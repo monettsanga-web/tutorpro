@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Award,
@@ -10,6 +10,7 @@ import {
   CalendarPlus,
   Check,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   ClipboardCheck,
   Clock3,
@@ -40,9 +41,10 @@ import {
   updateTeacherProfile,
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, updateBooking } from './bookings.js'
+import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro user'
 const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
 
@@ -73,6 +75,167 @@ function EmptyState({ icon: Icon = CalendarDays, title, text, action, actionLabe
       <h3>{title}</h3>
       <p>{text}</p>
       {action && <button className="portal-text-button" onClick={action}>{actionLabel} <ArrowRight size={15} /></button>}
+    </div>
+  )
+}
+
+function ScheduleCalendar({
+  weekOffset,
+  onWeekOffset,
+  availabilitySlots = [],
+  bookings = [],
+  editable = false,
+  onPaint,
+  selectedLesson,
+  onSelect,
+  duration = 25,
+}) {
+  const dates = weekDates(weekOffset)
+  const available = new Set(availabilitySlots)
+  const dragState = useRef(null)
+  const scrollRef = useRef(null)
+  const activeBookings = bookings.filter((booking) => !['cancelled', 'declined'].includes(booking.status))
+  const occupied = new Map()
+
+  activeBookings.forEach((booking) => {
+    const start = timeToMinutes(booking.time)
+    const count = Math.ceil(Number(booking.duration) / 30)
+    for (let index = 0; index < count; index += 1) {
+      occupied.set(`${booking.date}-${minutesToTime(start + (index * 30))}`, { booking, isStart: index === 0 })
+    }
+  })
+
+  useEffect(() => {
+    const finishDrag = () => { dragState.current = null }
+    document.addEventListener('pointerup', finishDrag)
+    document.addEventListener('pointercancel', finishDrag)
+    if (scrollRef.current) scrollRef.current.scrollTop = 7.5 * 62
+    return () => {
+      document.removeEventListener('pointerup', finishDrag)
+      document.removeEventListener('pointercancel', finishDrag)
+    }
+  }, [])
+
+  const weekStart = dates[0]
+  const weekEnd = dates[6]
+  const rangeLabel = weekStart.getMonth() === weekEnd.getMonth()
+    ? `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`
+    : `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${weekEnd.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`
+
+  const applyPaint = (slotKey, shouldAdd) => {
+    if (!editable || !onPaint) return
+    onPaint(slotKey, shouldAdd)
+  }
+
+  const startPaint = (event, slotKey, isBooked) => {
+    if (!editable || isBooked || event.button !== 0) return
+    event.preventDefault()
+    const shouldAdd = !available.has(slotKey)
+    dragState.current = { shouldAdd }
+    applyPaint(slotKey, shouldAdd)
+  }
+
+  const continuePaint = (slotKey, isBooked) => {
+    if (!editable || isBooked || !dragState.current) return
+    applyPaint(slotKey, dragState.current.shouldAdd)
+  }
+
+  const canSelect = (dayIndex, dateKey, time) => {
+    if (!onSelect) return false
+    const start = timeToMinutes(time)
+    const count = Math.ceil(Number(duration) / 30)
+    const now = new Date()
+    if (new Date(`${dateKey}T${time}:00`) <= now) return false
+    for (let index = 0; index < count; index += 1) {
+      const slotTime = minutesToTime(start + (index * 30))
+      if ((start + (index * 30)) >= 1440) return false
+      if (!available.has(makeSlotKey(dayIndex, slotTime))) return false
+      if (occupied.has(`${dateKey}-${slotTime}`)) return false
+    }
+    return true
+  }
+
+  const selectedCells = new Set()
+  if (selectedLesson?.date && selectedLesson?.time) {
+    const start = timeToMinutes(selectedLesson.time)
+    const count = Math.ceil(Number(selectedLesson.duration || duration) / 30)
+    for (let index = 0; index < count; index += 1) {
+      selectedCells.add(`${selectedLesson.date}-${minutesToTime(start + (index * 30))}`)
+    }
+  }
+
+  return (
+    <div className="schedule-calendar">
+      <div className="schedule-toolbar">
+        <div className="schedule-toolbar__arrows">
+          <button onClick={() => onWeekOffset(weekOffset - 1)} aria-label="Previous week"><ChevronLeft size={19} /></button>
+          <button onClick={() => onWeekOffset(weekOffset + 1)} aria-label="Next week"><ChevronRight size={19} /></button>
+        </div>
+        <strong>{rangeLabel}</strong>
+        <button className="schedule-today" onClick={() => onWeekOffset(0)}>Today</button>
+        <div className="schedule-view-tabs"><span className="active">Week</span><span>30 min slots</span></div>
+      </div>
+      <div className="schedule-scroll" ref={scrollRef}>
+        <div className="schedule-days">
+          <div className="schedule-time-heading">UTC+8</div>
+          {dates.map((date) => {
+            const dateKey = formatDateKey(date)
+            const current = dateKey === today()
+            return <div className={`schedule-day-heading ${current ? 'current' : ''}`} key={dateKey}><span>{date.toLocaleDateString('en', { weekday: 'short' })}</span><strong>{date.getDate()}</strong></div>
+          })}
+        </div>
+        <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''}`}>
+          {HALF_HOUR_TIMES.map((time) => (
+            <div className="schedule-row" key={time}>
+              <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{time.endsWith(':00') ? time : ''}</div>
+              {dates.map((date, dayIndex) => {
+                const dateKey = formatDateKey(date)
+                const slotKey = makeSlotKey(dayIndex, time)
+                const bookingCell = occupied.get(`${dateKey}-${time}`)
+                const isAvailable = available.has(slotKey)
+                const selectable = canSelect(dayIndex, dateKey, time)
+                const isSelected = selectedCells.has(`${dateKey}-${time}`)
+                const isPast = new Date(`${dateKey}T${time}:00`) <= new Date()
+                const student = bookingCell ? getAccountById(bookingCell.booking.studentId) : null
+                const classes = [
+                  'schedule-cell',
+                  isAvailable ? 'available' : 'unavailable',
+                  bookingCell ? 'booked' : '',
+                  bookingCell?.isStart ? 'booking-start' : '',
+                  selectable ? 'selectable' : '',
+                  isSelected ? 'selected' : '',
+                  isPast && !editable ? 'past' : '',
+                ].filter(Boolean).join(' ')
+                return (
+                  <button
+                    type="button"
+                    className={classes}
+                    key={`${dateKey}-${time}`}
+                    aria-label={`${date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${time}${isAvailable ? ', available' : ', unavailable'}`}
+                    aria-pressed={editable ? isAvailable : isSelected}
+                    disabled={!editable && !selectable && !isSelected}
+                    onPointerDown={(event) => startPaint(event, slotKey, Boolean(bookingCell))}
+                    onPointerEnter={() => continuePaint(slotKey, Boolean(bookingCell))}
+                    onClick={(event) => {
+                      if (editable && event.detail === 0 && !bookingCell) applyPaint(slotKey, !isAvailable)
+                      if (!editable && selectable) onSelect({ date: dateKey, time })
+                    }}
+                  >
+                    {bookingCell?.isStart && <span><strong>{student?.child?.name || 'Booked lesson'}</strong><small>{bookingCell.booking.focus}</small></span>}
+                    {!editable && selectable && !bookingCell && <i>Available</i>}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="schedule-legend">
+        <span><i className="legend-dot legend-dot--available" />Available</span>
+        <span><i className="legend-dot legend-dot--selected" />Selected</span>
+        <span><i className="legend-dot legend-dot--booked" />Booked</span>
+        <span><i className="legend-dot legend-dot--unavailable" />Unavailable</span>
+      </div>
     </div>
   )
 }
@@ -160,20 +323,26 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
 function BookLessonPanel({ account, onBooked }) {
   const teachers = getApprovedTeachers()
   const [form, setForm] = useState({ teacherId: '', date: '', time: '', duration: '25', focus: account.child.goal, note: '' })
+  const [weekOffset, setWeekOffset] = useState(0)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const timeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
   const selectedTeacherId = form.teacherId || teachers[0]?.id || ''
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId)
-  const selectedDay = form.date ? new Date(`${form.date}T00:00`).toLocaleDateString('en', { weekday: 'long' }) : ''
-  const dayAvailability = selectedTeacher?.teacher?.availability?.find((slot) => slot.day === selectedDay)
-  const availableTimes = form.date && dayAvailability?.enabled
-    ? timeSlots.filter((time) => time >= dayAvailability.from && time <= dayAvailability.to)
-    : []
+  const teacherBookings = selectedTeacherId ? getBookings({ teacherId: selectedTeacherId }) : []
 
   const update = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value, ...(['date', 'teacherId'].includes(name) ? { time: '' } : {}) }))
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+      ...(['teacherId', 'duration'].includes(name) ? { date: '', time: '' } : {}),
+    }))
+    setError('')
+    setSuccess(false)
+  }
+
+  const selectSlot = ({ date, time }) => {
+    setForm((current) => ({ ...current, date, time }))
     setError('')
     setSuccess(false)
   }
@@ -181,7 +350,7 @@ function BookLessonPanel({ account, onBooked }) {
   const submit = (event) => {
     event.preventDefault()
     if (!selectedTeacherId || !form.date || !form.time || !form.focus) {
-      setError('Choose a teacher, date, time and lesson focus to continue.')
+      setError('Choose an available time on the calendar to continue.')
       return
     }
     try {
@@ -195,45 +364,43 @@ function BookLessonPanel({ account, onBooked }) {
   }
 
   return (
-    <div className="booking-layout">
-      <section className="portal-card booking-form-card">
-        <div className="portal-card__heading">
-          <div><span className="portal-kicker">New lesson</span><h2>Book a one-to-one class</h2><p>Choose the time and focus. Your booking will be sent for confirmation.</p></div>
-          <span className="portal-card__icon"><CalendarPlus size={23} /></span>
+    <div className="portal-view">
+      <div className="portal-page-heading">
+        <div><span className="portal-kicker">Live availability</span><h1>Book a class</h1><p>Only teacher-approved times can be selected. Every row is a 30-minute calendar slot.</p></div>
+      </div>
+      <section className="portal-card booking-calendar-card">
+        <div className="booking-controls">
+          <label><span>Teacher</span><select name="teacherId" value={selectedTeacherId} onChange={update}>{teachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}</select></label>
+          <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+          <fieldset className="compact-duration"><legend>Lesson length</legend><div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span>{duration} min</span></label>)}</div></fieldset>
         </div>
-        {success && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>Lesson requested!</strong><span>You can follow its status under My lessons.</span></div></div>}
+
+        {success && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>Lesson requested!</strong><span>The selected slot is now reserved while confirmation is pending.</span></div></div>}
         {error && <div className="portal-error" role="alert">{error}</div>}
-        {teachers.length ? (
-          <form className="booking-form" onSubmit={submit}>
-            <label>
-              <span>Teacher</span>
-              <select name="teacherId" value={selectedTeacherId} onChange={update}>
-                {teachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}
-              </select>
-            </label>
-            <div className="booking-form__row">
-              <label><span>Date</span><input type="date" min={today()} name="date" value={form.date} onChange={update} /></label>
-              <label><span>Start time</span><select name="time" value={form.time} onChange={update} disabled={!form.date || !availableTimes.length}><option value="">{!form.date ? 'Choose a date first' : availableTimes.length ? 'Choose time' : 'Teacher unavailable'}</option>{availableTimes.map((time) => <option key={time} value={time}>{formatTime(time)}</option>)}</select></label>
-            </div>
-            <fieldset className="duration-picker">
-              <legend>Lesson length</legend>
-              <div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span><strong>{duration} min</strong><small>{duration === '25' ? 'Focused boost' : 'Deep-dive lesson'}</small></span></label>)}</div>
-            </fieldset>
-            <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
-            <label><span>Note for the teacher <i>optional</i></span><textarea name="note" value={form.note} onChange={update} placeholder="Anything you would like the teacher to know?" /></label>
-            <button className="portal-primary-button" type="submit">Request this lesson <ArrowRight size={17} /></button>
-          </form>
+
+        {teachers.length && selectedTeacher ? (
+          <ScheduleCalendar
+            weekOffset={weekOffset}
+            onWeekOffset={setWeekOffset}
+            availabilitySlots={selectedTeacher.teacher.availabilitySlots || []}
+            bookings={teacherBookings}
+            duration={Number(form.duration)}
+            selectedLesson={form}
+            onSelect={selectSlot}
+          />
         ) : (
           <EmptyState icon={Users} title="Teachers are being prepared" text="An administrator needs to approve a teacher before new lessons can be requested." />
         )}
+
+        <form className="booking-confirm-bar" onSubmit={submit}>
+          <div className={form.date && form.time ? 'selected' : ''}>
+            <span className="portal-card__icon"><Clock3 size={21} /></span>
+            <div><small>{form.date && form.time ? 'Selected lesson' : 'Choose an available slot'}</small><strong>{form.date && form.time ? `${formatLessonDate(form.date, form.time, true)} at ${formatTime(form.time)}` : 'No time selected yet'}</strong><em>{form.duration} min lesson · {form.duration === '50' ? 'uses 2 calendar slots' : 'uses 1 calendar slot'}</em></div>
+          </div>
+          <label><span>Note <i>optional</i></span><input name="note" value={form.note} onChange={update} placeholder="Note for the teacher" /></label>
+          <button className="portal-primary-button" type="submit" disabled={!form.date || !form.time}>Request lesson <ArrowRight size={17} /></button>
+        </form>
       </section>
-      <aside className="booking-help">
-        <div className="booking-help__mascot"><img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda" /></div>
-        <span className="portal-kicker">Good to know</span>
-        <h3>Make the first class count.</h3>
-        <ul><li><Check size={15} /> Join from a quiet space</li><li><Check size={15} /> Bring recent schoolwork</li><li><Check size={15} /> Share one clear goal</li></ul>
-        <p>No payment is requested during this booking step.</p>
-      </aside>
     </div>
   )
 }
@@ -242,6 +409,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [active, setActive] = useState('overview')
   const [account, setAccount] = useState(initialAccount)
   const [bookingVersion, setBookingVersion] = useState(0)
+  const [lessonsWeek, setLessonsWeek] = useState(0)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profile, setProfile] = useState({ goal: account.child.goal, frequency: account.child.frequency })
   const bookings = getBookings({ studentId: account.id })
@@ -314,8 +482,12 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'lessons' && (
         <div className="portal-view">
-          <div className="portal-page-heading"><div><span className="portal-kicker">Your schedule</span><h1>My lessons</h1><p>Track requests, confirmed classes and completed learning.</p></div><button className="portal-primary-button" onClick={() => setActive('book')}><CalendarPlus size={17} /> Book a class</button></div>
-          <section className="portal-card lessons-list-card">
+          <div className="portal-page-heading"><div><span className="portal-kicker">Your schedule</span><h1>My lessons</h1><p>A 24-hour weekly calendar with every lesson placed in its 30-minute time slot.</p></div><button className="portal-primary-button" onClick={() => setActive('book')}><CalendarPlus size={17} /> Book a class</button></div>
+          <section className="portal-card student-schedule-card">
+            <ScheduleCalendar weekOffset={lessonsWeek} onWeekOffset={setLessonsWeek} bookings={bookings} />
+          </section>
+          <section className="portal-card lessons-list-card schedule-list-below">
+            <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">All requests</span><h2>Lesson details</h2></div></div>
             {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher actions={['pending', 'confirmed'].includes(booking.status) && <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button>} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
           </section>
         </div>
@@ -355,7 +527,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [active, setActive] = useState('overview')
   const [account, setAccount] = useState(initialAccount)
   const [version, setVersion] = useState(0)
-  const [availability, setAvailability] = useState(account.teacher.availability || [])
+  const [availabilitySlots, setAvailabilitySlots] = useState(account.teacher.availabilitySlots || [])
+  const [scheduleWeek, setScheduleWeek] = useState(0)
   const [saved, setSaved] = useState(false)
   const bookings = getBookings({ teacherId: account.id })
   const pending = bookings.filter((booking) => booking.status === 'pending').length
@@ -383,8 +556,18 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     refresh()
   }
 
+  const paintAvailability = (slotKey, shouldAdd) => {
+    setAvailabilitySlots((current) => {
+      const next = new Set(current)
+      if (shouldAdd) next.add(slotKey)
+      else next.delete(slotKey)
+      return [...next]
+    })
+    setSaved(false)
+  }
+
   const saveAvailability = () => {
-    const updated = updateTeacherProfile(account.id, { availability })
+    const updated = updateTeacherProfile(account.id, { availabilitySlots })
     setAccount(updated)
     onAccountChange(updated)
     setSaved(true)
@@ -443,11 +626,20 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'schedule' && (
         <div className="portal-view">
-          <div className="portal-page-heading"><div><span className="portal-kicker">Weekly schedule</span><h1>Availability</h1><p>Set the windows when families can request a class.</p></div>{saved && <span className="saved-label"><Check size={14} /> Schedule saved</span>}</div>
-          <section className="portal-card availability-card">
-            <div className="availability-head"><span>Day</span><span>Available</span><span>From</span><span>Until</span></div>
-            {availability.map((slot, index) => <div className="availability-row" key={slot.day}><strong>{slot.day}</strong><label className="switch"><input type="checkbox" checked={slot.enabled} onChange={(event) => setAvailability((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, enabled: event.target.checked } : item))} /><span /></label><input type="time" value={slot.from} disabled={!slot.enabled} onChange={(event) => setAvailability((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, from: event.target.value } : item))} /><input type="time" value={slot.to} disabled={!slot.enabled} onChange={(event) => setAvailability((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, to: event.target.value } : item))} /></div>)}
-            <button className="portal-primary-button" onClick={saveAvailability}>Save weekly availability</button>
+          <div className="portal-page-heading schedule-page-heading">
+            <div><span className="portal-kicker">Recurring weekly calendar</span><h1>Set availability</h1><p>Click and drag across the calendar to add time. Drag across green slots to make them unavailable.</p></div>
+            <div className="schedule-save-actions"><span>{availabilitySlots.length} slots · {(availabilitySlots.length / 2).toFixed(1)} hours/week</span>{saved && <span className="saved-label"><Check size={14} /> Saved</span>}<button className="portal-primary-button" onClick={saveAvailability}><Check size={16} /> Save availability</button></div>
+          </div>
+          <section className="portal-card availability-calendar-card">
+            <div className="drag-instruction"><span><CalendarDays size={18} /></span><div><strong>Paint your available time</strong><small>Each cell is 30 minutes. Booked lessons are locked and cannot be removed.</small></div></div>
+            <ScheduleCalendar
+              weekOffset={scheduleWeek}
+              onWeekOffset={setScheduleWeek}
+              availabilitySlots={availabilitySlots}
+              bookings={bookings}
+              editable
+              onPaint={paintAvailability}
+            />
           </section>
         </div>
       )}

@@ -1,3 +1,6 @@
+import { getAccountById } from './auth.js'
+import { lessonSlotKeys, timeToMinutes } from './schedule.js'
+
 const BOOKINGS_KEY = 'tutorpro_bookings_v1'
 
 function readBookings() {
@@ -23,13 +26,30 @@ export function getBookings(filters = {}) {
 
 export function createBooking(details) {
   const bookings = readBookings()
-  const conflict = bookings.some((booking) => (
-    booking.teacherId === details.teacherId
-    && booking.date === details.date
-    && booking.time === details.time
-    && !['cancelled', 'declined'].includes(booking.status)
-  ))
-  if (conflict) throw new Error('That lesson time has just been taken. Please choose another time.')
+  const teacher = getAccountById(details.teacherId)
+  if (!teacher || teacher.role !== 'teacher' || teacher.status !== 'approved') {
+    throw new Error('This teacher is not currently available for bookings.')
+  }
+
+  const startMinutes = timeToMinutes(details.time)
+  if (startMinutes % 30 !== 0 || startMinutes < 0 || startMinutes >= 1440) {
+    throw new Error('Lessons must start on a 30-minute calendar slot.')
+  }
+
+  const requiredSlots = lessonSlotKeys(details.date, details.time, details.duration)
+  const availableSlots = new Set(teacher.teacher?.availabilitySlots || [])
+  if (!requiredSlots.every((slot) => availableSlots.has(slot))) {
+    throw new Error('This time is outside the teacher’s available schedule.')
+  }
+
+  const requestedEnd = startMinutes + (Math.ceil(Number(details.duration) / 30) * 30)
+  const conflict = bookings.some((booking) => {
+    if (booking.teacherId !== details.teacherId || booking.date !== details.date || ['cancelled', 'declined'].includes(booking.status)) return false
+    const bookingStart = timeToMinutes(booking.time)
+    const bookingEnd = bookingStart + (Math.ceil(Number(booking.duration) / 30) * 30)
+    return startMinutes < bookingEnd && requestedEnd > bookingStart
+  })
+  if (conflict) throw new Error('That lesson time has just been taken. Please choose another available slot.')
 
   const booking = {
     id: crypto.randomUUID(),

@@ -1,3 +1,5 @@
+import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
+
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
 const LEGACY_ACCOUNTS_KEY = 'tutorpro_accounts_v1'
 const SESSION_KEY = 'tutorpro_session_v2'
@@ -49,37 +51,52 @@ function publicAccount(account) {
 
 export function initializePlatform() {
   const accounts = readAccounts()
-  if (accounts.some((account) => account.id === 'teacher-monett')) return
+  let changed = false
 
-  accounts.push({
-    id: 'teacher-monett',
-    role: 'teacher',
-    status: 'approved',
-    systemProfile: true,
-    fullName: 'Monett Sanga',
-    email: 'monett@tutorpro.example',
-    createdAt: new Date().toISOString(),
-    teacher: {
-      specialization: 'Both Curricula',
-      bio: 'Experienced English teacher for eight years with learners of different nationalities.',
-      education: 'Bachelor of Elementary Education',
-      experience: 8,
-      languages: 'English, Filipino and Korean',
-      credentials: ['Bachelor of Elementary Education'],
-      availability: [
-        { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },
-        { day: 'Tuesday', enabled: true, from: '16:00', to: '20:00' },
-        { day: 'Wednesday', enabled: true, from: '16:00', to: '20:00' },
-        { day: 'Thursday', enabled: true, from: '16:00', to: '20:00' },
-        { day: 'Friday', enabled: true, from: '16:00', to: '20:00' },
-        { day: 'Saturday', enabled: false, from: '09:00', to: '15:00' },
-        { day: 'Sunday', enabled: false, from: '09:00', to: '15:00' },
-      ],
-      rating: 5,
-      lessonsCompleted: 284,
-    },
+  accounts.forEach((account) => {
+    if (account.role === 'teacher' && !account.teacher?.availabilitySlots) {
+      account.teacher = {
+        ...account.teacher,
+        availabilitySlots: slotsFromAvailabilityRanges(account.teacher?.availability || []),
+      }
+      changed = true
+    }
   })
-  writeAccounts(accounts)
+
+  if (!accounts.some((account) => account.id === 'teacher-monett')) {
+    accounts.push({
+      id: 'teacher-monett',
+      role: 'teacher',
+      status: 'approved',
+      systemProfile: true,
+      fullName: 'Monett Sanga',
+      email: 'monett@tutorpro.example',
+      createdAt: new Date().toISOString(),
+      teacher: {
+        specialization: 'Both Curricula',
+        bio: 'Experienced English teacher for eight years with learners of different nationalities.',
+        education: 'Bachelor of Elementary Education',
+        experience: 8,
+        languages: 'English, Filipino and Korean',
+        credentials: ['Bachelor of Elementary Education'],
+        availabilitySlots: buildWeeklySlots([0, 1, 2, 3, 4], '16:00', '20:00'),
+        availability: [
+          { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },
+          { day: 'Tuesday', enabled: true, from: '16:00', to: '20:00' },
+          { day: 'Wednesday', enabled: true, from: '16:00', to: '20:00' },
+          { day: 'Thursday', enabled: true, from: '16:00', to: '20:00' },
+          { day: 'Friday', enabled: true, from: '16:00', to: '20:00' },
+          { day: 'Saturday', enabled: false, from: '09:00', to: '15:00' },
+          { day: 'Sunday', enabled: false, from: '09:00', to: '15:00' },
+        ],
+        rating: 5,
+        lessonsCompleted: 284,
+      },
+    })
+    changed = true
+  }
+
+  if (changed) writeAccounts(accounts)
 }
 
 export function getCurrentAccount() {
@@ -174,6 +191,7 @@ export async function registerTeacher(details) {
       experience: Number(details.experience) || 0,
       languages: details.languages.trim(),
       credentials: details.credentials || [],
+      availabilitySlots: buildWeeklySlots([0, 1, 2, 3, 4], '16:00', '20:00'),
       availability: [
         { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },
         { day: 'Tuesday', enabled: true, from: '16:00', to: '20:00' },

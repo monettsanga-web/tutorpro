@@ -8,8 +8,9 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 
 - Two-step family and learner registration
 - Personalised student profile with goals, progress, streaks and achievements
-- One-to-one booking flow with teacher, date, time, duration and lesson focus
-- Booking history, status tracking and cancellation
+- 24-hour weekly lesson calendar divided into 30-minute slots
+- One-to-one booking restricted to teacher-approved availability
+- Booking history, calendar status tracking and cancellation
 - Editable learning preferences
 
 ### Teacher
@@ -18,7 +19,8 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 - Credential filename capture for administrator review
 - Approval-status visibility
 - Booking acceptance, decline and lesson completion
-- Weekly availability management
+- Click-and-drag weekly availability painting
+- Locked booked slots that cannot be offered to another student
 - Profile, lesson and rating overview
 
 ### Administrator
