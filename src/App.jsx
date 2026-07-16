@@ -1,0 +1,649 @@
+import { useEffect, useState } from 'react'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  BookOpen,
+  CalendarCheck2,
+  Check,
+  ChevronDown,
+  Clock3,
+  Globe2,
+  GraduationCap,
+  Heart,
+  Menu,
+  MessageCircle,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Target,
+  UserRoundCheck,
+  Users,
+  X,
+} from 'lucide-react'
+
+const LIVE_SITE = 'https://tutor-pro-connect.base44.app'
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
+
+const programmes = {
+  primary: [
+    {
+      name: 'Cambridge Primary',
+      years: 'Years 1–6',
+      description: 'Build strong foundations in reading, writing, speaking and comprehension.',
+      accent: 'coral',
+    },
+    {
+      name: 'Oxford Primary',
+      years: 'Years 1–6',
+      description: 'Grow literacy and a love of language through clear, engaging lessons.',
+      accent: 'gold',
+    },
+  ],
+  secondary: [
+    {
+      name: 'Cambridge Secondary',
+      years: 'Years 7–11',
+      description: 'Develop the analysis and writing skills students need for IGCSE English.',
+      accent: 'coral',
+    },
+    {
+      name: 'Oxford Secondary',
+      years: 'Years 7–11',
+      description: 'Master advanced language and literature with structured one-to-one support.',
+      accent: 'gold',
+    },
+  ],
+}
+
+const faqs = [
+  {
+    question: 'What curricula do you follow?',
+    answer:
+      'Lessons are aligned with Cambridge and Oxford English curricula for Primary and Secondary students. Your tutor will adapt each class to your child’s year level, current goals and schoolwork.',
+  },
+  {
+    question: 'Is the first class really free?',
+    answer:
+      'Yes. New students can take a free first class before choosing a plan. It is a chance to meet the tutor, discuss goals and experience the teaching approach with no commitment.',
+  },
+  {
+    question: 'What is the difference between the plans?',
+    answer:
+      'The Weekly plan is designed for one or two classes a week and is paid weekly. The Package plan is for four or five 25-minute classes a week, paid monthly, with priority scheduling and a dedicated tutor.',
+  },
+  {
+    question: 'Can I change plans later?',
+    answer:
+      'Yes. You can start with the rhythm that works now and change as your child’s schedule or learning goals evolve.',
+  },
+  {
+    question: 'How do online classes work?',
+    answer:
+      'Create a student account, choose a tutor and an available time, then join your one-to-one lesson online. Tutors track progress so future sessions build on what your child has learned.',
+  },
+]
+
+function Logo({ light = false }) {
+  return (
+    <a className={`logo ${light ? 'logo--light' : ''}`} href="#top" aria-label="TutorPro home">
+      <span className="logo__mark" aria-hidden="true">
+        <BookOpen size={22} strokeWidth={2.4} />
+      </span>
+      <span className="logo__text">
+        Tutor<span>Pro</span>
+      </span>
+    </a>
+  )
+}
+
+function Header({ onBook }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const closeMenu = () => setMenuOpen(false)
+
+  return (
+    <header className="site-header">
+      <div className="header-inner">
+        <Logo />
+        <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
+          <a href="#why" onClick={closeMenu}>Why TutorPro</a>
+          <a href="#programmes" onClick={closeMenu}>Programmes</a>
+          <a href="#tutors" onClick={closeMenu}>Tutors</a>
+          <a href="#pricing" onClick={closeMenu}>Pricing</a>
+          <a href="#faq" onClick={closeMenu}>FAQ</a>
+          <div className="nav__mobile-actions">
+            <a href={`${LIVE_SITE}/login`} className="text-link">Student login</a>
+            <button className="button button--primary" onClick={() => { closeMenu(); onBook() }}>
+              Book a free class
+            </button>
+          </div>
+        </nav>
+        <div className="header-actions">
+          <a className="login-link" href={`${LIVE_SITE}/login`}>Log in</a>
+          <button className="button button--primary button--small" onClick={onBook}>
+            Free first class <ArrowUpRight size={16} />
+          </button>
+        </div>
+        <button
+          className="menu-button"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+    </header>
+  )
+}
+
+function Hero({ onBook }) {
+  return (
+    <section className="hero" id="top">
+      <div className="hero__dots" aria-hidden="true" />
+      <div className="container hero__grid">
+        <div className="hero__content">
+          <div className="eyebrow">
+            <span><Sparkles size={14} /></span>
+            Cambridge & Oxford aligned
+          </div>
+          <h1>English confidence, built <em>one lesson</em> at a time.</h1>
+          <p className="hero__lede">
+            Personalised 1-to-1 online tutoring that helps Primary and Secondary students speak up, write clearly and thrive at school.
+          </p>
+          <div className="hero__actions">
+            <button className="button button--primary button--large" onClick={onBook}>
+              Book a free first class <ArrowRight size={18} />
+            </button>
+            <a className="button button--quiet button--large" href="#programmes">
+              Explore programmes
+            </a>
+          </div>
+          <div className="hero__proof" aria-label="TutorPro benefits">
+            <span><Check size={15} /> No commitment</span>
+            <span><Check size={15} /> From $8 per class</span>
+            <span><Check size={15} /> Flexible times</span>
+          </div>
+        </div>
+
+        <div className="hero__visual">
+          <div className="hero__photo-wrap">
+            <img
+              className="hero__photo"
+              src={assetUrl('assets/tutorpro-hero.webp')}
+              alt="A student taking part in a friendly online English lesson"
+            />
+            <div className="class-pill">
+              <span className="class-pill__icon"><MessageCircle size={18} /></span>
+              <span><strong>1-to-1 attention</strong>Every class, every child</span>
+            </div>
+          </div>
+          <div className="progress-card">
+            <div className="progress-card__top">
+              <span className="progress-card__icon"><Target size={18} /></span>
+              <span><small>Learning goal</small><strong>Confident speaking</strong></span>
+            </div>
+            <div className="progress-card__bar"><span /></div>
+            <div className="progress-card__foot"><span>Great progress</span><strong>82%</strong></div>
+          </div>
+          <div className="hero__shape" aria-hidden="true" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Stats() {
+  const items = [
+    ['500+', 'active students'],
+    ['20+', 'expert tutors'],
+    ['98%', 'success rate'],
+    ['5+', 'years of experience'],
+  ]
+
+  return (
+    <section className="stats" aria-label="TutorPro at a glance">
+      <div className="container stats__inner">
+        <p>Trusted by growing learners</p>
+        <div className="stats__items">
+          {items.map(([number, label]) => (
+            <div className="stat" key={label}>
+              <strong>{number}</strong>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function WhyTutorPro() {
+  const benefits = [
+    {
+      icon: GraduationCap,
+      title: 'The right curriculum',
+      text: 'Every lesson connects to the Cambridge or Oxford learning journey your child already follows.',
+      color: 'coral',
+    },
+    {
+      icon: UserRoundCheck,
+      title: 'A tutor who gets them',
+      text: 'One-to-one teaching means the pace, examples and feedback all fit how your child learns best.',
+      color: 'gold',
+    },
+    {
+      icon: CalendarCheck2,
+      title: 'Learning that fits life',
+      text: 'Choose 25 or 50 minutes and book times around school, activities and family routines.',
+      color: 'blue',
+    },
+  ]
+
+  return (
+    <section className="section why" id="why">
+      <div className="container">
+        <div className="section-heading section-heading--split">
+          <div>
+            <span className="kicker">Why TutorPro</span>
+            <h2>Less pressure. More progress.</h2>
+          </div>
+          <p>Support that meets your child where they are—and gives them a clear path to where they want to be.</p>
+        </div>
+        <div className="benefit-grid">
+          {benefits.map(({ icon: Icon, title, text, color }, index) => (
+            <article className="benefit" key={title}>
+              <span className={`benefit__number benefit__number--${color}`}>0{index + 1}</span>
+              <div className={`benefit__icon benefit__icon--${color}`}><Icon size={25} /></div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+        <div className="lesson-note">
+          <img src={assetUrl('assets/online-english-lesson.jpg')} alt="A child learning one-to-one with an online tutor" />
+          <div className="lesson-note__copy">
+            <span className="lesson-note__label"><ShieldCheck size={16} /> Always one-to-one</span>
+            <h3>One child. One tutor. One clear goal.</h3>
+            <p>No crowded class and no getting lost in the lesson. Your child has the space to ask, practise and make mistakes safely.</p>
+          </div>
+          <a className="text-link text-link--arrow" href="#programmes">Find their programme <ArrowRight size={16} /></a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Programmes() {
+  const [level, setLevel] = useState('primary')
+
+  return (
+    <section className="section programmes" id="programmes">
+      <div className="container programmes__grid">
+        <div className="programmes__intro">
+          <span className="kicker kicker--light">Programmes</span>
+          <h2>Made for their school years.</h2>
+          <p>
+            Focused English support from first foundations to exam-ready analysis. Choose a level to see the right path.
+          </p>
+          <div className="level-toggle" role="group" aria-label="Choose school level">
+            <button
+              className={level === 'primary' ? 'active' : ''}
+              aria-pressed={level === 'primary'}
+              onClick={() => setLevel('primary')}
+            >
+              Primary
+            </button>
+            <button
+              className={level === 'secondary' ? 'active' : ''}
+              aria-pressed={level === 'secondary'}
+              onClick={() => setLevel('secondary')}
+            >
+              Secondary
+            </button>
+          </div>
+        </div>
+
+        <div className="programme-list" aria-live="polite">
+          {programmes[level].map((programme, index) => (
+            <article className="programme-card" key={programme.name}>
+              <div className={`programme-card__mark programme-card__mark--${programme.accent}`}>
+                {index === 0 ? <Globe2 size={25} /> : <BookOpen size={25} />}
+              </div>
+              <div className="programme-card__body">
+                <span>{programme.years}</span>
+                <h3>{programme.name}</h3>
+                <p>{programme.description}</p>
+              </div>
+              <ArrowUpRight className="programme-card__arrow" size={20} />
+            </article>
+          ))}
+          <div className="programme-note">
+            <BadgeCheck size={20} />
+            <p><strong>Not sure which path fits?</strong> We’ll help you choose during the free first class.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function HowItWorks({ onBook }) {
+  const steps = [
+    {
+      icon: Users,
+      title: 'Tell us about your child',
+      text: 'Share their year, curriculum and the skills they want to strengthen.',
+    },
+    {
+      icon: Heart,
+      title: 'Meet the right tutor',
+      text: 'Browse verified teachers and choose a personality and schedule that fits.',
+    },
+    {
+      icon: Star,
+      title: 'See confidence grow',
+      text: 'Start learning one-to-one and follow progress from lesson to lesson.',
+    },
+  ]
+
+  return (
+    <section className="section journey">
+      <div className="container">
+        <div className="section-heading section-heading--center">
+          <span className="kicker">How it works</span>
+          <h2>From “I’m stuck” to “I’ve got this.”</h2>
+          <p>Getting the right support should feel simple.</p>
+        </div>
+        <div className="steps">
+          {steps.map(({ icon: Icon, title, text }, index) => (
+            <article className="step" key={title}>
+              <div className="step__top">
+                <span className="step__icon"><Icon size={23} /></span>
+                <span className="step__number">0{index + 1}</span>
+              </div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+              {index < steps.length - 1 && <ArrowRight className="step__arrow" size={21} />}
+            </article>
+          ))}
+        </div>
+        <div className="journey__action">
+          <button className="button button--primary button--large" onClick={onBook}>
+            Take the first step <ArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TutorSpotlight() {
+  return (
+    <section className="section tutor-section" id="tutors">
+      <div className="container tutor-spotlight">
+        <div className="tutor-profile">
+          <div className="tutor-profile__monogram" aria-label="Monett Sanga initials">
+            <span>MS</span>
+            <div className="tutor-profile__verified"><ShieldCheck size={19} /></div>
+          </div>
+          <div className="tutor-profile__details">
+            <span className="available"><i /> Available for new students</span>
+            <h3>Monett Sanga</h3>
+            <p>English teacher · Both curricula</p>
+            <div className="tutor-profile__tags">
+              <span>English</span><span>Filipino</span><span>Korean</span>
+            </div>
+          </div>
+        </div>
+        <div className="tutor-copy">
+          <span className="kicker">Meet your tutor</span>
+          <h2>Experience that feels encouraging.</h2>
+          <p className="tutor-copy__lead">
+            Monett has taught English to students of different nationalities for eight years, bringing clear guidance and a welcoming approach to every class.
+          </p>
+          <div className="tutor-facts">
+            <div><strong>8 years</strong><span>teaching experience</span></div>
+            <div><strong>Bachelor’s</strong><span>Elementary Education</span></div>
+            <div><strong>$10</strong><span>from / 25 minutes</span></div>
+          </div>
+          <a className="button button--outline" href={`${LIVE_SITE}/teachers`}>
+            Browse tutor profiles <ArrowUpRight size={17} />
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Pricing({ onBook }) {
+  return (
+    <section className="section pricing" id="pricing">
+      <div className="container">
+        <div className="section-heading section-heading--center">
+          <span className="kicker">Simple pricing</span>
+          <h2>Choose your child’s rhythm.</h2>
+          <p>Start with a free class. Stay flexible, with no long-term commitment.</p>
+        </div>
+
+        <div className="pricing-grid">
+          <article className="price-card">
+            <div className="price-card__head">
+              <span className="price-card__icon"><Clock3 size={22} /></span>
+              <div><h3>Weekly</h3><p>For steady, flexible support</p></div>
+            </div>
+            <div className="price-options">
+              <div><strong>$10</strong><span>/ 25 min</span></div>
+              <i />
+              <div><strong>$20</strong><span>/ 50 min</span></div>
+            </div>
+            <p className="price-card__cadence">1–2 classes per week · pay weekly</p>
+            <ul>
+              <li><Check size={16} /> Flexible scheduling</li>
+              <li><Check size={16} /> Any supported curriculum</li>
+              <li><Check size={16} /> One-to-one attention</li>
+              <li><Check size={16} /> Progress tracking</li>
+            </ul>
+            <button className="button button--outline button--full" onClick={() => onBook('Weekly')}>
+              Try your first class free <ArrowRight size={17} />
+            </button>
+          </article>
+
+          <article className="price-card price-card--featured">
+            <div className="best-value"><Sparkles size={14} /> Best value</div>
+            <div className="price-card__head">
+              <span className="price-card__icon"><CalendarCheck2 size={22} /></span>
+              <div><h3>Package</h3><p>For faster, consistent progress</p></div>
+            </div>
+            <div className="package-price">
+              <strong>$8</strong><span>/ 25 min class</span>
+            </div>
+            <p className="price-card__cadence">4–5 classes per week · pay monthly</p>
+            <ul>
+              <li><Check size={16} /> Save $2 on every class</li>
+              <li><Check size={16} /> Priority scheduling</li>
+              <li><Check size={16} /> Dedicated tutor assignment</li>
+              <li><Check size={16} /> Detailed progress reports</li>
+            </ul>
+            <button className="button button--primary button--full" onClick={() => onBook('Package')}>
+              Try your first class free <ArrowRight size={17} />
+            </button>
+          </article>
+        </div>
+        <p className="pricing-note"><ShieldCheck size={16} /> Secure booking · Free first class for new students</p>
+      </div>
+    </section>
+  )
+}
+
+function FAQ() {
+  const [openIndex, setOpenIndex] = useState(0)
+
+  return (
+    <section className="section faq" id="faq">
+      <div className="container faq__grid">
+        <div className="faq__intro">
+          <span className="kicker">Good to know</span>
+          <h2>Questions, answered.</h2>
+          <p>Compare experience, languages and curriculum fit to find the right teacher for your child.</p>
+          <a className="text-link text-link--arrow" href={`${LIVE_SITE}/teachers`}>
+            Browse tutor profiles <ArrowUpRight size={16} />
+          </a>
+        </div>
+        <div className="faq-list">
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index
+            return (
+              <div className={`faq-item ${isOpen ? 'faq-item--open' : ''}`} key={faq.question}>
+                <button
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${index}`}
+                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                >
+                  <span>{faq.question}</span>
+                  <ChevronDown size={20} />
+                </button>
+                <div className="faq-item__answer" id={`faq-answer-${index}`}>
+                  <p>{faq.answer}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function FinalCTA({ onBook }) {
+  return (
+    <section className="final-cta">
+      <div className="container final-cta__inner">
+        <div className="final-cta__icon"><Sparkles size={27} /></div>
+        <div>
+          <span className="kicker kicker--light">Their next chapter starts here</span>
+          <h2>Let’s make English their strong subject.</h2>
+          <p>Meet an expert tutor and experience a one-to-one class—free.</p>
+        </div>
+        <button className="button button--cream button--large" onClick={onBook}>
+          Book a free class <ArrowRight size={18} />
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer__main">
+          <div className="footer__brand">
+            <Logo light />
+            <p>Personalised English tutoring for confident, capable learners.</p>
+            <span>Cambridge & Oxford aligned</span>
+          </div>
+          <div className="footer__links">
+            <div>
+              <h3>Explore</h3>
+              <a href="#why">Why TutorPro</a>
+              <a href="#programmes">Programmes</a>
+              <a href="#tutors">Tutors</a>
+              <a href="#pricing">Pricing</a>
+            </div>
+            <div>
+              <h3>Get started</h3>
+              <a href={`${LIVE_SITE}/register`}>Student sign up</a>
+              <a href={`${LIVE_SITE}/teacher-signup`}>Join as a teacher</a>
+              <a href={`${LIVE_SITE}/login`}>Log in</a>
+              <a href="#faq">FAQ</a>
+            </div>
+          </div>
+        </div>
+        <div className="footer__bottom">
+          <span>© {new Date().getFullYear()} TutorPro English Hub</span>
+          <a className="footer__credit" href="https://www.pexels.com/photo/7014777/">Learning photo via Pexels</a>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+function BookingModal({ isOpen, onClose, selectedPlan }) {
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose()
+    }}>
+      <section className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
+        <button className="modal-close" onClick={onClose} aria-label="Close dialog"><X size={21} /></button>
+        <span className="modal-icon"><Sparkles size={23} /></span>
+        <span className="kicker">Free first class</span>
+        <h2 id="booking-title">Start with the right next step.</h2>
+        <p>
+          {selectedPlan
+            ? `You’re interested in the ${selectedPlan} plan. Create a student account to choose a tutor and book your free first class.`
+            : 'Create a student account to choose a tutor and book your free first class. No payment is needed to get started.'}
+        </p>
+        <div className="modal-actions">
+          <a className="button button--primary button--full" href={`${LIVE_SITE}/register`}>
+            Create a free account <ArrowUpRight size={17} />
+          </a>
+          <a className="button button--outline button--full" href={`${LIVE_SITE}/teachers`}>
+            Browse tutors first
+          </a>
+        </div>
+        <p className="modal-login">Already a student? <a href={`${LIVE_SITE}/login`}>Log in to book</a></p>
+        <div className="modal-trust"><ShieldCheck size={17} /> First class free · No commitment</div>
+      </section>
+    </div>
+  )
+}
+
+export default function App() {
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('')
+
+  const openBooking = (plan = '') => {
+    setSelectedPlan(typeof plan === 'string' ? plan : '')
+    setBookingOpen(true)
+  }
+
+  return (
+    <>
+      <Header onBook={openBooking} />
+      <main>
+        <Hero onBook={openBooking} />
+        <Stats />
+        <WhyTutorPro />
+        <Programmes />
+        <HowItWorks onBook={openBooking} />
+        <TutorSpotlight />
+        <Pricing onBook={openBooking} />
+        <FAQ />
+        <FinalCTA onBook={openBooking} />
+      </main>
+      <Footer />
+      <BookingModal
+        isOpen={bookingOpen}
+        selectedPlan={selectedPlan}
+        onClose={() => setBookingOpen(false)}
+      />
+    </>
+  )
+}
