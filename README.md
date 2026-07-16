@@ -25,7 +25,8 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 
 - First-time administrator setup for `monettsanga@yahoo.com`
 - Teacher approval, rejection and suspension controls
-- Student access suspension and restoration
+- Direct access to any teacher dashboard from the teacher table
+- Student access suspension, restoration and direct dashboard access
 - Platform-wide booking status controls
 - Overview metrics for students, teachers and lessons
 

@@ -1732,7 +1732,7 @@
 .admin-table--teachers .admin-table__row,
 .admin-table--students .admin-table__head,
 .admin-table--students .admin-table__row {
-  grid-template-columns: 1.35fr 1.1fr 1.1fr 0.65fr 0.65fr;
+  grid-template-columns: 1.3fr 1.05fr 1.05fr 0.65fr 0.95fr;
 }
 
 .admin-table__head {
@@ -1769,9 +1769,89 @@
   border-radius: 8px;
 }
 
+.table-access-button {
+  display: inline-flex;
+  height: 33px;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 9px;
+  background: #e6f0fc;
+  color: #246bbd;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
 .table-action--approve { background: #e4f5e9; color: #2e7d4b; }
 .table-action--reject { background: #fde9e5; color: #aa4936; }
 .table-action--suspend { background: #fff2db; color: #a76f12; }
+
+.admin-preview-pill {
+  position: fixed;
+  z-index: 80;
+  right: 22px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 44px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 15px;
+  padding: 10px 11px 10px 13px;
+  background: var(--portal-navy);
+  box-shadow: 0 18px 45px rgba(8, 28, 61, 0.28);
+  color: #fff;
+  animation: admin-pill-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-preview-pill > span {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(244, 123, 32, 0.16);
+  color: #ff994d;
+}
+
+.admin-preview-pill > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.admin-preview-pill strong {
+  color: #fff;
+  font-size: 0.7rem;
+}
+
+.admin-preview-pill small {
+  max-width: 230px;
+  overflow: hidden;
+  color: #aebed7;
+  font-size: 0.58rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-preview-pill button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 11px;
+  background: var(--portal-orange);
+  color: #fff;
+  font-size: 0.63rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+@keyframes admin-pill-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .booking-status-select {
   min-height: 36px;
@@ -2214,7 +2294,18 @@
 
 @media (max-width: 650px) {
   .portal-content {
-    padding: 22px 15px;
+    padding: 22px 15px 95px;
+  }
+
+  .admin-preview-pill {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    max-width: none;
+  }
+
+  .admin-preview-pill > div {
+    flex: 1;
   }
 
   .portal-topbar {

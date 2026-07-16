@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Clock3,
+  Eye,
   Flame,
   GraduationCap,
   Home,
@@ -76,7 +77,7 @@ function EmptyState({ icon: Icon = CalendarDays, title, text, action, actionLabe
   )
 }
 
-function PortalShell({ account, role, active, onActive, onHome, onLogout, navItems, children }) {
+function PortalShell({ account, role, active, onActive, onHome, onLogout, navItems, children, adminPreview = false }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const roleLabels = { student: 'Student space', teacher: 'Teacher studio', admin: 'Admin control' }
 
@@ -87,6 +88,13 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
 
   return (
     <div className={`portal portal--${role}`}>
+      {adminPreview && (
+        <div className="admin-preview-pill">
+          <span><ShieldCheck size={17} /></span>
+          <div><strong>Administrator access</strong><small>Viewing {displayName(account)}’s {role} dashboard</small></div>
+          <button onClick={onHome}>Return to admin</button>
+        </div>
+      )}
       <aside className={`portal-sidebar ${mobileOpen ? 'portal-sidebar--open' : ''}`}>
         <div className="portal-brand">
           <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda mascot" />
@@ -100,8 +108,8 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
           ))}
         </nav>
         <div className="portal-sidebar__foot">
-          <button onClick={onHome}><Home size={18} /> Website home</button>
-          <button onClick={onLogout}><LogOut size={18} /> Log out</button>
+          <button onClick={onHome}><Home size={18} /> {adminPreview ? 'Return to admin' : 'Website home'}</button>
+          {!adminPreview && <button onClick={onLogout}><LogOut size={18} /> Log out</button>}
           <div className="portal-mini-user">
             <span>{initials(displayName(account))}</span>
             <div><strong>{displayName(account)}</strong><small>{account.email}</small></div>
@@ -230,7 +238,7 @@ function BookLessonPanel({ account, onBooked }) {
   )
 }
 
-export function StudentDashboard({ account: initialAccount, onAccountChange, onHome, onLogout }) {
+export function StudentDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false }) {
   const [active, setActive] = useState('overview')
   const [account, setAccount] = useState(initialAccount)
   const [bookingVersion, setBookingVersion] = useState(0)
@@ -263,7 +271,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   ]
 
   return (
-    <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+    <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview}>
       {active === 'overview' && (
         <div className="portal-view">
           <section className="student-welcome">
@@ -343,7 +351,7 @@ function TargetIcon() {
   return <TrendingUp size={25} />
 }
 
-export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout }) {
+export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false }) {
   const [active, setActive] = useState('overview')
   const [account, setAccount] = useState(initialAccount)
   const [version, setVersion] = useState(0)
@@ -391,7 +399,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   ]
 
   return (
-    <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+    <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview}>
       {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro administrator if you need help.'}</span></div></div>}
 
       {active === 'overview' && (
@@ -457,6 +465,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 export function AdminDashboard({ account, onHome, onLogout }) {
   const [active, setActive] = useState('overview')
   const [version, setVersion] = useState(0)
+  const [managedAccount, setManagedAccount] = useState(null)
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
   const bookings = getBookings()
@@ -498,6 +507,24 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
 
+  const exitManagedDashboard = () => {
+    setManagedAccount(null)
+    refresh()
+  }
+
+  const updateManagedAccount = (updatedAccount) => {
+    setManagedAccount(updatedAccount)
+    refresh()
+  }
+
+  if (managedAccount?.role === 'teacher') {
+    return <TeacherDashboard key={managedAccount.id} account={managedAccount} onAccountChange={updateManagedAccount} onHome={exitManagedDashboard} onLogout={exitManagedDashboard} adminPreview />
+  }
+
+  if (managedAccount?.role === 'student') {
+    return <StudentDashboard key={managedAccount.id} account={managedAccount} onAccountChange={updateManagedAccount} onHome={exitManagedDashboard} onLogout={exitManagedDashboard} adminPreview />
+  }
+
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
       {active === 'overview' && (
@@ -517,11 +544,11 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Review credentials and control access to the teaching dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions">{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Review credentials and control access to the teaching dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(teacher)} title="Access teacher dashboard"><Eye size={15} /> Open</button>{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>View student profiles and manage dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{students.length ? students.map((student) => <div className="admin-table__row" key={student.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.email}</small></div></div><div><strong>{student.child.name}</strong><small>{student.child.year}</small></div><div><strong>{student.child.curriculum}</strong><small>{student.child.goal}</small></div><div><StatusBadge status={student.status} /></div><div className="table-actions">{student.status === 'active' ? <button className="table-action table-action--suspend" onClick={() => setStatus(student.id, 'suspended')} title="Suspend"><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setStatus(student.id, 'active')} title="Restore"><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>View student profiles and manage dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{students.length ? students.map((student) => <div className="admin-table__row" key={student.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.email}</small></div></div><div><strong>{student.child.name}</strong><small>{student.child.year}</small></div><div><strong>{student.child.curriculum}</strong><small>{student.child.goal}</small></div><div><StatusBadge status={student.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(student)} title="Access student dashboard"><Eye size={15} /> Open</button>{student.status === 'active' ? <button className="table-action table-action--suspend" onClick={() => setStatus(student.id, 'suspended')} title="Suspend"><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setStatus(student.id, 'active')} title="Restore"><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'bookings' && (
