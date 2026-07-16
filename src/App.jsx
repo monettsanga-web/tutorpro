@@ -21,8 +21,9 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import AuthModal from './AuthModal.jsx'
+import { getCurrentAccount } from './auth.js'
 
-const LIVE_SITE = 'https://tutor-pro-connect.base44.app'
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
 const programmes = {
@@ -80,7 +81,7 @@ const faqs = [
   {
     question: 'How do online classes work?',
     answer:
-      'Create a student account, choose a tutor and an available time, then join your one-to-one lesson online. Tutors track progress so future sessions build on what your child has learned.',
+      'Create a family account, complete your child’s learning profile and choose a lesson rhythm. We use those details to prepare the right one-to-one support and track progress from class to class.',
   },
 ]
 
@@ -97,10 +98,14 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook }) {
+function Header({ onBook, onLogin, onAccount, currentAccount }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const closeMenu = () => setMenuOpen(false)
+  const openAndClose = (callback) => {
+    closeMenu()
+    callback()
+  }
 
   return (
     <header className="site-header">
@@ -109,20 +114,34 @@ function Header({ onBook }) {
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
           <a href="#why" onClick={closeMenu}>Why TutorPro</a>
           <a href="#programmes" onClick={closeMenu}>Programmes</a>
-          <a href="#tutors" onClick={closeMenu}>Tutors</a>
+          <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
           <a href="#faq" onClick={closeMenu}>FAQ</a>
           <div className="nav__mobile-actions">
-            <a href={`${LIVE_SITE}/login`} className="text-link">Student login</a>
-            <button className="button button--primary" onClick={() => { closeMenu(); onBook() }}>
-              Book a free class
+            {currentAccount ? (
+              <button className="account-link" onClick={() => openAndClose(onAccount)}>
+                <span>{currentAccount.parentName.slice(0, 1).toUpperCase()}</span>
+                My account
+              </button>
+            ) : (
+              <button className="text-link button-reset" onClick={() => openAndClose(onLogin)}>Student login</button>
+            )}
+            <button className="button button--primary" onClick={() => openAndClose(onBook)}>
+              {currentAccount ? 'Open my account' : 'Create a free account'}
             </button>
           </div>
         </nav>
         <div className="header-actions">
-          <a className="login-link" href={`${LIVE_SITE}/login`}>Log in</a>
+          {currentAccount ? (
+            <button className="account-link" onClick={onAccount}>
+              <span>{currentAccount.parentName.slice(0, 1).toUpperCase()}</span>
+              Hi, {currentAccount.parentName.split(' ')[0]}
+            </button>
+          ) : (
+            <button className="login-link button-reset" onClick={onLogin}>Log in</button>
+          )}
           <button className="button button--primary button--small" onClick={onBook}>
-            Free first class <ArrowUpRight size={16} />
+            {currentAccount ? 'My account' : 'Register free'} <ArrowUpRight size={16} />
           </button>
         </div>
         <button
@@ -338,8 +357,8 @@ function HowItWorks({ onBook }) {
     },
     {
       icon: Heart,
-      title: 'Meet the right tutor',
-      text: 'Browse verified teachers and choose a personality and schedule that fits.',
+      title: 'Build their learning profile',
+      text: 'Choose a curriculum, school year and goal so every lesson starts with the right focus.',
     },
     {
       icon: Star,
@@ -349,7 +368,7 @@ function HowItWorks({ onBook }) {
   ]
 
   return (
-    <section className="section journey">
+    <section className="section journey" id="journey">
       <div className="container">
         <div className="section-heading section-heading--center">
           <span className="kicker">How it works</span>
@@ -373,44 +392,6 @@ function HowItWorks({ onBook }) {
           <button className="button button--primary button--large" onClick={onBook}>
             Take the first step <ArrowRight size={18} />
           </button>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function TutorSpotlight() {
-  return (
-    <section className="section tutor-section" id="tutors">
-      <div className="container tutor-spotlight">
-        <div className="tutor-profile">
-          <div className="tutor-profile__monogram" aria-label="Monett Sanga initials">
-            <span>MS</span>
-            <div className="tutor-profile__verified"><ShieldCheck size={19} /></div>
-          </div>
-          <div className="tutor-profile__details">
-            <span className="available"><i /> Available for new students</span>
-            <h3>Monett Sanga</h3>
-            <p>English teacher · Both curricula</p>
-            <div className="tutor-profile__tags">
-              <span>English</span><span>Filipino</span><span>Korean</span>
-            </div>
-          </div>
-        </div>
-        <div className="tutor-copy">
-          <span className="kicker">Meet your tutor</span>
-          <h2>Experience that feels encouraging.</h2>
-          <p className="tutor-copy__lead">
-            Monett has taught English to students of different nationalities for eight years, bringing clear guidance and a welcoming approach to every class.
-          </p>
-          <div className="tutor-facts">
-            <div><strong>8 years</strong><span>teaching experience</span></div>
-            <div><strong>Bachelor’s</strong><span>Elementary Education</span></div>
-            <div><strong>$10</strong><span>from / 25 minutes</span></div>
-          </div>
-          <a className="button button--outline" href={`${LIVE_SITE}/teachers`}>
-            Browse tutor profiles <ArrowUpRight size={17} />
-          </a>
         </div>
       </div>
     </section>
@@ -477,7 +458,7 @@ function Pricing({ onBook }) {
   )
 }
 
-function FAQ() {
+function FAQ({ onBook }) {
   const [openIndex, setOpenIndex] = useState(0)
 
   return (
@@ -486,10 +467,10 @@ function FAQ() {
         <div className="faq__intro">
           <span className="kicker">Good to know</span>
           <h2>Questions, answered.</h2>
-          <p>Compare experience, languages and curriculum fit to find the right teacher for your child.</p>
-          <a className="text-link text-link--arrow" href={`${LIVE_SITE}/teachers`}>
-            Browse tutor profiles <ArrowUpRight size={16} />
-          </a>
+          <p>Your free account keeps your child’s level, curriculum and learning goals together in one place.</p>
+          <button className="text-link text-link--arrow button-reset" onClick={onBook}>
+            Create a free account <ArrowUpRight size={16} />
+          </button>
         </div>
         <div className="faq-list">
           {faqs.map((faq, index) => {
@@ -534,7 +515,7 @@ function FinalCTA({ onBook }) {
   )
 }
 
-function Footer() {
+function Footer({ onRegister, onLogin, onAccount, currentAccount }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -549,14 +530,20 @@ function Footer() {
               <h3>Explore</h3>
               <a href="#why">Why TutorPro</a>
               <a href="#programmes">Programmes</a>
-              <a href="#tutors">Tutors</a>
+              <a href="#journey">How it works</a>
               <a href="#pricing">Pricing</a>
             </div>
             <div>
               <h3>Get started</h3>
-              <a href={`${LIVE_SITE}/register`}>Student sign up</a>
-              <a href={`${LIVE_SITE}/teacher-signup`}>Join as a teacher</a>
-              <a href={`${LIVE_SITE}/login`}>Log in</a>
+              {currentAccount ? (
+                <button onClick={onAccount}>My account</button>
+              ) : (
+                <>
+                  <button onClick={onRegister}>Create an account</button>
+                  <button onClick={onLogin}>Student login</button>
+                </>
+              )}
+              <a href="#pricing">Lesson plans</a>
               <a href="#faq">FAQ</a>
             </div>
           </div>
@@ -570,80 +557,98 @@ function Footer() {
   )
 }
 
-function BookingModal({ isOpen, onClose, selectedPlan }) {
-  useEffect(() => {
-    if (!isOpen) return undefined
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = ''
-    }
-  }, [isOpen, onClose])
-
-  if (!isOpen) return null
-
-  return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose()
-    }}>
-      <section className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
-        <button className="modal-close" onClick={onClose} aria-label="Close dialog"><X size={21} /></button>
-        <span className="modal-icon"><Sparkles size={23} /></span>
-        <span className="kicker">Free first class</span>
-        <h2 id="booking-title">Start with the right next step.</h2>
-        <p>
-          {selectedPlan
-            ? `You’re interested in the ${selectedPlan} plan. Create a student account to choose a tutor and book your free first class.`
-            : 'Create a student account to choose a tutor and book your free first class. No payment is needed to get started.'}
-        </p>
-        <div className="modal-actions">
-          <a className="button button--primary button--full" href={`${LIVE_SITE}/register`}>
-            Create a free account <ArrowUpRight size={17} />
-          </a>
-          <a className="button button--outline button--full" href={`${LIVE_SITE}/teachers`}>
-            Browse tutors first
-          </a>
-        </div>
-        <p className="modal-login">Already a student? <a href={`${LIVE_SITE}/login`}>Log in to book</a></p>
-        <div className="modal-trust"><ShieldCheck size={17} /> First class free · No commitment</div>
-      </section>
-    </div>
-  )
-}
-
 export default function App() {
-  const [bookingOpen, setBookingOpen] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState('register')
   const [selectedPlan, setSelectedPlan] = useState('')
+  const [currentAccount, setCurrentAccount] = useState(getCurrentAccount)
 
-  const openBooking = (plan = '') => {
+  useEffect(() => {
+    const elements = document.querySelectorAll(
+      '.section-heading, .benefit, .lesson-note, .programmes__intro, .programme-card, .step, .price-card, .faq__intro, .faq-item, .final-cta__inner',
+    )
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    elements.forEach((element, index) => {
+      element.classList.add('reveal')
+      element.style.setProperty('--reveal-delay', `${(index % 3) * 70}ms`)
+    })
+
+    if (reducedMotion || !('IntersectionObserver' in window)) {
+      elements.forEach((element) => element.classList.add('reveal--visible'))
+      return undefined
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal--visible')
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.12 })
+
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [])
+
+  const openRegistration = (plan = '') => {
     setSelectedPlan(typeof plan === 'string' ? plan : '')
-    setBookingOpen(true)
+    setAuthMode(currentAccount ? 'account' : 'register')
+    setAuthOpen(true)
+  }
+
+  const openLogin = () => {
+    setSelectedPlan('')
+    setAuthMode('login')
+    setAuthOpen(true)
+  }
+
+  const openAccount = () => {
+    setSelectedPlan('')
+    setAuthMode('account')
+    setAuthOpen(true)
+  }
+
+  const closeAndExplore = () => {
+    setAuthOpen(false)
+    window.setTimeout(() => document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' }), 80)
   }
 
   return (
     <>
-      <Header onBook={openBooking} />
+      <Header
+        onBook={openRegistration}
+        onLogin={openLogin}
+        onAccount={openAccount}
+        currentAccount={currentAccount}
+      />
       <main>
-        <Hero onBook={openBooking} />
+        <Hero onBook={openRegistration} />
         <Stats />
         <WhyTutorPro />
         <Programmes />
-        <HowItWorks onBook={openBooking} />
-        <TutorSpotlight />
-        <Pricing onBook={openBooking} />
-        <FAQ />
-        <FinalCTA onBook={openBooking} />
+        <HowItWorks onBook={openRegistration} />
+        <Pricing onBook={openRegistration} />
+        <FAQ onBook={openRegistration} />
+        <FinalCTA onBook={openRegistration} />
       </main>
-      <Footer />
-      <BookingModal
-        isOpen={bookingOpen}
-        selectedPlan={selectedPlan}
-        onClose={() => setBookingOpen(false)}
+      <Footer
+        onRegister={openRegistration}
+        onLogin={openLogin}
+        onAccount={openAccount}
+        currentAccount={currentAccount}
       />
+      {authOpen && (
+        <AuthModal
+          initialMode={authMode}
+          selectedPlan={selectedPlan}
+          currentAccount={currentAccount}
+          onClose={() => setAuthOpen(false)}
+          onAuthenticated={setCurrentAccount}
+          onExplore={closeAndExplore}
+        />
+      )}
     </>
   )
 }
