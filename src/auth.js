@@ -1,12 +1,22 @@
-const ACCOUNTS_KEY = 'tutorpro_accounts_v1'
-const SESSION_KEY = 'tutorpro_session_v1'
+const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
+const LEGACY_ACCOUNTS_KEY = 'tutorpro_accounts_v1'
+const SESSION_KEY = 'tutorpro_session_v2'
+export const ADMIN_EMAIL = 'monettsanga@yahoo.com'
 
 const normalizeEmail = (email) => email.trim().toLowerCase()
 
 function readAccounts() {
   try {
-    const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]')
-    return Array.isArray(accounts) ? accounts : []
+    const current = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]')
+    if (Array.isArray(current) && current.length) return current
+
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_ACCOUNTS_KEY) || '[]')
+    if (Array.isArray(legacy) && legacy.length) {
+      const migrated = legacy.map((account) => ({ ...account, role: 'student', status: 'active' }))
+      writeAccounts(migrated)
+      return migrated
+    }
+    return []
   } catch {
     return []
   }
@@ -30,7 +40,46 @@ async function hashPassword(password, salt) {
 function publicAccount(account) {
   if (!account) return null
   const { passwordHash: _passwordHash, salt: _salt, ...safeAccount } = account
-  return safeAccount
+  return {
+    ...safeAccount,
+    role: account.role || 'student',
+    status: account.status || 'active',
+  }
+}
+
+export function initializePlatform() {
+  const accounts = readAccounts()
+  if (accounts.some((account) => account.id === 'teacher-monett')) return
+
+  accounts.push({
+    id: 'teacher-monett',
+    role: 'teacher',
+    status: 'approved',
+    systemProfile: true,
+    fullName: 'Monett Sanga',
+    email: 'monett@tutorpro.example',
+    createdAt: new Date().toISOString(),
+    teacher: {
+      specialization: 'Both Curricula',
+      bio: 'Experienced English teacher for eight years with learners of different nationalities.',
+      education: 'Bachelor of Elementary Education',
+      experience: 8,
+      languages: 'English, Filipino and Korean',
+      credentials: ['Bachelor of Elementary Education'],
+      availability: [
+        { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Tuesday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Wednesday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Thursday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Friday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Saturday', enabled: false, from: '09:00', to: '15:00' },
+        { day: 'Sunday', enabled: false, from: '09:00', to: '15:00' },
+      ],
+      rating: 5,
+      lessonsCompleted: 284,
+    },
+  })
+  writeAccounts(accounts)
 }
 
 export function getCurrentAccount() {
@@ -41,6 +90,24 @@ export function getCurrentAccount() {
   } catch {
     return null
   }
+}
+
+export function getAccounts(role) {
+  return readAccounts()
+    .map(publicAccount)
+    .filter((account) => !role || account.role === role)
+}
+
+export function getAccountById(accountId) {
+  return publicAccount(readAccounts().find((account) => account.id === accountId))
+}
+
+export function getApprovedTeachers() {
+  return getAccounts('teacher').filter((account) => account.status === 'approved')
+}
+
+export function hasAdminAccount() {
+  return readAccounts().some((account) => account.role === 'admin')
 }
 
 export async function registerAccount(details) {
@@ -54,6 +121,8 @@ export async function registerAccount(details) {
   const salt = createSalt()
   const account = {
     id: crypto.randomUUID(),
+    role: 'student',
+    status: 'active',
     parentName: details.parentName.trim(),
     email,
     passwordHash: await hashPassword(details.password, salt),
@@ -64,6 +133,11 @@ export async function registerAccount(details) {
       curriculum: details.curriculum,
       goal: details.goal,
       frequency: details.frequency,
+      level: 'Building foundations',
+      progress: 18,
+      streak: 0,
+      lessonsCompleted: 0,
+      achievements: ['First step'],
     },
     selectedPlan: details.selectedPlan || '',
     createdAt: new Date().toISOString(),
@@ -75,12 +149,86 @@ export async function registerAccount(details) {
   return publicAccount(account)
 }
 
+export async function registerTeacher(details) {
+  const accounts = readAccounts()
+  const email = normalizeEmail(details.email)
+
+  if (accounts.some((account) => account.email === email)) {
+    throw new Error('An account with this email already exists.')
+  }
+
+  const salt = createSalt()
+  const account = {
+    id: crypto.randomUUID(),
+    role: 'teacher',
+    status: 'pending',
+    fullName: details.fullName.trim(),
+    email,
+    passwordHash: await hashPassword(details.password, salt),
+    salt,
+    createdAt: new Date().toISOString(),
+    teacher: {
+      specialization: details.specialization,
+      bio: details.bio.trim(),
+      education: details.education.trim(),
+      experience: Number(details.experience) || 0,
+      languages: details.languages.trim(),
+      credentials: details.credentials || [],
+      availability: [
+        { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Tuesday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Wednesday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Thursday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Friday', enabled: true, from: '16:00', to: '20:00' },
+        { day: 'Saturday', enabled: false, from: '09:00', to: '15:00' },
+        { day: 'Sunday', enabled: false, from: '09:00', to: '15:00' },
+      ],
+      rating: 0,
+      lessonsCompleted: 0,
+    },
+  }
+
+  accounts.push(account)
+  writeAccounts(accounts)
+  localStorage.setItem(SESSION_KEY, account.id)
+  return publicAccount(account)
+}
+
+export async function registerAdmin(password) {
+  const accounts = readAccounts()
+  if (accounts.some((account) => account.role === 'admin')) {
+    throw new Error('The administrator account has already been created. Log in instead.')
+  }
+  if (accounts.some((account) => account.email === ADMIN_EMAIL)) {
+    throw new Error('This email is already attached to another account.')
+  }
+
+  const salt = createSalt()
+  const account = {
+    id: crypto.randomUUID(),
+    role: 'admin',
+    status: 'active',
+    fullName: 'TutorPro Administrator',
+    email: ADMIN_EMAIL,
+    passwordHash: await hashPassword(password, salt),
+    salt,
+    createdAt: new Date().toISOString(),
+  }
+  accounts.push(account)
+  writeAccounts(accounts)
+  localStorage.setItem(SESSION_KEY, account.id)
+  return publicAccount(account)
+}
+
 export async function loginAccount(emailValue, password) {
   const email = normalizeEmail(emailValue)
   const account = readAccounts().find((item) => item.email === email)
 
-  if (!account) {
-    throw new Error('We could not find an account with that email.')
+  if (!account || !account.passwordHash) {
+    throw new Error('We could not find a login-enabled account with that email.')
+  }
+  if (account.status === 'suspended' || account.status === 'rejected') {
+    throw new Error(`This account is ${account.status}. Please contact the TutorPro administrator.`)
   }
 
   const passwordHash = await hashPassword(password, account.salt)
@@ -90,6 +238,27 @@ export async function loginAccount(emailValue, password) {
 
   localStorage.setItem(SESSION_KEY, account.id)
   return publicAccount(account)
+}
+
+export function updateAccount(accountId, changes) {
+  const accounts = readAccounts()
+  const index = accounts.findIndex((account) => account.id === accountId)
+  if (index < 0) throw new Error('Account not found.')
+  accounts[index] = { ...accounts[index], ...changes, updatedAt: new Date().toISOString() }
+  writeAccounts(accounts)
+  return publicAccount(accounts[index])
+}
+
+export function updateTeacherProfile(accountId, teacherChanges) {
+  const account = readAccounts().find((item) => item.id === accountId)
+  if (!account || account.role !== 'teacher') throw new Error('Teacher account not found.')
+  return updateAccount(accountId, { teacher: { ...account.teacher, ...teacherChanges } })
+}
+
+export function updateStudentProfile(accountId, childChanges) {
+  const account = readAccounts().find((item) => item.id === accountId)
+  if (!account || (account.role || 'student') !== 'student') throw new Error('Student account not found.')
+  return updateAccount(accountId, { child: { ...account.child, ...childChanges } })
 }
 
 export function logoutAccount() {

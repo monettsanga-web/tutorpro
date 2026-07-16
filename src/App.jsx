@@ -22,7 +22,9 @@ import {
   X,
 } from 'lucide-react'
 import AuthModal from './AuthModal.jsx'
-import { getCurrentAccount } from './auth.js'
+import PortalAccess from './PortalAccess.jsx'
+import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
+import { getCurrentAccount, initializePlatform, logoutAccount } from './auth.js'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -89,7 +91,7 @@ function Logo({ light = false }) {
   return (
     <a className={`logo ${light ? 'logo--light' : ''}`} href="#top" aria-label="TutorPro home">
       <span className="logo__mark" aria-hidden="true">
-        <BookOpen size={22} strokeWidth={2.4} />
+        <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="" />
       </span>
       <span className="logo__text">
         Tutor<span>Pro</span>
@@ -515,7 +517,7 @@ function FinalCTA({ onBook }) {
   )
 }
 
-function Footer({ onRegister, onLogin, onAccount, currentAccount }) {
+function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -536,15 +538,15 @@ function Footer({ onRegister, onLogin, onAccount, currentAccount }) {
             <div>
               <h3>Get started</h3>
               {currentAccount ? (
-                <button onClick={onAccount}>My account</button>
+                <button onClick={onAccount}>Open my dashboard</button>
               ) : (
                 <>
-                  <button onClick={onRegister}>Create an account</button>
+                  <button onClick={onRegister}>Student registration</button>
                   <button onClick={onLogin}>Student login</button>
                 </>
               )}
-              <a href="#pricing">Lesson plans</a>
-              <a href="#faq">FAQ</a>
+              <button onClick={onTeacherAccess}>Teacher portal</button>
+              <button onClick={onAdminAccess}>Admin portal</button>
             </div>
           </div>
         </div>
@@ -560,8 +562,13 @@ function Footer({ onRegister, onLogin, onAccount, currentAccount }) {
 export default function App() {
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState('register')
+  const [roleAccess, setRoleAccess] = useState(null)
+  const [activePortal, setActivePortal] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState('')
-  const [currentAccount, setCurrentAccount] = useState(getCurrentAccount)
+  const [currentAccount, setCurrentAccount] = useState(() => {
+    initializePlatform()
+    return getCurrentAccount()
+  })
 
   useEffect(() => {
     const elements = document.querySelectorAll(
@@ -592,27 +599,61 @@ export default function App() {
     return () => observer.disconnect()
   }, [])
 
+  const enterPortal = (account) => {
+    setCurrentAccount(account)
+    setAuthOpen(false)
+    setRoleAccess(null)
+    setActivePortal(account.role || 'student')
+  }
+
   const openRegistration = (plan = '') => {
+    if (currentAccount) {
+      enterPortal(currentAccount)
+      return
+    }
     setSelectedPlan(typeof plan === 'string' ? plan : '')
-    setAuthMode(currentAccount ? 'account' : 'register')
+    setAuthMode('register')
+    setRoleAccess(null)
     setAuthOpen(true)
   }
 
   const openLogin = () => {
     setSelectedPlan('')
     setAuthMode('login')
+    setRoleAccess(null)
     setAuthOpen(true)
   }
 
   const openAccount = () => {
-    setSelectedPlan('')
-    setAuthMode('account')
-    setAuthOpen(true)
+    if (currentAccount) enterPortal(currentAccount)
+    else openLogin()
+  }
+
+  const openRoleAccess = (role) => {
+    setAuthOpen(false)
+    setRoleAccess(role)
   }
 
   const closeAndExplore = () => {
     setAuthOpen(false)
     window.setTimeout(() => document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' }), 80)
+  }
+
+  const logout = () => {
+    logoutAccount()
+    setCurrentAccount(null)
+    setActivePortal(null)
+  }
+
+  if (activePortal && currentAccount) {
+    const portalProps = {
+      account: currentAccount,
+      onHome: () => setActivePortal(null),
+      onLogout: logout,
+    }
+    if (activePortal === 'admin') return <AdminDashboard {...portalProps} />
+    if (activePortal === 'teacher') return <TeacherDashboard {...portalProps} onAccountChange={setCurrentAccount} />
+    return <StudentDashboard {...portalProps} onAccountChange={setCurrentAccount} />
   }
 
   return (
@@ -637,6 +678,8 @@ export default function App() {
         onRegister={openRegistration}
         onLogin={openLogin}
         onAccount={openAccount}
+        onTeacherAccess={() => openRoleAccess('teacher')}
+        onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
       />
       {authOpen && (
@@ -647,6 +690,17 @@ export default function App() {
           onClose={() => setAuthOpen(false)}
           onAuthenticated={setCurrentAccount}
           onExplore={closeAndExplore}
+          onEnterPortal={enterPortal}
+          onTeacherAccess={() => openRoleAccess('teacher')}
+        />
+      )}
+      {roleAccess && (
+        <PortalAccess
+          key={roleAccess}
+          mode={roleAccess}
+          onClose={() => setRoleAccess(null)}
+          onAuthenticated={setCurrentAccount}
+          onEnterPortal={enterPortal}
         />
       )}
     </>

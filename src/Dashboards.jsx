@@ -1,0 +1,536 @@
+import { useState } from 'react'
+import {
+  ArrowRight,
+  Award,
+  Ban,
+  Bell,
+  BookOpen,
+  CalendarCheck2,
+  CalendarDays,
+  CalendarPlus,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardCheck,
+  Clock3,
+  Flame,
+  GraduationCap,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  TrendingUp,
+  UserCheck,
+  UserRound,
+  Users,
+  Video,
+  X,
+  XCircle,
+} from 'lucide-react'
+import {
+  getAccountById,
+  getAccounts,
+  getApprovedTeachers,
+  updateAccount,
+  updateStudentProfile,
+  updateTeacherProfile,
+} from './auth.js'
+import { createBooking, getBookings, getBookingStats, updateBooking } from './bookings.js'
+
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
+const today = () => new Date().toISOString().slice(0, 10)
+const displayName = (account) => account.parentName || account.fullName || 'TutorPro user'
+const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
+
+function formatLessonDate(date, time, includeYear = false) {
+  if (!date) return 'Date to be confirmed'
+  const value = new Date(`${date}T${time || '00:00'}`)
+  return value.toLocaleDateString('en', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(includeYear ? { year: 'numeric' } : {}),
+  })
+}
+
+function formatTime(time) {
+  if (!time) return ''
+  return new Date(`2026-01-01T${time}`).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })
+}
+
+function StatusBadge({ status }) {
+  return <span className={`portal-status portal-status--${status}`}>{status}</span>
+}
+
+function EmptyState({ icon: Icon = CalendarDays, title, text, action, actionLabel }) {
+  return (
+    <div className="portal-empty">
+      <span><Icon size={25} /></span>
+      <h3>{title}</h3>
+      <p>{text}</p>
+      {action && <button className="portal-text-button" onClick={action}>{actionLabel} <ArrowRight size={15} /></button>}
+    </div>
+  )
+}
+
+function PortalShell({ account, role, active, onActive, onHome, onLogout, navItems, children }) {
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const roleLabels = { student: 'Student space', teacher: 'Teacher studio', admin: 'Admin control' }
+
+  const chooseNav = (id) => {
+    onActive(id)
+    setMobileOpen(false)
+  }
+
+  return (
+    <div className={`portal portal--${role}`}>
+      <aside className={`portal-sidebar ${mobileOpen ? 'portal-sidebar--open' : ''}`}>
+        <div className="portal-brand">
+          <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda mascot" />
+          <div><strong>Tutor<span>Pro</span></strong><small>{roleLabels[role]}</small></div>
+        </div>
+        <nav className="portal-nav" aria-label={`${roleLabels[role]} navigation`}>
+          {navItems.map(({ id, label, icon: Icon, badge }) => (
+            <button className={active === id ? 'active' : ''} key={id} onClick={() => chooseNav(id)}>
+              <Icon size={19} /><span>{label}</span>{badge > 0 && <i>{badge}</i>}
+            </button>
+          ))}
+        </nav>
+        <div className="portal-sidebar__foot">
+          <button onClick={onHome}><Home size={18} /> Website home</button>
+          <button onClick={onLogout}><LogOut size={18} /> Log out</button>
+          <div className="portal-mini-user">
+            <span>{initials(displayName(account))}</span>
+            <div><strong>{displayName(account)}</strong><small>{account.email}</small></div>
+          </div>
+        </div>
+      </aside>
+      {mobileOpen && <button className="portal-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
+      <div className="portal-main">
+        <header className="portal-topbar">
+          <button className="portal-menu" onClick={() => setMobileOpen(true)} aria-label="Open dashboard navigation"><Menu size={22} /></button>
+          <div><span>{roleLabels[role]}</span><strong>{navItems.find((item) => item.id === active)?.label}</strong></div>
+          <div className="portal-topbar__actions">
+            <button aria-label="Notifications"><Bell size={19} /><i /></button>
+            <button className="portal-user-chip" onClick={() => onActive('profile')}>
+              <span>{initials(displayName(account))}</span>
+              <div><strong>{displayName(account).split(' ')[0]}</strong><small>{role}</small></div>
+            </button>
+          </div>
+        </header>
+        <main className="portal-content">{children}</main>
+      </div>
+    </div>
+  )
+}
+
+function BookingCard({ booking, showStudent = false, showTeacher = false, actions }) {
+  const student = getAccountById(booking.studentId)
+  const teacher = getAccountById(booking.teacherId)
+  const person = showStudent ? student?.child?.name : showTeacher ? teacher?.fullName : ''
+
+  return (
+    <article className="lesson-card">
+      <div className="lesson-card__date">
+        <strong>{new Date(`${booking.date}T00:00`).getDate()}</strong>
+        <span>{new Date(`${booking.date}T00:00`).toLocaleDateString('en', { month: 'short' })}</span>
+      </div>
+      <div className="lesson-card__main">
+        <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
+        <h3>{booking.focus}</h3>
+        <p>{person && <strong>{person} · </strong>}{formatLessonDate(booking.date, booking.time)} at {formatTime(booking.time)}</p>
+        {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
+      </div>
+      {actions && <div className="lesson-card__actions">{actions}</div>}
+    </article>
+  )
+}
+
+function BookLessonPanel({ account, onBooked }) {
+  const teachers = getApprovedTeachers()
+  const [form, setForm] = useState({ teacherId: '', date: '', time: '', duration: '25', focus: account.child.goal, note: '' })
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const timeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
+  const selectedTeacherId = form.teacherId || teachers[0]?.id || ''
+  const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId)
+  const selectedDay = form.date ? new Date(`${form.date}T00:00`).toLocaleDateString('en', { weekday: 'long' }) : ''
+  const dayAvailability = selectedTeacher?.teacher?.availability?.find((slot) => slot.day === selectedDay)
+  const availableTimes = form.date && dayAvailability?.enabled
+    ? timeSlots.filter((time) => time >= dayAvailability.from && time <= dayAvailability.to)
+    : []
+
+  const update = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({ ...current, [name]: value, ...(['date', 'teacherId'].includes(name) ? { time: '' } : {}) }))
+    setError('')
+    setSuccess(false)
+  }
+
+  const submit = (event) => {
+    event.preventDefault()
+    if (!selectedTeacherId || !form.date || !form.time || !form.focus) {
+      setError('Choose a teacher, date, time and lesson focus to continue.')
+      return
+    }
+    try {
+      createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id })
+      setSuccess(true)
+      setForm((current) => ({ ...current, date: '', time: '', note: '' }))
+      onBooked()
+    } catch (bookingError) {
+      setError(bookingError.message)
+    }
+  }
+
+  return (
+    <div className="booking-layout">
+      <section className="portal-card booking-form-card">
+        <div className="portal-card__heading">
+          <div><span className="portal-kicker">New lesson</span><h2>Book a one-to-one class</h2><p>Choose the time and focus. Your booking will be sent for confirmation.</p></div>
+          <span className="portal-card__icon"><CalendarPlus size={23} /></span>
+        </div>
+        {success && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>Lesson requested!</strong><span>You can follow its status under My lessons.</span></div></div>}
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        {teachers.length ? (
+          <form className="booking-form" onSubmit={submit}>
+            <label>
+              <span>Teacher</span>
+              <select name="teacherId" value={selectedTeacherId} onChange={update}>
+                {teachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}
+              </select>
+            </label>
+            <div className="booking-form__row">
+              <label><span>Date</span><input type="date" min={today()} name="date" value={form.date} onChange={update} /></label>
+              <label><span>Start time</span><select name="time" value={form.time} onChange={update} disabled={!form.date || !availableTimes.length}><option value="">{!form.date ? 'Choose a date first' : availableTimes.length ? 'Choose time' : 'Teacher unavailable'}</option>{availableTimes.map((time) => <option key={time} value={time}>{formatTime(time)}</option>)}</select></label>
+            </div>
+            <fieldset className="duration-picker">
+              <legend>Lesson length</legend>
+              <div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span><strong>{duration} min</strong><small>{duration === '25' ? 'Focused boost' : 'Deep-dive lesson'}</small></span></label>)}</div>
+            </fieldset>
+            <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+            <label><span>Note for the teacher <i>optional</i></span><textarea name="note" value={form.note} onChange={update} placeholder="Anything you would like the teacher to know?" /></label>
+            <button className="portal-primary-button" type="submit">Request this lesson <ArrowRight size={17} /></button>
+          </form>
+        ) : (
+          <EmptyState icon={Users} title="Teachers are being prepared" text="An administrator needs to approve a teacher before new lessons can be requested." />
+        )}
+      </section>
+      <aside className="booking-help">
+        <div className="booking-help__mascot"><img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda" /></div>
+        <span className="portal-kicker">Good to know</span>
+        <h3>Make the first class count.</h3>
+        <ul><li><Check size={15} /> Join from a quiet space</li><li><Check size={15} /> Bring recent schoolwork</li><li><Check size={15} /> Share one clear goal</li></ul>
+        <p>No payment is requested during this booking step.</p>
+      </aside>
+    </div>
+  )
+}
+
+export function StudentDashboard({ account: initialAccount, onAccountChange, onHome, onLogout }) {
+  const [active, setActive] = useState('overview')
+  const [account, setAccount] = useState(initialAccount)
+  const [bookingVersion, setBookingVersion] = useState(0)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [profile, setProfile] = useState({ goal: account.child.goal, frequency: account.child.frequency })
+  const bookings = getBookings({ studentId: account.id })
+  const upcoming = bookings.find((booking) => booking.date >= today() && ['pending', 'confirmed'].includes(booking.status))
+  const completed = bookings.filter((booking) => booking.status === 'completed').length
+  const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
+  void bookingVersion
+
+  const saveProfile = () => {
+    const updated = updateStudentProfile(account.id, profile)
+    setAccount(updated)
+    onAccountChange(updated)
+    setProfileSaved(true)
+    window.setTimeout(() => setProfileSaved(false), 2200)
+  }
+
+  const cancel = (bookingId) => {
+    updateBooking(bookingId, { status: 'cancelled' })
+    setBookingVersion((value) => value + 1)
+  }
+
+  const nav = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'book', label: 'Book a class', icon: CalendarPlus },
+    { id: 'lessons', label: 'My lessons', icon: CalendarDays, badge: pendingCount },
+    { id: 'profile', label: 'My profile', icon: UserRound },
+  ]
+
+  return (
+    <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+      {active === 'overview' && (
+        <div className="portal-view">
+          <section className="student-welcome">
+            <div>
+              <span className="portal-kicker">Welcome back, {account.parentName.split(' ')[0]}</span>
+              <h1>{account.child.name} is building something brilliant.</h1>
+              <p>Every lesson is another step toward confident, clear English.</p>
+              <button className="portal-primary-button" onClick={() => setActive('book')}>Book the next class <ArrowRight size={17} /></button>
+            </div>
+            <div className="student-welcome__profile">
+              <div className="progress-ring" style={{ '--progress': `${account.child.progress || 18}%` }}><span><strong>{account.child.progress || 18}%</strong><small>term goal</small></span></div>
+              <div><span>Current pathway</span><strong>{account.child.curriculum} · {account.child.year}</strong><small>{account.child.level || 'Building foundations'}</small></div>
+            </div>
+            <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda mascot" />
+          </section>
+
+          <div className="portal-stat-grid">
+            <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{account.child.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
+            <article><span className="stat-icon stat-icon--blue"><TrendingUp size={21} /></span><div><small>Learning progress</small><strong>{account.child.progress || 18}%</strong><em>On the rise</em></div></article>
+            <article><span className="stat-icon stat-icon--gold"><Flame size={21} /></span><div><small>Learning streak</small><strong>{account.child.streak || 0} days</strong><em>Personal best</em></div></article>
+            <article><span className="stat-icon stat-icon--green"><Award size={21} /></span><div><small>Achievements</small><strong>{account.child.achievements?.length || 1}</strong><em>Badges earned</em></div></article>
+          </div>
+
+          <div className="student-overview-grid">
+            <section className="portal-card">
+              <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Coming up</span><h2>Next lesson</h2></div><button className="portal-text-button" onClick={() => setActive('lessons')}>All lessons <ChevronRight size={15} /></button></div>
+              {upcoming ? <BookingCard booking={upcoming} showTeacher /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
+            </section>
+            <section className="portal-card learning-focus-card">
+              <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Personalised path</span><h2>Learning focus</h2></div><span className="portal-card__icon"><Sparkles size={21} /></span></div>
+              <div className="focus-visual"><span><TargetIcon /></span><div><small>Main goal</small><strong>{account.child.goal}</strong></div></div>
+              <div className="focus-progress"><div><span>Foundation</span><strong>{account.child.progress || 18}%</strong></div><i><span style={{ width: `${account.child.progress || 18}%` }} /></i></div>
+              <p>Your next lessons will balance curriculum skills with this personal goal.</p>
+            </section>
+          </div>
+        </div>
+      )}
+
+      {active === 'book' && <BookLessonPanel account={account} onBooked={() => setBookingVersion((value) => value + 1)} />}
+
+      {active === 'lessons' && (
+        <div className="portal-view">
+          <div className="portal-page-heading"><div><span className="portal-kicker">Your schedule</span><h1>My lessons</h1><p>Track requests, confirmed classes and completed learning.</p></div><button className="portal-primary-button" onClick={() => setActive('book')}><CalendarPlus size={17} /> Book a class</button></div>
+          <section className="portal-card lessons-list-card">
+            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher actions={['pending', 'confirmed'].includes(booking.status) && <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button>} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
+          </section>
+        </div>
+      )}
+
+      {active === 'profile' && (
+        <div className="portal-view">
+          <section className="student-profile-hero">
+            <div className="student-profile-hero__avatar">{account.child.name.slice(0, 1).toUpperCase()}<span><Sparkles size={17} /></span></div>
+            <div><span className="portal-kicker">Student profile</span><h1>{account.child.name}</h1><p>{account.child.year} · {account.child.curriculum} English</p><div className="profile-tags"><span><Star size={13} /> {account.child.level || 'Building foundations'}</span><span><Flame size={13} /> {account.child.streak || 0} day streak</span></div></div>
+            <div className="profile-score"><strong>{account.child.progress || 18}%</strong><span>Term progress</span></div>
+          </section>
+          <div className="profile-layout">
+            <section className="portal-card profile-edit-card">
+              <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Learning preferences</span><h2>Shape the learning path</h2></div>{profileSaved && <span className="saved-label"><Check size={14} /> Saved</span>}</div>
+              <label><span>Main learning goal</span><select value={profile.goal} onChange={(event) => setProfile((value) => ({ ...value, goal: event.target.value }))}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+              <label><span>Preferred lesson rhythm</span><select value={profile.frequency} onChange={(event) => setProfile((value) => ({ ...value, frequency: event.target.value }))}><option>1–2 weekly</option><option>4–5 weekly</option><option>Not sure</option></select></label>
+              <div className="profile-info-row"><div><span>Parent / guardian</span><strong>{account.parentName}</strong></div><div><span>Account email</span><strong>{account.email}</strong></div></div>
+              <button className="portal-primary-button" onClick={saveProfile}>Save profile changes</button>
+            </section>
+            <section className="portal-card achievements-card">
+              <span className="portal-kicker">Proud moments</span><h2>Achievements</h2>
+              <div className="achievement-list"><div><span>🌱</span><div><strong>First step</strong><small>Profile completed</small></div></div><div className={completed ? '' : 'locked'}><span>📚</span><div><strong>Lesson learner</strong><small>Complete a lesson</small></div></div><div className={(account.child.streak || 0) >= 3 ? '' : 'locked'}><span>🔥</span><div><strong>On a roll</strong><small>Reach a 3-day streak</small></div></div></div>
+            </section>
+          </div>
+        </div>
+      )}
+    </PortalShell>
+  )
+}
+
+function TargetIcon() {
+  return <TrendingUp size={25} />
+}
+
+export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout }) {
+  const [active, setActive] = useState('overview')
+  const [account, setAccount] = useState(initialAccount)
+  const [version, setVersion] = useState(0)
+  const [availability, setAvailability] = useState(account.teacher.availability || [])
+  const [saved, setSaved] = useState(false)
+  const bookings = getBookings({ teacherId: account.id })
+  const pending = bookings.filter((booking) => booking.status === 'pending').length
+  void version
+
+  const refresh = () => setVersion((value) => value + 1)
+  const changeStatus = (bookingId, status) => {
+    const booking = updateBooking(bookingId, { status })
+    if (status === 'completed') {
+      const student = getAccountById(booking.studentId)
+      if (student?.child) {
+        const child = {
+          ...student.child,
+          lessonsCompleted: (student.child.lessonsCompleted || 0) + 1,
+          progress: Math.min(100, (student.child.progress || 0) + 8),
+          streak: (student.child.streak || 0) + 1,
+          achievements: [...new Set([...(student.child.achievements || []), 'Lesson learner'])],
+        }
+        updateStudentProfile(student.id, child)
+      }
+      const updated = updateTeacherProfile(account.id, { lessonsCompleted: (account.teacher.lessonsCompleted || 0) + 1 })
+      setAccount(updated)
+      onAccountChange(updated)
+    }
+    refresh()
+  }
+
+  const saveAvailability = () => {
+    const updated = updateTeacherProfile(account.id, { availability })
+    setAccount(updated)
+    onAccountChange(updated)
+    setSaved(true)
+    window.setTimeout(() => setSaved(false), 2000)
+  }
+
+  const nav = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'bookings', label: 'Bookings', icon: ClipboardCheck, badge: pending },
+    { id: 'schedule', label: 'Availability', icon: CalendarDays },
+    { id: 'profile', label: 'My profile', icon: UserRound },
+  ]
+
+  return (
+    <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+      {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro administrator if you need help.'}</span></div></div>}
+
+      {active === 'overview' && (
+        <div className="portal-view">
+          <div className="portal-page-heading"><div><span className="portal-kicker">Teacher studio</span><h1>Good day, {account.fullName.split(' ')[0]}.</h1><p>Keep every learner, booking and teaching hour in view.</p></div><button className="portal-primary-button" onClick={() => setActive('schedule')}><CalendarDays size={17} /> Update availability</button></div>
+          <div className="portal-stat-grid portal-stat-grid--three">
+            <article><span className="stat-icon stat-icon--orange"><ClipboardCheck size={21} /></span><div><small>Pending requests</small><strong>{pending}</strong><em>Needs attention</em></div></article>
+            <article><span className="stat-icon stat-icon--blue"><Video size={21} /></span><div><small>Lessons completed</small><strong>{account.teacher.lessonsCompleted || 0}</strong><em>All time</em></div></article>
+            <article><span className="stat-icon stat-icon--gold"><Star size={21} /></span><div><small>Teacher rating</small><strong>{account.teacher.rating ? `${account.teacher.rating}.0` : 'New'}</strong><em>Student feedback</em></div></article>
+          </div>
+          <div className="teacher-overview-grid">
+            <section className="portal-card">
+              <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Action centre</span><h2>Booking requests</h2></div><button className="portal-text-button" onClick={() => setActive('bookings')}>View all <ChevronRight size={15} /></button></div>
+              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
+              {!pending && <EmptyState icon={ClipboardCheck} title="You’re all caught up" text="New lesson requests will appear here for your review." />}
+            </section>
+            <section className="portal-card teacher-profile-snapshot">
+              <div className="teacher-profile-snapshot__avatar">{initials(account.fullName)}<span><ShieldCheck size={16} /></span></div>
+              <StatusBadge status={account.status} />
+              <h2>{account.fullName}</h2><p>{account.teacher.specialization}</p>
+              <dl><div><dt>Experience</dt><dd>{account.teacher.experience} years</dd></div><div><dt>Languages</dt><dd>{account.teacher.languages}</dd></div><div><dt>Education</dt><dd>{account.teacher.education}</dd></div></dl>
+              <button className="portal-secondary-button" onClick={() => setActive('profile')}>View full profile</button>
+            </section>
+          </div>
+        </div>
+      )}
+
+      {active === 'bookings' && (
+        <div className="portal-view">
+          <div className="portal-page-heading"><div><span className="portal-kicker">Lesson management</span><h1>Bookings</h1><p>Confirm requests and keep lesson statuses up to date.</p></div></div>
+          <section className="portal-card lessons-list-card">
+            {bookings.length ? bookings.map((booking) => {
+              let actions = null
+              if (booking.status === 'pending') actions = <><button className="lesson-action lesson-action--wide lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}>Accept</button><button className="lesson-action lesson-action--wide lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}>Decline</button></>
+              if (booking.status === 'confirmed') actions = <button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => changeStatus(booking.id, 'completed')}>Mark complete</button>
+              return <BookingCard key={booking.id} booking={booking} showStudent actions={actions} />
+            }) : <EmptyState title="No bookings yet" text="Approved teachers will see student requests here." />}
+          </section>
+        </div>
+      )}
+
+      {active === 'schedule' && (
+        <div className="portal-view">
+          <div className="portal-page-heading"><div><span className="portal-kicker">Weekly schedule</span><h1>Availability</h1><p>Set the windows when families can request a class.</p></div>{saved && <span className="saved-label"><Check size={14} /> Schedule saved</span>}</div>
+          <section className="portal-card availability-card">
+            <div className="availability-head"><span>Day</span><span>Available</span><span>From</span><span>Until</span></div>
+            {availability.map((slot, index) => <div className="availability-row" key={slot.day}><strong>{slot.day}</strong><label className="switch"><input type="checkbox" checked={slot.enabled} onChange={(event) => setAvailability((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, enabled: event.target.checked } : item))} /><span /></label><input type="time" value={slot.from} disabled={!slot.enabled} onChange={(event) => setAvailability((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, from: event.target.value } : item))} /><input type="time" value={slot.to} disabled={!slot.enabled} onChange={(event) => setAvailability((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, to: event.target.value } : item))} /></div>)}
+            <button className="portal-primary-button" onClick={saveAvailability}>Save weekly availability</button>
+          </section>
+        </div>
+      )}
+
+      {active === 'profile' && (
+        <div className="portal-view">
+          <section className="teacher-profile-hero"><div className="teacher-profile-hero__avatar">{initials(account.fullName)}<span><ShieldCheck size={18} /></span></div><div><StatusBadge status={account.status} /><h1>{account.fullName}</h1><p>{account.teacher.specialization} · {account.teacher.experience} years experience</p></div><div className="teacher-profile-hero__score"><Star size={21} /><strong>{account.teacher.rating || 'New'}</strong><span>rating</span></div></section>
+          <section className="portal-card teacher-profile-detail"><span className="portal-kicker">Professional profile</span><h2>About my teaching</h2><p className="teacher-bio">{account.teacher.bio}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{account.teacher.education}</strong></div><div><span>Languages</span><strong>{account.teacher.languages}</strong></div><div><span>Credentials</span><strong>{account.teacher.credentials?.length || 0} submitted</strong></div></div></section>
+        </div>
+      )}
+    </PortalShell>
+  )
+}
+
+export function AdminDashboard({ account, onHome, onLogout }) {
+  const [active, setActive] = useState('overview')
+  const [version, setVersion] = useState(0)
+  const teachers = getAccounts('teacher')
+  const students = getAccounts('student')
+  const bookings = getBookings()
+  const bookingStats = getBookingStats()
+  const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
+  void version
+
+  const refresh = () => setVersion((value) => value + 1)
+  const setStatus = (accountId, status) => {
+    updateAccount(accountId, { status })
+    refresh()
+  }
+  const setBookingStatus = (bookingId, status) => {
+    const previous = bookings.find((booking) => booking.id === bookingId)
+    const updatedBooking = updateBooking(bookingId, { status })
+    if (status === 'completed' && previous?.status !== 'completed') {
+      const student = getAccountById(updatedBooking.studentId)
+      const teacher = getAccountById(updatedBooking.teacherId)
+      if (student?.child) {
+        updateStudentProfile(student.id, {
+          lessonsCompleted: (student.child.lessonsCompleted || 0) + 1,
+          progress: Math.min(100, (student.child.progress || 0) + 8),
+          streak: (student.child.streak || 0) + 1,
+          achievements: [...new Set([...(student.child.achievements || []), 'Lesson learner'])],
+        })
+      }
+      if (teacher?.teacher) {
+        updateTeacherProfile(teacher.id, { lessonsCompleted: (teacher.teacher.lessonsCompleted || 0) + 1 })
+      }
+    }
+    refresh()
+  }
+
+  const nav = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
+    { id: 'students', label: 'Students', icon: GraduationCap },
+    { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
+    { id: 'profile', label: 'Admin account', icon: ShieldCheck },
+  ]
+
+  return (
+    <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+      {active === 'overview' && (
+        <div className="portal-view">
+          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro command centre</span><h1>Everything important, under control.</h1><p>Review your community, approve teachers and keep every booking moving.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
+          <div className="portal-stat-grid">
+            <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student accounts</small><strong>{students.length}</strong><em>{students.filter((item) => item.status === 'active').length} active</em></div></article>
+            <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>
+            <article><span className="stat-icon stat-icon--gold"><CalendarDays size={21} /></span><div><small>Total bookings</small><strong>{bookingStats.total}</strong><em>{bookingStats.pending} pending</em></div></article>
+            <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro</em></div></article>
+          </div>
+          <div className="admin-overview-grid">
+            <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button onClick={() => setStatus(teacher.id, 'approved')}><Check size={15} /> Approve</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
+            <section className="portal-card admin-health-card"><span className="portal-kicker">Platform health</span><h2>Booking flow</h2><div className="health-donut" style={{ '--health': bookingStats.total ? `${Math.round((bookingStats.completed / bookingStats.total) * 100)}%` : '0%' }}><span><strong>{bookingStats.total ? Math.round((bookingStats.completed / bookingStats.total) * 100) : 0}%</strong><small>completed</small></span></div><dl><div><dt><i className="dot dot--orange" />Pending</dt><dd>{bookingStats.pending}</dd></div><div><dt><i className="dot dot--blue" />Confirmed</dt><dd>{bookingStats.confirmed}</dd></div><div><dt><i className="dot dot--green" />Completed</dt><dd>{bookingStats.completed}</dd></div></dl></section>
+          </div>
+        </div>
+      )}
+
+      {active === 'teachers' && (
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Review credentials and control access to the teaching dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions">{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
+      )}
+
+      {active === 'students' && (
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>View student profiles and manage dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{students.length ? students.map((student) => <div className="admin-table__row" key={student.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.email}</small></div></div><div><strong>{student.child.name}</strong><small>{student.child.year}</small></div><div><strong>{student.child.curriculum}</strong><small>{student.child.goal}</small></div><div><StatusBadge status={student.status} /></div><div className="table-actions">{student.status === 'active' ? <button className="table-action table-action--suspend" onClick={() => setStatus(student.id, 'suspended')} title="Suspend"><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setStatus(student.id, 'active')} title="Restore"><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+      )}
+
+      {active === 'bookings' && (
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests across every student and teacher.</p></div></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
+      )}
+
+      {active === 'profile' && (
+        <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
+      )}
+    </PortalShell>
+  )
+}

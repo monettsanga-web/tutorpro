@@ -48,6 +48,8 @@ export default function AuthModal({
   onClose,
   onAuthenticated,
   onExplore,
+  onEnterPortal,
+  onTeacherAccess,
 }) {
   const [view, setView] = useState(initialMode)
   const [registerStep, setRegisterStep] = useState(1)
@@ -139,7 +141,7 @@ export default function AuthModal({
     try {
       const account = await loginAccount(form.email, form.password)
       onAuthenticated(account)
-      setView('account')
+      onEnterPortal(account)
     } catch (error) {
       setFormError(error.message)
     } finally {
@@ -316,6 +318,7 @@ export default function AuthModal({
                 </form>
               )}
               <p className="auth-switch">Already have an account? <button onClick={() => switchView('login')}>Log in</button></p>
+              <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Applying as a teacher? Open teacher registration</button>
             </>
           )}
 
@@ -352,6 +355,7 @@ export default function AuthModal({
               </form>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
               <p className="auth-switch">New to TutorPro? <button onClick={() => switchView('register')}>Create a free account</button></p>
+              <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Teacher registration and login</button>
             </>
           )}
 
@@ -367,8 +371,8 @@ export default function AuthModal({
                 <div><span>Level</span><strong>{activeAccount.child.year}</strong></div>
                 <div><span>Curriculum</span><strong>{activeAccount.child.curriculum}</strong></div>
               </div>
-              <button className="button button--primary button--full auth-submit" onClick={onExplore}>Explore lesson plans <ArrowRight size={17} /></button>
-              <button className="auth-result__link" onClick={() => setView('account')}>View my account</button>
+              <button className="button button--primary button--full auth-submit" onClick={() => onEnterPortal(activeAccount)}>Open student dashboard <ArrowRight size={17} /></button>
+              <button className="auth-result__link" onClick={onExplore}>Explore lesson plans first</button>
             </div>
           )}
 
@@ -387,7 +391,7 @@ export default function AuthModal({
                 <div><dt>Lesson rhythm</dt><dd>{currentAccount.child.frequency}</dd></div>
                 {currentAccount.selectedPlan && <div><dt>Plan interest</dt><dd>{currentAccount.selectedPlan}</dd></div>}
               </dl>
-              <button className="button button--primary button--full" onClick={onExplore}>View lesson plans <ArrowRight size={17} /></button>
+              <button className="button button--primary button--full" onClick={() => onEnterPortal(currentAccount)}>Open student dashboard <ArrowRight size={17} /></button>
               <button className="logout-button" onClick={handleLogout}><LogOut size={16} /> Log out</button>
             </div>
           )}
