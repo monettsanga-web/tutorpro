@@ -81,7 +81,8 @@ function normalizeLearners(account) {
 function publicAccount(account) {
   if (!account) return null
   const { passwordHash: _passwordHash, salt: _salt, ...safeAccount } = account
-  const role = account.role || 'student'
+  const rawRole = account.role || 'student'
+  const role = rawRole === 'parent' ? 'student' : rawRole
   if (role === 'student') {
     const children = normalizeLearners(account)
     return { ...safeAccount, role, status: account.status || 'active', children, child: children[0] || null }
@@ -94,10 +95,20 @@ export function initializePlatform() {
   let changed = false
 
   accounts.forEach((account) => {
-    if ((account.role || 'student') === 'student' && !account.children?.length && account.child) {
-      account.children = normalizeLearners(account)
-      account.child = account.children[0]
-      changed = true
+    if (['student', 'parent'].includes(account.role || 'student') && (account.child || account.children?.length)) {
+      const normalizedChildren = normalizeLearners(account)
+      const needsLearnerMigration = !account.children?.length
+        || account.children.some((learner) => !learner.id || !learner.paymentStatus)
+        || account.child?.id !== normalizedChildren[0]?.id
+        || account.role === 'parent'
+        || account.status === 'approved'
+      if (needsLearnerMigration) {
+        account.role = 'student'
+        account.status = account.status === 'approved' ? 'active' : (account.status || 'active')
+        account.children = normalizedChildren
+        account.child = normalizedChildren[0]
+        changed = true
+      }
     }
     if (account.role === 'teacher' && !account.teacher?.availabilitySlots) {
       account.teacher = {

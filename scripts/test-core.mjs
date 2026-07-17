@@ -10,6 +10,15 @@ const bookings = await import('../src/bookings.js')
 const payments = await import('../src/payments.js')
 const schedule = await import('../src/schedule.js')
 
+storage.set('tutorpro_accounts_v2', JSON.stringify([{
+  id: 'legacy-family',
+  role: 'parent',
+  status: 'approved',
+  parentName: 'Legacy Parent',
+  email: 'legacy@example.com',
+  child: { name: 'Legacy Learner', year: 'Year 4', curriculum: 'Cambridge', goal: 'Reading' },
+}]))
+
 function assert(condition, message) {
   if (!condition) throw new Error(message)
 }
@@ -26,6 +35,8 @@ async function rejects(callback, message) {
 
 auth.initializePlatform()
 assert(auth.getApprovedTeachers().length === 1, 'The approved seed teacher was not created.')
+const migratedFamily = auth.getAccountById('legacy-family')
+assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.paymentStatus === 'paid', 'Legacy student migration failed.')
 
 await rejects(
   () => auth.registerAccount({ parentName: 'Parent', email: 'bad@example.com', password: 'short' }),
@@ -93,6 +104,11 @@ await rejects(
   () => bookings.createBooking({ studentId: family.id, learnerId: learner.id, teacherId: teacher.id, date, time, duration: 25, focus: 'Reading' }),
   'Overlapping bookings were accepted.',
 )
+
+const recoveryDateValue = new Date(future)
+recoveryDateValue.setDate(recoveryDateValue.getDate() + 7)
+const recoveryBooking = bookings.createBooking({ studentId: family.id, learnerId: 'stale-learner-id', learnerName: learner.name, teacherId: teacher.id, date: schedule.formatDateKey(recoveryDateValue), time, duration: 25, focus: 'Reading' })
+assert(recoveryBooking.learnerId === learner.id, 'A recoverable stale learner reference blocked booking.')
 
 const confirmedBooking = bookings.updateBooking(booking.id, { status: 'confirmed' })
 assert(confirmedBooking.classroomId && confirmedBooking.classroomToken, 'Unique classroom credentials were not generated.')

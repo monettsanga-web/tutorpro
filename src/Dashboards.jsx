@@ -378,7 +378,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
       return
     }
     try {
-      const booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id })
+      const booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name })
       if (adminBooking) updateBooking(booking.id, { status: 'confirmed' })
       setSuccess(true)
       setForm((current) => ({ ...current, date: '', time: '', note: '' }))

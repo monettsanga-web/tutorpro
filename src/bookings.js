@@ -31,11 +31,14 @@ export function createBooking(details) {
     throw new Error('This teacher is not currently available for bookings.')
   }
   const studentAccount = getAccountById(details.studentId)
-  const learner = details.learnerId
-    ? studentAccount?.children?.find((item) => item.id === details.learnerId)
-    : studentAccount?.child
+  const learners = studentAccount?.children?.length ? studentAccount.children : studentAccount?.child ? [studentAccount.child] : []
+  let learner = details.learnerId ? learners.find((item) => item.id === details.learnerId) : null
+  if (!learner && details.learnerName) {
+    learner = learners.find((item) => item.name?.trim().toLowerCase() === details.learnerName.trim().toLowerCase())
+  }
+  if (!learner && learners.length === 1) learner = learners[0]
   if (!studentAccount || studentAccount.role !== 'student' || studentAccount.status !== 'active' || !learner) {
-    throw new Error('Choose an active and valid student profile before booking.')
+    throw new Error('The selected student profile is unavailable. Refresh the dashboard and choose the student again.')
   }
   if (learner.paymentStatus !== 'paid') throw new Error(`${learner.name} is currently unpaid. An administrator must mark the student as paid before booking.`)
   if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')
