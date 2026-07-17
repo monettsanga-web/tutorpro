@@ -1,6 +1,8 @@
 -- TutorPro English shared registration profiles
 -- Run this file once in Supabase Dashboard → SQL Editor.
 
+create extension if not exists pgcrypto;
+
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role text not null check (role in ('student', 'teacher', 'admin')),
@@ -38,30 +40,45 @@ create or replace function public.handle_tutorpro_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  authorized_admin boolean := encode(digest(lower(coalesce(new.email, '')), 'sha256'), 'hex') = 'bf6e66f2c7c1acfaa4a3899a3e054f5bf185f18456c35cde73c36c9176102a33';
+  resolved_role text := case when authorized_admin then 'admin' else coalesce(meta->>'role', 'student') end;
+  resolved_status text := case when authorized_admin then 'active' else coalesce(meta->>'status', case when meta->>'role' = 'teacher' then 'pending' else 'active' end) end;
 begin
   insert into public.profiles (
     id, role, status, email, login_id, auth_provider,
     display_name, parent_name, full_name, profile_data
   ) values (
     new.id,
-    coalesce(meta->>'role', 'student'),
-    coalesce(meta->>'status', case when meta->>'role' = 'teacher' then 'pending' else 'active' end),
+    resolved_role,
+    resolved_status,
     new.email,
     coalesce(meta->>'login_id', new.email, new.phone),
     coalesce(meta->>'auth_provider', case when new.phone is not null then 'whatsapp' else 'email' end),
-    meta->>'display_name',
+    case when authorized_admin then 'TutorPro English Administrator' else meta->>'display_name' end,
     meta->'profile_data'->>'parentName',
-    meta->'profile_data'->>'fullName',
+    case when authorized_admin then 'TutorPro English Administrator' else meta->'profile_data'->>'fullName' end,
     coalesce(meta->'profile_data', '{}'::jsonb)
   )
   on conflict (id) do update set
+    role = excluded.role,
+    status = excluded.status,
+    email = excluded.email,
+    login_id = excluded.login_id,
+    auth_provider = excluded.auth_provider,
     display_name = excluded.display_name,
+    parent_name = excluded.parent_name,
+    full_name = excluded.full_name,
     profile_data = excluded.profile_data,
     updated_at = now();
+
+  if authorized_admin then
+    insert into public.admin_members(user_id) values (new.id)
+    on conflict (user_id) do nothing;
+  end if;
   return new;
 end;
 $$;

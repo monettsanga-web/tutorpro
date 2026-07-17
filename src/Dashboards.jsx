@@ -1292,15 +1292,21 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const openManagedTeacher = async (teacherId) => {
     setAdminActionError('')
     setProcessingAccountId(teacherId)
-    try {
-      if (cloudSyncEnabled()) {
+    let cloudWarning = ''
+    if (cloudSyncEnabled()) {
+      try {
         const profiles = await fetchCloudProfiles()
         if (profiles.length) mergeCloudAccounts(profiles)
+      } catch (syncError) {
+        cloudWarning = `Cloud refresh warning: ${syncError.message}`
       }
+    }
+    try {
       const teacher = getAccountById(teacherId)
-      if (!teacher || teacher.role !== 'teacher') throw new Error('Teacher profile could not be loaded.')
+      if (!teacher || teacher.role !== 'teacher') throw new Error('Teacher profile could not be loaded from either Supabase or this browser.')
       setManagedLearnerId('')
       setManagedAccount(teacher)
+      if (cloudWarning) setAdminActionError(cloudWarning)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (openError) {
       setAdminActionError(openError.message)
@@ -1312,15 +1318,21 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const openManagedStudent = async (studentId, learnerId) => {
     setAdminActionError('')
     setProcessingAccountId(studentId)
-    try {
-      if (cloudSyncEnabled()) {
+    let cloudWarning = ''
+    if (cloudSyncEnabled()) {
+      try {
         const profiles = await fetchCloudProfiles()
         if (profiles.length) mergeCloudAccounts(profiles)
+      } catch (syncError) {
+        cloudWarning = `Cloud refresh warning: ${syncError.message}`
       }
+    }
+    try {
       const student = getAccountById(studentId)
-      if (!student || student.role !== 'student') throw new Error('Student profile could not be loaded.')
+      if (!student || student.role !== 'student') throw new Error('Student profile could not be loaded from either Supabase or this browser.')
       setManagedLearnerId(learnerId)
       setManagedAccount(student)
+      if (cloudWarning) setAdminActionError(cloudWarning)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (openError) {
       setAdminActionError(openError.message)

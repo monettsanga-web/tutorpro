@@ -40,20 +40,10 @@ WeChat ID registration can be mirrored to Admin through an anonymous Supabase pr
 
 1. Open **Authentication → Users → Add user**.
 2. Create the TutorPro English administrator using the private administrator email and password.
-3. Copy the new user UUID.
-4. In SQL Editor run the following, replacing the UUID:
+3. Open **SQL Editor → New query**.
+4. Paste and run the complete contents of [`supabase/admin_access_fix.sql`](../supabase/admin_access_fix.sql).
 
-```sql
-update public.profiles
-set role = 'admin', status = 'active', display_name = 'TutorPro English Administrator'
-where id = 'YOUR-ADMIN-AUTH-USER-UUID';
-
-insert into public.admin_members(user_id)
-values ('YOUR-ADMIN-AUTH-USER-UUID')
-on conflict (user_id) do nothing;
-```
-
-Do not display the administrator email publicly.
+The repair script finds the authorized administrator without displaying the email publicly, creates or updates the Admin profile, and adds the correct UUID to `admin_members`. It is safe to run more than once.
 
 ## 5. Configure TutorPro English
 
