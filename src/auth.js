@@ -140,6 +140,27 @@ function publicAccount(account) {
     const children = normalizeLearners(account)
     return { ...safeAccount, role, status: account.status || 'active', children, child: children[0] || null }
   }
+  if (role === 'teacher') {
+    const teacher = {
+      specialization: 'Both Curricula',
+      bio: 'Teacher profile setup is not complete yet.',
+      education: 'To be updated',
+      experience: 0,
+      languages: 'English',
+      credentials: [],
+      availabilitySlots: [],
+      availability: [],
+      rating: 0,
+      ratingCount: 0,
+      lessonsCompleted: 0,
+      classroom: { platform: 'zoom', zoomLink: '', voovLink: '' },
+      ...(account.teacher || {}),
+    }
+    teacher.availabilitySlots = Array.isArray(teacher.availabilitySlots) ? teacher.availabilitySlots : []
+    teacher.credentials = Array.isArray(teacher.credentials) ? teacher.credentials : []
+    teacher.classroom = { platform: 'zoom', zoomLink: '', voovLink: '', ...(teacher.classroom || {}) }
+    return { ...safeAccount, role, status: account.status || 'pending', teacher, fullName: account.fullName || account.displayName || 'New Teacher' }
+  }
   return { ...safeAccount, role, status: account.status || 'active' }
 }
 

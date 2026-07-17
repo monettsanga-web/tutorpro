@@ -573,11 +573,26 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [ratingBooking, setRatingBooking] = useState(null)
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
-  const learners = account.children?.length ? account.children : [account.child]
-  const learner = learners.find((item) => item.id === activeLearnerId) || learners[0]
+  const learners = (account.children?.length ? account.children : [account.child]).filter(Boolean)
+  const hasLearnerProfile = learners.length > 0
+  const learner = learners.find((item) => item.id === activeLearnerId) || learners[0] || {
+    id: 'profile-setup',
+    name: 'New Student',
+    year: 'Not selected',
+    curriculum: 'Not selected',
+    goal: 'Speaking with confidence',
+    frequency: '1–2 weekly',
+    accessStatus: 'active',
+    progress: 0,
+    streak: 0,
+    lessonsCompleted: 0,
+    achievements: [],
+  }
   const [profile, setProfile] = useState({ goal: learner.goal, frequency: learner.frequency })
   const allBookings = getBookings({ studentId: account.id })
-  const bookings = allBookings.filter((booking) => booking.learnerId ? booking.learnerId === learner.id : learner.id === learners[0].id)
+  const bookings = hasLearnerProfile
+    ? allBookings.filter((booking) => booking.learnerId ? booking.learnerId === learner.id : learner.id === learners[0]?.id)
+    : []
   const upcoming = bookings.find((booking) => booking.date >= today() && ['pending', 'confirmed'].includes(booking.status))
   const completed = bookings.filter((booking) => booking.status === 'completed').length
   const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
@@ -698,6 +713,14 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
+  if (!hasLearnerProfile) {
+    return (
+      <PortalShell account={account} role="student" active="profile" onActive={() => {}} onHome={onHome} onLogout={onLogout} navItems={[{ id: 'profile', label: 'Profile setup', icon: UserRound }]} adminPreview={adminPreview}>
+        <div className="portal-view incomplete-profile-view"><section className="portal-card incomplete-profile-card"><span><GraduationCap size={31} /></span><small>Profile setup required</small><h1>Finish this student registration</h1><p>The account is connected, but its learner details are incomplete. Add the student name, school year, curriculum and learning goal to open the dashboard.</p><button className="portal-primary-button" onClick={() => setShowAddStudent(true)}><Plus size={17} /> Add student profile</button></section>{showAddStudent && <AddStudentDialog account={account} onClose={() => setShowAddStudent(false)} onAdded={finishAddingStudent} />}</div>
+      </PortalShell>
+    )
+  }
+
   if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
 
   return (
@@ -797,7 +820,26 @@ function TargetIcon() {
 
 export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false }) {
   const [active, setActive] = useState('overview')
-  const [account, setAccount] = useState(initialAccount)
+  const [account, setAccount] = useState(() => {
+    const source = initialAccount.teacher || {}
+    return {
+      ...initialAccount,
+      fullName: initialAccount.fullName || initialAccount.displayName || 'New Teacher',
+      teacher: {
+        specialization: 'Both Curricula',
+        bio: 'Complete your teaching profile to help families learn more about you.',
+        education: 'To be updated',
+        experience: 0,
+        languages: 'English',
+        lessonsCompleted: 0,
+        rating: 0,
+        ...source,
+        credentials: Array.isArray(source.credentials) ? source.credentials : [],
+        availabilitySlots: Array.isArray(source.availabilitySlots) ? source.availabilitySlots : [],
+        classroom: { platform: 'zoom', zoomLink: '', voovLink: '', ...(source.classroom || {}) },
+      },
+    }
+  })
   const [version, setVersion] = useState(0)
   const [availabilitySlots, setAvailabilitySlots] = useState(account.teacher.availabilitySlots || [])
   const [scheduleWeek, setScheduleWeek] = useState(0)
@@ -1133,7 +1175,7 @@ function RemoveStudentDialog({ profile, onClose, onConfirm }) {
         <span className="portal-kicker">Permanent administrator action</span>
         <h2 id="remove-student-title">Remove {profile.learner.name}’s registration?</h2>
         <p>{isFinalStudent ? 'This is the final student in the family account, so the entire family login will also be removed.' : 'The family account and its other student profiles will remain active.'}</p>
-        <ul><li><Trash2 size={14} /> Student profile and display photo</li><li><Trash2 size={14} /> Student booking and classroom history</li><li><Trash2 size={14} /> Student payment records</li></ul>
+        <ul><li><Trash2 size={14} /> Student profile and display photo</li><li><Trash2 size={14} /> Student booking and classroom history</li><li><Trash2 size={14} /> Student learning activity data</li></ul>
         {error && <div className="portal-error" role="alert">{error}</div>}
         <label><span>Type <strong>{profile.learner.name}</strong> to confirm</span><input autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder={profile.learner.name} /></label>
         <div className="portal-dialog__actions"><button className="portal-secondary-button" onClick={onClose} disabled={removing}>Keep registration</button><button className="danger-confirm-button" onClick={remove} disabled={!matches || removing}><Trash2 size={16} /> {removing ? 'Removing…' : isFinalStudent ? 'Remove family registration' : 'Remove student profile'}</button></div>
@@ -1201,7 +1243,22 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
-  const studentProfiles = students.flatMap((student) => (student.children?.length ? student.children : [student.child]).map((learner) => ({ account: student, learner })))
+  const studentProfiles = students.flatMap((student) => {
+    const learners = student.children?.length ? student.children : student.child ? [student.child] : []
+    if (learners.length) return learners.map((learner) => ({ account: student, learner }))
+    return [{
+      account: student,
+      learner: {
+        id: `incomplete-${student.id}`,
+        name: 'Incomplete student profile',
+        year: 'Not provided',
+        curriculum: 'Not provided',
+        goal: 'Profile setup required',
+        accessStatus: 'incomplete',
+        incomplete: true,
+      },
+    }]
+  })
   const bookings = getBookings()
   const bookingStats = getBookingStats()
   const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
@@ -1308,7 +1365,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'bookings' && (

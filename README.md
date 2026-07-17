@@ -62,7 +62,8 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Detects the visitor country through IP geolocation with browser-language fallback
 - Automatically selects English, Filipino, Korean, Chinese, Japanese, Spanish, French, German, Portuguese, Arabic, Vietnamese or Thai
 - Provides a persistent manual language selector
-- Uses Google Website Translator to translate public pages and dashboards
+- Applies language and text-direction preferences without mutating React-rendered dashboard elements
+- Additional full-text translations can be added through React-safe locale dictionaries
 
 ### Shared registration database
 

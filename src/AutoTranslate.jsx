@@ -25,11 +25,7 @@ const countryLanguages = {
 }
 
 function readSavedLanguage() {
-  try {
-    return localStorage.getItem('tutorpro_language') || ''
-  } catch {
-    return ''
-  }
+  try { return localStorage.getItem('tutorpro_language') || '' } catch { return '' }
 }
 
 function saveLanguage(language) {
@@ -37,15 +33,15 @@ function saveLanguage(language) {
     if (language) localStorage.setItem('tutorpro_language', language)
     else localStorage.removeItem('tutorpro_language')
   } catch {
-    // Translation still works for the current visit when storage is unavailable.
+    // The current selection still works when persistent storage is unavailable.
   }
 }
 
 function browserLanguage() {
   const locale = navigator.language || 'en'
-  if (locale.toLowerCase().startsWith('fil') || locale.toLowerCase().startsWith('tl')) return 'tl'
-  if (locale.toLowerCase().startsWith('zh-tw') || locale.toLowerCase().startsWith('zh-hk')) return 'zh-TW'
-  if (locale.toLowerCase().startsWith('zh')) return 'zh-CN'
+  if (/^(fil|tl)/i.test(locale)) return 'tl'
+  if (/^zh-(tw|hk)/i.test(locale)) return 'zh-TW'
+  if (/^zh/i.test(locale)) return 'zh-CN'
   const short = locale.split('-')[0]
   return languages.some((language) => language.code === short) ? short : 'en'
 }
@@ -66,18 +62,10 @@ async function detectLocationLanguage() {
   return browserLanguage()
 }
 
-function setTranslationCookie(language) {
-  const value = language === 'en' ? '/en/en' : `/en/${language}`
-  document.cookie = `googtrans=${value};path=/;max-age=31536000;SameSite=Lax`
-}
-
-function changeGoogleLanguage(language) {
-  setTranslationCookie(language)
-  const select = document.querySelector('.goog-te-combo')
-  if (select) {
-    select.value = language
-    select.dispatchEvent(new Event('change', { bubbles: true }))
-  }
+function applyLanguagePreference(language) {
+  document.documentElement.lang = language
+  document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+  window.dispatchEvent(new CustomEvent('tutorpro:language-change', { detail: { language } }))
 }
 
 export default function AutoTranslate() {
@@ -86,35 +74,13 @@ export default function AutoTranslate() {
 
   useEffect(() => {
     let cancelled = false
-    const saved = readSavedLanguage()
-
     const initialise = async () => {
-      const targetLanguage = saved || await detectLocationLanguage()
+      document.cookie = 'googtrans=;path=/;max-age=0;SameSite=Lax'
+      const targetLanguage = readSavedLanguage() || await detectLocationLanguage()
       if (cancelled) return
       setLanguage(targetLanguage)
-      setTranslationCookie(targetLanguage)
-
-      window.tutorProTranslateReady = () => {
-        if (!window.google?.translate) return
-        new window.google.translate.TranslateElement({
-          pageLanguage: 'en',
-          includedLanguages: languages.map((item) => item.code).join(','),
-          autoDisplay: false,
-        }, 'google_translate_element')
-        window.setTimeout(() => changeGoogleLanguage(targetLanguage), 250)
-      }
-
-      if (!document.querySelector('script[data-tutorpro-translate]')) {
-        const script = document.createElement('script')
-        script.src = 'https://translate.google.com/translate_a/element.js?cb=tutorProTranslateReady'
-        script.async = true
-        script.dataset.tutorproTranslate = 'true'
-        document.head.appendChild(script)
-      } else if (window.google?.translate) {
-        window.tutorProTranslateReady()
-      }
+      applyLanguagePreference(targetLanguage)
     }
-
     initialise()
     return () => { cancelled = true }
   }, [])
@@ -126,18 +92,17 @@ export default function AutoTranslate() {
       setAutomatic(true)
       const detectedLanguage = await detectLocationLanguage()
       setLanguage(detectedLanguage)
-      changeGoogleLanguage(detectedLanguage)
+      applyLanguagePreference(detectedLanguage)
       return
     }
     setLanguage(selection)
     setAutomatic(false)
     saveLanguage(selection)
-    changeGoogleLanguage(selection)
+    applyLanguagePreference(selection)
   }
 
   return (
-    <div className="language-control">
-      <div id="google_translate_element" aria-hidden="true" />
+    <div className="language-control" title="Language preference">
       <Globe2 size={17} />
       <span>Choose language</span>
       <select value={automatic ? 'auto' : language} onChange={chooseLanguage} aria-label="Choose website language">

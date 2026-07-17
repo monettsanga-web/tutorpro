@@ -8,9 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:sync",
+    "test": "npm run test:core && npm run test:sync && npm run test:render",
     "test:core": "node scripts/test-core.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
+    "test:render": "node scripts/test-dashboard-render.mjs",
     "classroom:server": "node server/classroom-signaling.mjs"
   },
   "dependencies": {

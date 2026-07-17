@@ -770,6 +770,51 @@
 .inline-access--active { color: #358652; }
 .inline-access--suspended { color: #bd3765; }
 
+/* Incomplete profile recovery */
+.incomplete-profile-view {
+  display: grid;
+  min-height: calc(100vh - 150px);
+  place-items: center;
+}
+
+.incomplete-profile-card {
+  width: min(620px, 100%);
+  padding: 48px;
+  text-align: center;
+}
+
+.incomplete-profile-card > span {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 21px;
+  place-items: center;
+  border-radius: 22px;
+  background: #ece5fb;
+  color: var(--portal-blue);
+  transform: rotate(-3deg);
+}
+
+.incomplete-profile-card > small {
+  color: var(--portal-orange);
+  font-size: 0.59rem;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.incomplete-profile-card h1 {
+  margin: 7px 0 10px;
+  font-size: 2rem;
+}
+
+.incomplete-profile-card p {
+  max-width: 470px;
+  margin: 0 auto 22px;
+  color: var(--portal-muted);
+  font-size: 0.76rem;
+}
+
 /* Student dashboard */
 .student-welcome {
   position: relative;
@@ -4629,8 +4674,7 @@
   .booking-layout,
   .profile-layout,
   .teacher-public-profile-grid,
-  .classroom-layout,
-  .payment-layout {
+  .classroom-layout {
     grid-template-columns: 1fr;
   }
 

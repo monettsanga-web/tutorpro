@@ -416,7 +416,7 @@ export default function AuthModal({
             </div>
           )}
 
-          <div className="auth-panel__foot"><ShieldCheck size={15} /> Secure account setup · No payment required</div>
+          <div className="auth-panel__foot"><ShieldCheck size={15} /> Secure account setup · No card required</div>
         </div>
       </section>
     </div>

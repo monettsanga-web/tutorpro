@@ -49,12 +49,14 @@ export async function signInCloudProfile(login, password) {
 }
 
 export function profileRowToAccount(row) {
-  const data = row.profile_data || {}
+  const data = row.profile_data && typeof row.profile_data === 'object' && !Array.isArray(row.profile_data)
+    ? row.profile_data
+    : {}
   return {
     ...data,
     id: row.id,
-    role: row.role,
-    status: row.status,
+    role: ['student', 'teacher', 'admin'].includes(row.role) ? row.role : (data.role || 'student'),
+    status: row.status || data.status || 'active',
     email: row.email || data.email || '',
     loginId: row.login_id || data.loginId || row.email || '',
     authProvider: row.auth_provider || data.authProvider || 'email',
