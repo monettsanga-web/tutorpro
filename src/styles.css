@@ -2383,121 +2383,92 @@ body {
   gap: 6px;
 }
 
-.provider-picker button {
+.provider-method {
+  position: relative;
   display: flex;
   min-width: 0;
-  min-height: 50px;
+  min-height: 90px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   border: 1px solid #d7e0db;
-  border-radius: 9px;
-  padding: 4px;
+  border-radius: 12px;
+  padding: 9px 5px 7px;
   background: #fff;
   color: #64736f;
-  font-size: 0.53rem;
-  font-weight: 750;
-  line-height: 1.1;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  text-align: center;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
-.provider-picker button:hover {
+.provider-method:hover {
   border-color: #9aaca5;
-  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(50, 21, 104, 0.1);
+  transform: translateY(-3px);
 }
 
-.provider-picker button.active {
+.provider-method.active {
   border-color: var(--coral);
-  background: #fff0ec;
-  color: var(--coral-dark);
-  box-shadow: 0 0 0 2px rgba(239, 118, 94, 0.08);
+  background: #fff6f9;
+  box-shadow: 0 0 0 2px rgba(255, 79, 135, 0.09), 0 8px 18px rgba(50, 21, 104, 0.08);
 }
 
-.provider-picker button > span {
+.provider-method__logo {
   display: grid;
-  min-width: 23px;
-  height: 23px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  border-radius: 7px;
-  background: #edf2ef;
-  color: var(--ink);
-  font-size: 0.62rem;
-  font-weight: 850;
-}
-
-.provider-picker button.active > span {
-  background: var(--coral);
-  color: #fff;
-}
-
-.provider-launch {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  margin-top: -2px;
-  border: 1px solid #d9e3ef;
   border-radius: 11px;
-  padding: 10px;
-  background: #f7faff;
+  background: #f3f4f6;
+  font-size: 1.35rem;
+  transition: transform 160ms ease, background 160ms ease;
 }
 
-.provider-launch > span {
-  display: grid;
-  width: 37px;
-  height: 37px;
-  place-items: center;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(50, 21, 104, 0.09);
+.provider-method:hover .provider-method__logo {
+  transform: scale(1.08) rotate(-3deg);
+}
+
+.provider-method--gmail .provider-method__logo { background: #fff0ee; color: #ea4335; }
+.provider-method--yahoo .provider-method__logo { background: #f1eafe; color: #6001d2; }
+.provider-method--wechat .provider-method__logo { background: #e8fbed; color: #07a84f; }
+.provider-method--whatsapp .provider-method__logo { background: #e7faed; color: #20ad58; }
+.provider-method--email .provider-method__logo { background: #eee8fb; color: #7048df; }
+
+.provider-method strong {
+  overflow: hidden;
+  max-width: 100%;
   color: var(--ink);
-  font-size: 0.67rem;
-  font-weight: 900;
+  font-size: 0.58rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.provider-launch > div {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.provider-launch strong {
-  color: var(--ink);
-  font-size: 0.66rem;
-}
-
-.provider-launch small {
+.provider-method small {
   color: var(--muted);
-  font-size: 0.55rem;
+  font-size: 0.44rem;
+  line-height: 1.15;
+}
+
+.provider-method__external {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  color: #aaa2b4;
+}
+
+.provider-method.active .provider-method__external {
+  color: var(--coral);
+}
+
+.provider-picker > p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.52rem;
   line-height: 1.45;
 }
-
-.provider-launch > a {
-  display: inline-flex;
-  min-height: 34px;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border-radius: 8px;
-  padding: 0 9px;
-  background: var(--ink);
-  color: #fff;
-  font-size: 0.58rem;
-  font-weight: 800;
-  white-space: nowrap;
-  transition: transform 160ms ease, box-shadow 160ms ease;
-}
-
-.provider-launch > a:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 7px 15px rgba(50, 21, 104, 0.18);
-}
-
-.provider-launch--gmail { border-color: #e5d8d8; background: #fff9f8; }
-.provider-launch--yahoo { border-color: #dfd6f2; background: #faf7ff; }
-.provider-launch--wechat { border-color: #d3ead8; background: #f5fcf6; }
-.provider-launch--whatsapp { border-color: #d2ead9; background: #f4fcf6; }
 
 .auth-form--login {
   gap: 19px;
@@ -3022,14 +2993,6 @@ body {
 
   .provider-picker > div {
     grid-template-columns: repeat(3, 1fr);
-  }
-
-  .provider-launch {
-    grid-template-columns: auto 1fr;
-  }
-
-  .provider-launch > a {
-    grid-column: 1 / -1;
   }
 
   .frequency-field > div {

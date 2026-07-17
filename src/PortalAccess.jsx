@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  ExternalLink,
   FileCheck2,
   GraduationCap,
   LockKeyhole,
@@ -18,19 +17,9 @@ import {
   X,
 } from 'lucide-react'
 import { hasAdminAccount, loginAccount, registerAdmin, registerTeacher } from './auth.js'
+import AuthProviderPicker from './AuthProviderPicker.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
-const teacherProviders = [
-  ['gmail', 'Gmail', 'G'], ['yahoo', 'Yahoo', 'Y!'], ['wechat', 'WeChat', 'We'], ['whatsapp', 'WhatsApp', 'WA'], ['email', 'Other email', '@'],
-]
-
-const providerLaunchLinks = {
-  gmail: { url: 'https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmail.google.com%2F', label: 'Open Gmail' },
-  yahoo: { url: 'https://login.yahoo.com/', label: 'Open Yahoo Mail' },
-  wechat: { url: 'https://www.wechat.com/', label: 'Open WeChat' },
-  whatsapp: { url: 'https://web.whatsapp.com/', label: 'Open WhatsApp Web' },
-}
-
 function validTeacherLogin(provider, value) {
   const login = value.trim()
   if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
@@ -169,8 +158,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
               {step === 1 ? (
                 <form className="auth-form" onSubmit={nextTeacherStep} noValidate>
                   <label><span>Full name</span><div className={`input-wrap ${errors.fullName ? 'input-wrap--error' : ''}`}><UserRound size={18} /><input autoFocus name="fullName" autoComplete="name" value={form.fullName} onChange={update} placeholder="Your full name" /></div>{errors.fullName && <small className="field-error">{errors.fullName}</small>}</label>
-                  <fieldset className="provider-picker"><legend>Choose how to sign in</legend><div>{teacherProviders.map(([id, label, mark]) => <button type="button" className={form.authProvider === id ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, authProvider: id, email: '' }))} key={id}><span>{mark}</span>{label}</button>)}</div></fieldset>
-                  {providerLaunchLinks[form.authProvider] && <div className={`provider-launch provider-launch--${form.authProvider}`}><span>{teacherProviders.find(([id]) => id === form.authProvider)?.[2]}</span><div><strong>Use your {teacherProviders.find(([id]) => id === form.authProvider)?.[1]} account</strong><small>Open the provider in a new tab, then return here to complete teacher registration.</small></div><a href={providerLaunchLinks[form.authProvider].url} target="_blank" rel="noopener noreferrer">{providerLaunchLinks[form.authProvider].label} <ExternalLink size={14} /></a></div>}
+                  <AuthProviderPicker value={form.authProvider} onSelect={(provider) => setForm((current) => ({ ...current, authProvider: provider, email: '' }))} />
                   <label><span>{form.authProvider === 'wechat' ? 'WeChat ID' : form.authProvider === 'whatsapp' ? 'WhatsApp number' : 'Email address'}</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input name="email" autoComplete="username" value={form.email} onChange={update} placeholder={form.authProvider === 'wechat' ? 'Your WeChat ID' : form.authProvider === 'whatsapp' ? '+63 912 345 6789' : 'teacher@example.com'} /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
                   <div className="auth-form__row">
                     <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={update} placeholder="8+ characters" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>

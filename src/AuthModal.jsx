@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  ExternalLink,
   GraduationCap,
   LockKeyhole,
   LogOut,
@@ -18,26 +17,12 @@ import {
   X,
 } from 'lucide-react'
 import { loginAccount, logoutAccount, registerAccount } from './auth.js'
+import AuthProviderPicker from './AuthProviderPicker.jsx'
 
 const yearOptions = [
   'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6',
   'Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11',
 ]
-
-const signUpProviders = [
-  { id: 'gmail', label: 'Gmail', mark: 'G' },
-  { id: 'yahoo', label: 'Yahoo Mail', mark: 'Y!' },
-  { id: 'wechat', label: 'WeChat', mark: 'We' },
-  { id: 'whatsapp', label: 'WhatsApp', mark: 'WA' },
-  { id: 'email', label: 'Other email', mark: '@' },
-]
-
-const providerLaunchLinks = {
-  gmail: { url: 'https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmail.google.com%2F', label: 'Open Gmail' },
-  yahoo: { url: 'https://login.yahoo.com/', label: 'Open Yahoo Mail' },
-  wechat: { url: 'https://www.wechat.com/', label: 'Open WeChat' },
-  whatsapp: { url: 'https://web.whatsapp.com/', label: 'Open WhatsApp Web' },
-}
 
 function providerField(provider) {
   if (provider === 'wechat') return { label: 'WeChat ID', placeholder: 'Your WeChat ID', inputMode: 'text' }
@@ -255,11 +240,7 @@ export default function AuthModal({
                     </div>
                     <FieldError>{errors.parentName}</FieldError>
                   </label>
-                  <fieldset className="provider-picker">
-                    <legend>Choose how to sign in</legend>
-                    <div>{signUpProviders.map((provider) => <button type="button" className={form.authProvider === provider.id ? 'active' : ''} onClick={() => { setForm((current) => ({ ...current, authProvider: provider.id, email: '' })); setErrors((current) => ({ ...current, email: '' })) }} key={provider.id}><span>{provider.mark}</span>{provider.label}</button>)}</div>
-                  </fieldset>
-                  {providerLaunchLinks[form.authProvider] && <div className={`provider-launch provider-launch--${form.authProvider}`}><span>{signUpProviders.find((provider) => provider.id === form.authProvider)?.mark}</span><div><strong>Use your {signUpProviders.find((provider) => provider.id === form.authProvider)?.label} account</strong><small>Open the provider securely in a new tab, then return here to finish your TutorPro English account.</small></div><a href={providerLaunchLinks[form.authProvider].url} target="_blank" rel="noopener noreferrer">{providerLaunchLinks[form.authProvider].label} <ExternalLink size={14} /></a></div>}
+                  <AuthProviderPicker value={form.authProvider} onSelect={(provider) => { setForm((current) => ({ ...current, authProvider: provider, email: '' })); setErrors((current) => ({ ...current, email: '' })) }} />
                   <label>
                     <span>{providerField(form.authProvider).label}</span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
