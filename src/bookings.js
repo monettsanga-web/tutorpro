@@ -30,6 +30,10 @@ export function createBooking(details) {
   if (!teacher || teacher.role !== 'teacher' || teacher.status !== 'approved') {
     throw new Error('This teacher is not currently available for bookings.')
   }
+  const studentAccount = getAccountById(details.studentId)
+  const learner = studentAccount?.children?.find((item) => item.id === details.learnerId) || studentAccount?.child
+  if (!studentAccount || !learner) throw new Error('Choose a valid student profile before booking.')
+  if (learner.paymentStatus !== 'paid') throw new Error(`${learner.name} is currently unpaid. An administrator must mark the student as paid before booking.`)
 
   const startMinutes = timeToMinutes(details.time)
   if (startMinutes % 30 !== 0 || startMinutes < 0 || startMinutes >= 1440) {
@@ -54,6 +58,7 @@ export function createBooking(details) {
   const booking = {
     id: crypto.randomUUID(),
     studentId: details.studentId,
+    learnerId: learner.id,
     teacherId: details.teacherId,
     date: details.date,
     time: details.time,

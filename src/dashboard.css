@@ -352,17 +352,49 @@
 }
 
 .portal-primary-button {
+  position: relative;
+  isolation: isolate;
   min-height: 45px;
+  overflow: hidden;
   padding: 0 18px;
-  background: linear-gradient(105deg, var(--portal-orange), #ff9641);
+  background: linear-gradient(115deg, #ee6818, var(--portal-orange) 48%, #ff9c49);
   color: #fff;
-  box-shadow: 0 9px 20px rgba(244, 123, 32, 0.2);
+  box-shadow: 0 10px 23px rgba(230, 100, 22, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   font-size: 0.78rem;
+}
+
+.portal-primary-button::after {
+  position: absolute;
+  z-index: -1;
+  top: -50%;
+  bottom: -50%;
+  left: -45%;
+  width: 25%;
+  background: rgba(255, 255, 255, 0.2);
+  content: '';
+  transform: rotate(20deg);
+  transition: left 420ms ease;
+}
+
+.portal-primary-button:hover::after {
+  left: 125%;
 }
 
 .portal-primary-button:hover,
 .portal-secondary-button:hover {
   transform: translateY(-2px);
+  box-shadow: 0 13px 26px rgba(25, 55, 93, 0.15);
+}
+
+.portal button:not(:disabled):active,
+.portal-dialog button:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+.portal button:focus-visible,
+.portal-dialog button:focus-visible {
+  outline: 3px solid rgba(40, 121, 216, 0.28);
+  outline-offset: 2px;
 }
 
 .portal-primary-button:disabled {
@@ -585,6 +617,191 @@
   border: 1px solid #efc4bb;
   background: #fff0ec;
   color: #9b4030;
+}
+
+/* Family learner controls */
+.family-student-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  border: 1px solid var(--portal-line);
+  border-radius: 15px;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(18, 42, 75, 0.05);
+}
+
+.family-student-switcher > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.family-student-switcher > div > span {
+  margin: 0 5px;
+  color: var(--portal-muted);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.family-student-switcher > div > button {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  padding: 0 11px 0 7px;
+  background: transparent;
+  color: #4e617a;
+  font-size: 0.7rem;
+  font-weight: 750;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.family-student-switcher > div > button:hover {
+  background: #f2f6fb;
+  transform: translateY(-1px);
+}
+
+.family-student-switcher > div > button.active {
+  border-color: #c9d9ec;
+  background: #eaf2fc;
+  color: var(--portal-blue);
+  box-shadow: 0 5px 14px rgba(40, 121, 216, 0.1);
+}
+
+.family-student-switcher > div > button > span:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.learner-tab-photo {
+  width: 33px;
+  height: 33px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  font-size: 0.7rem;
+}
+
+.payment-mini {
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.payment-mini--paid { color: #2f8a53; }
+.payment-mini--unpaid { color: #c26c25; }
+
+.add-student-button {
+  display: inline-flex;
+  min-height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 11px;
+  background: var(--portal-navy);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  box-shadow: 0 7px 16px rgba(14, 35, 72, 0.16);
+}
+
+.add-student-button small {
+  border-radius: 8px;
+  padding: 2px 5px;
+  background: rgba(255, 255, 255, 0.13);
+  font-size: 0.48rem;
+}
+
+.payment-required-card {
+  display: flex;
+  max-width: 760px;
+  min-height: 250px;
+  align-items: center;
+  gap: 22px;
+  border: 1px solid #efd2a6;
+  border-radius: 21px;
+  padding: 35px;
+  background: linear-gradient(120deg, #fffaf1, #fff1df);
+  box-shadow: 0 14px 36px rgba(137, 83, 24, 0.08);
+}
+
+.payment-required-card > span {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 23px;
+  background: #fff;
+  color: #d48425;
+  box-shadow: 0 8px 20px rgba(137, 83, 24, 0.1);
+  transform: rotate(-3deg);
+}
+
+.payment-required-card small {
+  color: #b26d20;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.payment-required-card h2 {
+  margin: 5px 0 8px;
+  font-size: 1.65rem;
+}
+
+.payment-required-card p {
+  max-width: 520px;
+  margin: 0;
+  color: #846f57;
+  font-size: 0.76rem;
+}
+
+.payment-required-card .portal-primary-button {
+  margin-top: 17px;
+}
+
+.profile-payment--paid { color: #2f8a53 !important; }
+.profile-payment--unpaid { color: #b66b23 !important; }
+
+.payment-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.payment-badge {
+  border-radius: 20px;
+  padding: 5px 8px;
+  font-size: 0.55rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.payment-badge--paid { background: #e2f4e8; color: #2d7c49; }
+.payment-badge--unpaid { background: #fff0dd; color: #a9631b; }
+
+.payment-control button {
+  min-height: 29px;
+  border: 1px solid #d5dfeb;
+  border-radius: 7px;
+  padding: 0 7px;
+  background: #fff;
+  color: #546983;
+  font-size: 0.54rem;
+  font-weight: 750;
 }
 
 /* Student dashboard */
@@ -2792,7 +3009,7 @@
 .admin-table--teachers .admin-table__row,
 .admin-table--students .admin-table__head,
 .admin-table--students .admin-table__row {
-  grid-template-columns: 1.3fr 1.05fr 1.05fr 0.65fr 0.95fr;
+  grid-template-columns: 1.2fr 1fr 1fr 0.9fr 0.95fr;
 }
 
 .admin-table__head {
@@ -3453,6 +3670,35 @@
   .compact-duration,
   .booking-confirm-bar > .portal-primary-button {
     grid-column: auto;
+  }
+
+  .family-student-switcher {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .family-student-switcher > div {
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .family-student-switcher > div > span {
+    display: none;
+  }
+
+  .add-student-button {
+    justify-content: center;
+  }
+
+  .payment-required-card {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 26px;
+  }
+
+  .payment-control {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .portal-stat-grid,

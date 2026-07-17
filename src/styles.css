@@ -182,16 +182,19 @@ h3 {
 
 /* ---------- Buttons & links ---------- */
 .button {
+  position: relative;
   display: inline-flex;
   min-height: 48px;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
   gap: 9px;
   border: 1px solid transparent;
   border-radius: 10px;
   padding: 0 20px;
-  font-weight: 700;
+  font-weight: 750;
   line-height: 1;
+  isolation: isolate;
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
 }
 
@@ -210,14 +213,31 @@ h3 {
 }
 
 .button--primary {
-  background: var(--coral);
+  background: linear-gradient(115deg, #df5d46, var(--coral) 52%, #f58b75);
   color: #fff;
-  box-shadow: 0 10px 22px rgba(221, 95, 72, 0.2);
+  box-shadow: 0 10px 22px rgba(221, 95, 72, 0.23), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.button--primary::after {
+  position: absolute;
+  z-index: -1;
+  top: -55%;
+  bottom: -55%;
+  left: -42%;
+  width: 22%;
+  background: rgba(255, 255, 255, 0.22);
+  content: '';
+  transform: rotate(20deg);
+  transition: left 420ms ease;
 }
 
 .button--primary:hover {
-  background: var(--coral-dark);
-  box-shadow: 0 13px 26px rgba(221, 95, 72, 0.27);
+  background: linear-gradient(115deg, #d95740, var(--coral-dark) 52%, #ed806a);
+  box-shadow: 0 14px 29px rgba(221, 95, 72, 0.3);
+}
+
+.button--primary:hover::after {
+  left: 125%;
 }
 
 .button--small {

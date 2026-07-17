@@ -43,14 +43,24 @@ async function hashPassword(password, salt) {
   return hashText(`${salt}:${password}`)
 }
 
+function normalizeLearners(account) {
+  const source = account.children?.length ? account.children : account.child ? [account.child] : []
+  return source.slice(0, 3).map((learner, index) => ({
+    ...learner,
+    id: learner.id || `learner-${account.id}-${index + 1}`,
+    paymentStatus: learner.paymentStatus || 'paid',
+  }))
+}
+
 function publicAccount(account) {
   if (!account) return null
   const { passwordHash: _passwordHash, salt: _salt, ...safeAccount } = account
-  return {
-    ...safeAccount,
-    role: account.role || 'student',
-    status: account.status || 'active',
+  const role = account.role || 'student'
+  if (role === 'student') {
+    const children = normalizeLearners(account)
+    return { ...safeAccount, role, status: account.status || 'active', children, child: children[0] || null }
   }
+  return { ...safeAccount, role, status: account.status || 'active' }
 }
 
 export function initializePlatform() {
@@ -58,6 +68,11 @@ export function initializePlatform() {
   let changed = false
 
   accounts.forEach((account) => {
+    if ((account.role || 'student') === 'student' && !account.children?.length && account.child) {
+      account.children = normalizeLearners(account)
+      account.child = account.children[0]
+      changed = true
+    }
     if (account.role === 'teacher' && !account.teacher?.availabilitySlots) {
       account.teacher = {
         ...account.teacher,
@@ -140,6 +155,20 @@ export async function registerAccount(details) {
   }
 
   const salt = createSalt()
+  const learner = {
+    id: crypto.randomUUID(),
+    name: details.childName.trim(),
+    year: details.year,
+    curriculum: details.curriculum,
+    goal: details.goal,
+    frequency: details.frequency,
+    paymentStatus: 'unpaid',
+    level: 'Building foundations',
+    progress: 18,
+    streak: 0,
+    lessonsCompleted: 0,
+    achievements: ['First step'],
+  }
   const account = {
     id: crypto.randomUUID(),
     role: 'student',
@@ -148,18 +177,8 @@ export async function registerAccount(details) {
     email,
     passwordHash: await hashPassword(details.password, salt),
     salt,
-    child: {
-      name: details.childName.trim(),
-      year: details.year,
-      curriculum: details.curriculum,
-      goal: details.goal,
-      frequency: details.frequency,
-      level: 'Building foundations',
-      progress: 18,
-      streak: 0,
-      lessonsCompleted: 0,
-      achievements: ['First step'],
-    },
+    child: learner,
+    children: [learner],
     selectedPlan: details.selectedPlan || '',
     preferredTeacherId: details.preferredTeacherId || '',
     createdAt: new Date().toISOString(),
@@ -319,10 +338,42 @@ export function updateTeacherProfile(accountId, teacherChanges) {
   return updateAccount(accountId, { teacher: { ...account.teacher, ...teacherChanges } })
 }
 
-export function updateStudentProfile(accountId, childChanges) {
+export function updateStudentProfile(accountId, childChanges, learnerId) {
   const account = readAccounts().find((item) => item.id === accountId)
   if (!account || (account.role || 'student') !== 'student') throw new Error('Student account not found.')
-  return updateAccount(accountId, { child: { ...account.child, ...childChanges } })
+  const children = normalizeLearners(account)
+  const targetId = learnerId || children[0]?.id
+  const updatedChildren = children.map((learner) => learner.id === targetId ? { ...learner, ...childChanges } : learner)
+  if (!updatedChildren.some((learner) => learner.id === targetId)) throw new Error('Student profile not found.')
+  return updateAccount(accountId, { children: updatedChildren, child: updatedChildren[0] })
+}
+
+export function addStudentLearner(accountId, details) {
+  const account = readAccounts().find((item) => item.id === accountId)
+  if (!account || (account.role || 'student') !== 'student') throw new Error('Family account not found.')
+  const children = normalizeLearners(account)
+  if (children.length >= 3) throw new Error('A family account can include up to three students.')
+  const learner = {
+    id: crypto.randomUUID(),
+    name: details.name.trim(),
+    year: details.year,
+    curriculum: details.curriculum,
+    goal: details.goal,
+    frequency: details.frequency || '1–2 weekly',
+    paymentStatus: 'unpaid',
+    level: 'Building foundations',
+    progress: 0,
+    streak: 0,
+    lessonsCompleted: 0,
+    achievements: ['Profile created'],
+  }
+  const updatedChildren = [...children, learner]
+  return updateAccount(accountId, { children: updatedChildren, child: updatedChildren[0] })
+}
+
+export function updateLearnerPayment(accountId, learnerId, paymentStatus) {
+  if (!['paid', 'unpaid'].includes(paymentStatus)) throw new Error('Invalid payment status.')
+  return updateStudentProfile(accountId, { paymentStatus }, learnerId)
 }
 
 export function logoutAccount() {

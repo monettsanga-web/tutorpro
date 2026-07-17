@@ -7,7 +7,9 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 ### Student / parent
 
 - Two-step family and learner registration
-- Personalised student profile with an uploaded display photo, goals, progress, streaks and achievements
+- One family account can manage one to three named student profiles
+- Individual payment status, schedules, progress and display photo for each student
+- Unpaid students are automatically prevented from booking
 - One rating and optional review after every completed class
 - Teacher feedback, strengths, next steps and homework shown on completed lessons
 - 24-hour weekly lesson calendar divided into 30-minute slots
@@ -35,7 +37,8 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 - Teacher approval, rejection and suspension controls
 - Direct access to any teacher dashboard from the teacher table
 - Student access suspension, restoration and direct dashboard access
-- Book available teacher slots on behalf of students
+- Paid/unpaid controls for every individual learner
+- Select a specific student name and book an available teacher slot on their behalf
 - Platform-wide booking status controls
 - Overview metrics for students, teachers and lessons
 
