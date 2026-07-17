@@ -2431,6 +2431,74 @@ body {
   color: #fff;
 }
 
+.provider-launch {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: -2px;
+  border: 1px solid #d9e3ef;
+  border-radius: 11px;
+  padding: 10px;
+  background: #f7faff;
+}
+
+.provider-launch > span {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(50, 21, 104, 0.09);
+  color: var(--ink);
+  font-size: 0.67rem;
+  font-weight: 900;
+}
+
+.provider-launch > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.provider-launch strong {
+  color: var(--ink);
+  font-size: 0.66rem;
+}
+
+.provider-launch small {
+  color: var(--muted);
+  font-size: 0.55rem;
+  line-height: 1.45;
+}
+
+.provider-launch > a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 8px;
+  padding: 0 9px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.provider-launch > a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 15px rgba(50, 21, 104, 0.18);
+}
+
+.provider-launch--gmail { border-color: #e5d8d8; background: #fff9f8; }
+.provider-launch--yahoo { border-color: #dfd6f2; background: #faf7ff; }
+.provider-launch--wechat { border-color: #d3ead8; background: #f5fcf6; }
+.provider-launch--whatsapp { border-color: #d2ead9; background: #f4fcf6; }
+
 .auth-form--login {
   gap: 19px;
 }
@@ -2954,6 +3022,14 @@ body {
 
   .provider-picker > div {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .provider-launch {
+    grid-template-columns: auto 1fr;
+  }
+
+  .provider-launch > a {
+    grid-column: 1 / -1;
   }
 
   .frequency-field > div {
