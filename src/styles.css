@@ -1937,6 +1937,63 @@ h3 {
   font-size: 0.72rem;
 }
 
+/* ---------- Automatic language control ---------- */
+.language-control {
+  position: fixed;
+  z-index: 95;
+  bottom: 18px;
+  left: 18px;
+  display: flex;
+  min-height: 43px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 0 9px 0 12px;
+  background: rgba(50, 21, 104, 0.94);
+  box-shadow: 0 13px 32px rgba(39, 17, 78, 0.24);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.language-control > span {
+  color: #dff7a6;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.language-control select {
+  max-width: 108px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.language-control select option {
+  background: #fff;
+  color: #321568;
+}
+
+#google_translate_element,
+.goog-te-banner-frame,
+.goog-logo-link,
+.goog-te-gadget {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+.skiptranslate iframe {
+  display: none !important;
+}
+
 /* ---------- Motion ---------- */
 .reveal {
   opacity: 0;

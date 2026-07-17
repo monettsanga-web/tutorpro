@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
-  Award,
   Ban,
   Bell,
   BookOpen,
@@ -15,9 +14,11 @@ import {
   ChevronRight,
   ClipboardCheck,
   Clock3,
+  CreditCard,
   Eye,
   Film,
   Flame,
+  Gamepad2,
   GraduationCap,
   Home,
   LayoutDashboard,
@@ -50,6 +51,9 @@ import {
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, rateCompletedBooking, saveTeacherFeedback, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
+import StudentGames from './StudentGames.jsx'
+import PayPalCheckout from './PayPalCheckout.jsx'
+import { recordPayment, getPayments } from './payments.js'
 import { saveProfileMedia } from './media.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
@@ -434,6 +438,57 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
   )
 }
 
+function PaymentsPanel({ account, learner, onAccountChange }) {
+  const plans = [
+    { id: 'weekly-25', name: 'Weekly lesson', detail: 'One focused 25-minute class', amount: 10, badge: 'Flexible' },
+    { id: 'growth-4', name: 'Growth pack', detail: 'Four 25-minute classes', amount: 32, badge: 'Most popular' },
+    { id: 'intensive-8', name: 'Intensive pack', detail: 'Eight 25-minute classes', amount: 64, badge: 'Best progress' },
+  ]
+  const [selectedPlan, setSelectedPlan] = useState(plans[1])
+  const [confirmation, setConfirmation] = useState('')
+  const payments = getPayments({ accountId: account.id, learnerId: learner.id })
+
+  const completePayment = (paypalResult) => {
+    recordPayment({
+      accountId: account.id,
+      learnerId: learner.id,
+      provider: 'paypal',
+      transactionId: paypalResult.transactionId,
+      payerName: paypalResult.payerName,
+      amount: selectedPlan.amount,
+      currency: 'USD',
+      plan: selectedPlan.name,
+      status: 'completed',
+    })
+    const updated = updateLearnerPayment(account.id, learner.id, 'paid')
+    onAccountChange(updated)
+    setConfirmation(`${selectedPlan.name} payment confirmed for ${learner.name}. Booking is now unlocked.`)
+  }
+
+  return (
+    <div className="payments-view portal-view">
+      <section className="payment-hero">
+        <div><span className="portal-kicker">Secure family payments</span><h1>Learn now. Pay safely with PayPal.</h1><p>Choose a lesson plan for {learner.name}. Successful payment immediately unlocks lesson booking.</p></div>
+        <div className={`payment-status-card payment-status-card--${learner.paymentStatus}`}><span><ShieldCheck size={23} /></span><div><small>Booking status</small><strong>{learner.paymentStatus === 'paid' ? 'Paid & unlocked' : 'Payment required'}</strong></div></div>
+      </section>
+      {confirmation && <div className="portal-success payment-confirmation"><CheckCircle2 size={19} /><div><strong>Thank you!</strong><span>{confirmation}</span></div></div>}
+      <div className="payment-layout">
+        <section className="portal-card payment-plans-card">
+          <div className="portal-card__heading"><div><span className="portal-kicker">Choose a plan</span><h2>Lesson credits</h2><p>All payments are shown in USD.</p></div><span className="portal-card__icon"><CreditCard size={22} /></span></div>
+          <div className="payment-plan-list">{plans.map((plan) => <button className={selectedPlan.id === plan.id ? 'active' : ''} onClick={() => { setSelectedPlan(plan); setConfirmation('') }} key={plan.id}><span><i>{plan.badge}</i><strong>{plan.name}</strong><small>{plan.detail}</small></span><b>${plan.amount}</b>{selectedPlan.id === plan.id && <CheckCircle2 size={20} />}</button>)}</div>
+        </section>
+        <section className="portal-card paypal-card">
+          <div className="paypal-card__brand"><span>Pay</span><strong>Pal</strong></div>
+          <h2>Complete payment</h2>
+          <div className="paypal-order"><span>{selectedPlan.name}</span><strong>${selectedPlan.amount.toFixed(2)} USD</strong></div>
+          <PayPalCheckout key={`${learner.id}-${selectedPlan.id}`} amount={selectedPlan.amount} currency="USD" description={`TutorPro English - ${selectedPlan.name} for ${learner.name}`} onSuccess={completePayment} />
+        </section>
+      </div>
+      <section className="portal-card payment-history-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Account records</span><h2>Payment history</h2></div></div>{payments.length ? <div className="payment-history-list">{payments.map((payment) => <div key={payment.id}><span><CreditCard size={16} /></span><div><strong>{payment.plan}</strong><small>{new Date(payment.createdAt).toLocaleDateString()} · PayPal {payment.transactionId && `· ${payment.transactionId.slice(-8)}`}</small></div><b>${payment.amount.toFixed(2)}</b><em>{payment.status}</em></div>)}</div> : <EmptyState icon={CreditCard} title="No payments yet" text="Completed PayPal transactions will appear here." />}</section>
+    </div>
+  )
+}
+
 function RatingDialog({ booking, studentId, onClose, onSaved }) {
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
@@ -607,10 +662,22 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     setBookingVersion((value) => value + 1)
   }
 
+  const earnGameStars = (stars) => {
+    const latestAccount = getAccountById(account.id)
+    const latestLearner = latestAccount.children.find((item) => item.id === learner.id) || latestAccount.child
+    const nextTotal = (latestLearner.gameStars || 0) + stars
+    const achievements = nextTotal >= 10 ? [...new Set([...(latestLearner.achievements || []), 'Game champion'])] : latestLearner.achievements
+    const updated = updateStudentProfile(account.id, { gameStars: nextTotal, achievements }, learner.id)
+    setAccount(updated)
+    onAccountChange(updated)
+  }
+
   const nav = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'book', label: 'Book a class', icon: CalendarPlus },
     { id: 'lessons', label: 'My lessons', icon: CalendarDays, badge: pendingCount },
+    { id: 'games', label: 'English games', icon: Gamepad2 },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -640,7 +707,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{learner.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
             <article><span className="stat-icon stat-icon--blue"><TrendingUp size={21} /></span><div><small>Learning progress</small><strong>{learner.progress || 18}%</strong><em>On the rise</em></div></article>
             <article><span className="stat-icon stat-icon--gold"><Flame size={21} /></span><div><small>Learning streak</small><strong>{learner.streak || 0} days</strong><em>Personal best</em></div></article>
-            <article><span className="stat-icon stat-icon--green"><Award size={21} /></span><div><small>Achievements</small><strong>{learner.achievements?.length || 1}</strong><em>Badges earned</em></div></article>
+            <article><span className="stat-icon stat-icon--green"><Gamepad2 size={21} /></span><div><small>Game stars</small><strong>{learner.gameStars || 0}</strong><em>Learn through play</em></div></article>
           </div>
 
           <div className="student-overview-grid">
@@ -672,6 +739,10 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           </section>
         </div>
       )}
+
+      {active === 'games' && <StudentGames learner={learner} onEarnStars={earnGameStars} />}
+
+      {active === 'payments' && <PaymentsPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'profile' && (
         <div className="portal-view">
