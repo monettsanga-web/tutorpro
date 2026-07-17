@@ -400,6 +400,45 @@ export function updateTeacherProfile(accountId, teacherChanges) {
   return updateAccount(accountId, { teacher: { ...account.teacher, ...teacherChanges } })
 }
 
+export function repairStudentForBooking(accountId, learnerSnapshot) {
+  const accounts = readAccounts()
+  const index = accounts.findIndex((account) => account.id === accountId)
+  if (index < 0) throw new Error('The family account could not be found. Please log in again.')
+  const account = accounts[index]
+  if (['teacher', 'admin'].includes(account.role)) throw new Error('Only family accounts can create student bookings.')
+
+  const children = normalizeLearners(account)
+  let learnerIndex = learnerSnapshot?.id ? children.findIndex((learner) => learner.id === learnerSnapshot.id) : -1
+  if (learnerIndex < 0 && learnerSnapshot?.name) {
+    learnerIndex = children.findIndex((learner) => learner.name?.trim().toLowerCase() === learnerSnapshot.name.trim().toLowerCase())
+  }
+  if (learnerIndex < 0 && learnerSnapshot && children.length < 3) {
+    children.push({
+      ...learnerSnapshot,
+      id: learnerSnapshot.id || crypto.randomUUID(),
+      paymentStatus: learnerSnapshot.paymentStatus || 'unpaid',
+    })
+    learnerIndex = children.length - 1
+  }
+  if (learnerIndex < 0) throw new Error('The selected learner could not be restored. Select the student again from My Profile.')
+
+  const storedLearner = children[learnerIndex]
+  children[learnerIndex] = {
+    ...learnerSnapshot,
+    ...storedLearner,
+    id: storedLearner.id || learnerSnapshot.id || crypto.randomUUID(),
+    paymentStatus: storedLearner.paymentStatus || learnerSnapshot.paymentStatus || 'unpaid',
+  }
+  account.role = 'student'
+  if (!account.status || account.status === 'approved') account.status = 'active'
+  account.children = children
+  account.child = children[0]
+  account.updatedAt = new Date().toISOString()
+  accounts[index] = account
+  writeAccounts(accounts)
+  return { account: publicAccount(account), learner: publicAccount(account).children[learnerIndex] }
+}
+
 export function updateStudentProfile(accountId, childChanges, learnerId) {
   const account = readAccounts().find((item) => item.id === accountId)
   if (!account || (account.role || 'student') !== 'student') throw new Error('Student account not found.')

@@ -1,4 +1,4 @@
-import { getAccountById, updateTeacherProfile } from './auth.js'
+import { getAccountById, repairStudentForBooking, updateTeacherProfile } from './auth.js'
 import { lessonSlotKeys, timeToMinutes } from './schedule.js'
 
 const BOOKINGS_KEY = 'tutorpro_bookings_v1'
@@ -30,15 +30,24 @@ export function createBooking(details) {
   if (!teacher || teacher.role !== 'teacher' || teacher.status !== 'approved') {
     throw new Error('This teacher is not currently available for bookings.')
   }
-  const studentAccount = getAccountById(details.studentId)
-  const learners = studentAccount?.children?.length ? studentAccount.children : studentAccount?.child ? [studentAccount.child] : []
+  let studentAccount = getAccountById(details.studentId)
+  let learners = studentAccount?.children?.length ? studentAccount.children : studentAccount?.child ? [studentAccount.child] : []
   let learner = details.learnerId ? learners.find((item) => item.id === details.learnerId) : null
   if (!learner && details.learnerName) {
     learner = learners.find((item) => item.name?.trim().toLowerCase() === details.learnerName.trim().toLowerCase())
   }
   if (!learner && learners.length === 1) learner = learners[0]
+
+  const needsRepair = studentAccount && (studentAccount.role !== 'student' || !learner || studentAccount.status === 'approved')
+  if (needsRepair && details.learnerProfile) {
+    const repaired = repairStudentForBooking(details.studentId, details.learnerProfile)
+    studentAccount = repaired.account
+    learner = repaired.learner
+  }
   if (!studentAccount || studentAccount.role !== 'student' || studentAccount.status !== 'active' || !learner) {
-    throw new Error('The selected student profile is unavailable. Refresh the dashboard and choose the student again.')
+    throw new Error(studentAccount?.status === 'suspended'
+      ? 'This family account is suspended. Contact the administrator before booking.'
+      : 'The student profile could not be verified. Log out, log in again, and retry the booking.')
   }
   if (learner.paymentStatus !== 'paid') throw new Error(`${learner.name} is currently unpaid. An administrator must mark the student as paid before booking.`)
   if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')

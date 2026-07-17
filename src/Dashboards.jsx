@@ -378,7 +378,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
       return
     }
     try {
-      const booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name })
+      const booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
       if (adminBooking) updateBooking(booking.id, { status: 'confirmed' })
       setSuccess(true)
       setForm((current) => ({ ...current, date: '', time: '', note: '' }))
@@ -729,7 +729,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         </div>
       )}
 
-      {active === 'book' && <BookLessonPanel account={account} learner={learner} onBooked={() => setBookingVersion((value) => value + 1)} />}
+      {active === 'book' && <BookLessonPanel account={account} learner={learner} onBooked={() => { const refreshed = getAccountById(account.id); if (refreshed) { setAccount(refreshed); onAccountChange(refreshed) } setBookingVersion((value) => value + 1) }} />}
 
       {active === 'lessons' && (
         <div className="portal-view">

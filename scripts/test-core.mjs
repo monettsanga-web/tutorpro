@@ -105,10 +105,21 @@ await rejects(
   'Overlapping bookings were accepted.',
 )
 
+const rawAccounts = JSON.parse(storage.get('tutorpro_accounts_v2'))
+const rawFamily = rawAccounts.find((account) => account.id === family.id)
+rawFamily.role = 'parent'
+rawFamily.status = 'approved'
+rawFamily.children[0] = { ...rawFamily.children[0], id: undefined }
+rawFamily.child = { ...rawFamily.children[0] }
+storage.set('tutorpro_accounts_v2', JSON.stringify(rawAccounts))
+
 const recoveryDateValue = new Date(future)
 recoveryDateValue.setDate(recoveryDateValue.getDate() + 7)
-const recoveryBooking = bookings.createBooking({ studentId: family.id, learnerId: 'stale-learner-id', learnerName: learner.name, teacherId: teacher.id, date: schedule.formatDateKey(recoveryDateValue), time, duration: 25, focus: 'Reading' })
-assert(recoveryBooking.learnerId === learner.id, 'A recoverable stale learner reference blocked booking.')
+const recoveryBooking = bookings.createBooking({ studentId: family.id, learnerId: 'stale-learner-id', learnerName: learner.name, learnerProfile: learner, teacherId: teacher.id, date: schedule.formatDateKey(recoveryDateValue), time, duration: 25, focus: 'Reading' })
+const repairedFamily = auth.getAccountById(family.id)
+const repairedLearner = repairedFamily.children.find((item) => item.name === learner.name)
+assert(repairedFamily.role === 'student' && repairedFamily.status === 'active', 'The family account was not repaired during booking.')
+assert(repairedLearner?.id === recoveryBooking.learnerId, 'A recoverable stale learner reference blocked booking.')
 
 const confirmedBooking = bookings.updateBooking(booking.id, { status: 'confirmed' })
 assert(confirmedBooking.classroomId && confirmedBooking.classroomToken, 'Unique classroom credentials were not generated.')
@@ -121,7 +132,7 @@ await rejects(() => bookings.rateCompletedBooking(booking.id, family.id, 4, 'Dup
 
 const payment = payments.recordPayment({
   accountId: family.id,
-  learnerId: learner.id,
+  learnerId: repairedLearner.id,
   provider: 'paypal',
   transactionId: 'TEST-PAYPAL-001',
   amount: 32,
@@ -129,9 +140,9 @@ const payment = payments.recordPayment({
   plan: 'Growth pack',
   status: 'completed',
 })
-assert(payment.amount === 32 && payments.getPayments({ learnerId: learner.id }).length === 1, 'Payment recording failed.')
+assert(payment.amount === 32 && payments.getPayments({ learnerId: repairedLearner.id }).length === 1, 'Payment recording failed.')
 await rejects(
-  () => payments.recordPayment({ accountId: family.id, learnerId: learner.id, provider: 'paypal', transactionId: '', amount: -1, plan: 'Invalid', status: 'completed' }),
+  () => payments.recordPayment({ accountId: family.id, learnerId: repairedLearner.id, provider: 'paypal', transactionId: '', amount: -1, plan: 'Invalid', status: 'completed' }),
   'An invalid payment was accepted.',
 )
 
