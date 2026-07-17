@@ -97,9 +97,15 @@ export async function updateCloudProfile(account) {
     profile_data: safeAccount(account),
     updated_at: new Date().toISOString(),
   }
-  const { error } = await supabase.from('profiles').update(payload).eq('id', account.id)
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(payload)
+    .eq('id', account.id)
+    .select('id, status, role')
+    .single()
   if (error) throw new Error(`Shared profile update failed: ${error.message}`)
-  return payload
+  if (!data?.id) throw new Error('Shared profile update was blocked by Supabase permissions.')
+  return { ...payload, ...data }
 }
 
 export async function deleteCloudProfile(accountId) {

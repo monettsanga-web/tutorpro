@@ -66,6 +66,13 @@ const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro English user'
 const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
 
+function withTimeout(promise, milliseconds, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => window.setTimeout(() => reject(new Error(message)), milliseconds)),
+  ])
+}
+
 function formatLessonDate(date, time, includeYear = false) {
   if (!date) return 'Date to be confirmed'
   const value = new Date(`${date}T${time || '00:00'}`)
@@ -1277,8 +1284,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     const previousStatus = getAccountById(accountId)?.status
     try {
       const updated = updateAccount(accountId, { status })
-      if (cloudSyncEnabled()) await updateCloudProfile(updated)
-      const profiles = cloudSyncEnabled() ? await fetchCloudProfiles() : []
+      if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the status update in time.')
+      const profiles = cloudSyncEnabled() ? await withTimeout(fetchCloudProfiles(), 8000, 'Supabase profile refresh timed out.') : []
       if (profiles.length) mergeCloudAccounts(profiles)
       refresh()
     } catch (statusError) {
@@ -1289,55 +1296,51 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
   }
 
-  const openManagedTeacher = async (teacherId) => {
+  const openManagedTeacher = (teacherId) => {
     setAdminActionError('')
-    setProcessingAccountId(teacherId)
-    let cloudWarning = ''
-    if (cloudSyncEnabled()) {
-      try {
-        const profiles = await fetchCloudProfiles()
-        if (profiles.length) mergeCloudAccounts(profiles)
-      } catch (syncError) {
-        cloudWarning = `Cloud refresh warning: ${syncError.message}`
-      }
+    const teacher = getAccountById(teacherId)
+    if (!teacher || teacher.role !== 'teacher') {
+      setAdminActionError('Teacher profile could not be loaded from this browser. Refresh the registrations list and try again.')
+      return
     }
-    try {
-      const teacher = getAccountById(teacherId)
-      if (!teacher || teacher.role !== 'teacher') throw new Error('Teacher profile could not be loaded from either Supabase or this browser.')
-      setManagedLearnerId('')
-      setManagedAccount(teacher)
-      if (cloudWarning) setAdminActionError(cloudWarning)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (openError) {
-      setAdminActionError(openError.message)
-    } finally {
-      setProcessingAccountId('')
+    setManagedLearnerId('')
+    setManagedAccount(teacher)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    if (cloudSyncEnabled()) {
+      withTimeout(fetchCloudProfiles(), 8000, 'Cloud refresh timed out.')
+        .then((profiles) => {
+          if (profiles.length) mergeCloudAccounts(profiles)
+          const refreshed = getAccountById(teacherId)
+          if (refreshed?.role === 'teacher') setManagedAccount(refreshed)
+        })
+        .catch(() => {
+          // The already-open local profile remains available to the administrator.
+        })
     }
   }
 
-  const openManagedStudent = async (studentId, learnerId) => {
+  const openManagedStudent = (studentId, learnerId) => {
     setAdminActionError('')
-    setProcessingAccountId(studentId)
-    let cloudWarning = ''
-    if (cloudSyncEnabled()) {
-      try {
-        const profiles = await fetchCloudProfiles()
-        if (profiles.length) mergeCloudAccounts(profiles)
-      } catch (syncError) {
-        cloudWarning = `Cloud refresh warning: ${syncError.message}`
-      }
+    const student = getAccountById(studentId)
+    if (!student || student.role !== 'student') {
+      setAdminActionError('Student profile could not be loaded from this browser. Refresh the registrations list and try again.')
+      return
     }
-    try {
-      const student = getAccountById(studentId)
-      if (!student || student.role !== 'student') throw new Error('Student profile could not be loaded from either Supabase or this browser.')
-      setManagedLearnerId(learnerId)
-      setManagedAccount(student)
-      if (cloudWarning) setAdminActionError(cloudWarning)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (openError) {
-      setAdminActionError(openError.message)
-    } finally {
-      setProcessingAccountId('')
+    setManagedLearnerId(learnerId)
+    setManagedAccount(student)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    if (cloudSyncEnabled()) {
+      withTimeout(fetchCloudProfiles(), 8000, 'Cloud refresh timed out.')
+        .then((profiles) => {
+          if (profiles.length) mergeCloudAccounts(profiles)
+          const refreshed = getAccountById(studentId)
+          if (refreshed?.role === 'student') setManagedAccount(refreshed)
+        })
+        .catch(() => {
+          // The already-open local profile remains available to the administrator.
+        })
     }
   }
   const setLearnerStatus = async (accountId, learnerId, accessStatus) => {
