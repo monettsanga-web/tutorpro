@@ -33,6 +33,22 @@ function browserLanguage() {
   return languages.some((language) => language.code === short) ? short : 'en'
 }
 
+async function detectLocationLanguage() {
+  try {
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 3500)
+    const response = await fetch('https://ipapi.co/json/', { signal: controller.signal })
+    window.clearTimeout(timeout)
+    if (response.ok) {
+      const location = await response.json()
+      return countryLanguages[location.country_code] || browserLanguage()
+    }
+  } catch {
+    return browserLanguage()
+  }
+  return browserLanguage()
+}
+
 function setTranslationCookie(language) {
   const value = language === 'en' ? '/en/en' : `/en/${language}`
   document.cookie = `googtrans=${value};path=/;max-age=31536000;SameSite=Lax`
@@ -56,21 +72,7 @@ export default function AutoTranslate() {
     const saved = localStorage.getItem('tutorpro_language')
 
     const initialise = async () => {
-      let targetLanguage = saved || browserLanguage()
-      if (!saved) {
-        try {
-          const controller = new AbortController()
-          const timeout = window.setTimeout(() => controller.abort(), 3500)
-          const response = await fetch('https://ipapi.co/json/', { signal: controller.signal })
-          window.clearTimeout(timeout)
-          if (response.ok) {
-            const location = await response.json()
-            targetLanguage = countryLanguages[location.country_code] || browserLanguage()
-          }
-        } catch {
-          targetLanguage = browserLanguage()
-        }
-      }
+      const targetLanguage = saved || await detectLocationLanguage()
       if (cancelled) return
       setLanguage(targetLanguage)
       setTranslationCookie(targetLanguage)
@@ -100,20 +102,29 @@ export default function AutoTranslate() {
     return () => { cancelled = true }
   }, [])
 
-  const chooseLanguage = (event) => {
-    const nextLanguage = event.target.value
-    setLanguage(nextLanguage)
+  const chooseLanguage = async (event) => {
+    const selection = event.target.value
+    if (selection === 'auto') {
+      localStorage.removeItem('tutorpro_language')
+      setAutomatic(true)
+      const detectedLanguage = await detectLocationLanguage()
+      setLanguage(detectedLanguage)
+      changeGoogleLanguage(detectedLanguage)
+      return
+    }
+    setLanguage(selection)
     setAutomatic(false)
-    localStorage.setItem('tutorpro_language', nextLanguage)
-    changeGoogleLanguage(nextLanguage)
+    localStorage.setItem('tutorpro_language', selection)
+    changeGoogleLanguage(selection)
   }
 
   return (
     <div className="language-control">
       <div id="google_translate_element" aria-hidden="true" />
-      <Globe2 size={16} />
-      <span>{automatic ? 'Auto' : 'Language'}</span>
-      <select value={language} onChange={chooseLanguage} aria-label="Choose website language">
+      <Globe2 size={17} />
+      <span>Choose language</span>
+      <select value={automatic ? 'auto' : language} onChange={chooseLanguage} aria-label="Choose website language">
+        <option value="auto">Auto-detect</option>
         {languages.map((item) => <option value={item.code} key={item.code}>{item.label}</option>)}
       </select>
     </div>

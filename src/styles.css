@@ -1961,17 +1961,22 @@ h3 {
   font-size: 0.55rem;
   font-weight: 800;
   letter-spacing: 0.06em;
+  white-space: nowrap;
   text-transform: uppercase;
 }
 
 .language-control select {
-  max-width: 108px;
+  max-width: 125px;
+  min-height: 29px;
   border: 0;
+  border-radius: 8px;
   outline: 0;
-  background: transparent;
+  padding: 0 7px;
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 0.68rem;
   font-weight: 750;
+  cursor: pointer;
 }
 
 .language-control select option {
@@ -3247,6 +3252,15 @@ body {
   .container,
   .header-inner {
     width: min(100% - 32px, 1160px);
+  }
+
+  .language-control {
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .language-control > span {
+    display: none;
   }
 
   .section {
