@@ -2661,15 +2661,12 @@ body {
   line-height: 1.15;
 }
 
-.provider-method__external {
+.provider-method__selected {
   position: absolute;
   top: 7px;
   right: 7px;
-  color: #aaa2b4;
-}
-
-.provider-method.active .provider-method__external {
   color: var(--coral);
+  filter: drop-shadow(0 2px 4px rgba(255, 79, 135, 0.2));
 }
 
 .provider-picker > p {

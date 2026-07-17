@@ -1,73 +1,38 @@
 import { MdAlternateEmail } from 'react-icons/md'
 import { SiGmail, SiWhatsapp, SiWechat } from 'react-icons/si'
 import { FaYahoo } from 'react-icons/fa6'
-import { ExternalLink } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 
 const authProviderOptions = [
-  {
-    id: 'gmail',
-    label: 'Gmail',
-    action: 'Google sign in',
-    url: 'https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmail.google.com%2F',
-    Icon: SiGmail,
-  },
-  {
-    id: 'yahoo',
-    label: 'Yahoo Mail',
-    action: 'Yahoo sign in',
-    url: 'https://login.yahoo.com/',
-    Icon: FaYahoo,
-  },
-  {
-    id: 'wechat',
-    label: 'WeChat',
-    action: 'Open WeChat',
-    url: 'https://www.wechat.com/',
-    Icon: SiWechat,
-  },
-  {
-    id: 'whatsapp',
-    label: 'WhatsApp',
-    action: 'WhatsApp Web',
-    url: 'https://web.whatsapp.com/',
-    Icon: SiWhatsapp,
-  },
-  {
-    id: 'email',
-    label: 'Other email',
-    action: 'Open email app',
-    url: 'mailto:',
-    Icon: MdAlternateEmail,
-  },
+  { id: 'gmail', label: 'Gmail', action: 'Use Gmail address', Icon: SiGmail },
+  { id: 'yahoo', label: 'Yahoo Mail', action: 'Use Yahoo address', Icon: FaYahoo },
+  { id: 'wechat', label: 'WeChat', action: 'Use WeChat ID', Icon: SiWechat },
+  { id: 'whatsapp', label: 'WhatsApp', action: 'Use phone number', Icon: SiWhatsapp },
+  { id: 'email', label: 'Other email', action: 'Any email provider', Icon: MdAlternateEmail },
 ]
 
 export default function AuthProviderPicker({ value, onSelect }) {
   return (
     <fieldset className="provider-picker provider-picker--branded">
-      <legend>Choose how to sign in</legend>
+      <legend>Choose how to create your TutorPro English account</legend>
       <div>
-        {authProviderOptions.map(({ id, label, action, url, Icon }) => {
-          const external = url.startsWith('http')
-          return (
-            <a
-              className={`provider-method provider-method--${id} ${value === id ? 'active' : ''}`}
-              href={url}
-              target={external ? '_blank' : undefined}
-              rel={external ? 'noopener noreferrer' : undefined}
-              onClick={() => onSelect(id)}
-              key={id}
-              aria-label={`${action}; use ${label} for TutorPro English`}
-              title={`${action} — opens in ${external ? 'a new tab' : 'your email app'}`}
-            >
-              <span className="provider-method__logo"><Icon aria-hidden="true" /></span>
-              <strong>{label}</strong>
-              <small>{action}</small>
-              <ExternalLink className="provider-method__external" size={11} aria-hidden="true" />
-            </a>
-          )
-        })}
+        {authProviderOptions.map(({ id, label, action, Icon }) => (
+          <button
+            type="button"
+            className={`provider-method provider-method--${id} ${value === id ? 'active' : ''}`}
+            onClick={() => onSelect(id)}
+            key={id}
+            aria-pressed={value === id}
+            aria-label={`Use ${label} to create a TutorPro English account`}
+          >
+            <span className="provider-method__logo"><Icon aria-hidden="true" /></span>
+            <strong>{label}</strong>
+            <small>{action}</small>
+            {value === id && <CheckCircle2 className="provider-method__selected" size={13} aria-hidden="true" />}
+          </button>
+        ))}
       </div>
-      <p>Choose a logo to open that provider securely. TutorPro English stays open so you can return and finish registration.</p>
+      <p>Your account is created directly on TutorPro English. Selecting a method will not send you to another website.</p>
     </fieldset>
   )
 }

@@ -8,8 +8,8 @@ A responsive TutorPro English website with automatic location-aware translation,
 
 - Two-step family and learner registration
 - Sign up and log in with Gmail, Yahoo Mail, WeChat ID, WhatsApp number or another email provider
-- Official branded icons for Gmail, Yahoo, WeChat, WhatsApp and other email apps
-- Every provider icon is a secure launch link that opens its own sign-in/sign-up platform while preserving the TutorPro English registration form
+- Official branded icons for Gmail, Yahoo, WeChat, WhatsApp and other email methods
+- Provider selection stays inside TutorPro English so users can complete registration without being redirected
 - One family account can manage one to three named student profiles
 - Individual payment status, schedules, progress and display photo for each student
 - Unpaid students are automatically prevented from booking
