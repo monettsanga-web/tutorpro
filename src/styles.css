@@ -331,6 +331,218 @@ h3 {
   font-weight: 800;
 }
 
+.header-account-menu {
+  position: relative;
+  padding: 8px 0;
+}
+
+.account-link--trigger {
+  min-height: 42px;
+  gap: 9px;
+  border-radius: 10px;
+  padding: 0 7px;
+  transition: background 160ms ease;
+}
+
+.account-link--trigger:hover,
+.header-account-menu:focus-within .account-link--trigger {
+  background: #f2ecff;
+}
+
+.account-link--trigger > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.account-link--trigger small {
+  color: var(--muted);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-link--trigger strong {
+  max-width: 100px;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.71rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-link--trigger > svg {
+  color: #8d82a1;
+  transition: transform 180ms ease;
+}
+
+.header-account-menu:hover .account-link--trigger > svg,
+.header-account-menu:focus-within .account-link--trigger > svg {
+  transform: rotate(180deg);
+}
+
+.header-account-dropdown {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% - 2px);
+  right: 0;
+  width: 315px;
+  padding: 10px;
+  border: 1px solid #e3dceb;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 60px rgba(40, 18, 78, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  visibility: hidden;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.header-account-menu:hover .header-account-dropdown,
+.header-account-menu:focus-within .header-account-dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.header-account-dropdown::before {
+  position: absolute;
+  top: -7px;
+  right: 30px;
+  width: 13px;
+  height: 13px;
+  border-top: 1px solid #e3dceb;
+  border-left: 1px solid #e3dceb;
+  background: #fff;
+  content: '';
+  transform: rotate(45deg);
+}
+
+.header-account-dropdown__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+  border-radius: 11px;
+  padding: 11px;
+  background: linear-gradient(120deg, #f4efff, #effbd5);
+}
+
+.header-account-dropdown__identity > span {
+  display: grid;
+  width: 41px;
+  height: 41px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.header-account-dropdown__identity > div,
+.header-account-dropdown > button > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.header-account-dropdown__identity strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-account-dropdown__identity small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.55rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-account-dropdown > button {
+  display: grid;
+  width: 100%;
+  min-height: 58px;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 9px;
+  background: transparent;
+  text-align: left;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.header-account-dropdown > button:hover {
+  background: #f6f3fb;
+  transform: translateX(2px);
+}
+
+.header-account-dropdown > button > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 9px;
+  background: #ece5fb;
+  color: var(--ink-2);
+}
+
+.header-account-dropdown > button strong {
+  color: var(--ink);
+  font-size: 0.68rem;
+}
+
+.header-account-dropdown > button small {
+  color: var(--muted);
+  font-size: 0.52rem;
+}
+
+.header-account-dropdown > button > svg {
+  color: #a298b1;
+}
+
+.header-account-dropdown > button.header-signout {
+  grid-template-columns: auto 1fr;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 10px 10px;
+}
+
+.header-account-dropdown > button.header-signout > span {
+  background: #ffe8ef;
+  color: #c83e6c;
+}
+
+.header-account-dropdown > button.header-signout strong {
+  color: #ac315b;
+}
+
+.mobile-logout-button {
+  display: flex;
+  width: 100%;
+  min-height: 47px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #f0c9d7;
+  border-radius: 9px;
+  background: #fff5f8;
+  color: #aa315b;
+  font-weight: 750;
+}
+
 /* ---------- Header ---------- */
 .site-header {
   position: sticky;
@@ -3050,8 +3262,7 @@ body {
     font-size: 0.7rem;
   }
 
-  .header-actions .login-link,
-  .header-actions .account-link {
+  .header-actions .login-link {
     display: none;
   }
 

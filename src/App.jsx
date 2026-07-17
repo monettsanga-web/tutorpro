@@ -13,6 +13,8 @@ import {
   Globe2,
   GraduationCap,
   Heart,
+  LayoutDashboard,
+  LogOut,
   Menu,
   MessageCircle,
   ShieldCheck,
@@ -122,9 +124,10 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount }) {
+function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro English user'
+  const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
 
   const closeMenu = () => setMenuOpen(false)
   const openAndClose = (callback) => {
@@ -143,7 +146,10 @@ function Header({ onBook, onLogin, onAccount, onTeacherAccess, onAdminAccess, cu
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
           <div className="nav__mobile-actions">
             {currentAccount ? (
-              <button className="account-link" onClick={() => openAndClose(onAccount)}><span>{accountName.slice(0, 1).toUpperCase()}</span>Open my dashboard</button>
+              <>
+                <button className="account-link" onClick={() => openAndClose(onAccount)}><span>{accountName.slice(0, 1).toUpperCase()}</span>Open my dashboard</button>
+                <button className="mobile-logout-button" onClick={() => openAndClose(onLogout)}><LogOut size={17} /> Log out</button>
+              </>
             ) : (
               <>
                 <button className="mobile-portal-button mobile-portal-button--primary" onClick={() => openAndClose(onBook)}>Student registration</button>
@@ -156,7 +162,14 @@ function Header({ onBook, onLogin, onAccount, onTeacherAccess, onAdminAccess, cu
         </nav>
         <div className="header-actions">
           {currentAccount ? (
-            <button className="account-link" onClick={onAccount}><span>{accountName.slice(0, 1).toUpperCase()}</span>Hi, {accountName.split(' ')[0]}</button>
+            <div className="header-account-menu">
+              <button className="account-link account-link--trigger" aria-haspopup="menu"><span>{accountName.slice(0, 1).toUpperCase()}</span><div><small>{accountRole}</small><strong>Hi, {accountName.split(' ')[0]}</strong></div><ChevronDown size={15} /></button>
+              <div className="header-account-dropdown" role="menu">
+                <div className="header-account-dropdown__identity"><span>{accountName.slice(0, 1).toUpperCase()}</span><div><strong>{accountName}</strong><small>{currentAccount.loginId || currentAccount.email}</small></div></div>
+                <button role="menuitem" onClick={onAccount}><span><LayoutDashboard size={17} /></span><div><strong>Open dashboard</strong><small>Continue learning and manage your account</small></div><ArrowRight size={15} /></button>
+                <button className="header-signout" role="menuitem" onClick={onLogout}><span><LogOut size={17} /></span><div><strong>Log out</strong><small>Sign out safely from this device</small></div></button>
+              </div>
+            </div>
           ) : (
             <>
               <button className="header-portal-link" onClick={onLogin}>Student login</button>
@@ -779,6 +792,7 @@ export default function App() {
         onBook={openRegistration}
         onLogin={openLogin}
         onAccount={openAccount}
+        onLogout={logout}
         onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}

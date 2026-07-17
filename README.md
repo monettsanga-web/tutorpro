@@ -48,6 +48,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Select a specific student name and book an available teacher slot on their behalf
 - Platform-wide booking status controls
 - Overview metrics for students, teachers and lessons
+- Hover/focus account menu on the homepage with direct dashboard access and secure logout
 
 ### Localisation
 
