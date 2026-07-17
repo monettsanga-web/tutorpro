@@ -1595,6 +1595,181 @@
   padding-bottom: 8px;
 }
 
+/* Profile media */
+.profile-media-photo {
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  background: linear-gradient(135deg, var(--portal-blue), #70b4f3);
+  color: #fff;
+}
+
+.profile-media-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-media-photo > strong {
+  color: inherit;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+}
+
+.portal-avatar-media {
+  width: 35px;
+  height: 35px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+}
+
+.portal-avatar-media > strong {
+  font-size: 0.72rem;
+}
+
+.student-profile-photo-wrap,
+.teacher-profile-photo-wrap {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  flex: 0 0 auto;
+}
+
+.student-profile-photo,
+.teacher-profile-photo {
+  width: 100%;
+  height: 100%;
+  border: 7px solid #fff;
+  border-radius: 31px;
+  box-shadow: 0 12px 30px rgba(40, 121, 216, 0.22);
+  font-size: 2.2rem;
+  transform: rotate(-3deg);
+}
+
+.teacher-profile-photo {
+  background: #fff;
+  color: var(--portal-navy);
+}
+
+.student-profile-photo-wrap > label,
+.teacher-profile-photo-wrap > label {
+  position: absolute;
+  z-index: 4;
+  right: -8px;
+  bottom: -7px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: var(--portal-orange);
+  color: #fff;
+  cursor: pointer;
+}
+
+.student-profile-photo-wrap input,
+.teacher-profile-photo-wrap input,
+.media-upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.teacher-snapshot-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--portal-navy);
+  font-size: 1.5rem;
+}
+
+.profile-intro-video,
+.profile-video-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background: var(--portal-navy);
+}
+
+.profile-intro-video {
+  display: block;
+  object-fit: cover;
+}
+
+.profile-video-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: #c5d4e7;
+  text-align: left;
+}
+
+.profile-video-placeholder > span {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--portal-orange);
+  color: #fff;
+}
+
+.profile-video-placeholder > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-video-placeholder strong {
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+.profile-video-placeholder small {
+  color: #9db0ca;
+  font-size: 0.59rem;
+}
+
+.teacher-public-profile-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+}
+
+.teacher-video-manager .portal-card__heading {
+  margin-bottom: 15px;
+}
+
+.media-upload-button {
+  position: relative;
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid #d7e0eb;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--portal-blue);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.teacher-video-manager > p {
+  margin: 10px 0 0;
+  color: var(--portal-muted);
+  font-size: 0.59rem;
+  line-height: 1.55;
+}
+
 /* Student profile */
 .student-profile-hero,
 .teacher-profile-hero {
@@ -1859,7 +2034,7 @@
   transform: rotate(-3deg);
 }
 
-.teacher-profile-snapshot__avatar span {
+.teacher-profile-snapshot__avatar .teacher-snapshot-verified {
   position: absolute;
   right: -7px;
   bottom: -7px;
@@ -2072,6 +2247,183 @@
   color: var(--portal-muted);
   font-size: 0.84rem;
   line-height: 1.75;
+}
+
+/* Ratings and class feedback */
+.rate-class-button,
+.rated-class-label {
+  display: inline-flex;
+  min-height: 33px;
+  align-items: center;
+  gap: 5px;
+  border-radius: 8px;
+  padding: 0 9px;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.rate-class-button {
+  border: 0;
+  background: #fff3d8;
+  color: #a46d0e;
+}
+
+.rated-class-label {
+  background: #fff3d8;
+  color: #b47a15;
+}
+
+.lesson-feedback-preview {
+  display: flex;
+  max-width: 560px;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  border-left: 3px solid var(--portal-blue);
+  padding: 6px 9px;
+  background: #f1f6fd;
+  color: #526981;
+}
+
+.lesson-feedback-preview strong {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #2f5f95;
+  font-size: 0.59rem;
+}
+
+.lesson-feedback-preview span,
+.lesson-feedback-preview small {
+  font-size: 0.6rem;
+  line-height: 1.45;
+}
+
+.lesson-rating-preview {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  color: #d49818;
+  font-size: 0.59rem;
+  font-weight: 750;
+}
+
+.lesson-rating-preview span {
+  overflow: hidden;
+  color: var(--portal-muted);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lesson-action--feedback {
+  background: #eee9fb;
+  color: #6d50ad;
+}
+
+.rating-dialog {
+  width: min(510px, 100%);
+  text-align: center;
+}
+
+.rating-dialog__icon {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  margin: 2px auto 20px;
+  place-items: center;
+  border-radius: 21px;
+  background: #fff1cf;
+  color: #dc9b11;
+  transform: rotate(-4deg);
+}
+
+.rating-dialog h2 {
+  margin-bottom: 9px;
+  font-size: 1.55rem;
+}
+
+.rating-dialog > p {
+  color: var(--portal-muted);
+  font-size: 0.72rem;
+}
+
+.rating-dialog form,
+.feedback-form {
+  display: grid;
+  gap: 14px;
+}
+
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.rating-stars button {
+  border: 0;
+  padding: 3px;
+  background: transparent;
+  color: #d5dce5;
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.rating-stars button:hover,
+.rating-stars button.active {
+  color: #e4a41b;
+  transform: translateY(-2px) scale(1.05);
+}
+
+.rating-dialog label,
+.feedback-form label {
+  display: grid;
+  gap: 6px;
+  color: #344a67;
+  font-size: 0.66rem;
+  font-weight: 750;
+  text-align: left;
+}
+
+.rating-dialog label span i {
+  color: var(--portal-muted);
+  font-size: 0.57rem;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.rating-dialog textarea,
+.feedback-form textarea,
+.feedback-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d9e2ee;
+  border-radius: 9px;
+  outline: 0;
+  padding: 10px 11px;
+  background: #fff;
+  color: #263b59;
+  font-size: 0.72rem;
+}
+
+.rating-dialog textarea,
+.feedback-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.rating-dialog textarea:focus,
+.feedback-form textarea:focus,
+.feedback-form input:focus {
+  border-color: var(--portal-blue);
+  box-shadow: 0 0 0 3px rgba(40, 121, 216, 0.1);
+}
+
+.feedback-form > div:not(.portal-dialog__actions) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
 }
 
 /* Admin portal */
@@ -2982,7 +3334,8 @@
   }
 
   .booking-layout,
-  .profile-layout {
+  .profile-layout,
+  .teacher-public-profile-grid {
     grid-template-columns: 1fr;
   }
 
@@ -3217,7 +3570,8 @@
   }
 
   .admin-teacher-form__row,
-  .admin-teacher-form__row--three {
+  .admin-teacher-form__row--three,
+  .feedback-form > div:not(.portal-dialog__actions) {
     grid-template-columns: 1fr;
   }
 

@@ -24,7 +24,8 @@ import {
 import AuthModal from './AuthModal.jsx'
 import PortalAccess from './PortalAccess.jsx'
 import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
-import { getCurrentAccount, initializePlatform, logoutAccount } from './auth.js'
+import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, updateAccount } from './auth.js'
+import { IntroVideo, ProfilePhoto } from './ProfileMedia.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -116,6 +117,7 @@ function Header({ onBook, onLogin, onAccount, onTeacherAccess, onAdminAccess, cu
         <Logo />
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
           <a href="#programmes" onClick={closeMenu}>Programmes</a>
+          <a href="#teachers" onClick={closeMenu}>Teachers</a>
           <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
           <div className="nav__mobile-actions">
@@ -394,6 +396,36 @@ function HowItWorks({ onBook }) {
   )
 }
 
+function TeacherShowcase({ onChooseTeacher }) {
+  const teachers = getApprovedTeachers()
+
+  return (
+    <section className="section public-teachers" id="teachers">
+      <div className="container">
+        <div className="section-heading section-heading--split">
+          <div><span className="kicker">Choose with confidence</span><h2>Meet the people behind every breakthrough.</h2></div>
+          <p>Watch teacher introductions, compare experience and choose the educator who feels right for your child.</p>
+        </div>
+        <div className="public-teacher-grid">
+          {teachers.map((teacher) => (
+            <article className="public-teacher-card" key={teacher.id}>
+              <div className="public-teacher-card__video"><IntroVideo accountId={teacher.id} compact /></div>
+              <div className="public-teacher-card__profile">
+                <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="public-teacher-photo" />
+                <div><span className="available"><i /> Available for students</span><h3>{teacher.fullName}</h3><p>{teacher.teacher.specialization}</p></div>
+                <div className="public-teacher-rating"><Star size={15} fill="currentColor" /><strong>{teacher.teacher.rating || 'New'}</strong>{teacher.teacher.ratingCount > 0 && <small>({teacher.teacher.ratingCount})</small>}</div>
+              </div>
+              <p className="public-teacher-card__bio">{teacher.teacher.bio}</p>
+              <div className="public-teacher-facts"><span><strong>{teacher.teacher.experience}</strong> years</span><span><strong>{teacher.teacher.lessonsCompleted || 0}</strong> lessons</span><span><strong>{teacher.teacher.languages?.split(',')[0]}</strong> language</span></div>
+              <button className="button button--primary button--full" onClick={() => onChooseTeacher(teacher)}>Choose {teacher.fullName.split(' ')[0]} <ArrowRight size={17} /></button>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Pricing({ onBook }) {
   return (
     <section className="section pricing" id="pricing">
@@ -526,6 +558,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <h3>Explore</h3>
               <a href="#why">Why TutorPro</a>
               <a href="#programmes">Programmes</a>
+              <a href="#teachers">Teachers</a>
               <a href="#journey">How it works</a>
               <a href="#pricing">Pricing</a>
             </div>
@@ -559,6 +592,7 @@ export default function App() {
   const [roleAccess, setRoleAccess] = useState(null)
   const [activePortal, setActivePortal] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState('')
+  const [preferredTeacher, setPreferredTeacher] = useState(null)
   const [currentAccount, setCurrentAccount] = useState(() => {
     initializePlatform()
     return getCurrentAccount()
@@ -606,6 +640,7 @@ export default function App() {
       return
     }
     setSelectedPlan(typeof plan === 'string' ? plan : '')
+    setPreferredTeacher(null)
     setAuthMode('register')
     setRoleAccess(null)
     setAuthOpen(true)
@@ -621,6 +656,20 @@ export default function App() {
   const openAccount = () => {
     if (currentAccount) enterPortal(currentAccount)
     else openLogin()
+  }
+
+  const chooseTeacher = (teacher) => {
+    if (currentAccount?.role === 'student') {
+      const updated = updateAccount(currentAccount.id, { preferredTeacherId: teacher.id })
+      setCurrentAccount(updated)
+      enterPortal(updated)
+      return
+    }
+    setSelectedPlan('')
+    setPreferredTeacher(teacher)
+    setAuthMode('register')
+    setRoleAccess(null)
+    setAuthOpen(true)
   }
 
   const openRoleAccess = (role) => {
@@ -666,6 +715,7 @@ export default function App() {
         <WhyTutorPro />
         <Programmes />
         <HowItWorks onBook={openRegistration} />
+        <TeacherShowcase onChooseTeacher={chooseTeacher} />
         <Pricing onBook={openRegistration} />
         <FAQ onBook={openRegistration} />
         <FinalCTA onBook={openRegistration} />
@@ -682,6 +732,7 @@ export default function App() {
         <AuthModal
           initialMode={authMode}
           selectedPlan={selectedPlan}
+          preferredTeacher={preferredTeacher}
           currentAccount={currentAccount}
           onClose={() => setAuthOpen(false)}
           onAuthenticated={setCurrentAccount}

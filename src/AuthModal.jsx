@@ -44,6 +44,7 @@ function FieldError({ children }) {
 export default function AuthModal({
   initialMode = 'register',
   selectedPlan = '',
+  preferredTeacher = null,
   currentAccount,
   onClose,
   onAuthenticated,
@@ -116,7 +117,7 @@ export default function AuthModal({
     setIsSubmitting(true)
     setFormError('')
     try {
-      const account = await registerAccount({ ...form, selectedPlan })
+      const account = await registerAccount({ ...form, selectedPlan, preferredTeacherId: preferredTeacher?.id || '' })
       setCreatedAccount(account)
       onAuthenticated(account)
       setView('success')
@@ -308,6 +309,7 @@ export default function AuthModal({
                     </div>
                     <FieldError>{errors.frequency}</FieldError>
                   </fieldset>
+                  {preferredTeacher && <div className="selected-teacher"><UserRound size={16} /><span><strong>{preferredTeacher.fullName} selected</strong><small>{preferredTeacher.teacher.specialization}</small></span></div>}
                   {selectedPlan && <div className="selected-plan"><Sparkles size={16} /> {selectedPlan} plan selected</div>}
                   <div className="auth-form__actions">
                     <button className="button button--outline" type="button" onClick={() => setRegisterStep(1)}><ArrowLeft size={16} /> Back</button>

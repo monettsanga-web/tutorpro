@@ -7,7 +7,9 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 ### Student / parent
 
 - Two-step family and learner registration
-- Personalised student profile with goals, progress, streaks and achievements
+- Personalised student profile with an uploaded display photo, goals, progress, streaks and achievements
+- One rating and optional review after every completed class
+- Teacher feedback, strengths, next steps and homework shown on completed lessons
 - 24-hour weekly lesson calendar divided into 30-minute slots
 - One-to-one booking restricted to teacher-approved availability
 - Booking history, calendar status tracking and cancellation
@@ -16,6 +18,9 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 ### Teacher
 
 - Teacher registration and professional profile application
+- Display photo and introduction-video uploads for the public teacher showcase
+- Public teacher discovery with experience, ratings and teacher selection
+- Post-class student feedback with strengths, next steps and optional homework
 - Credential filename capture for administrator review
 - Approval-status visibility
 - Booking acceptance, decline and lesson completion
@@ -50,4 +55,4 @@ npm run build
 
 ## Data and authentication note
 
-The current build is a fully interactive browser prototype. Accounts, approval states, profiles and bookings persist on the current device using local storage, and passwords are salted and hashed with the Web Crypto API. Before using the platform with real customers across multiple devices, connect the included data functions to a hosted authentication/database service such as Supabase, Firebase or a custom API.
+The current build is a fully interactive browser prototype. Accounts, approval states, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Passwords are salted and hashed with the Web Crypto API. Before using the platform with real customers across multiple devices, connect the included data and media functions to a hosted authentication, database and file-storage service such as Supabase, Firebase or a custom API.

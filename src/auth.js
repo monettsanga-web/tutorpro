@@ -161,6 +161,7 @@ export async function registerAccount(details) {
       achievements: ['First step'],
     },
     selectedPlan: details.selectedPlan || '',
+    preferredTeacherId: details.preferredTeacherId || '',
     createdAt: new Date().toISOString(),
   }
 

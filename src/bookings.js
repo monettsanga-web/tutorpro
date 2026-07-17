@@ -1,4 +1,4 @@
-import { getAccountById } from './auth.js'
+import { getAccountById, updateTeacherProfile } from './auth.js'
 import { lessonSlotKeys, timeToMinutes } from './schedule.js'
 
 const BOOKINGS_KEY = 'tutorpro_bookings_v1'
@@ -80,6 +80,43 @@ export function updateBooking(bookingId, changes) {
 
 export function cancelBooking(bookingId) {
   return updateBooking(bookingId, { status: 'cancelled' })
+}
+
+export function rateCompletedBooking(bookingId, studentId, rating, comment = '') {
+  const booking = readBookings().find((item) => item.id === bookingId)
+  if (!booking || booking.studentId !== studentId) throw new Error('This lesson does not belong to the student account.')
+  if (booking.status !== 'completed') throw new Error('A lesson can be rated after it is completed.')
+  if (booking.studentRating) throw new Error('This lesson has already been rated.')
+  const score = Number(rating)
+  if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error('Choose a rating from one to five stars.')
+
+  const updated = updateBooking(bookingId, {
+    studentRating: { score, comment: comment.trim(), createdAt: new Date().toISOString() },
+  })
+  const teacherRatings = readBookings()
+    .filter((item) => item.teacherId === booking.teacherId && item.studentRating?.score)
+    .map((item) => item.studentRating.score)
+  if (teacherRatings.length) {
+    const average = Math.round((teacherRatings.reduce((sum, value) => sum + value, 0) / teacherRatings.length) * 10) / 10
+    updateTeacherProfile(booking.teacherId, { rating: average, ratingCount: teacherRatings.length })
+  }
+  return updated
+}
+
+export function saveTeacherFeedback(bookingId, teacherId, feedback) {
+  const booking = readBookings().find((item) => item.id === bookingId)
+  if (!booking || booking.teacherId !== teacherId) throw new Error('This lesson is not assigned to the teacher account.')
+  if (!feedback.summary?.trim()) throw new Error('Add a short class summary before saving feedback.')
+  return updateBooking(bookingId, {
+    status: 'completed',
+    teacherFeedback: {
+      summary: feedback.summary.trim(),
+      strength: feedback.strength?.trim() || '',
+      nextStep: feedback.nextStep?.trim() || '',
+      homework: feedback.homework?.trim() || '',
+      createdAt: new Date().toISOString(),
+    },
+  })
 }
 
 export function getBookingStats() {
