@@ -7,6 +7,8 @@ import {
   CalendarCheck2,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Globe2,
   GraduationCap,
@@ -59,6 +61,25 @@ const programmes = {
     },
   ],
 }
+
+const curriculumSlides = [
+  { id: '1ENm8p2-G_glMXNyojA6e180EEWFIELYO', title: 'Power Up', publisher: 'Cambridge', level: 'Primary series', tone: 'cyan' },
+  { id: '1DR1mPyBwMFLXXPvYDX4RpGOkXS3pEf5L', title: 'Power Up Academy', publisher: 'Cambridge', level: 'Young learners', tone: 'orange' },
+  { id: '1TZdRANL2OTg50UiTTcFIV17-E-ULyfxv', title: 'Grammar Friends', publisher: 'Oxford', level: 'Grammar series', tone: 'violet' },
+  { id: '1IYX1WmS69ZuuKQeIwQSt0Y2qJHcjoHPC', title: 'Family and Friends', publisher: 'Oxford', level: 'Primary series', tone: 'green' },
+  { id: '1zvWowq1nDpftZLior_jOHiDLrECOXZSc', title: 'THiNK', publisher: 'Cambridge', level: 'Secondary series', tone: 'pink' },
+  { id: '1glUQpYaPNfGP2HGjaCJE3TWyIVlSzIgq', title: 'Global English', publisher: 'Cambridge', level: 'Primary series', tone: 'blue' },
+  { id: '1LVx0W1YK8TuSRLu97kQl-ydGsQBOfuvu', title: 'Phonics Monster ASAP', publisher: 'A-List', level: 'Phonics', tone: 'lime' },
+  { id: '1_E3DCPaqM_o-oDK9UGpEKKL7_SAGr9_I', title: 'Best Phonics', publisher: 'A-List', level: 'Early readers', tone: 'green' },
+  { id: '1Xd2aZnnrWIn-OtFoRqVadMtxG_ng7hIM', title: 'Everybody Up', publisher: 'Oxford', level: 'Primary series', tone: 'violet' },
+  { id: '1RCJobEvIAqmM80-9vOE8a9RrQqvD3cZq', title: "Let's Go", publisher: 'Oxford', level: 'Young learners', tone: 'yellow' },
+  { id: '1jycufY6vwbEwLkwp3Rl6nHAY538Fo4l3', title: 'Phonics Monster', publisher: 'A-List', level: 'Phonics', tone: 'yellow' },
+  { id: '1GWmHeEDtpOw1WZQ--rBLiPkAIGKWMnwX', title: 'Ready, Set, Sing!', publisher: 'A-List', level: 'Early learners', tone: 'yellow' },
+  { id: '1XXrOahvCyezLd1tX8MIlP8H9-v3yxFlo', title: 'Smart Up', publisher: 'A-List', level: 'Primary series', tone: 'blue' },
+  { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
+]
+
+const driveImage = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w1600`
 
 const faqs = [
   {
@@ -230,6 +251,59 @@ function Stats() {
               <span>{label}</span>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CurriculumCarousel({ onBook }) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
+  const activeSlide = curriculumSlides[activeIndex]
+
+  const showSlide = (index) => setActiveIndex((index + curriculumSlides.length) % curriculumSlides.length)
+
+  useEffect(() => {
+    if (paused) return undefined
+    const timer = window.setInterval(() => showSlide(activeIndex + 1), 5200)
+    return () => window.clearInterval(timer)
+  }, [activeIndex, paused])
+
+  const finishSwipe = (event) => {
+    if (touchStart === null) return
+    const distance = event.changedTouches[0].clientX - touchStart
+    if (Math.abs(distance) > 50) showSlide(activeIndex + (distance < 0 ? 1 : -1))
+    setTouchStart(null)
+  }
+
+  return (
+    <section className="curriculum-showcase" id="materials" aria-label="English curriculum materials">
+      <div className="container">
+        <div className="curriculum-showcase__heading">
+          <div><span className="kicker">A world of learning</span><h2>Great lessons start with brilliant materials.</h2></div>
+          <p>Explore the colourful Cambridge, Oxford and international series that inspire our personalised English lessons.</p>
+        </div>
+
+        <div className={`curriculum-carousel curriculum-carousel--${activeSlide.tone}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onTouchStart={(event) => setTouchStart(event.touches[0].clientX)} onTouchEnd={finishSwipe}>
+          <div className="curriculum-carousel__copy" key={`copy-${activeSlide.id}`}>
+            <span className="curriculum-carousel__count">{String(activeIndex + 1).padStart(2, '0')} / {curriculumSlides.length}</span>
+            <div className="curriculum-carousel__brand"><BookOpen size={17} /> {activeSlide.publisher}</div>
+            <h3>{activeSlide.title}</h3>
+            <p>{activeSlide.level} · Carefully matched to each learner’s age, confidence and curriculum goals.</p>
+            <div className="curriculum-carousel__actions"><a className="button button--cream" href="#programmes">Explore programmes <ArrowRight size={16} /></a><button className="carousel-text-button" onClick={onBook}>Start with a free class</button></div>
+          </div>
+          <div className="curriculum-carousel__visual" key={`image-${activeSlide.id}`}>
+            <img src={driveImage(activeSlide.id)} alt={`${activeSlide.title} English learning book series`} loading={activeIndex === 0 ? 'eager' : 'lazy'} onError={(event) => { event.currentTarget.src = `https://lh3.googleusercontent.com/d/${activeSlide.id}=w1600` }} />
+          </div>
+          <button className="curriculum-arrow curriculum-arrow--prev" onClick={() => showSlide(activeIndex - 1)} aria-label="Previous curriculum"><ChevronLeft size={23} /></button>
+          <button className="curriculum-arrow curriculum-arrow--next" onClick={() => showSlide(activeIndex + 1)} aria-label="Next curriculum"><ChevronRight size={23} /></button>
+          <div className="curriculum-carousel__progress" aria-hidden="true"><span key={activeIndex} /></div>
+        </div>
+
+        <div className="curriculum-thumbnails" role="tablist" aria-label="Choose curriculum slide">
+          {curriculumSlides.map((slide, index) => <button role="tab" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onClick={() => showSlide(index)} key={slide.id}><img src={driveImage(slide.id)} alt="" loading="lazy" /><span>{slide.title}</span></button>)}
         </div>
       </div>
     </section>
@@ -712,6 +786,7 @@ export default function App() {
       <main>
         <Hero onBook={openRegistration} />
         <Stats />
+        <CurriculumCarousel onBook={openRegistration} />
         <WhyTutorPro />
         <Programmes />
         <HowItWorks onBook={openRegistration} />

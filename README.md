@@ -1,6 +1,6 @@
 # TutorPro English
 
-A responsive TutorPro English website with a playful lime, purple, pink and yellow visual system inspired by leading children's learning platforms, plus role-based registration, dashboards and lesson booking.
+A responsive TutorPro English website with a playful lime, purple, pink and yellow visual system, a Google Drive-powered curriculum carousel, role-based registration, dashboards and lesson booking.
 
 ## Included portals
 
