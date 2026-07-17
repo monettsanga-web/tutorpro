@@ -3234,21 +3234,25 @@ body {
 
 @media (max-width: 560px) {
   .auth-backdrop {
-    align-items: end;
+    align-items: stretch;
     padding: 0;
   }
 
   .auth-shell {
     width: 100%;
-    min-height: 0;
-    max-height: 94vh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
     border: 0;
-    border-radius: 23px 23px 0 0;
+    border-radius: 0;
   }
 
   .auth-panel {
     min-height: 0;
-    padding: 35px 20px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 54px 18px calc(24px + env(safe-area-inset-bottom));
   }
 
   .auth-close {

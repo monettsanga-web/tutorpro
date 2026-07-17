@@ -5069,13 +5069,18 @@
 
   .role-access {
     width: 100%;
-    min-height: 0;
-    max-height: 94vh;
-    border-radius: 23px 23px 0 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
   }
 
   .role-access__panel {
-    padding: 40px 20px 25px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 54px 18px calc(25px + env(safe-area-inset-bottom));
   }
 
   .role-login-heading {

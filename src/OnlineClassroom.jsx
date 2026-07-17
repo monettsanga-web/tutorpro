@@ -86,6 +86,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const participantIdRef = useRef(`${account.id}-${crypto.randomUUID().slice(0, 8)}`)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
+  const sharedScreenVideoRef = useRef(null)
+  const remoteStreamRef = useRef(null)
   const annotationCanvasRef = useRef(null)
   const stageRef = useRef(null)
   const localStreamRef = useRef(null)
@@ -102,6 +104,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [micOn, setMicOn] = useState(true)
   const [cameraOn, setCameraOn] = useState(true)
   const [screenSharing, setScreenSharing] = useState(false)
+  const [remoteScreenSharing, setRemoteScreenSharing] = useState(false)
+  const [presentedFile, setPresentedFile] = useState(null)
   const [connectionStatus, setConnectionStatus] = useState('waiting')
   const [participantCount, setParticipantCount] = useState(1)
   const [annotationMode, setAnnotationMode] = useState(false)
@@ -162,8 +166,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }, [joined])
 
   useEffect(() => {
-    setVideoStream(localVideoRef.current, localStreamRef.current)
-  }, [joined, screenSharing])
+    setVideoStream(localVideoRef.current, cameraStreamRef.current)
+    setVideoStream(sharedScreenVideoRef.current, screenStreamRef.current)
+    setVideoStream(remoteVideoRef.current, remoteStreamRef.current)
+  }, [joined, screenSharing, remoteScreenSharing])
 
   useEffect(() => {
     if (!joined || !access.allowed) return undefined
@@ -179,7 +185,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       peer.ontrack = (event) => {
         const stream = event.streams[0]
-        if (stream) setVideoStream(remoteVideoRef.current, stream)
+        if (stream) {
+          remoteStreamRef.current = stream
+          setVideoStream(remoteVideoRef.current, stream)
+        }
       }
       peer.onconnectionstatechange = () => {
         const status = peer.connectionState
@@ -244,6 +253,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         if (peer.remoteDescription) {
           try { await peer.addIceCandidate(message.candidate) } catch { /* Ignore stale candidates. */ }
         } else pendingIceRef.current.push(message.candidate)
+        return
+      }
+      if (message.type === 'screen-state') {
+        setRemoteScreenSharing(Boolean(message.active))
+        if (message.active) setPresentedFile(null)
+        return
+      }
+      if (message.type === 'presentation-file') {
+        setPresentedFile(message.file || null)
         return
       }
       if (message.type === 'annotation-path' && message.path) {
@@ -348,8 +366,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     const cameraTrack = cameraStreamRef.current?.getVideoTracks()[0]
     const sender = peerRef.current?.getSenders().find((item) => item.track?.kind === 'video')
     if (sender && cameraTrack) await sender.replaceTrack(cameraTrack)
-    localStreamRef.current = cameraStreamRef.current
-    setVideoStream(localVideoRef.current, cameraStreamRef.current)
+    setVideoStream(sharedScreenVideoRef.current, null)
+    transportRef.current?.send({ type: 'screen-state', active: false })
     setScreenSharing(false)
   }
 
@@ -368,8 +386,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       screenStreamRef.current = stream
       const sender = peerRef.current?.getSenders().find((item) => item.track?.kind === 'video')
       if (sender) await sender.replaceTrack(screenTrack)
-      localStreamRef.current = stream
-      setVideoStream(localVideoRef.current, stream)
+      setVideoStream(sharedScreenVideoRef.current, stream)
+      setPresentedFile(null)
+      transportRef.current?.send({ type: 'screen-state', active: true })
       setScreenSharing(true)
       screenTrack.onended = stopScreenShare
     } catch (error) {
@@ -452,8 +471,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       setFiles((current) => [...current, entry])
       transportRef.current?.send({ type: 'classroom-file', file: entry })
+      if (account.role === 'teacher') {
+        setPresentedFile(entry)
+        transportRef.current?.send({ type: 'presentation-file', file: entry })
+      }
     }
     reader.readAsDataURL(file)
+  }
+
+  const presentFile = (file) => {
+    setPresentedFile(file)
+    transportRef.current?.send({ type: 'presentation-file', file })
   }
 
   const copyRoomId = async () => {
@@ -503,27 +531,41 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       </header>
 
       <div className="classroom-workspace">
-        <section className="classroom-stage" ref={stageRef}>
-          <video className="classroom-remote-video" ref={remoteVideoRef} autoPlay playsInline />
-          {connectionStatus !== 'connected' && <div className="classroom-waiting"><span><Radio size={34} /></span><h2>Waiting for the other participant…</h2><p>Keep this room open. The connection begins automatically when they enter.</p></div>}
-          <canvas
-            ref={annotationCanvasRef}
-            className={annotationMode ? 'annotation-canvas active' : 'annotation-canvas'}
-            onPointerDown={startDrawing}
-            onPointerMove={continueDrawing}
-            onPointerUp={finishDrawing}
-            onPointerCancel={finishDrawing}
-          />
-          <div className="classroom-local-tile"><video ref={localVideoRef} autoPlay muted playsInline /><span>{screenSharing ? 'Your screen' : 'You'} · {participantName}</span>{!cameraOn && !screenSharing && <CameraOff size={25} />}</div>
-          {annotationMode && <div className="annotation-toolbar"><button className={annotationTool === 'pen' ? 'active' : ''} onClick={() => setAnnotationTool('pen')} title="Pen"><PenTool size={17} /></button><button className={annotationTool === 'highlighter' ? 'active' : ''} onClick={() => setAnnotationTool('highlighter')} title="Highlighter"><Circle size={17} /></button><button className={annotationTool === 'eraser' ? 'active' : ''} onClick={() => setAnnotationTool('eraser')} title="Eraser"><Eraser size={17} /></button><label title="Ink colour"><input type="color" value={annotationColor} onChange={(event) => setAnnotationColor(event.target.value)} /></label><button onClick={clearAnnotations} title="Clear annotations"><Trash2 size={17} /></button><button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button></div>}
-          <div className="classroom-stage__badge"><ShieldCheck size={13} /> End-to-end peer media</div>
+        <section className="classroom-stage">
+          <div className="classroom-video-rail">
+            <div className="classroom-camera-tile classroom-camera-tile--remote">
+              {!remoteScreenSharing && <video ref={remoteVideoRef} autoPlay playsInline />}
+              {connectionStatus !== 'connected' && <div className="camera-tile-waiting"><Radio size={22} /><span>Waiting for {account.role === 'teacher' ? learner?.name : teacher?.fullName}</span></div>}
+              <span>{account.role === 'teacher' ? learner?.name || 'Student' : teacher?.fullName || 'Teacher'}</span>
+            </div>
+            <div className="classroom-camera-tile classroom-camera-tile--local">
+              <video ref={localVideoRef} autoPlay muted playsInline />
+              <span>You · {participantName}</span>
+              {!cameraOn && <CameraOff size={24} />}
+            </div>
+            <div className="video-rail-status"><i className={connectionStatus === 'connected' ? 'online' : ''} /><span>{connectionStatus === 'connected' ? 'Audio & video connected' : 'Waiting for connection'}</span></div>
+          </div>
+
+          <div className="classroom-lesson-board" ref={stageRef}>
+            {screenSharing ? <video className="classroom-presentation-video" ref={sharedScreenVideoRef} autoPlay muted playsInline /> : remoteScreenSharing ? <video className="classroom-presentation-video" ref={remoteVideoRef} autoPlay playsInline /> : presentedFile ? <div className="classroom-file-presentation">{presentedFile.type?.startsWith('image/') ? <img src={presentedFile.dataUrl} alt={presentedFile.name} /> : presentedFile.type === 'application/pdf' ? <iframe src={presentedFile.dataUrl} title={presentedFile.name} /> : <div><Presentation size={54} /><strong>{presentedFile.name}</strong><span>Use the download button to open this lesson file.</span></div>}<small><Paperclip size={13} /> {presentedFile.name}</small></div> : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            <canvas
+              ref={annotationCanvasRef}
+              className={annotationMode ? 'annotation-canvas active' : 'annotation-canvas'}
+              onPointerDown={startDrawing}
+              onPointerMove={continueDrawing}
+              onPointerUp={finishDrawing}
+              onPointerCancel={finishDrawing}
+            />
+            {annotationMode && <div className="annotation-toolbar"><button className={annotationTool === 'pen' ? 'active' : ''} onClick={() => setAnnotationTool('pen')} title="Pen"><PenTool size={17} /></button><button className={annotationTool === 'highlighter' ? 'active' : ''} onClick={() => setAnnotationTool('highlighter')} title="Highlighter"><Circle size={17} /></button><button className={annotationTool === 'eraser' ? 'active' : ''} onClick={() => setAnnotationTool('eraser')} title="Eraser"><Eraser size={17} /></button><label title="Ink colour"><input type="color" value={annotationColor} onChange={(event) => setAnnotationColor(event.target.value)} /></label><button onClick={clearAnnotations} title="Clear annotations"><Trash2 size={17} /></button><button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button></div>}
+            <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
+          </div>
         </section>
 
         {sidebarOpen && <aside className="classroom-sidebar">
           <div className="classroom-sidebar__heading"><div><Paperclip size={18} /><span><strong>Lesson files</strong><small>Shared in this live room</small></span></div><button onClick={() => setSidebarOpen(false)}><X size={17} /></button></div>
           <label className="classroom-file-upload"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, image, document or slides · max 8 MB</span><input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*" onChange={uploadFile} /></label>
           {fileError && <div className="classroom-file-error">{fileError}</div>}
-          <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB</small></div><a href={file.dataUrl} download={file.name} title="Download"><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
+          <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB</small></div>{account.role !== 'student' && <button onClick={() => presentFile(file)} title="Present on lesson board"><Presentation size={16} /></button>}<a href={file.dataUrl} download={file.name} title="Download"><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
           <div className="classroom-people"><span><Users size={17} /> Participants</span><div><i className="online" /><strong>{participantName}</strong><small>{account.role}</small></div>{connectionStatus === 'connected' && <div><i className="online" /><strong>{account.role === 'teacher' ? learner?.name : teacher?.fullName}</strong><small>{account.role === 'teacher' ? 'student' : 'teacher'}</small></div>}</div>
         </aside>}
       </div>
