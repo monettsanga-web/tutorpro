@@ -100,8 +100,9 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, currentAccount }) {
+function Header({ onBook, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro user'
 
   const closeMenu = () => setMenuOpen(false)
   const openAndClose = (callback) => {
@@ -114,44 +115,37 @@ function Header({ onBook, onLogin, onAccount, currentAccount }) {
       <div className="header-inner">
         <Logo />
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
-          <a href="#why" onClick={closeMenu}>Why TutorPro</a>
           <a href="#programmes" onClick={closeMenu}>Programmes</a>
           <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
-          <a href="#faq" onClick={closeMenu}>FAQ</a>
           <div className="nav__mobile-actions">
             {currentAccount ? (
-              <button className="account-link" onClick={() => openAndClose(onAccount)}>
-                <span>{currentAccount.parentName.slice(0, 1).toUpperCase()}</span>
-                My account
-              </button>
+              <button className="account-link" onClick={() => openAndClose(onAccount)}><span>{accountName.slice(0, 1).toUpperCase()}</span>Open my dashboard</button>
             ) : (
-              <button className="text-link button-reset" onClick={() => openAndClose(onLogin)}>Student login</button>
+              <>
+                <button className="mobile-portal-button mobile-portal-button--primary" onClick={() => openAndClose(onBook)}>Student registration</button>
+                <button className="mobile-portal-button" onClick={() => openAndClose(onLogin)}>Student login</button>
+                <button className="mobile-portal-button" onClick={() => openAndClose(onTeacherAccess)}>Teacher portal</button>
+                <button className="mobile-portal-button" onClick={() => openAndClose(onAdminAccess)}>Admin portal</button>
+              </>
             )}
-            <button className="button button--primary" onClick={() => openAndClose(onBook)}>
-              {currentAccount ? 'Open my account' : 'Create a free account'}
-            </button>
           </div>
         </nav>
         <div className="header-actions">
           {currentAccount ? (
-            <button className="account-link" onClick={onAccount}>
-              <span>{currentAccount.parentName.slice(0, 1).toUpperCase()}</span>
-              Hi, {currentAccount.parentName.split(' ')[0]}
-            </button>
+            <button className="account-link" onClick={onAccount}><span>{accountName.slice(0, 1).toUpperCase()}</span>Hi, {accountName.split(' ')[0]}</button>
           ) : (
-            <button className="login-link button-reset" onClick={onLogin}>Log in</button>
+            <>
+              <button className="header-portal-link" onClick={onLogin}>Student login</button>
+              <button className="header-portal-link" onClick={onTeacherAccess}>Teacher portal</button>
+              <button className="header-portal-link header-portal-link--admin" onClick={onAdminAccess}>Admin portal</button>
+            </>
           )}
           <button className="button button--primary button--small" onClick={onBook}>
-            {currentAccount ? 'My account' : 'Register free'} <ArrowUpRight size={16} />
+            {currentAccount ? 'My dashboard' : 'Student registration'} <ArrowUpRight size={16} />
           </button>
         </div>
-        <button
-          className="menu-button"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
+        <button className="menu-button" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -662,6 +656,8 @@ export default function App() {
         onBook={openRegistration}
         onLogin={openLogin}
         onAccount={openAccount}
+        onTeacherAccess={() => openRoleAccess('teacher')}
+        onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
       />
       <main>

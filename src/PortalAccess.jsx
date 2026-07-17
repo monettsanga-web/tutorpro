@@ -16,7 +16,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { ADMIN_EMAIL, hasAdminAccount, loginAccount, registerAdmin, registerTeacher } from './auth.js'
+import { hasAdminAccount, loginAccount, registerAdmin, registerTeacher } from './auth.js'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -30,7 +30,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
   const [errors, setErrors] = useState({})
   const [created, setCreated] = useState(null)
   const [form, setForm] = useState({
-    fullName: '', email: isAdmin ? ADMIN_EMAIL : '', password: '', confirmPassword: '',
+    fullName: '', email: '', password: '', confirmPassword: '',
     specialization: 'Both Curricula', bio: '', education: '', experience: '', languages: '', credentials: [],
   })
 
@@ -110,7 +110,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
     if (!validateCredentials()) return
     setSubmitting(true)
     try {
-      const account = await registerAdmin(form.password)
+      const account = await registerAdmin(form.email, form.password)
       onAuthenticated(account)
       onEnterPortal(account)
     } catch (submitError) {
@@ -179,8 +179,8 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
             <>
               <div className="auth-heading role-login-heading"><span className="auth-heading__icon auth-heading__icon--admin"><ShieldCheck size={22} /></span><div><span>{view === 'setup' ? 'First-time secure setup' : 'Restricted access'}</span><h2 id="role-access-title">{view === 'setup' ? 'Create the admin account' : 'Administrator login'}</h2><p>{view === 'setup' ? 'Set the password for the locked administrator email.' : 'Manage teachers, students and bookings.'}</p></div></div>
               <form className="auth-form" onSubmit={view === 'setup' ? submitAdminSetup : submitLogin} noValidate>
-                <label><span>Administrator email</span><div className="input-wrap input-wrap--locked"><Mail size={18} /><input name="email" value={ADMIN_EMAIL} readOnly /></div><small className="locked-note"><ShieldCheck size={12} /> Email locked to the TutorPro owner</small></label>
-                <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input autoFocus name="password" type={showPassword ? 'text' : 'password'} autoComplete={view === 'setup' ? 'new-password' : 'current-password'} value={form.password} onChange={update} placeholder={view === 'setup' ? 'Create a strong password' : 'Your admin password'} /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
+                <label><span>Administrator email</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus name="email" type="email" autoComplete="email" value={form.email} onChange={update} placeholder="Enter administrator email" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
+                <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete={view === 'setup' ? 'new-password' : 'current-password'} value={form.password} onChange={update} placeholder={view === 'setup' ? 'Create a strong password' : 'Your admin password'} /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
                 {view === 'setup' && <label><span>Confirm password</span><div className={`input-wrap ${errors.confirmPassword ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.confirmPassword} onChange={update} placeholder="Repeat admin password" /></div>{errors.confirmPassword && <small className="field-error">{errors.confirmPassword}</small>}</label>}
                 <button className="button button--primary button--full auth-submit" type="submit" disabled={submitting}>{submitting ? 'Please wait…' : view === 'setup' ? 'Create secure admin account' : 'Open admin dashboard'} {!submitting && <ArrowRight size={17} />}</button>
               </form>

@@ -3,7 +3,7 @@ import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
 const LEGACY_ACCOUNTS_KEY = 'tutorpro_accounts_v1'
 const SESSION_KEY = 'tutorpro_session_v2'
-export const ADMIN_EMAIL = 'monettsanga@yahoo.com'
+const ADMIN_EMAIL_HASH = 'bf6e66f2c7c1acfaa4a3899a3e054f5bf185f18456c35cde73c36c9176102a33'
 
 const normalizeEmail = (email) => email.trim().toLowerCase()
 
@@ -33,10 +33,14 @@ function createSalt() {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-async function hashPassword(password, salt) {
-  const value = new TextEncoder().encode(`${salt}:${password}`)
+async function hashText(text) {
+  const value = new TextEncoder().encode(text)
   const buffer = await crypto.subtle.digest('SHA-256', value)
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function hashPassword(password, salt) {
+  return hashText(`${salt}:${password}`)
 }
 
 function publicAccount(account) {
@@ -212,12 +216,53 @@ export async function registerTeacher(details) {
   return publicAccount(account)
 }
 
-export async function registerAdmin(password) {
+export async function createTeacherByAdmin(details) {
   const accounts = readAccounts()
+  const email = normalizeEmail(details.email)
+  if (accounts.some((account) => account.email === email)) {
+    throw new Error('An account with this email already exists.')
+  }
+
+  const salt = createSalt()
+  const account = {
+    id: crypto.randomUUID(),
+    role: 'teacher',
+    status: 'approved',
+    createdByAdmin: true,
+    fullName: details.fullName.trim(),
+    email,
+    passwordHash: await hashPassword(details.password, salt),
+    salt,
+    createdAt: new Date().toISOString(),
+    teacher: {
+      specialization: details.specialization || 'Both Curricula',
+      bio: details.bio?.trim() || 'TutorPro English teacher.',
+      education: details.education?.trim() || 'To be updated',
+      experience: Number(details.experience) || 0,
+      languages: details.languages?.trim() || 'English',
+      credentials: [],
+      availabilitySlots: [],
+      availability: [],
+      rating: 0,
+      lessonsCompleted: 0,
+    },
+  }
+
+  accounts.push(account)
+  writeAccounts(accounts)
+  return publicAccount(account)
+}
+
+export async function registerAdmin(emailValue, password) {
+  const accounts = readAccounts()
+  const email = normalizeEmail(emailValue)
+  if (await hashText(email) !== ADMIN_EMAIL_HASH) {
+    throw new Error('The administrator email could not be verified.')
+  }
   if (accounts.some((account) => account.role === 'admin')) {
     throw new Error('The administrator account has already been created. Log in instead.')
   }
-  if (accounts.some((account) => account.email === ADMIN_EMAIL)) {
+  if (accounts.some((account) => account.email === email)) {
     throw new Error('This email is already attached to another account.')
   }
 
@@ -227,7 +272,7 @@ export async function registerAdmin(password) {
     role: 'admin',
     status: 'active',
     fullName: 'TutorPro Administrator',
-    email: ADMIN_EMAIL,
+    email,
     passwordHash: await hashPassword(password, salt),
     salt,
     createdAt: new Date().toISOString(),

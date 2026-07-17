@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Plus,
   ShieldCheck,
   Sparkles,
   Star,
@@ -33,6 +34,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import {
+  createTeacherByAdmin,
   getAccountById,
   getAccounts,
   getApprovedTeachers,
@@ -187,7 +189,7 @@ function ScheduleCalendar({
         <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''}`}>
           {HALF_HOUR_TIMES.map((time) => (
             <div className="schedule-row" key={time}>
-              <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{time.endsWith(':00') ? time : ''}</div>
+              <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{time}</div>
               {dates.map((date, dayIndex) => {
                 const dateKey = formatDateKey(date)
                 const slotKey = makeSlotKey(dayIndex, time)
@@ -320,7 +322,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   )
 }
 
-function BookLessonPanel({ account, onBooked }) {
+function BookLessonPanel({ account, onBooked, adminBooking = false }) {
   const teachers = getApprovedTeachers()
   const [form, setForm] = useState({ teacherId: '', date: '', time: '', duration: '25', focus: account.child.goal, note: '' })
   const [weekOffset, setWeekOffset] = useState(0)
@@ -354,7 +356,8 @@ function BookLessonPanel({ account, onBooked }) {
       return
     }
     try {
-      createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id })
+      const booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id })
+      if (adminBooking) updateBooking(booking.id, { status: 'confirmed' })
       setSuccess(true)
       setForm((current) => ({ ...current, date: '', time: '', note: '' }))
       onBooked()
@@ -375,7 +378,7 @@ function BookLessonPanel({ account, onBooked }) {
           <fieldset className="compact-duration"><legend>Lesson length</legend><div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span>{duration} min</span></label>)}</div></fieldset>
         </div>
 
-        {success && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>Lesson requested!</strong><span>The selected slot is now reserved while confirmation is pending.</span></div></div>}
+        {success && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>{adminBooking ? 'Lesson booked and confirmed!' : 'Lesson requested!'}</strong><span>{adminBooking ? 'The student and teacher calendars are now reserved.' : 'The selected slot is now reserved while confirmation is pending.'}</span></div></div>}
         {error && <div className="portal-error" role="alert">{error}</div>}
 
         {teachers.length && selectedTeacher ? (
@@ -398,7 +401,7 @@ function BookLessonPanel({ account, onBooked }) {
             <div><small>{form.date && form.time ? 'Selected lesson' : 'Choose an available slot'}</small><strong>{form.date && form.time ? `${formatLessonDate(form.date, form.time, true)} at ${formatTime(form.time)}` : 'No time selected yet'}</strong><em>{form.duration} min lesson · {form.duration === '50' ? 'uses 2 calendar slots' : 'uses 1 calendar slot'}</em></div>
           </div>
           <label><span>Note <i>optional</i></span><input name="note" value={form.note} onChange={update} placeholder="Note for the teacher" /></label>
-          <button className="portal-primary-button" type="submit" disabled={!form.date || !form.time}>Request lesson <ArrowRight size={17} /></button>
+          <button className="portal-primary-button" type="submit" disabled={!form.date || !form.time}>{adminBooking ? 'Book and confirm' : 'Request lesson'} <ArrowRight size={17} /></button>
         </form>
       </section>
     </div>
@@ -654,15 +657,70 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   )
 }
 
+function AddTeacherDialog({ onClose, onCreated }) {
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' })
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    const closeOnEscape = (event) => event.key === 'Escape' && onClose()
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [onClose])
+
+  const update = (event) => {
+    setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+    setError('')
+  }
+
+  const submit = async (event) => {
+    event.preventDefault()
+    if (form.fullName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(form.email) || form.password.length < 8 || !/[0-9]/.test(form.password)) {
+      setError('Add a name, valid email and temporary password with at least 8 characters and one number.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const teacher = await createTeacherByAdmin(form)
+      onCreated(teacher)
+    } catch (createError) {
+      setError(createError.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="portal-dialog add-teacher-dialog" role="dialog" aria-modal="true" aria-labelledby="add-teacher-title">
+        <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
+        <div className="portal-dialog__heading"><span><UserCheck size={23} /></span><div><small>Administrator action</small><h2 id="add-teacher-title">Add a teacher</h2><p>Create an approved teacher login. They can change their profile and paint their own availability after signing in.</p></div></div>
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        <form className="admin-teacher-form" onSubmit={submit}>
+          <div className="admin-teacher-form__row"><label><span>Full name</span><input autoFocus name="fullName" value={form.fullName} onChange={update} placeholder="Teacher name" /></label><label><span>Email address</span><input type="email" name="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></label></div>
+          <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="password" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}><option>Both Curricula</option><option>Cambridge</option><option>Oxford</option></select></label></div>
+          <div className="admin-teacher-form__row admin-teacher-form__row--three"><label><span>Experience</span><input type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="Years" /></label><label><span>Education</span><input name="education" value={form.education} onChange={update} placeholder="Degree" /></label><label><span>Languages</span><input name="languages" value={form.languages} onChange={update} placeholder="English…" /></label></div>
+          <label><span>Short biography</span><textarea name="bio" value={form.bio} onChange={update} placeholder="Teaching background and approach…" /></label>
+          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button" disabled={submitting}>{submitting ? 'Creating teacher…' : 'Create approved teacher'} <ArrowRight size={16} /></button></div>
+        </form>
+      </section>
+    </div>
+  )
+}
+
 export function AdminDashboard({ account, onHome, onLogout }) {
   const [active, setActive] = useState('overview')
   const [version, setVersion] = useState(0)
   const [managedAccount, setManagedAccount] = useState(null)
+  const [showAddTeacher, setShowAddTeacher] = useState(false)
+  const [adminBooking, setAdminBooking] = useState(false)
+  const [bookingStudentId, setBookingStudentId] = useState('')
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
   const bookings = getBookings()
   const bookingStats = getBookingStats()
   const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
+  const bookingStudent = students.find((student) => student.id === bookingStudentId) || students[0] || null
   void version
 
   const refresh = () => setVersion((value) => value + 1)
@@ -736,7 +794,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Review credentials and control access to the teaching dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(teacher)} title="Access teacher dashboard"><Eye size={15} /> Open</button>{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(teacher)} title="Access teacher dashboard"><Eye size={15} /> Open</button>{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
@@ -744,12 +802,20 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'bookings' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests across every student and teacher.</p></div></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
+        adminBooking ? (
+          <div className="admin-booking-view">
+            <div className="admin-booking-context"><button onClick={() => setAdminBooking(false)}><ChevronLeft size={17} /> All bookings</button><label><span>Book for student</span><select value={bookingStudent?.id || ''} onChange={(event) => setBookingStudentId(event.target.value)}>{students.map((student) => <option key={student.id} value={student.id}>{student.child.name} · {student.parentName}</option>)}</select></label></div>
+            {bookingStudent ? <BookLessonPanel key={bookingStudent.id} account={bookingStudent} adminBooking onBooked={refresh} /> : <EmptyState icon={GraduationCap} title="Register a student first" text="An administrator needs a student profile before creating a booking." />}
+          </div>
+        ) : (
+          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests or book an available teacher slot for a student.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
+        )
       )}
 
       {active === 'profile' && (
         <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
       )}
+      {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}
     </PortalShell>
   )
 }

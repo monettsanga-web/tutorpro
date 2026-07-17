@@ -25,10 +25,12 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 
 ### Administrator
 
-- First-time administrator setup for `monettsanga@yahoo.com`
+- Private email-and-password setup and login; the authorized address is never displayed publicly
+- Create approved teacher accounts with temporary passwords
 - Teacher approval, rejection and suspension controls
 - Direct access to any teacher dashboard from the teacher table
 - Student access suspension, restoration and direct dashboard access
+- Book available teacher slots on behalf of students
 - Platform-wide booking status controls
 - Overview metrics for students, teachers and lessons
 
