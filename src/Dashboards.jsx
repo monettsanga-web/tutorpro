@@ -55,7 +55,7 @@ import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinut
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
-const displayName = (account) => account.parentName || account.fullName || 'TutorPro user'
+const displayName = (account) => account.parentName || account.fullName || 'TutorPro English user'
 const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
 
 function formatLessonDate(date, time, includeYear = false) {
@@ -271,8 +271,8 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
       )}
       <aside className={`portal-sidebar ${mobileOpen ? 'portal-sidebar--open' : ''}`}>
         <div className="portal-brand">
-          <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda mascot" />
-          <div><strong>Tutor<span>Pro</span></strong><small>{roleLabels[role]}</small></div>
+          <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
+          <div><strong>Tutor<span>Pro</span> English</strong><small>{roleLabels[role]}</small></div>
         </div>
         <nav className="portal-nav" aria-label={`${roleLabels[role]} navigation`}>
           {navItems.map(({ id, label, icon: Icon, badge }) => (
@@ -457,7 +457,7 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
         <span className="rating-dialog__icon"><Star size={29} fill="currentColor" /></span>
         <span className="portal-kicker">Class complete</span>
         <h2 id="rating-title">How was the lesson with {teacher?.fullName || 'your teacher'}?</h2>
-        <p>Your rating helps families choose the right teacher and helps TutorPro keep every class excellent.</p>
+        <p>Your rating helps families choose the right teacher and helps TutorPro English keep every class excellent.</p>
         {error && <div className="portal-error" role="alert">{error}</div>}
         <form onSubmit={submit}>
           <div className="rating-stars" role="group" aria-label="Lesson rating">{[1, 2, 3, 4, 5].map((score) => <button type="button" className={score <= rating ? 'active' : ''} onClick={() => setRating(score)} key={score} aria-label={`${score} star${score > 1 ? 's' : ''}`}><Star size={30} fill={score <= rating ? 'currentColor' : 'none'} /></button>)}</div>
@@ -633,7 +633,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               <div className="progress-ring" style={{ '--progress': `${learner.progress || 18}%` }}><span><strong>{learner.progress || 18}%</strong><small>term goal</small></span></div>
               <div><span>Current pathway</span><strong>{learner.curriculum} · {learner.year}</strong><small>{learner.level || 'Building foundations'}</small></div>
             </div>
-            <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro panda mascot" />
+            <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
           </section>
 
           <div className="portal-stat-grid">
@@ -815,7 +815,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
-      {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro administrator if you need help.'}</span></div></div>}
+      {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro English administrator if you need help.'}</span></div></div>}
 
       {active === 'overview' && (
         <div className="portal-view">
@@ -1045,12 +1045,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
       {active === 'overview' && (
         <div className="portal-view">
-          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro command centre</span><h1>Everything important, under control.</h1><p>Review your community, approve teachers and keep every booking moving.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
+          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><h1>Everything important, under control.</h1><p>Review your community, approve teachers and keep every booking moving.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student profiles</small><strong>{studentProfiles.length}</strong><em>{students.length} family accounts</em></div></article>
             <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>
             <article><span className="stat-icon stat-icon--gold"><CalendarDays size={21} /></span><div><small>Total bookings</small><strong>{bookingStats.total}</strong><em>{bookingStats.pending} pending</em></div></article>
-            <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro</em></div></article>
+            <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro English</em></div></article>
           </div>
           <div className="admin-overview-grid">
             <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button onClick={() => setStatus(teacher.id, 'approved')}><Check size={15} /> Approve</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
@@ -1079,7 +1079,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'profile' && (
-        <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
+        <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro English Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
       )}
       {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}
     </PortalShell>

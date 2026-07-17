@@ -1,20 +1,20 @@
 /* ---------- Foundation ---------- */
 :root {
-  --ink: #153d38;
-  --ink-2: #214f49;
-  --text: #183b37;
-  --muted: #63716e;
-  --cream: #f7f3e9;
-  --cream-2: #fffdf8;
+  --ink: #321568;
+  --ink-2: #54338f;
+  --text: #2f2450;
+  --muted: #716981;
+  --cream: #e9fac6;
+  --cream-2: #fffef9;
   --paper: #ffffff;
-  --coral: #ef765e;
-  --coral-dark: #dd5f48;
-  --gold: #f2bf55;
-  --sky: #cce3ec;
-  --mint: #d8e8d5;
-  --line: #dfe5df;
-  --shadow-sm: 0 8px 24px rgba(20, 61, 56, 0.08);
-  --shadow-lg: 0 28px 70px rgba(20, 61, 56, 0.16);
+  --coral: #ff4f87;
+  --coral-dark: #e73876;
+  --gold: #ffd54a;
+  --sky: #dceeff;
+  --mint: #dff5a7;
+  --line: #e4e0eb;
+  --shadow-sm: 0 8px 24px rgba(50, 21, 104, 0.08);
+  --shadow-lg: 0 28px 70px rgba(50, 21, 104, 0.17);
   --radius-sm: 12px;
   --radius-md: 20px;
   --radius-lg: 30px;
@@ -273,12 +273,12 @@ h3 {
 .button--cream {
   background: var(--cream-2);
   color: var(--ink);
-  box-shadow: 0 12px 26px rgba(5, 32, 28, 0.15);
+  box-shadow: 0 12px 26px rgba(39, 16, 79, 0.15);
 }
 
 .button--cream:hover {
   background: #fff;
-  box-shadow: 0 15px 30px rgba(5, 32, 28, 0.22);
+  box-shadow: 0 15px 30px rgba(39, 16, 79, 0.22);
 }
 
 .button--full {
@@ -337,7 +337,7 @@ h3 {
   z-index: 50;
   top: 0;
   height: 76px;
-  border-bottom: 1px solid rgba(21, 61, 56, 0.09);
+  border-bottom: 1px solid rgba(50, 21, 104, 0.09);
   background: rgba(255, 253, 248, 0.96);
   backdrop-filter: blur(12px);
 }
@@ -368,7 +368,7 @@ h3 {
   border-radius: 12px;
   background: #fff;
   color: #fff;
-  box-shadow: 0 5px 13px rgba(21, 61, 56, 0.12);
+  box-shadow: 0 5px 13px rgba(50, 21, 104, 0.12);
   transform: rotate(-2deg);
 }
 
@@ -387,6 +387,22 @@ h3 {
 
 .logo__text span {
   color: var(--coral);
+}
+
+.logo__text small {
+  display: block;
+  margin-top: -2px;
+  color: var(--ink-2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.logo--light .logo__text small {
+  color: #dff7a6;
 }
 
 .logo--light .logo__mark {
@@ -494,7 +510,18 @@ h3 {
 .hero {
   position: relative;
   overflow: hidden;
-  background: var(--cream);
+  background: #e2f7a7;
+}
+
+.hero::before {
+  position: absolute;
+  top: -120px;
+  left: -95px;
+  width: 330px;
+  height: 330px;
+  border: 52px solid rgba(112, 72, 223, 0.09);
+  border-radius: 50%;
+  content: '';
 }
 
 .hero__dots {
@@ -634,7 +661,7 @@ h3 {
   gap: 11px;
   min-width: 205px;
   padding: 13px 15px;
-  border: 1px solid rgba(21, 61, 56, 0.07);
+  border: 1px solid rgba(50, 21, 104, 0.07);
   border-radius: 13px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow-sm);
@@ -672,7 +699,7 @@ h3 {
   left: 0;
   width: 235px;
   padding: 16px;
-  border: 1px solid rgba(21, 61, 56, 0.06);
+  border: 1px solid rgba(50, 21, 104, 0.06);
   border-radius: 15px;
   background: #fff;
   box-shadow: var(--shadow-lg);
@@ -738,8 +765,8 @@ h3 {
 
 /* ---------- Stats ---------- */
 .stats {
-  border-top: 1px solid rgba(21, 61, 56, 0.08);
-  border-bottom: 1px solid rgba(21, 61, 56, 0.08);
+  border-top: 1px solid rgba(50, 21, 104, 0.08);
+  border-bottom: 1px solid rgba(50, 21, 104, 0.08);
   background: #fff;
 }
 
@@ -944,7 +971,7 @@ h3 {
 .level-toggle button.active {
   background: #fff;
   color: var(--ink);
-  box-shadow: 0 5px 15px rgba(5, 25, 22, 0.18);
+  box-shadow: 0 5px 15px rgba(39, 16, 79, 0.18);
 }
 
 .programme-list {
@@ -963,7 +990,7 @@ h3 {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 17px;
   background: #fff;
-  box-shadow: 0 12px 35px rgba(4, 25, 22, 0.18);
+  box-shadow: 0 12px 35px rgba(39, 16, 79, 0.18);
   transition: transform 180ms ease;
 }
 
@@ -1031,7 +1058,7 @@ h3 {
 
 /* ---------- Journey ---------- */
 .journey {
-  background: var(--cream);
+  background: #f4efff;
 }
 
 .steps {
@@ -1112,7 +1139,7 @@ h3 {
 
 /* ---------- Public teacher profiles ---------- */
 .public-teachers {
-  background: #eef3f8;
+  background: #eef7ff;
 }
 
 .public-teacher-grid {
@@ -1281,7 +1308,7 @@ h3 {
 
 .price-card--featured {
   border: 2px solid var(--ink);
-  box-shadow: 0 20px 45px rgba(20, 61, 56, 0.13);
+  box-shadow: 0 20px 45px rgba(50, 21, 104, 0.13);
 }
 
 .best-value {
@@ -1554,7 +1581,7 @@ h3 {
 /* ---------- Footer ---------- */
 .footer {
   padding: 72px 0 25px;
-  background: #0f302c;
+  background: #24104e;
   color: #aebfbb;
 }
 
@@ -1729,7 +1756,7 @@ h3 {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
-  box-shadow: 0 5px 15px rgba(21, 61, 56, 0.08);
+  box-shadow: 0 5px 15px rgba(50, 21, 104, 0.08);
   transition: transform 160ms ease, background 160ms ease;
 }
 

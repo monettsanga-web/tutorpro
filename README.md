@@ -1,6 +1,6 @@
-# TutorPro English Hub
+# TutorPro English
 
-A responsive TutorPro website with animated marketing pages, role-based registration, dashboards and lesson booking.
+A responsive TutorPro English website with a playful lime, purple, pink and yellow visual system inspired by leading children's learning platforms, plus role-based registration, dashboards and lesson booking.
 
 ## Included portals
 
@@ -60,4 +60,4 @@ npm run build
 
 ## Data and authentication note
 
-The current build is a fully interactive browser prototype. Accounts, approval states, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. Before using the platform with real customers across multiple devices, connect the included data and media functions to a hosted authentication, database and file-storage service such as Supabase, Firebase or a custom API.
+The current build is a fully interactive browser prototype. Accounts, approval states, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. Before using the platform with real customers across multiple devices, connect the included data and media functions to a hosted authentication, database and file-storage service such as Supabase, Firebase or a custom API.

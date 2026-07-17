@@ -314,7 +314,7 @@ export async function registerAdmin(emailValue, password) {
     id: crypto.randomUUID(),
     role: 'admin',
     status: 'active',
-    fullName: 'TutorPro Administrator',
+    fullName: 'TutorPro English Administrator',
     email,
     loginId: email,
     authProvider: 'email',
@@ -335,7 +335,7 @@ export async function loginAccount(loginValue, password) {
     throw new Error('We could not find a login-enabled account with that email.')
   }
   if (account.status === 'suspended' || account.status === 'rejected') {
-    throw new Error(`This account is ${account.status}. Please contact the TutorPro administrator.`)
+    throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
   }
 
   const passwordHash = await hashPassword(password, account.salt)

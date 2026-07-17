@@ -199,7 +199,7 @@ export default function AuthModal({
         <aside className="auth-story">
           <div className="auth-story__brand">
             <span><BookOpen size={22} /></span>
-            <strong>Tutor<span>Pro</span></strong>
+            <strong>Tutor<span>Pro</span> English</strong>
           </div>
           <div className="auth-story__content">
             <span className="kicker kicker--light">Your learning space</span>
@@ -358,7 +358,7 @@ export default function AuthModal({
                 <span className="auth-heading__icon"><LockKeyhole size={22} /></span>
                 <div>
                   <span>Welcome back</span>
-                  <h2 id="auth-title">Log in to TutorPro</h2>
+                  <h2 id="auth-title">Log in to TutorPro English</h2>
                   <p>Pick up where your learner left off.</p>
                 </div>
               </div>
@@ -384,7 +384,7 @@ export default function AuthModal({
                 </button>
               </form>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
-              <p className="auth-switch">New to TutorPro? <button onClick={() => switchView('register')}>Create a free account</button></p>
+              <p className="auth-switch">New to TutorPro English? <button onClick={() => switchView('register')}>Create a free account</button></p>
               <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Teacher registration and login</button>
             </>
           )}
@@ -394,7 +394,7 @@ export default function AuthModal({
               <div className="auth-confetti" aria-hidden="true"><i /><i /><i /><i /><i /></div>
               <span className="auth-result__icon"><CheckCircle2 size={35} /></span>
               <span className="kicker">You’re all set</span>
-              <h2 id="auth-title">Welcome to TutorPro, {activeAccount.parentName.split(' ')[0]}!</h2>
+              <h2 id="auth-title">Welcome to TutorPro English, {activeAccount.parentName.split(' ')[0]}!</h2>
               <p>{activeAccount.child.name}’s learning profile is ready. You can now explore the plan that best fits your family.</p>
               <div className="account-summary">
                 <div><span>Student</span><strong>{activeAccount.child.name}</strong></div>

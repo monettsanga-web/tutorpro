@@ -90,12 +90,12 @@ const faqs = [
 
 function Logo({ light = false }) {
   return (
-    <a className={`logo ${light ? 'logo--light' : ''}`} href="#top" aria-label="TutorPro home">
+    <a className={`logo ${light ? 'logo--light' : ''}`} href="#top" aria-label="TutorPro English home">
       <span className="logo__mark" aria-hidden="true">
         <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="" />
       </span>
       <span className="logo__text">
-        Tutor<span>Pro</span>
+        Tutor<span>Pro</span><small>English</small>
       </span>
     </a>
   )
@@ -103,7 +103,7 @@ function Logo({ light = false }) {
 
 function Header({ onBook, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro user'
+  const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro English user'
 
   const closeMenu = () => setMenuOpen(false)
   const openAndClose = (callback) => {
@@ -177,7 +177,7 @@ function Hero({ onBook }) {
               Explore programmes
             </a>
           </div>
-          <div className="hero__proof" aria-label="TutorPro benefits">
+          <div className="hero__proof" aria-label="TutorPro English benefits">
             <span><Check size={15} /> No commitment</span>
             <span><Check size={15} /> From $8 per class</span>
             <span><Check size={15} /> Flexible times</span>
@@ -220,7 +220,7 @@ function Stats() {
   ]
 
   return (
-    <section className="stats" aria-label="TutorPro at a glance">
+    <section className="stats" aria-label="TutorPro English at a glance">
       <div className="container stats__inner">
         <p>Trusted by growing learners</p>
         <div className="stats__items">
@@ -263,7 +263,7 @@ function WhyTutorPro() {
       <div className="container">
         <div className="section-heading section-heading--split">
           <div>
-            <span className="kicker">Why TutorPro</span>
+            <span className="kicker">Why TutorPro English</span>
             <h2>Less pressure. More progress.</h2>
           </div>
           <p>Support that meets your child where they are—and gives them a clear path to where they want to be.</p>
@@ -556,7 +556,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
           <div className="footer__links">
             <div>
               <h3>Explore</h3>
-              <a href="#why">Why TutorPro</a>
+              <a href="#why">Why TutorPro English</a>
               <a href="#programmes">Programmes</a>
               <a href="#teachers">Teachers</a>
               <a href="#journey">How it works</a>
@@ -578,7 +578,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
           </div>
         </div>
         <div className="footer__bottom">
-          <span>© {new Date().getFullYear()} TutorPro English Hub</span>
+          <span>© {new Date().getFullYear()} TutorPro English</span>
           <a className="footer__credit" href="https://www.pexels.com/photo/7014777/">Learning photo via Pexels</a>
         </div>
       </div>
