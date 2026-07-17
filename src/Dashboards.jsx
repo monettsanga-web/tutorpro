@@ -46,6 +46,7 @@ import {
   getAccountById,
   getAccounts,
   getApprovedTeachers,
+  mergeCloudAccounts,
   removeStudentAccount,
   removeStudentLearner,
   updateAccount,
@@ -60,6 +61,7 @@ import OnlineClassroom from './OnlineClassroom.jsx'
 import PayPalCheckout from './PayPalCheckout.jsx'
 import { recordPayment, getPayments, removeStudentPayments, updatePaymentStatus } from './payments.js'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
+import { cloudSyncEnabled, fetchCloudProfiles, subscribeToCloudProfiles, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
@@ -734,6 +736,27 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     }
   }, [initialAccount.id, activeLearnerId])
 
+  useEffect(() => {
+    if (!cloudSyncEnabled()) return undefined
+    let active = true
+    const synchronizeCloud = async () => {
+      try {
+        const profiles = await fetchCloudProfiles()
+        if (active) mergeCloudAccounts(profiles)
+      } catch {
+        // The local profile remains usable while cloud connectivity recovers.
+      }
+    }
+    synchronizeCloud()
+    const unsubscribe = subscribeToCloudProfiles(synchronizeCloud)
+    const interval = window.setInterval(synchronizeCloud, 5000)
+    return () => {
+      active = false
+      unsubscribe()
+      window.clearInterval(interval)
+    }
+  }, [])
+
   const chooseLearner = (learnerId) => {
     const nextLearner = learners.find((item) => item.id === learnerId)
     if (!nextLearner) return
@@ -940,6 +963,27 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       window.clearInterval(interval)
     }
   }, [initialAccount.id])
+
+  useEffect(() => {
+    if (!cloudSyncEnabled()) return undefined
+    let active = true
+    const synchronizeCloud = async () => {
+      try {
+        const profiles = await fetchCloudProfiles()
+        if (active) mergeCloudAccounts(profiles)
+      } catch {
+        // The teacher dashboard keeps its offline copy until cloud access returns.
+      }
+    }
+    synchronizeCloud()
+    const unsubscribe = subscribeToCloudProfiles(synchronizeCloud)
+    const interval = window.setInterval(synchronizeCloud, 5000)
+    return () => {
+      active = false
+      unsubscribe()
+      window.clearInterval(interval)
+    }
+  }, [])
 
   const refresh = () => setVersion((value) => value + 1)
 
@@ -1232,6 +1276,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [studentToRemove, setStudentToRemove] = useState(null)
   const [adminPaymentError, setAdminPaymentError] = useState('')
+  const [cloudStatus, setCloudStatus] = useState(cloudSyncEnabled() ? 'connecting' : 'local')
+  const [cloudError, setCloudError] = useState('')
 
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
@@ -1243,6 +1289,36 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       window.removeEventListener('storage', synchronize)
       window.removeEventListener('tutorpro:data-change', synchronize)
       window.removeEventListener('focus', synchronize)
+      window.clearInterval(interval)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!cloudSyncEnabled()) return undefined
+    let active = true
+    const synchronizeCloud = async () => {
+      try {
+        const authorized = await verifyCloudAdmin()
+        if (!authorized) throw new Error('This Supabase user is not listed in admin_members.')
+        const profiles = await fetchCloudProfiles()
+        if (!active) return
+        mergeCloudAccounts(profiles)
+        setCloudStatus('connected')
+        setCloudError('')
+        setVersion((value) => value + 1)
+      } catch (syncError) {
+        if (active) {
+          setCloudStatus('error')
+          setCloudError(syncError.message)
+        }
+      }
+    }
+    synchronizeCloud()
+    const unsubscribe = subscribeToCloudProfiles(synchronizeCloud)
+    const interval = window.setInterval(synchronizeCloud, 5000)
+    return () => {
+      active = false
+      unsubscribe()
       window.clearInterval(interval)
     }
   }, [])
@@ -1354,7 +1430,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
       {active === 'overview' && (
         <div className="portal-view">
-          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><span className="admin-live-sync"><i /> Live registration sync</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
+          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
+          {cloudError && <div className="portal-error admin-cloud-error" role="alert">{cloudError} Check the Supabase setup and administrator membership.</div>}
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student profiles</small><strong>{studentProfiles.length}</strong><em>{students.length} family accounts</em></div></article>
             <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>

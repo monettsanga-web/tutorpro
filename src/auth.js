@@ -1,3 +1,4 @@
+import { cloudSyncEnabled, deleteCloudProfile, registerCloudProfile, signInCloudProfile, updateCloudProfile } from './cloudProfiles.js'
 import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
 
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
@@ -123,6 +124,12 @@ function normalizeLearners(account) {
     paymentStatus: learner.paymentStatus || 'paid',
     accessStatus: learner.accessStatus || 'active',
   }))
+}
+
+function queueCloudProfileUpdate(account) {
+  updateCloudProfile(publicAccount(account)).catch(() => {
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('tutorpro:cloud-error'))
+  })
 }
 
 function publicAccount(account) {
@@ -278,6 +285,8 @@ export async function registerAccount(details) {
     createdAt: new Date().toISOString(),
   }
 
+  const cloud = await registerCloudProfile({ login: details.email, password: details.password, provider: authProvider, account })
+  if (cloud?.userId) account.id = cloud.userId
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
@@ -333,6 +342,8 @@ export async function registerTeacher(details) {
     },
   }
 
+  const cloud = await registerCloudProfile({ login: details.email, password: details.password, provider: authProvider, account })
+  if (cloud?.userId) account.id = cloud.userId
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
@@ -408,14 +419,44 @@ export async function registerAdmin(emailValue, password) {
     salt,
     createdAt: new Date().toISOString(),
   }
+  const cloud = await registerCloudProfile({ login: email, password, provider: 'email', account })
+  if (cloud?.userId) account.id = cloud.userId
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
   return publicAccount(account)
 }
 
+export function mergeCloudAccounts(cloudAccounts) {
+  if (!Array.isArray(cloudAccounts) || !cloudAccounts.length) return []
+  const accounts = readAccounts()
+  cloudAccounts.forEach((cloudAccount) => {
+    const index = accounts.findIndex((account) => account.id === cloudAccount.id || (accountLoginId(cloudAccount) && accountLoginId(account) === accountLoginId(cloudAccount)))
+    if (index >= 0) {
+      const local = accounts[index]
+      accounts[index] = {
+        ...local,
+        ...cloudAccount,
+        passwordHash: local.passwordHash,
+        salt: local.salt,
+      }
+    } else accounts.push({ ...cloudAccount, cloudOnly: true })
+  })
+  writeAccounts(accounts)
+  return cloudAccounts.map((account) => publicAccount(accounts.find((item) => item.id === account.id) || account))
+}
+
 export async function loginAccount(loginValue, password) {
-  const account = readAccounts().find((item) => accountLoginId(item) === normalizeLoginId(item.authProvider || 'email', loginValue))
+  let account = readAccounts().find((item) => accountLoginId(item) === normalizeLoginId(item.authProvider || 'email', loginValue))
+  if (cloudSyncEnabled()) {
+    const cloudAccount = await signInCloudProfile(loginValue, password)
+    if (cloudAccount) {
+      account = mergeCloudAccounts([cloudAccount])[0]
+      if (account.status === 'suspended' || account.status === 'rejected') throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
+      writeSessionId(account.id)
+      return account
+    }
+  }
 
   if (!account || !account.passwordHash) {
     throw new Error('We could not find a login-enabled account with that email.')
@@ -439,6 +480,7 @@ export function updateAccount(accountId, changes) {
   if (index < 0) throw new Error('Account not found.')
   accounts[index] = { ...accounts[index], ...changes, updatedAt: new Date().toISOString() }
   writeAccounts(accounts)
+  queueCloudProfileUpdate(accounts[index])
   return publicAccount(accounts[index])
 }
 
@@ -486,6 +528,7 @@ export function repairStudentForBooking(accountId, learnerSnapshot) {
   account.updatedAt = new Date().toISOString()
   accounts[index] = account
   writeAccounts(accounts)
+  queueCloudProfileUpdate(account)
   return { account: publicAccount(account), learner: publicAccount(account).children[learnerIndex] }
 }
 
@@ -546,6 +589,7 @@ export function removeStudentLearner(accountId, learnerId) {
   const updatedChildren = children.filter((learner) => learner.id !== learnerId)
   accounts[index] = { ...accounts[index], children: updatedChildren, child: updatedChildren[0], updatedAt: new Date().toISOString() }
   writeAccounts(accounts)
+  queueCloudProfileUpdate(accounts[index])
   return publicAccount(accounts[index])
 }
 
@@ -560,6 +604,7 @@ export function removeStudentAccount(accountId) {
     localStorage.setItem(LEGACY_ACCOUNTS_KEY, JSON.stringify(legacyAccounts.filter((item) => item.id !== accountId && (!removedLogin || accountLoginId(item) !== removedLogin))))
   }
   clearSessionId(accountId)
+  deleteCloudProfile(accountId).catch(() => {})
   return true
 }
 

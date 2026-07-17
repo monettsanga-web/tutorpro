@@ -69,6 +69,16 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Provides a persistent manual language selector
 - Uses Google Website Translator to translate public pages and dashboards
 
+### Shared registration database
+
+- Optional Supabase Auth and Realtime integration for cross-device registration synchronization
+- Student registrations appear automatically in Admin → Students
+- Teacher registrations appear as pending in Admin → Teachers
+- Admin status, payment and suspension changes flow back to the correct dashboard
+- Browser storage remains available as an offline/same-browser fallback
+
+Follow [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) to create and connect the free Supabase project securely.
+
 ## Run locally
 
 ```bash
@@ -105,4 +115,4 @@ The core-flow test covers registration, login, multi-student accounts, payment s
 
 ## Data and authentication note
 
-The current build is a fully interactive browser prototype. Accounts, game rewards, payments, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Set `VITE_WECHAT_PAY_QR_URL` to your official merchant QR image. The included WeChat Pay flow submits a transaction reference for administrator review; automated WeChat Pay order verification still requires a WeChat Pay merchant account and secure server API. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.
+The app uses Supabase for cross-device registration profiles when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured. Without those values it falls back to browser storage, which only synchronizes the same website origin/browser. Game rewards, payments, ratings and bookings currently retain a browser-storage fallback; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API for the fallback flow, while configured cloud accounts use Supabase Auth. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Set `VITE_WECHAT_PAY_QR_URL` to your official merchant QR image. The included WeChat Pay flow submits a transaction reference for administrator review; automated WeChat Pay order verification still requires a WeChat Pay merchant account and secure server API. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.

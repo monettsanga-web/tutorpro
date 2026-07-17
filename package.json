@@ -14,6 +14,7 @@
     "classroom:server": "node server/classroom-signaling.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.110.7",
     "lucide-react": "0.468.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
