@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 
 let paypalScriptPromise
+const DEFAULT_PAYPAL_CLIENT_ID = 'BAAXvbkRzHmGWZOsc_IiuRNFK42HC_S4ohKWnUewPemgsQ91KbHWNQV0YwHv60ryHsheLmcNA42ykDE2Uw'
 
 function loadPayPal(currency) {
   if (window.paypal) return Promise.resolve(window.paypal)
   if (paypalScriptPromise) return paypalScriptPromise
-  const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb'
+  const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || DEFAULT_PAYPAL_CLIENT_ID
   paypalScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
     script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${currency}&intent=capture&components=buttons`
