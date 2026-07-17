@@ -44,8 +44,9 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Private administrator email; the authorized address is never displayed publicly
 - Create approved teacher accounts with temporary passwords
 - Teacher approval, rejection and suspension controls
-- Reliable Open controls that refresh the shared profile before entering any teacher or student dashboard
-- Teacher approval/rejection/suspension waits for Supabase confirmation and reports RLS errors instead of showing a false success
+- Teacher and Student Open controls enter a safe administrator profile view immediately, even when Supabase refresh is slow
+- Dedicated administrator teacher profile with biography, credentials, availability, classroom and booking details
+- Teacher approval/rejection/suspension requires Supabase to return the updated row and reports RLS errors instead of showing a false success
 - Per-student profile suspension and restoration with clear learner-facing status messages
 - Safe removal of individual student profiles or final family registrations with typed confirmation
 - Automatic cleanup of removed student bookings and profile media

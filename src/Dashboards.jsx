@@ -56,6 +56,7 @@ import {
 import { createBooking, getBookings, getBookingStats, rateCompletedBooking, removeStudentBookingData, saveTeacherFeedback, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
+import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { cloudSyncEnabled, fetchCloudProfiles, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
@@ -1105,6 +1106,37 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   )
 }
 
+export function AdminTeacherProfile({ teacher, onBack, onStatusChange, processing, error }) {
+  const profile = teacher.teacher || {}
+  const credentials = Array.isArray(profile.credentials) ? profile.credentials : []
+  const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
+  const teacherBookings = getBookings({ teacherId: teacher.id })
+  const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed').length
+
+  return (
+    <div className="portal-view admin-teacher-profile-view">
+      <div className="admin-profile-backbar"><button onClick={onBack}><ChevronLeft size={17} /> Back to teachers</button><span><ShieldCheck size={15} /> Administrator profile view</span></div>
+      {error && <div className="portal-error" role="alert">{error}</div>}
+      <section className="admin-teacher-profile-hero">
+        <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="admin-teacher-profile-photo" />
+        <div><StatusBadge status={teacher.status || 'pending'} /><h1>{teacher.fullName || 'New Teacher'}</h1><p>{profile.specialization || 'Specialization not provided'} · {Number(profile.experience) || 0} years experience</p><div className="profile-tags"><span><Star size={13} /> {profile.rating || 'New'} rating</span><span><Video size={13} /> {profile.lessonsCompleted || completedLessons} lessons</span></div></div>
+        <div className="admin-teacher-profile-actions">
+          {teacher.status !== 'approved' && <button className="approve" onClick={() => onStatusChange(teacher.id, 'approved')} disabled={processing}><UserCheck size={16} /> {processing ? 'Saving…' : 'Approve teacher'}</button>}
+          {teacher.status === 'approved' && <button className="suspend" onClick={() => onStatusChange(teacher.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend</button>}
+          {teacher.status !== 'rejected' && !teacher.systemProfile && <button className="reject" onClick={() => onStatusChange(teacher.id, 'rejected')} disabled={processing}><XCircle size={16} /> Reject</button>}
+        </div>
+      </section>
+      <div className="admin-teacher-profile-grid">
+        <section className="portal-card"><span className="portal-kicker">Professional profile</span><h2>About the teacher</h2><p className="teacher-bio">{profile.bio || 'The teacher has not added a biography yet.'}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{profile.education || 'Not provided'}</strong></div><div><span>Languages</span><strong>{profile.languages || 'Not provided'}</strong></div><div><span>Curriculum</span><strong>{profile.specialization || 'Not provided'}</strong></div></div></section>
+        <section className="portal-card admin-teacher-media"><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2><IntroVideo accountId={teacher.id} compact /><p>Visible to parents on the public teacher profile.</p></section>
+        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed lessons</dt><dd>{completedLessons}</dd></div></dl></section>
+        <section className="portal-card"><span className="portal-kicker">Verification</span><h2>Submitted credentials</h2>{credentials.length ? <ul className="admin-credential-list">{credentials.map((credential) => <li key={credential}><ShieldCheck size={15} /> {credential}</li>)}</ul> : <EmptyState icon={ShieldCheck} title="No credentials submitted" text="The teacher has not uploaded credential names yet." />}</section>
+      </div>
+      <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Teacher activity</span><h2>Recent bookings</h2></div></div>{teacherBookings.length ? teacherBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent />) : <EmptyState icon={CalendarDays} title="No bookings yet" text="Teacher bookings will appear here." />}</section>
+    </div>
+  )
+}
+
 function AddTeacherDialog({ onClose, onCreated }) {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' })
   const [error, setError] = useState('')
@@ -1287,9 +1319,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the status update in time.')
       const profiles = cloudSyncEnabled() ? await withTimeout(fetchCloudProfiles(), 8000, 'Supabase profile refresh timed out.') : []
       if (profiles.length) mergeCloudAccounts(profiles)
+      const refreshed = getAccountById(accountId)
+      if (refreshed) setManagedAccount((current) => current?.id === accountId ? refreshed : current)
       refresh()
     } catch (statusError) {
-      if (previousStatus) updateLocalAccount(accountId, { status: previousStatus })
+      const reverted = previousStatus ? updateLocalAccount(accountId, { status: previousStatus }) : getAccountById(accountId)
+      if (reverted) setManagedAccount((current) => current?.id === accountId ? reverted : current)
       setAdminActionError(`${statusError.message} The status was not changed. Confirm this administrator exists in Supabase admin_members.`)
     } finally {
       setProcessingAccountId('')
@@ -1416,7 +1451,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
 
   if (managedAccount?.role === 'teacher') {
-    return <TeacherDashboard key={managedAccount.id} account={managedAccount} onAccountChange={updateManagedAccount} onHome={exitManagedDashboard} onLogout={exitManagedDashboard} adminPreview />
+    return (
+      <PortalShell account={account} role="admin" active="teachers" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
+        <RoleErrorBoundary onBack={exitManagedDashboard}>
+          <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} processing={processingAccountId === managedAccount.id} error={adminActionError} />
+        </RoleErrorBoundary>
+      </PortalShell>
+    )
   }
 
   if (managedAccount?.role === 'student') {

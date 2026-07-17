@@ -3648,6 +3648,78 @@
   gap: 11px;
 }
 
+/* Administrator-managed teacher profile */
+.admin-profile-backbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.admin-profile-backbar button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--portal-line);
+  border-radius: 9px;
+  padding: 0 11px;
+  background: #fff;
+  color: var(--portal-blue);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.admin-profile-backbar > span { display: flex; align-items: center; gap: 5px; color: var(--portal-muted); font-size: 0.58rem; }
+
+.admin-teacher-profile-hero {
+  display: grid;
+  min-height: 230px;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 18px;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 35px 40px;
+  background: linear-gradient(115deg, var(--portal-navy), #5b3697);
+  box-shadow: 0 17px 40px rgba(50,21,104,0.18);
+  color: #fff;
+}
+
+.admin-teacher-profile-photo { width: 105px; height: 105px; border: 6px solid rgba(255,255,255,0.82); border-radius: 30px; font-size: 2rem; transform: rotate(-3deg); }
+.admin-teacher-profile-hero h1 { margin: 7px 0 4px; color: #fff; font-size: 2.25rem; }
+.admin-teacher-profile-hero p { margin-bottom: 10px; color: #c4b6d8; font-size: 0.75rem; }
+.admin-teacher-profile-hero .profile-tags span { background: rgba(255,255,255,0.1); color: #e1d7ed; }
+.admin-teacher-profile-actions { display: flex; flex-direction: column; gap: 7px; }
+.admin-teacher-profile-actions button { display: inline-flex; min-height: 39px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; padding: 0 11px; font-size: 0.62rem; font-weight: 800; }
+.admin-teacher-profile-actions .approve { background: #dff7a6; color: #466c12; }
+.admin-teacher-profile-actions .suspend { background: #fff1c9; color: #93620a; }
+.admin-teacher-profile-actions .reject { background: #ffe1eb; color: #a62d57; }
+.admin-teacher-profile-actions button:disabled { cursor: wait; opacity: 0.5; }
+
+.admin-teacher-profile-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+.admin-teacher-profile-grid .portal-card h2 { font-size: 1.16rem; }
+.admin-teacher-media .profile-video-placeholder,
+.admin-teacher-media .profile-intro-video { margin-top: 15px; }
+.admin-teacher-media > p { margin: 10px 0 0; color: var(--portal-muted); font-size: 0.58rem; }
+.admin-teacher-detail-list { margin: 15px 0 0; }
+.admin-teacher-detail-list > div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--portal-line); padding: 9px 0; }
+.admin-teacher-detail-list dt { color: var(--portal-muted); font-size: 0.62rem; }
+.admin-teacher-detail-list dd { margin: 0; color: #30445f; font-size: 0.66rem; font-weight: 800; text-align: right; }
+.admin-credential-list { display: grid; gap: 8px; margin: 15px 0 0; padding: 0; list-style: none; }
+.admin-credential-list li { display: flex; align-items: center; gap: 7px; border-radius: 9px; padding: 9px; background: #f3f6fb; color: #556a84; font-size: 0.62rem; }
+
+.role-error-card { display: flex; min-height: 480px; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--portal-line); border-radius: 22px; padding: 35px; background: #fff; box-shadow: 0 17px 40px rgba(50,21,104,0.08); text-align: center; }
+.role-error-card > span { display: grid; width: 66px; height: 66px; margin-bottom: 18px; place-items: center; border-radius: 20px; background: #ffe7ef; color: #c53c69; }
+.role-error-card > small { color: var(--portal-orange); font-size: 0.56rem; font-weight: 850; text-transform: uppercase; }
+.role-error-card h2 { margin: 6px 0; font-size: 1.5rem; }
+.role-error-card p { color: var(--portal-muted); font-size: 0.7rem; }
+.role-error-card > div { display: flex; gap: 8px; margin-top: 17px; }
+.role-error-card button { display: inline-flex; min-height: 40px; align-items: center; gap: 6px; border: 1px solid var(--portal-line); border-radius: 9px; padding: 0 11px; background: #fff; color: var(--portal-navy); font-size: 0.63rem; font-weight: 800; }
+.role-error-card button:first-child { border-color: var(--portal-navy); background: var(--portal-navy); color: #fff; }
+
 /* Admin portal */
 .portal-dialog-backdrop {
   position: fixed;
@@ -4996,6 +5068,15 @@
   .admin-welcome__shield {
     display: none;
   }
+
+  .admin-profile-backbar { align-items: flex-start; flex-direction: column; }
+  .admin-teacher-profile-hero { grid-template-columns: 1fr; padding: 27px 22px; text-align: center; }
+  .admin-teacher-profile-photo { justify-self: center; }
+  .admin-teacher-profile-hero .profile-tags { justify-content: center; }
+  .admin-teacher-profile-actions { width: 100%; }
+  .admin-teacher-profile-grid { grid-template-columns: 1fr; }
+  .role-error-card > div { flex-direction: column; width: 100%; }
+  .role-error-card button { justify-content: center; }
 
   .admin-table-card {
     margin-right: -15px;
