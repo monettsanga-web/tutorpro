@@ -8,6 +8,7 @@ globalThis.localStorage = {
 const auth = await import('../src/auth.js')
 const bookings = await import('../src/bookings.js')
 const schedule = await import('../src/schedule.js')
+const translation = await import('../src/chatTranslation.js')
 
 storage.set('tutorpro_accounts_v2', JSON.stringify([{
   id: 'legacy-family',
@@ -163,5 +164,6 @@ assert(auth.removeStudentAccount('older-v1-family') && !auth.getAccountById('old
 const loggedIn = await auth.loginAccount('family@example.com', 'Family123')
 assert(loggedIn.id === family.id, 'Login failed.')
 assert(bookings.getBookingStats().completed === 1, 'Booking statistics are incorrect.')
+assert(await translation.translateChatText('good job', 'tl') === 'magaling', 'Classroom chat translation fallback failed.')
 
 console.log('TutorPro English core flows: PASS')

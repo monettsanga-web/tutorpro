@@ -533,6 +533,24 @@
 .annotation-toolbar button.active { background: #5a378f; color: #fff; }
 .annotation-toolbar input { width: 24px; height: 24px; border: 0; padding: 0; background: none; }
 
+.annotation-text-editor {
+  position: absolute;
+  z-index: 18;
+  display: grid;
+  width: min(310px, 70%);
+  grid-template-columns: 1fr auto auto;
+  gap: 4px;
+  border: 1px solid rgba(112,72,223,0.35);
+  border-radius: 10px;
+  padding: 5px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(37,18,68,0.24);
+  transform: translateY(-50%);
+}
+.annotation-text-editor input { min-width: 0; border: 0; outline: 0; padding: 0 7px; color: #35254c; font-size: 0.7rem; font-weight: 650; }
+.annotation-text-editor button { display: grid; width: 31px; height: 31px; place-items: center; border: 0; border-radius: 7px; background: #7048df; color: #fff; }
+.annotation-text-editor button:last-child { background: #f2edf8; color: #7d6e8e; }
+
 .classroom-stage__badge {
   position: absolute;
   z-index: 7;
@@ -569,6 +587,35 @@
 .classroom-sidebar__heading strong { color: #fff; font-size: 0.66rem; }
 .classroom-sidebar__heading small { color: #786a89; font-size: 0.49rem; }
 .classroom-sidebar__heading > button { display: grid; width: 31px; height: 31px; place-items: center; border: 0; border-radius: 8px; background: rgba(255,255,255,0.05); color: #a995bf; }
+
+.classroom-sidebar-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; border-radius: 10px; padding: 4px; background: rgba(255,255,255,0.04); }
+.classroom-sidebar-tabs button { display: flex; min-height: 34px; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 7px; background: transparent; color: #8f80a2; font-size: 0.56rem; font-weight: 800; }
+.classroom-sidebar-tabs button.active { background: #7048df; color: #fff; }
+.classroom-sidebar-tabs i { display: grid; min-width: 16px; height: 16px; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.12); font-size: 0.44rem; font-style: normal; }
+
+.classroom-chat { display: grid; min-height: 355px; grid-template-rows: auto 1fr auto auto; }
+.chat-translation-bar { display: flex; min-height: 35px; align-items: center; gap: 6px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 0 3px 7px; color: #9b8dab; font-size: 0.53rem; }
+.chat-translation-bar select { margin-left: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; outline: 0; padding: 4px 6px; background: #251641; color: #d8cae5; font-size: 0.52rem; }
+.classroom-chat-messages { min-height: 220px; max-height: 360px; overflow-y: auto; padding: 3px; }
+.chat-message { width: 88%; margin: 7px 0; border-radius: 4px 11px 11px 11px; padding: 8px 9px; background: #281843; color: #d9cce5; }
+.chat-message.own { margin-left: auto; border-radius: 11px 4px 11px 11px; background: #573699; }
+.chat-message > div { display: flex; justify-content: space-between; gap: 7px; margin-bottom: 4px; }
+.chat-message strong { color: #fff; font-size: 0.53rem; }
+.chat-message small { color: #8e7da2; font-size: 0.43rem; }
+.chat-message p { margin: 0; font-size: 0.59rem; line-height: 1.48; overflow-wrap: anywhere; }
+.chat-message > button { margin-top: 5px; border: 0; border-radius: 5px; padding: 4px 6px; background: rgba(255,255,255,0.09); color: #dff7a6; font-size: 0.47rem; font-weight: 750; }
+.chat-message > button:disabled { opacity: 0.5; }
+.chat-translation { display: flex; align-items: flex-start; gap: 4px; margin-top: 6px !important; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; color: #dff7a6; font-style: italic; }
+.chat-empty { display: flex; min-height: 210px; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #756685; text-align: center; }
+.chat-empty strong { color: #a99bb9; font-size: 0.62rem; }
+.chat-empty span { max-width: 180px; font-size: 0.49rem; }
+.classroom-chat-form { display: grid; grid-template-columns: 1fr auto; gap: 5px; margin-top: 8px; }
+.classroom-chat-form input { min-width: 0; min-height: 39px; border: 1px solid rgba(255,255,255,0.11); border-radius: 9px; outline: 0; padding: 0 9px; background: #211339; color: #fff; font-size: 0.6rem; }
+.classroom-chat-form input:focus { border-color: #7f59ce; }
+.classroom-chat-form button { display: grid; width: 39px; height: 39px; place-items: center; border: 0; border-radius: 9px; background: #ff4f87; color: #fff; }
+.classroom-chat-form button:disabled { cursor: not-allowed; opacity: 0.35; }
+
+.classroom-files-panel { min-height: 355px; }
 
 .classroom-file-upload {
   display: flex;
@@ -607,6 +654,10 @@
 .classroom-people i.online { background: #66c97e; }
 .classroom-people strong { color: #d6cade; font-size: 0.57rem; }
 .classroom-people small { color: #746681; font-size: 0.46rem; text-transform: capitalize; }
+.classroom-people > button { display: flex; width: 100%; min-height: 34px; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.05); color: #c8b9d8; font-size: 0.53rem; font-weight: 800; }
+.classroom-people > button.allowed { border-color: rgba(144,223,97,0.24); background: rgba(144,223,97,0.1); color: #dff7a6; }
+.student-annotation-state { display: flex !important; grid-template-columns: auto 1fr !important; min-height: 34px !important; gap: 6px !important; margin-top: 8px; border-radius: 8px; padding: 7px !important; background: rgba(255,255,255,0.04); color: #9e8caf; }
+.student-annotation-state span { font-size: 0.49rem; line-height: 1.4; }
 
 .classroom-controls {
   position: relative;
@@ -647,6 +698,8 @@
 .classroom-controls button.off { background: #ad315d; color: #fff; }
 .classroom-controls button.sharing { background: #4e8f3a; }
 .classroom-controls button.annotation { background: #714ac0; }
+.classroom-controls button.permission { background: #3f8b4f; }
+.classroom-controls button:disabled { cursor: not-allowed; opacity: 0.42; }
 .classroom-controls .leave-class-button { min-width: 92px; background: #d83e72; color: #fff; }
 
 .lesson-classroom-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }

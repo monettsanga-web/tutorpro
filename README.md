@@ -37,6 +37,9 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Live camera, microphone, screen sharing, synchronized annotation and lesson-file sharing
 - Larger teacher/student camera tiles on the left with a large central lesson, screen-share and presentation board
 - Uploaded images and PDFs can be presented and annotated directly on the classroom board
+- Students can annotate only after the teacher grants permission; permission can be revoked live
+- Pen, highlighter, eraser, colour and text annotation tools synchronize between participants
+- Private classroom chat with per-message translation and classroom phrase fallback
 - Supabase realtime booking sync guarantees the teacher and student use the same booking-specific classroom ID and token
 - Profile, lesson and rating overview
 
