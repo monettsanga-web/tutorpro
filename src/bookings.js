@@ -71,6 +71,8 @@ export function createBooking(details) {
 
   const booking = {
     id: crypto.randomUUID(),
+    classroomId: `TP-${details.date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+    classroomToken: crypto.randomUUID(),
     studentId: details.studentId,
     learnerId: learner.id,
     teacherId: details.teacherId,
@@ -94,7 +96,13 @@ export function updateBooking(bookingId, changes) {
   if (index < 0) throw new Error('Booking not found.')
   const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'declined']
   if (changes.status && !validStatuses.includes(changes.status)) throw new Error('Invalid booking status.')
-  bookings[index] = { ...bookings[index], ...changes, updatedAt: new Date().toISOString() }
+  const classroomDetails = changes.status === 'confirmed' && !bookings[index].classroomId
+    ? {
+        classroomId: `TP-${bookings[index].date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+        classroomToken: crypto.randomUUID(),
+      }
+    : {}
+  bookings[index] = { ...bookings[index], ...classroomDetails, ...changes, updatedAt: new Date().toISOString() }
   writeBookings(bookings)
   return bookings[index]
 }
@@ -141,6 +149,44 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
       createdAt: new Date().toISOString(),
     },
   })
+}
+
+export function getBookingById(bookingId) {
+  return readBookings().find((booking) => booking.id === bookingId) || null
+}
+
+export function getClassroomAccess(bookingId, account, now = new Date()) {
+  let booking = getBookingById(bookingId)
+  if (!booking) return { allowed: false, reason: 'Classroom booking not found.' }
+  if (['confirmed', 'completed'].includes(booking.status) && (!booking.classroomId || !booking.classroomToken)) {
+    booking = updateBooking(booking.id, {
+      classroomId: `TP-${booking.date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      classroomToken: crypto.randomUUID(),
+    })
+  }
+  if (!account) return { allowed: false, reason: 'Log in to access this classroom.', booking }
+  const authorized = account.role === 'admin'
+    || (account.role === 'teacher' && booking.teacherId === account.id)
+    || (account.role === 'student' && booking.studentId === account.id)
+  if (!authorized) return { allowed: false, reason: 'This private classroom belongs to another booking.', booking }
+  if (account.role === 'student' && account.status !== 'active') return { allowed: false, reason: 'This student account is not active.', booking }
+  if (account.role === 'teacher' && account.status !== 'approved') return { allowed: false, reason: 'This teacher account is not approved for live classes.', booking }
+  if (!['confirmed', 'completed'].includes(booking.status)) {
+    return { allowed: false, reason: 'The lesson must be confirmed before the classroom opens.', booking }
+  }
+
+  const startsAt = new Date(`${booking.date}T${booking.time}:00`)
+  if (Number.isNaN(startsAt.getTime())) return { allowed: false, reason: 'The classroom schedule is invalid.', booking }
+  const earlyMinutes = account.role === 'teacher' ? 30 : 10
+  const opensAt = new Date(startsAt.getTime() - (earlyMinutes * 60 * 1000))
+  const closesAt = new Date(startsAt.getTime() + ((Number(booking.duration) + 60) * 60 * 1000))
+  if (account.role !== 'admin' && now < opensAt) {
+    return { allowed: false, reason: `This classroom opens ${earlyMinutes} minutes before the lesson.`, booking, startsAt, opensAt, closesAt }
+  }
+  if (account.role !== 'admin' && now > closesAt) {
+    return { allowed: false, reason: 'This classroom session has closed.', booking, startsAt, opensAt, closesAt }
+  }
+  return { allowed: true, booking, startsAt, opensAt, closesAt }
 }
 
 export function getBookingStats() {

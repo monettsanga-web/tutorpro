@@ -51,6 +51,7 @@ import {
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, rateCompletedBooking, saveTeacherFeedback, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
+import OnlineClassroom from './OnlineClassroom.jsx'
 import PayPalCheckout from './PayPalCheckout.jsx'
 import { recordPayment, getPayments } from './payments.js'
 import { saveProfileMedia } from './media.js'
@@ -313,7 +314,7 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
   )
 }
 
-function BookingCard({ booking, showStudent = false, showTeacher = false, actions }) {
+function BookingCard({ booking, showStudent = false, showTeacher = false, actions, onEnterClassroom }) {
   const student = getAccountById(booking.studentId)
   const teacher = getAccountById(booking.teacherId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
@@ -332,7 +333,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
         <h3>{booking.focus}</h3>
         <p>{person && <strong>{person} · </strong>}{formatLessonDate(booking.date, booking.time)} at {formatTime(booking.time)}</p>
-        {booking.status === 'confirmed' && (meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noreferrer"><Video size={13} /> Join with {meetingPlatform}<ShieldCheck size={11} /></a> : <span className="meeting-link-pending"><Clock3 size={12} /> Teacher will add the private meeting link</span>)}
+        {booking.status === 'confirmed' && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> Enter private classroom <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
@@ -608,6 +609,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [mediaVersion, setMediaVersion] = useState(0)
   const [mediaError, setMediaError] = useState('')
   const [ratingBooking, setRatingBooking] = useState(null)
+  const [classroomBooking, setClassroomBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
   const learners = account.children?.length ? account.children : [account.child]
   const learner = learners.find((item) => item.id === activeLearnerId) || learners[0]
@@ -681,6 +683,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
+  if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
+
   return (
     <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
       <div className="family-student-switcher">
@@ -713,7 +717,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <div className="student-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Coming up</span><h2>Next lesson</h2></div><button className="portal-text-button" onClick={() => setActive('lessons')}>All lessons <ChevronRight size={15} /></button></div>
-              {upcoming ? <BookingCard booking={upcoming} showTeacher /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
+              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
             </section>
             <section className="portal-card learning-focus-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Personalised path</span><h2>Learning focus</h2></div><span className="portal-card__icon"><Sparkles size={21} /></span></div>
@@ -735,7 +739,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           </section>
           <section className="portal-card lessons-list-card schedule-list-below">
             <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">All requests</span><h2>Lesson details</h2></div></div>
-            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
+            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
           </section>
         </div>
       )}
@@ -787,6 +791,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [mediaVersion, setMediaVersion] = useState(0)
   const [mediaError, setMediaError] = useState('')
   const [feedbackBooking, setFeedbackBooking] = useState(null)
+  const [classroomBooking, setClassroomBooking] = useState(null)
   const [classroom, setClassroom] = useState(account.teacher.classroom || { platform: 'zoom', zoomLink: '', voovLink: '' })
   const [classroomSaved, setClassroomSaved] = useState(false)
   const [classroomError, setClassroomError] = useState('')
@@ -884,6 +889,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
+  if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
+
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
       {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro English administrator if you need help.'}</span></div></div>}
@@ -922,7 +929,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               if (booking.status === 'pending') actions = <><button className="lesson-action lesson-action--wide lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}>Accept</button><button className="lesson-action lesson-action--wide lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}>Decline</button></>
               if (booking.status === 'confirmed') actions = <button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button>
               if (booking.status === 'completed') actions = <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
-              return <BookingCard key={booking.id} booking={booking} showStudent actions={actions} />
+              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} actions={actions} />
             }) : <EmptyState title="No bookings yet" text="Approved teachers will see student requests here." />}
           </section>
         </div>
@@ -944,8 +951,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               </div>
               <button className="portal-primary-button" onClick={saveClassroom}><ShieldCheck size={16} /> Save private classroom</button>
             </section>
-            <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>The active meeting link is only visible inside confirmed student lessons, your teacher dashboard, and the administrator dashboard.</p><ul><li><Check size={14} /> Hidden from public teacher profiles</li><li><Check size={14} /> Hidden from unbooked students</li><li><Check size={14} /> Visible to administrators</li></ul></aside>
+            <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
+          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch an upcoming class</h2></div></div>{bookings.filter((booking) => booking.status === 'confirmed').length ? bookings.filter((booking) => booking.status === 'confirmed').map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} />) : <EmptyState icon={Video} title="No confirmed classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
         </div>
       )}
 
@@ -1043,6 +1051,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [showAddTeacher, setShowAddTeacher] = useState(false)
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
+  const [classroomBooking, setClassroomBooking] = useState(null)
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
   const studentProfiles = students.flatMap((student) => (student.children?.length ? student.children : [student.child]).map((learner) => ({ account: student, learner })))
@@ -1104,6 +1113,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
+  if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
+
   if (managedAccount?.role === 'teacher') {
     return <TeacherDashboard key={managedAccount.id} account={managedAccount} onAccountChange={updateManagedAccount} onHome={exitManagedDashboard} onLogout={exitManagedDashboard} adminPreview />
   }
@@ -1145,7 +1156,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             {bookingStudent && bookingLearner ? <BookLessonPanel key={bookingLearner.id} account={bookingStudent} learner={bookingLearner} adminBooking onBooked={refresh} /> : <EmptyState icon={GraduationCap} title="Register a student first" text="An administrator needs a student profile before creating a booking." />}
           </div>
         ) : (
-          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests or book an available teacher slot for a student.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
+          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests or book an available teacher slot for a student.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
         )
       )}
 

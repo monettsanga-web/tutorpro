@@ -34,7 +34,9 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Booking acceptance, decline and lesson completion
 - Click-and-drag weekly availability painting
 - Locked booked slots that cannot be offered to another student
-- Private Zoom or VooV classroom links visible only to booked students, teachers and administrators
+- Private Zoom or VooV fallback links visible only to booked students, teachers and administrators
+- Unique TutorPro English classroom for every confirmed booking
+- Live camera, microphone, screen sharing, synchronized annotation and lesson-file sharing
 - Profile, lesson and rating overview
 
 ### Administrator
@@ -64,6 +66,22 @@ npm install
 npm run dev
 ```
 
+## Online classroom signaling
+
+The classroom uses peer-to-peer WebRTC for video, audio and screen sharing. For a same-browser two-tab demo, it automatically uses `BroadcastChannel`. For students and teachers on different devices, run the included signaling service:
+
+```bash
+npm run classroom:server
+```
+
+Copy `.env.example` to `.env.local` and set:
+
+```env
+VITE_CLASSROOM_SIGNALING_URL=ws://localhost:8787
+```
+
+Use a hosted `wss://` signaling endpoint and TURN credentials in production. Camera, microphone and screen sharing require HTTPS or localhost. Every room is isolated by its booking-specific classroom ID and secret token.
+
 ## Checks
 
 ```bash
@@ -73,8 +91,8 @@ npm run build
 npm audit
 ```
 
-The core-flow test covers registration, login, multi-student accounts, payment status, teacher availability, booking conflicts, lesson feedback, ratings and PayPal records.
+The core-flow test covers registration, login, multi-student accounts, payment status, teacher availability, booking conflicts, private classroom access, lesson feedback, ratings and PayPal records.
 
 ## Data and authentication note
 
-The current build is a fully interactive browser prototype. Accounts, game rewards, payments, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.
+The current build is a fully interactive browser prototype. Accounts, game rewards, payments, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.

@@ -8,14 +8,16 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "node scripts/test-core.mjs"
+    "test": "node scripts/test-core.mjs",
+    "classroom:server": "node server/classroom-signaling.mjs"
   },
   "dependencies": {
     "lucide-react": "0.468.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-icons": "5.5.0",
-    "three": "0.180.0"
+    "three": "0.180.0",
+    "ws": "8.21.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

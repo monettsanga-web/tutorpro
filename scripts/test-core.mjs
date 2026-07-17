@@ -94,7 +94,11 @@ await rejects(
   'Overlapping bookings were accepted.',
 )
 
-bookings.updateBooking(booking.id, { status: 'confirmed' })
+const confirmedBooking = bookings.updateBooking(booking.id, { status: 'confirmed' })
+assert(confirmedBooking.classroomId && confirmedBooking.classroomToken, 'Unique classroom credentials were not generated.')
+const classTime = new Date(`${date}T${time}:00`)
+assert(bookings.getClassroomAccess(booking.id, family, classTime).allowed, 'The booked student could not access the classroom at class time.')
+assert(!bookings.getClassroomAccess(booking.id, { id: 'another-family', role: 'student' }, classTime).allowed, 'An unrelated student accessed a private classroom.')
 bookings.saveTeacherFeedback(booking.id, teacher.id, { summary: 'A focused and successful speaking lesson.', strength: 'Clear answers', nextStep: 'Longer sentences' })
 bookings.rateCompletedBooking(booking.id, family.id, 5, 'Excellent class')
 await rejects(() => bookings.rateCompletedBooking(booking.id, family.id, 4, 'Duplicate'), 'A duplicate lesson rating was accepted.')

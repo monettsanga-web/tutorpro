@@ -5,6 +5,7 @@ import AutoTranslate from './AutoTranslate.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import './styles.css'
 import './dashboard.css'
+import './classroom.css'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
