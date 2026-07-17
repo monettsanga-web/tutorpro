@@ -53,11 +53,12 @@ import {
   updateStudentProfile,
   updateTeacherProfile,
 } from './auth.js'
-import { createBooking, getBookings, getBookingStats, rateCompletedBooking, removeStudentBookingData, saveTeacherFeedback, updateBooking } from './bookings.js'
+import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, removeStudentBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
+import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import { cloudSyncEnabled, fetchCloudProfiles, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
@@ -382,15 +383,16 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     setSuccess(false)
   }
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
     if (!selectedTeacherId || !form.date || !form.time || !form.focus) {
       setError('Choose an available time on the calendar to continue.')
       return
     }
     try {
-      const booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
-      if (adminBooking) updateBooking(booking.id, { status: 'confirmed' })
+      let booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
+      if (adminBooking) booking = updateBooking(booking.id, { status: 'confirmed' })
+      if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The shared booking database did not respond in time.')
       setSuccess(true)
       setForm((current) => ({ ...current, date: '', time: '', note: '' }))
       onBooked()
@@ -645,18 +647,23 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     let active = true
     const synchronizeCloud = async () => {
       try {
-        const profiles = await fetchCloudProfiles()
-        if (active) mergeCloudAccounts(profiles)
+        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
+        if (active) {
+          mergeCloudAccounts(profiles)
+          mergeCloudBookings(sharedBookings)
+        }
       } catch {
         // The local profile remains usable while cloud connectivity recovers.
       }
     }
     synchronizeCloud()
-    const unsubscribe = subscribeToCloudProfiles(synchronizeCloud)
+    const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
+    const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
     const interval = window.setInterval(synchronizeCloud, 5000)
     return () => {
       active = false
-      unsubscribe()
+      unsubscribeProfiles()
+      unsubscribeBookings()
       window.clearInterval(interval)
     }
   }, [])
@@ -897,18 +904,23 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     let active = true
     const synchronizeCloud = async () => {
       try {
-        const profiles = await fetchCloudProfiles()
-        if (active) mergeCloudAccounts(profiles)
+        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
+        if (active) {
+          mergeCloudAccounts(profiles)
+          mergeCloudBookings(sharedBookings)
+        }
       } catch {
         // The teacher dashboard keeps its offline copy until cloud access returns.
       }
     }
     synchronizeCloud()
-    const unsubscribe = subscribeToCloudProfiles(synchronizeCloud)
+    const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
+    const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
     const interval = window.setInterval(synchronizeCloud, 5000)
     return () => {
       active = false
-      unsubscribe()
+      unsubscribeProfiles()
+      unsubscribeBookings()
       window.clearInterval(interval)
     }
   }, [])
@@ -1306,9 +1318,10 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       try {
         const authorized = await verifyCloudAdmin()
         if (!authorized) throw new Error('This Supabase user is not listed in admin_members.')
-        const profiles = await fetchCloudProfiles()
+        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
         if (!active) return
         mergeCloudAccounts(profiles)
+        mergeCloudBookings(sharedBookings)
         setCloudStatus('connected')
         setCloudError('')
         setVersion((value) => value + 1)
@@ -1320,11 +1333,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       }
     }
     synchronizeCloud()
-    const unsubscribe = subscribeToCloudProfiles(synchronizeCloud)
+    const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
+    const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
     const interval = window.setInterval(synchronizeCloud, 5000)
     return () => {
       active = false
-      unsubscribe()
+      unsubscribeProfiles()
+      unsubscribeBookings()
       window.clearInterval(interval)
     }
   }, [])

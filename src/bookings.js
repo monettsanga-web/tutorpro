@@ -1,4 +1,5 @@
 import { getAccountById, repairStudentForBooking, updateTeacherProfile } from './auth.js'
+import { deleteCloudBooking, syncCloudBooking } from './cloudBookings.js'
 import { lessonSlotKeys, timeToMinutes } from './schedule.js'
 
 const BOOKINGS_KEY = 'tutorpro_bookings_v1'
@@ -15,6 +16,32 @@ function readBookings() {
 function writeBookings(bookings) {
   localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings))
   if (typeof window !== 'undefined') window.queueMicrotask(() => window.dispatchEvent(new Event('tutorpro:data-change')))
+}
+
+function queueCloudBooking(booking) {
+  syncCloudBooking(booking).catch(() => {
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('tutorpro:cloud-error'))
+  })
+}
+
+export function mergeCloudBookings(cloudBookings) {
+  if (!Array.isArray(cloudBookings) || !cloudBookings.length) return getBookings()
+  const bookings = readBookings()
+  cloudBookings.forEach((cloudBooking) => {
+    const index = bookings.findIndex((booking) => booking.id === cloudBooking.id)
+    if (index < 0) bookings.push(cloudBooking)
+    else {
+      const localTime = new Date(bookings[index].updatedAt || bookings[index].createdAt || 0).getTime()
+      const cloudTime = new Date(cloudBooking.updatedAt || cloudBooking.createdAt || 0).getTime()
+      if (!Number.isFinite(localTime) || cloudTime >= localTime) bookings[index] = { ...bookings[index], ...cloudBooking }
+    }
+  })
+  writeBookings(bookings)
+  return getBookings()
+}
+
+export async function syncBookingNow(booking) {
+  return syncCloudBooking(booking)
 }
 
 export function getBookings(filters = {}) {
@@ -100,6 +127,7 @@ export function createBooking(details) {
   }
   bookings.push(booking)
   writeBookings(bookings)
+  queueCloudBooking(booking)
   return booking
 }
 
@@ -117,6 +145,7 @@ export function updateBooking(bookingId, changes) {
     : {}
   bookings[index] = { ...bookings[index], ...classroomDetails, ...changes, updatedAt: new Date().toISOString() }
   writeBookings(bookings)
+  queueCloudBooking(bookings[index])
   return bookings[index]
 }
 
@@ -214,8 +243,12 @@ export function removeStudentBookingData(accountId, learnerId, includeLegacyPrim
     if (!booking.learnerId) return !includeLegacyPrimary
     return booking.learnerId !== learnerId
   })
-  const removed = bookings.length - remaining.length
-  if (removed) writeBookings(remaining)
+  const removedBookings = bookings.filter((booking) => !remaining.some((item) => item.id === booking.id))
+  const removed = removedBookings.length
+  if (removed) {
+    writeBookings(remaining)
+    removedBookings.forEach((booking) => deleteCloudBooking(booking.id).catch(() => {}))
+  }
   return removed
 }
 

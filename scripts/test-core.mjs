@@ -114,6 +114,9 @@ const booking = bookings.createBooking({
   focus: 'Speaking with confidence',
 })
 assert(booking.status === 'pending', 'Booking creation failed.')
+const studentRoom = bookings.getBookings({ studentId: family.id }).find((item) => item.id === booking.id)
+const teacherRoom = bookings.getBookings({ teacherId: teacher.id }).find((item) => item.id === booking.id)
+assert(studentRoom.classroomId === teacherRoom.classroomId && studentRoom.classroomToken === teacherRoom.classroomToken, 'Teacher and student did not receive the same classroom credentials.')
 await rejects(
   () => bookings.createBooking({ studentId: family.id, learnerId: learner.id, teacherId: teacher.id, date, time, duration: 25, focus: 'Reading' }),
   'Overlapping bookings were accepted.',

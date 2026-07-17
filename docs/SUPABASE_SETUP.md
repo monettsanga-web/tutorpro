@@ -45,6 +45,10 @@ WeChat ID registration can be mirrored to Admin through an anonymous Supabase pr
 
 The repair script finds the authorized administrator without displaying the email publicly, creates or updates the Admin profile, and adds the correct UUID to `admin_members`. It is safe to run more than once.
 
+### Enable shared bookings and classroom IDs
+
+If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
+
 ## 5. Configure TutorPro English
 
 Copy `.env.example` to `.env.local` and add the browser-safe values:

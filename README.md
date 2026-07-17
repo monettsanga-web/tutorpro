@@ -35,12 +35,15 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Private Zoom or VooV fallback links visible only to booked students, teachers and administrators
 - Unique TutorPro English classroom for every confirmed booking
 - Live camera, microphone, screen sharing, synchronized annotation and lesson-file sharing
-- Small teacher/student camera tiles on the left with a large central lesson, screen-share and presentation board
+- Larger teacher/student camera tiles on the left with a large central lesson, screen-share and presentation board
+- Uploaded images and PDFs can be presented and annotated directly on the classroom board
+- Supabase realtime booking sync guarantees the teacher and student use the same booking-specific classroom ID and token
 - Profile, lesson and rating overview
 
 ### Administrator
 
 - Supabase administrator login on every device; the Admin Portal never falls back to a device-local signup screen
+- Shared realtime bookings so teacher and student receive the same classroom ID and room token
 - Private administrator email; the authorized address is never displayed publicly
 - Create approved teacher accounts with temporary passwords
 - Teacher approval, rejection and suspension controls
