@@ -12,7 +12,7 @@ globalThis.sessionStorage = globalThis.localStorage
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
 try {
-  const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile } = await vite.ssrLoadModule('/src/Dashboards.jsx')
+  const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile } = await vite.ssrLoadModule('/src/Dashboards.jsx')
   const { default: PortalAccess } = await vite.ssrLoadModule('/src/PortalAccess.jsx')
   const callbacks = { onAccountChange() {}, onHome() {}, onLogout() {} }
 
@@ -30,6 +30,7 @@ try {
   const teacherHtml = renderToString(React.createElement(TeacherDashboard, { account: incompleteTeacher, ...callbacks }))
   const adminHtml = renderToString(React.createElement(AdminDashboard, { account: administrator, onHome() {}, onLogout() {} }))
   const adminTeacherHtml = renderToString(React.createElement(AdminTeacherProfile, { teacher: incompleteTeacher, onBack() {}, onStatusChange() {}, processing: false, error: '' }))
+  const adminStudentHtml = renderToString(React.createElement(AdminStudentProfile, { account: incompleteStudent, learnerId: '', onBack() {}, onStatusChange() {}, onRemove() {}, processing: false, error: '' }))
   const adminLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'admin', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
   const teacherLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'teacher', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
 
@@ -37,6 +38,7 @@ try {
   if (!teacherHtml.includes('Good day')) throw new Error('Incomplete teacher dashboard failed to render.')
   if (!adminHtml.includes('TutorPro English command centre')) throw new Error('Administrator dashboard failed to render.')
   if (!adminTeacherHtml.includes('About the teacher') || !adminTeacherHtml.includes('New Teacher')) throw new Error('Administrator teacher profile view failed to render.')
+  if (!adminStudentHtml.includes('Parent and login details') || !adminStudentHtml.includes('Incomplete student profile')) throw new Error('Administrator student profile view failed to render.')
   if (!adminLoginHtml.includes('Administrator login') || adminLoginHtml.includes('Create the admin account')) throw new Error('Admin Portal did not default to login on a new device.')
   if (!teacherLoginHtml.includes('Teacher login')) throw new Error('Teacher Portal did not default to login.')
   process.stdout.write('Student, Teacher and Admin dashboard rendering: PASS\n')

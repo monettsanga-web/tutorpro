@@ -1137,6 +1137,52 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, processin
   )
 }
 
+export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onRemove, processing, error }) {
+  const learners = (account.children?.length ? account.children : account.child ? [account.child] : []).filter(Boolean)
+  const learner = learners.find((item) => item.id === learnerId) || learners[0] || {
+    id: `incomplete-${account.id}`,
+    name: 'Incomplete student profile',
+    year: 'Not provided',
+    curriculum: 'Not provided',
+    goal: 'Profile setup required',
+    frequency: 'Not provided',
+    accessStatus: 'incomplete',
+    progress: 0,
+    streak: 0,
+    lessonsCompleted: 0,
+    achievements: [],
+    incomplete: true,
+  }
+  const isIncomplete = Boolean(learner.incomplete || !learners.length)
+  const effectiveStatus = account.status === 'suspended' ? 'suspended' : learner.accessStatus || 'active'
+  const learnerBookings = getBookings({ studentId: account.id }).filter((booking) => booking.learnerId ? booking.learnerId === learner.id : learner === learners[0])
+  const completedLessons = learnerBookings.filter((booking) => booking.status === 'completed').length
+
+  return (
+    <div className="portal-view admin-student-profile-view">
+      <div className="admin-profile-backbar"><button onClick={onBack}><ChevronLeft size={17} /> Back to students</button><span><ShieldCheck size={15} /> Administrator profile view</span></div>
+      {error && <div className="portal-error" role="alert">{error}</div>}
+      <section className="admin-student-profile-hero">
+        <ProfilePhoto accountId={`${account.id}-${learner.id}`} name={learner.name} className="admin-student-profile-photo" />
+        <div><StatusBadge status={effectiveStatus} /><h1>{learner.name}</h1><p>{learner.year} · {learner.curriculum} English</p><div className="profile-tags"><span><Star size={13} /> {learner.level || 'Building foundations'}</span><span><Flame size={13} /> {learner.streak || 0} day streak</span></div></div>
+        <div className="admin-teacher-profile-actions">
+          {!isIncomplete && effectiveStatus === 'active' && <button className="suspend" onClick={() => onStatusChange(account.id, learner.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend profile</button>}
+          {!isIncomplete && effectiveStatus === 'suspended' && <button className="approve" onClick={() => onStatusChange(account.id, learner.id, 'active')} disabled={processing}><UserCheck size={16} /> Restore profile</button>}
+          <button className="reject" onClick={() => onRemove({ account, learner })} disabled={processing}><Trash2 size={16} /> Remove registration</button>
+        </div>
+      </section>
+      {isIncomplete && <div className="student-profile-suspension"><GraduationCap size={20} /><div><strong>This registration is incomplete</strong><span>Open the student account and add the learner name, school year, curriculum and learning goal.</span></div></div>}
+      <div className="admin-student-profile-grid">
+        <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
+        <section className="portal-card"><span className="portal-kicker">Learning profile</span><h2>Programme preferences</h2><dl className="admin-teacher-detail-list"><div><dt>Main goal</dt><dd>{learner.goal || 'Not provided'}</dd></div><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
+        <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
+        <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family remain separate.</p></section>
+      </div>
+      <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Student activity</span><h2>Recent lessons</h2></div></div>{learnerBookings.length ? learnerBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher />) : <EmptyState icon={CalendarDays} title="No lessons yet" text="Student bookings will appear here." />}</section>
+    </div>
+  )
+}
+
 function AddTeacherDialog({ onClose, onCreated }) {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' })
   const [error, setError] = useState('')
@@ -1384,10 +1430,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     const previous = getAccountById(accountId)
     try {
       const updated = updateLearnerAccess(accountId, learnerId, accessStatus)
-      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the student status in time.')
+      setManagedAccount((current) => current?.id === accountId ? updated : current)
       refresh()
     } catch (statusError) {
-      if (previous) updateLocalAccount(accountId, { children: previous.children, child: previous.child })
+      const reverted = previous ? updateLocalAccount(accountId, { children: previous.children, child: previous.child }) : null
+      if (reverted) setManagedAccount((current) => current?.id === accountId ? reverted : current)
       setAdminActionError(`${statusError.message} The student status was not changed in Supabase.`)
     } finally {
       setProcessingAccountId('')
@@ -1403,6 +1451,15 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     } else {
       await deleteProfileMediaOwner(`${profile.account.id}-${profile.learner.id}`).catch(() => 0)
       removeStudentLearner(profile.account.id, profile.learner.id)
+    }
+    const refreshedFamily = getAccountById(profile.account.id)
+    if (!refreshedFamily) {
+      setManagedAccount(null)
+      setManagedLearnerId('')
+      setActive('students')
+    } else if (managedAccount?.id === profile.account.id) {
+      setManagedAccount(refreshedFamily)
+      setManagedLearnerId(refreshedFamily.children?.[0]?.id || '')
     }
     setStudentToRemove(null)
     refresh()
@@ -1443,11 +1500,6 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
-  const updateManagedAccount = (updatedAccount) => {
-    setManagedAccount(updatedAccount)
-    refresh()
-  }
-
   if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
 
   if (managedAccount?.role === 'teacher') {
@@ -1461,7 +1513,14 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   }
 
   if (managedAccount?.role === 'student') {
-    return <StudentDashboard key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} initialLearnerId={managedLearnerId} onAccountChange={updateManagedAccount} onHome={exitManagedDashboard} onLogout={exitManagedDashboard} adminPreview />
+    return (
+      <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
+        <RoleErrorBoundary onBack={exitManagedDashboard}>
+          <AdminStudentProfile account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} />
+        </RoleErrorBoundary>
+        {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
+      </PortalShell>
+    )
   }
 
   return (
