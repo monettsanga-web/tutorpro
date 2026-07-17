@@ -36,7 +36,7 @@ async function rejects(callback, message) {
 auth.initializePlatform()
 assert(auth.getApprovedTeachers().length === 1, 'The approved seed teacher was not created.')
 const migratedFamily = auth.getAccountById('legacy-family')
-assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.paymentStatus === 'paid', 'Legacy student migration failed.')
+assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.paymentStatus === 'paid' && migratedFamily.child.accessStatus === 'active', 'Legacy student migration failed.')
 
 await rejects(
   () => auth.registerAccount({ parentName: 'Parent', email: 'bad@example.com', password: 'short' }),
@@ -89,6 +89,13 @@ const date = schedule.formatDateKey(future)
 const time = '16:00'
 const slot = schedule.makeSlotKey(schedule.weekdayIndex(future), time)
 teacher = auth.updateTeacherProfile(teacher.id, { availabilitySlots: [slot] })
+
+family = auth.updateLearnerAccess(family.id, learner.id, 'suspended')
+await rejects(
+  () => bookings.createBooking({ studentId: family.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner, teacherId: teacher.id, date, time, duration: 25, focus: 'Speaking' }),
+  'A suspended student profile was allowed to book.',
+)
+family = auth.updateLearnerAccess(family.id, learner.id, 'active')
 
 const booking = bookings.createBooking({
   studentId: family.id,

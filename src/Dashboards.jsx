@@ -45,6 +45,7 @@ import {
   getAccounts,
   getApprovedTeachers,
   updateAccount,
+  updateLearnerAccess,
   updateLearnerPayment,
   updateStudentProfile,
   updateTeacherProfile,
@@ -388,6 +389,24 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     }
   }
 
+  if (account.status === 'suspended') {
+    return (
+      <div className="portal-view">
+        <div className="portal-page-heading"><div><span className="portal-kicker">Family account access</span><h1>Account suspended</h1><p>All student profiles in this family account are temporarily paused.</p></div></div>
+        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Family account · Suspended</small><h2>{learner.name} cannot book while this account is suspended.</h2><p>Contact the TutorPro English administrator to restore access.</p>{adminBooking && <button className="portal-primary-button" onClick={() => { updateAccount(account.id, { status: 'active' }); onBooked() }}>Restore family account <UserCheck size={16} /></button>}</div></section>
+      </div>
+    )
+  }
+
+  if (learner.accessStatus === 'suspended') {
+    return (
+      <div className="portal-view">
+        <div className="portal-page-heading"><div><span className="portal-kicker">Student access</span><h1>Profile suspended</h1><p>This learner cannot schedule or enter new classes while suspended.</p></div></div>
+        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Student status · Suspended</small><h2>{learner.name}’s learning profile is paused.</h2><p>Please contact the TutorPro English administrator to restore booking and classroom access.</p>{adminBooking && <button className="portal-primary-button" onClick={() => { updateLearnerAccess(account.id, learner.id, 'active'); onBooked() }}>Restore {learner.name} <UserCheck size={16} /></button>}</div></section>
+      </div>
+    )
+  }
+
   if (learner.paymentStatus !== 'paid') {
     return (
       <div className="portal-view">
@@ -688,7 +707,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   return (
     <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
       <div className="family-student-switcher">
-        <div><span>Learning as</span>{learners.map((item) => <button className={item.id === learner.id ? 'active' : ''} key={item.id} onClick={() => chooseLearner(item.id)}><ProfilePhoto accountId={`${account.id}-${item.id}`} name={item.name} refreshKey={mediaVersion} className="learner-tab-photo" /><span>{item.name}<small className={`payment-mini payment-mini--${item.paymentStatus}`}>{item.paymentStatus}</small></span></button>)}</div>
+        <div><span>Learning as</span>{learners.map((item) => <button className={item.id === learner.id ? 'active' : ''} key={item.id} onClick={() => chooseLearner(item.id)}><ProfilePhoto accountId={`${account.id}-${item.id}`} name={item.name} refreshKey={mediaVersion} className="learner-tab-photo" /><span>{item.name}<small className={account.status === 'suspended' || item.accessStatus === 'suspended' ? 'access-mini access-mini--suspended' : `payment-mini payment-mini--${item.paymentStatus}`}>{account.status === 'suspended' || item.accessStatus === 'suspended' ? 'suspended' : item.paymentStatus}</small></span></button>)}</div>
         {learners.length < 3 && <button className="add-student-button" onClick={() => setShowAddStudent(true)}><Plus size={15} /> Add student <small>{learners.length}/3</small></button>}
       </div>
       {active === 'overview' && (
@@ -752,10 +771,11 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         <div className="portal-view">
           <section className="student-profile-hero">
             <div className="student-profile-photo-wrap"><ProfilePhoto accountId={`${account.id}-${learner.id}`} name={learner.name} refreshKey={mediaVersion} className="student-profile-photo" /><label title="Upload display photo"><Camera size={16} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadStudentPhoto} /></label></div>
-            <div><span className="portal-kicker">Student profile</span><h1>{learner.name}</h1><p>{learner.year} · {learner.curriculum} English</p><div className="profile-tags"><span><Star size={13} /> {learner.level || 'Building foundations'}</span><span><Flame size={13} /> {learner.streak || 0} day streak</span><span className={`profile-payment profile-payment--${learner.paymentStatus}`}><ShieldCheck size={13} /> {learner.paymentStatus}</span></div></div>
+            <div><span className="portal-kicker">Student profile</span><h1>{learner.name}</h1><p>{learner.year} · {learner.curriculum} English</p><div className="profile-tags"><span><Star size={13} /> {learner.level || 'Building foundations'}</span><span><Flame size={13} /> {learner.streak || 0} day streak</span><span className={`profile-payment profile-payment--${learner.paymentStatus}`}><ShieldCheck size={13} /> {learner.paymentStatus}</span>{learner.accessStatus === 'suspended' && <span className="profile-access-suspended"><Ban size={13} /> suspended</span>}</div></div>
             <div className="profile-score"><strong>{learner.progress || 18}%</strong><span>Term progress</span></div>
           </section>
           {mediaError && <div className="portal-error" role="alert">{mediaError}</div>}
+          {(account.status === 'suspended' || learner.accessStatus === 'suspended') && <div className="student-profile-suspension"><Ban size={20} /><div><strong>{account.status === 'suspended' ? 'This family account is suspended' : 'This student profile is suspended'}</strong><span>Booking, classroom entry and new lesson activity are paused. Contact the administrator for assistance.</span></div></div>}
           <div className="profile-layout">
             <section className="portal-card profile-edit-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Learning preferences</span><h2>Shape the learning path</h2></div>{profileSaved && <span className="saved-label"><Check size={14} /> Saved</span>}</div>
@@ -1072,6 +1092,10 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     updateLearnerPayment(accountId, learnerId, paymentStatus)
     refresh()
   }
+  const setLearnerStatus = (accountId, learnerId, accessStatus) => {
+    updateLearnerAccess(accountId, learnerId, accessStatus)
+    refresh()
+  }
   const setBookingStatus = (bookingId, status) => {
     const previous = bookings.find((booking) => booking.id === bookingId)
     const updatedBooking = updateBooking(bookingId, { status })
@@ -1146,13 +1170,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Payment</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · {student.status}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="payment-control"><span className={`payment-badge payment-badge--${rowLearner.paymentStatus}`}>{rowLearner.paymentStatus}</span><button onClick={() => setPaymentStatus(student.id, rowLearner.id, rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid')}>Mark {rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid'}</button></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{student.status === 'active' ? <button className="table-action table-action--suspend" onClick={() => setStatus(student.id, 'suspended')} title="Suspend family account"><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setStatus(student.id, 'active')} title="Restore family account"><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Payment</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="payment-control"><span className={`payment-badge payment-badge--${rowLearner.paymentStatus}`}>{rowLearner.paymentStatus}</span><button onClick={() => setPaymentStatus(student.id, rowLearner.id, rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid')}>Mark {rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid'}</button></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'bookings' && (
         adminBooking ? (
           <div className="admin-booking-view">
-            <div className="admin-booking-context"><button onClick={() => setAdminBooking(false)}><ChevronLeft size={17} /> All bookings</button><label><span>Book for student</span><select value={bookingLearner?.id || ''} onChange={(event) => setBookingStudentId(event.target.value)}>{studentProfiles.map(({ account: student, learner: optionLearner }) => <option key={optionLearner.id} value={optionLearner.id}>{optionLearner.name} · {student.parentName} · {optionLearner.paymentStatus}</option>)}</select></label></div>
+            <div className="admin-booking-context"><button onClick={() => setAdminBooking(false)}><ChevronLeft size={17} /> All bookings</button><label><span>Book for student</span><select value={bookingLearner?.id || ''} onChange={(event) => setBookingStudentId(event.target.value)}>{studentProfiles.map(({ account: student, learner: optionLearner }) => <option key={optionLearner.id} value={optionLearner.id}>{optionLearner.name} · {student.parentName} · {optionLearner.accessStatus === 'suspended' ? 'suspended' : optionLearner.paymentStatus}</option>)}</select></label></div>
             {bookingStudent && bookingLearner ? <BookLessonPanel key={bookingLearner.id} account={bookingStudent} learner={bookingLearner} adminBooking onBooked={refresh} /> : <EmptyState icon={GraduationCap} title="Register a student first" text="An administrator needs a student profile before creating a booking." />}
           </div>
         ) : (

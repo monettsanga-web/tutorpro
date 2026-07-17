@@ -699,6 +699,7 @@
 
 .payment-mini--paid { color: #2f8a53; }
 .payment-mini--unpaid { color: #c26c25; }
+.access-mini--suspended { color: #c63f6c; font-size: 0.48rem; font-weight: 850; text-transform: uppercase; }
 
 .add-student-button {
   display: inline-flex;
@@ -773,8 +774,60 @@
   margin-top: 17px;
 }
 
+.student-suspended-card {
+  display: flex;
+  max-width: 760px;
+  min-height: 250px;
+  align-items: center;
+  gap: 22px;
+  border: 1px solid #efbfd0;
+  border-radius: 21px;
+  padding: 35px;
+  background: linear-gradient(120deg, #fff8fa, #ffe8f0);
+  box-shadow: 0 14px 36px rgba(156, 39, 79, 0.09);
+}
+
+.student-suspended-card > span {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 23px;
+  background: #fff;
+  color: #c63f6c;
+  box-shadow: 0 8px 20px rgba(156, 39, 79, 0.12);
+  transform: rotate(-3deg);
+}
+
+.student-suspended-card small { color: #ad315c; font-size: 0.6rem; font-weight: 850; letter-spacing: 0.07em; text-transform: uppercase; }
+.student-suspended-card h2 { margin: 5px 0 8px; font-size: 1.65rem; }
+.student-suspended-card p { max-width: 520px; margin: 0; color: #86606d; font-size: 0.76rem; }
+.student-suspended-card .portal-primary-button { margin-top: 17px; }
+
 .profile-payment--paid { color: #2f8a53 !important; }
 .profile-payment--unpaid { color: #b66b23 !important; }
+.profile-access-suspended { color: #b83260 !important; background: #ffe8f0 !important; }
+
+.student-profile-suspension {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 18px;
+  border: 1px solid #edbfd0;
+  border-radius: 13px;
+  padding: 13px 15px;
+  background: #fff0f5;
+  color: #b63360;
+}
+
+.student-profile-suspension > div { display: flex; flex-direction: column; }
+.student-profile-suspension strong { color: #a92f59; font-size: 0.72rem; }
+.student-profile-suspension span { color: #966476; font-size: 0.61rem; }
+
+.inline-access { font-weight: 800; text-transform: capitalize; }
+.inline-access--active { color: #358652; }
+.inline-access--suspended { color: #bd3765; }
 
 .payment-control {
   display: flex;
@@ -4788,7 +4841,8 @@
     justify-content: center;
   }
 
-  .payment-required-card {
+  .payment-required-card,
+  .student-suspended-card {
     align-items: flex-start;
     flex-direction: column;
     padding: 26px;

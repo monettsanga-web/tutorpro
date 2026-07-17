@@ -49,6 +49,7 @@ export function createBooking(details) {
       ? 'This family account is suspended. Contact the administrator before booking.'
       : 'The student profile could not be verified. Log out, log in again, and retry the booking.')
   }
+  if (learner.accessStatus === 'suspended') throw new Error(`${learner.name}’s student profile is suspended. Contact the TutorPro English administrator before booking.`)
   if (learner.paymentStatus !== 'paid') throw new Error(`${learner.name} is currently unpaid. An administrator must mark the student as paid before booking.`)
   if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')
   if (!details.focus?.trim()) throw new Error('Choose a lesson focus before booking.')
@@ -182,6 +183,10 @@ export function getClassroomAccess(bookingId, account, now = new Date()) {
     || (account.role === 'student' && booking.studentId === account.id)
   if (!authorized) return { allowed: false, reason: 'This private classroom belongs to another booking.', booking }
   if (account.role === 'student' && account.status !== 'active') return { allowed: false, reason: 'This student account is not active.', booking }
+  if (account.role === 'student') {
+    const classroomLearner = account.children?.find((learner) => learner.id === booking.learnerId) || account.child
+    if (classroomLearner?.accessStatus === 'suspended') return { allowed: false, reason: 'This student profile is suspended and cannot enter the classroom.', booking }
+  }
   if (account.role === 'teacher' && account.status !== 'approved') return { allowed: false, reason: 'This teacher account is not approved for live classes.', booking }
   if (!['confirmed', 'completed'].includes(booking.status)) {
     return { allowed: false, reason: 'The lesson must be confirmed before the classroom opens.', booking }
