@@ -84,7 +84,7 @@ Use separate tabs or devices:
 5. Confirm the teacher appears under **Admin → Teachers** with `pending` status.
 6. Approve the teacher.
 7. Confirm the teacher dashboard updates to `approved`.
-8. Mark the student paid/unpaid or suspended/active.
+8. Suspend or restore the student profile.
 9. Confirm the student dashboard updates automatically.
 
 The Admin Dashboard badge should display **Supabase live sync**. If it displays **Cloud sync needs attention**, check the environment values, SQL schema and `admin_members` row.
@@ -94,4 +94,4 @@ The Admin Dashboard badge should display **Supabase live sync**. If it displays 
 - Keep Row Level Security enabled.
 - Never put the Supabase `service_role` key in a `VITE_` variable.
 - Use a server-side Edge Function for deleting Supabase Auth users completely.
-- Move bookings, payment verification, media and classroom files into shared Supabase tables/storage before production launch.
+- Move bookings, media and classroom files into shared Supabase tables/storage before production launch.

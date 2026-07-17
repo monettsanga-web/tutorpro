@@ -51,13 +51,12 @@ const adminTeachers = auth.getAccounts('teacher')
 if (!adminStudents.some((account) => account.id === family.id)) throw new Error('Student signup did not synchronize to Admin data.')
 if (!adminTeachers.some((account) => account.id === teacher.id && account.status === 'pending')) throw new Error('Teacher signup did not synchronize as pending.')
 
-auth.updateLearnerPayment(family.id, family.child.id, 'paid')
 auth.updateLearnerAccess(family.id, family.child.id, 'suspended')
 auth.updateAccount(teacher.id, { status: 'approved' })
 
 activeSession = studentTab
 const studentAfterAdmin = auth.getAccountById(family.id)
-if (studentAfterAdmin.child.paymentStatus !== 'paid' || studentAfterAdmin.child.accessStatus !== 'suspended') {
+if (studentAfterAdmin.child.accessStatus !== 'suspended') {
   throw new Error('Admin student controls did not synchronize back to Student data.')
 }
 

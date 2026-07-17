@@ -51,7 +51,6 @@ export function createBooking(details) {
       : 'The student profile could not be verified. Log out, log in again, and retry the booking.')
   }
   if (learner.accessStatus === 'suspended') throw new Error(`${learner.name}’s student profile is suspended. Contact the TutorPro English administrator before booking.`)
-  if (learner.paymentStatus !== 'paid') throw new Error(`${learner.name} is currently unpaid. An administrator must mark the student as paid before booking.`)
   if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')
   if (!details.focus?.trim()) throw new Error('Choose a lesson focus before booking.')
   const lessonDate = new Date(`${details.date}T${details.time}:00`)

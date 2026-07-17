@@ -7,7 +7,6 @@ globalThis.localStorage = {
 
 const auth = await import('../src/auth.js')
 const bookings = await import('../src/bookings.js')
-const payments = await import('../src/payments.js')
 const schedule = await import('../src/schedule.js')
 
 storage.set('tutorpro_accounts_v2', JSON.stringify([{
@@ -36,7 +35,7 @@ async function rejects(callback, message) {
 auth.initializePlatform()
 assert(auth.getApprovedTeachers().length === 1, 'The approved seed teacher was not created.')
 const migratedFamily = auth.getAccountById('legacy-family')
-assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.paymentStatus === 'paid' && migratedFamily.child.accessStatus === 'active', 'Legacy student migration failed.')
+assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.accessStatus === 'active', 'Legacy student migration failed.')
 
 storage.set('tutorpro_accounts_v1', JSON.stringify([{
   id: 'older-v1-family',
@@ -62,7 +61,7 @@ let family = await auth.registerAccount({
   goal: 'Speaking with confidence',
   frequency: '1–2 weekly',
 })
-assert(family.children.length === 1 && family.child.paymentStatus === 'unpaid', 'Student registration failed.')
+assert(family.children.length === 1 && family.child.accessStatus === 'active', 'Student registration failed.')
 assert(auth.getAccounts('student').some((account) => account.id === family.id), 'New student registration did not appear in the administrator data source.')
 
 family = auth.addStudentLearner(family.id, { name: 'Jamie', year: 'Year 7', curriculum: 'Oxford', goal: 'Writing and grammar', frequency: '1–2 weekly' })
@@ -74,8 +73,6 @@ await rejects(
 )
 
 const learner = family.children[0]
-family = auth.updateLearnerPayment(family.id, learner.id, 'paid')
-assert(family.child.paymentStatus === 'paid', 'Student payment status did not update.')
 
 let teacher = await auth.registerTeacher({
   fullName: 'Test Teacher',
@@ -147,50 +144,16 @@ bookings.saveTeacherFeedback(booking.id, teacher.id, { summary: 'A focused and s
 bookings.rateCompletedBooking(booking.id, family.id, 5, 'Excellent class')
 await rejects(() => bookings.rateCompletedBooking(booking.id, family.id, 4, 'Duplicate'), 'A duplicate lesson rating was accepted.')
 
-const payment = payments.recordPayment({
-  accountId: family.id,
-  learnerId: repairedLearner.id,
-  provider: 'paypal',
-  transactionId: 'TEST-PAYPAL-001',
-  amount: 32,
-  currency: 'USD',
-  plan: 'Growth pack',
-  status: 'completed',
-})
-assert(payment.amount === 32 && payments.getPayments({ learnerId: repairedLearner.id }).length === 1, 'Payment recording failed.')
-let wechatLearner = repairedFamily.children.find((item) => item.name === 'Jamie')
-auth.updateLearnerAccess(family.id, wechatLearner.id, 'suspended')
-await rejects(
-  () => payments.recordPayment({ accountId: family.id, learnerId: wechatLearner.id, provider: 'wechat-pay', transactionId: 'WECHAT-SUSPENDED', amount: 10, currency: 'USD', plan: 'Weekly lesson', status: 'pending' }),
-  'A suspended student profile submitted a payment.',
-)
-const activeWechatFamily = auth.updateLearnerAccess(family.id, wechatLearner.id, 'active')
-wechatLearner = activeWechatFamily.children.find((item) => item.id === wechatLearner.id)
-const wechatPayment = payments.recordPayment({ accountId: family.id, learnerId: wechatLearner.id, provider: 'wechat-pay', transactionId: 'WECHAT-TEST-001', amount: 10, currency: 'USD', plan: 'Weekly lesson', status: 'pending' })
-assert(wechatPayment.status === 'pending', 'WeChat Pay submission was not marked pending.')
-payments.updatePaymentStatus(wechatPayment.id, 'completed', 'test-admin')
-const paidWechatFamily = auth.updateLearnerPayment(family.id, wechatLearner.id, 'paid')
-assert(paidWechatFamily.children.find((item) => item.id === wechatLearner.id).paymentStatus === 'paid', 'Approved WeChat Pay did not unlock the student.')
-await rejects(
-  () => payments.recordPayment({ accountId: family.id, learnerId: repairedLearner.id, provider: 'paypal', transactionId: '', amount: -1, plan: 'Invalid', status: 'completed' }),
-  'An invalid payment was accepted.',
-)
-
 let removableFamily = await auth.registerAccount({ parentName: 'Remove Parent', email: 'remove@example.com', password: 'Remove123', childName: 'Keep', year: 'Year 3', curriculum: 'Cambridge', goal: 'Reading', frequency: '1–2 weekly' })
 removableFamily = auth.addStudentLearner(removableFamily.id, { name: 'Remove Me', year: 'Year 6', curriculum: 'Oxford', goal: 'Grammar', frequency: '1–2 weekly' })
 let removableLearner = removableFamily.children[1]
-removableFamily = auth.updateLearnerPayment(removableFamily.id, removableLearner.id, 'paid')
-removableLearner = removableFamily.children.find((item) => item.id === removableLearner.id)
 const removalDate = new Date(future)
 removalDate.setDate(removalDate.getDate() + 21)
 bookings.createBooking({ studentId: removableFamily.id, learnerId: removableLearner.id, learnerName: removableLearner.name, learnerProfile: removableLearner, teacherId: teacher.id, date: schedule.formatDateKey(removalDate), time, duration: 25, focus: 'Grammar' })
-payments.recordPayment({ accountId: removableFamily.id, learnerId: removableLearner.id, provider: 'paypal', transactionId: 'REMOVE-PAYPAL-001', amount: 10, plan: 'Weekly lesson', status: 'completed' })
 bookings.removeStudentBookingData(removableFamily.id, removableLearner.id)
-payments.removeStudentPayments(removableFamily.id, removableLearner.id)
 auth.removeStudentLearner(removableFamily.id, removableLearner.id)
 assert(auth.getAccountById(removableFamily.id).children.length === 1, 'Removing an additional student profile failed.')
 assert(!bookings.getBookings({ studentId: removableFamily.id }).some((item) => item.learnerId === removableLearner.id), 'Removed student bookings were not cleaned up.')
-assert(payments.getPayments({ learnerId: removableLearner.id }).length === 0, 'Removed student payment records were not cleaned up.')
 assert(auth.removeStudentAccount(removableFamily.id) && !auth.getAccountById(removableFamily.id), 'Removing the final family registration failed.')
 assert(auth.removeStudentAccount('older-v1-family') && !auth.getAccountById('older-v1-family'), 'Removed legacy registration reappeared in the administrator data source.')
 

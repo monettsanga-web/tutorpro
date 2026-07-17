@@ -121,7 +121,6 @@ function normalizeLearners(account) {
   return source.slice(0, 3).map((learner, index) => ({
     ...learner,
     id: learner.id || `learner-${account.id}-${index + 1}`,
-    paymentStatus: learner.paymentStatus || 'paid',
     accessStatus: learner.accessStatus || 'active',
   }))
 }
@@ -152,7 +151,7 @@ export function initializePlatform() {
     if (['student', 'parent'].includes(account.role || 'student') && (account.child || account.children?.length)) {
       const normalizedChildren = normalizeLearners(account)
       const needsLearnerMigration = !account.children?.length
-        || account.children.some((learner) => !learner.id || !learner.paymentStatus || !learner.accessStatus)
+        || account.children.some((learner) => !learner.id || !learner.accessStatus)
         || account.child?.id !== normalizedChildren[0]?.id
         || account.role === 'parent'
         || account.status === 'approved'
@@ -260,7 +259,6 @@ export async function registerAccount(details) {
     curriculum: details.curriculum,
     goal: details.goal,
     frequency: details.frequency,
-    paymentStatus: 'unpaid',
     accessStatus: 'active',
     level: 'Building foundations',
     progress: 18,
@@ -506,7 +504,6 @@ export function repairStudentForBooking(accountId, learnerSnapshot) {
     children.push({
       ...learnerSnapshot,
       id: learnerSnapshot.id || crypto.randomUUID(),
-      paymentStatus: learnerSnapshot.paymentStatus || 'unpaid',
       accessStatus: learnerSnapshot.accessStatus || 'active',
     })
     learnerIndex = children.length - 1
@@ -518,7 +515,6 @@ export function repairStudentForBooking(accountId, learnerSnapshot) {
     ...learnerSnapshot,
     ...storedLearner,
     id: storedLearner.id || learnerSnapshot.id || crypto.randomUUID(),
-    paymentStatus: storedLearner.paymentStatus || learnerSnapshot.paymentStatus || 'unpaid',
     accessStatus: storedLearner.accessStatus || learnerSnapshot.accessStatus || 'active',
   }
   account.role = 'student'
@@ -557,7 +553,6 @@ export function addStudentLearner(accountId, details) {
     curriculum: details.curriculum,
     goal: details.goal,
     frequency: details.frequency || '1–2 weekly',
-    paymentStatus: 'unpaid',
     accessStatus: 'active',
     level: 'Building foundations',
     progress: 0,
@@ -567,11 +562,6 @@ export function addStudentLearner(accountId, details) {
   }
   const updatedChildren = [...children, learner]
   return updateAccount(accountId, { children: updatedChildren, child: updatedChildren[0] })
-}
-
-export function updateLearnerPayment(accountId, learnerId, paymentStatus) {
-  if (!['paid', 'unpaid'].includes(paymentStatus)) throw new Error('Invalid payment status.')
-  return updateStudentProfile(accountId, { paymentStatus }, learnerId)
 }
 
 export function updateLearnerAccess(accountId, learnerId, accessStatus) {

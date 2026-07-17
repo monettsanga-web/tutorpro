@@ -1,6 +1,6 @@
 # TutorPro English
 
-A responsive TutorPro English website with automatic location-aware translation, interactive English games, PayPal checkout, a Google Drive-powered curriculum carousel, role-based dashboards and lesson booking.
+A responsive TutorPro English website with automatic location-aware translation, interactive English games, a Google Drive-powered curriculum carousel, role-based dashboards and lesson booking.
 
 ## Included portals
 
@@ -11,11 +11,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Official branded icons for Gmail, Yahoo, WeChat, WhatsApp and other email methods
 - Provider selection stays inside TutorPro English so users can complete registration without being redirected
 - One family account can manage one to three named student profiles
-- Individual payment status, schedules, progress and display photo for each student
-- Unpaid students are automatically prevented from booking
-- PayPal checkout plus WeChat Pay reference submission and per-student payment history
-- WeChat Pay transactions require administrator verification before booking unlocks
-- Suspended student or family profiles cannot submit payments
+- Individual schedules, progress and display photo for each student
 - Adaptive 3D English games for Years 1–3, 4–6 and 7–11 with persistent stars
 - WebGL Word Galaxy, 3D Grammar Bridge and speech-powered Sound Safari missions
 - One rating and optional review after every completed class
@@ -49,16 +45,15 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Direct access to any teacher dashboard from the teacher table
 - Per-student profile suspension and restoration with clear learner-facing status messages
 - Safe removal of individual student profiles or final family registrations with typed confirmation
-- Automatic cleanup of removed student bookings, payments and profile media
+- Automatic cleanup of removed student bookings and profile media
 - Direct access to each student dashboard
 - Live admin refresh when student or teacher registrations change in the same tab or another tab
 - Automatic merging of older and current registration records so no student disappears from Admin
 - Per-tab sessions so an administrator can stay logged in while testing student or teacher registration separately
-- New teachers appear as pending for approval; new students appear with paid/unpaid, active/suspended and profile controls
+- New teachers appear as pending for approval; new students appear with active/suspended profile controls
 - Paid/unpaid controls for every individual learner
 - Select a specific student name and book an available teacher slot on their behalf
 - Platform-wide booking status controls
-- WeChat Pay transaction approval/rejection and automatic paid-status updates
 - Overview metrics for students, teachers and lessons
 - Hover/focus account menu on the homepage with direct dashboard access and secure logout
 
@@ -74,7 +69,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Optional Supabase Auth and Realtime integration for cross-device registration synchronization
 - Student registrations appear automatically in Admin → Students
 - Teacher registrations appear as pending in Admin → Teachers
-- Admin status, payment and suspension changes flow back to the correct dashboard
+- Admin approval and suspension changes flow back to the correct dashboard
 - Browser storage remains available as an offline/same-browser fallback
 
 Follow [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) to create and connect the free Supabase project securely.
@@ -111,8 +106,8 @@ npm run build
 npm audit
 ```
 
-The core-flow test covers registration, login, multi-student accounts, payment status, teacher availability, booking conflicts, private classroom access, lesson feedback, ratings and payment records. The synchronization test verifies that student and teacher sign-ups appear in Admin, and that admin approvals, paid/unpaid changes and suspensions flow back to the correct dashboard.
+The core-flow test covers registration, login, multi-student accounts, profile status, teacher availability, booking conflicts, private classroom access, lesson feedback and ratings. The synchronization test verifies that student and teacher sign-ups appear in Admin, and that admin approvals and suspensions flow back to the correct dashboard.
 
 ## Data and authentication note
 
-The app uses Supabase for cross-device registration profiles when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured. Without those values it falls back to browser storage, which only synchronizes the same website origin/browser. Game rewards, payments, ratings and bookings currently retain a browser-storage fallback; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API for the fallback flow, while configured cloud accounts use Supabase Auth. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Set `VITE_WECHAT_PAY_QR_URL` to your official merchant QR image. The included WeChat Pay flow submits a transaction reference for administrator review; automated WeChat Pay order verification still requires a WeChat Pay merchant account and secure server API. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.
+The app uses Supabase for cross-device registration profiles when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured. Without those values it falls back to browser storage, which only synchronizes the same website origin/browser. Game rewards, ratings and bookings currently retain a browser-storage fallback; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API for the fallback flow, while configured cloud accounts use Supabase Auth. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service.
