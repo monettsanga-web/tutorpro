@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Ban,
@@ -51,12 +51,12 @@ import {
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, rateCompletedBooking, saveTeacherFeedback, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
-import StudentGames from './StudentGames.jsx'
 import PayPalCheckout from './PayPalCheckout.jsx'
 import { recordPayment, getPayments } from './payments.js'
 import { saveProfileMedia } from './media.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
+const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro English user'
@@ -740,7 +740,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         </div>
       )}
 
-      {active === 'games' && <StudentGames learner={learner} onEarnStars={earnGameStars} />}
+      {active === 'games' && <Suspense fallback={<div className="game-loading"><i /><strong>Launching 3D English Game Zone…</strong><span>Preparing the world for {learner.name}</span></div>}><StudentGames key={learner.id} learner={learner} onEarnStars={earnGameStars} /></Suspense>}
 
       {active === 'payments' && <PaymentsPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 

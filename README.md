@@ -12,7 +12,8 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Individual payment status, schedules, progress and display photo for each student
 - Unpaid students are automatically prevented from booking
 - PayPal checkout, lesson-credit plans and per-student payment history
-- Interactive vocabulary, sentence-building and listen-and-spell games with persistent stars
+- Adaptive 3D English games for Years 1–3, 4–6 and 7–11 with persistent stars
+- WebGL Word Galaxy, 3D Grammar Bridge and speech-powered Sound Safari missions
 - One rating and optional review after every completed class
 - Teacher feedback, strengths, next steps and homework shown on completed lessons
 - 24-hour weekly lesson calendar divided into 30-minute slots

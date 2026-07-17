@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import WordGalaxy3D from './WordGalaxy3D.jsx'
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,7 +12,6 @@ import {
   Star,
   Trophy,
   Volume2,
-  X,
   Zap,
 } from 'lucide-react'
 
@@ -41,6 +41,50 @@ const spellingWords = [
   { word: 'wonderful', hint: 'Extremely good or delightful' },
 ]
 
+const levelContent = {
+  beginner: {
+    label: 'Rookie Explorer',
+    description: 'Short words, clear clues and friendly sentence patterns for Years 1–3.',
+    words: [
+      { clue: 'An animal that says meow.', answer: 'cat', options: ['cat', 'fish', 'bird', 'frog'] },
+      { clue: 'The colour of a clear daytime sky.', answer: 'blue', options: ['red', 'blue', 'black', 'pink'] },
+      { clue: 'We use this to read stories.', answer: 'book', options: ['shoe', 'book', 'cup', 'ball'] },
+      { clue: 'The opposite of small.', answer: 'big', options: ['cold', 'slow', 'big', 'soft'] },
+      { clue: 'A place where you learn with a teacher.', answer: 'school', options: ['beach', 'school', 'farm', 'shop'] },
+    ],
+    sentences: ['I like my English class', 'The cat is very happy', 'We read a book together', 'My teacher helps me learn'],
+    spelling: [{ word: 'friend', hint: 'A person you like' }, { word: 'school', hint: 'A place to learn' }, { word: 'happy', hint: 'Feeling good' }, { word: 'yellow', hint: 'The colour of sunshine' }],
+  },
+  explorer: {
+    label: 'Galaxy Explorer',
+    description: 'Vocabulary, grammar and listening challenges designed for Years 4–6.',
+    words: wordQuestions,
+    sentences: sentenceQuestions,
+    spelling: spellingWords,
+  },
+  master: {
+    label: 'Language Master',
+    description: 'Advanced vocabulary and complex sentence patterns for Years 7–11.',
+    words: [
+      { clue: 'Able to change easily when circumstances become different.', answer: 'adaptable', options: ['accurate', 'adaptable', 'ordinary', 'cautious'] },
+      { clue: 'A conclusion reached using evidence and reasoning.', answer: 'inference', options: ['inference', 'permission', 'preference', 'influence'] },
+      { clue: 'To examine something carefully and in detail.', answer: 'analyse', options: ['announce', 'analyse', 'arrange', 'achieve'] },
+      { clue: 'Expressing ideas clearly and effectively.', answer: 'articulate', options: ['fortunate', 'articulate', 'immediate', 'delicate'] },
+      { clue: 'Something that is certain to happen and cannot be avoided.', answer: 'inevitable', options: ['invisible', 'inevitable', 'incredible', 'independent'] },
+      { clue: 'To make a situation less severe or difficult.', answer: 'alleviate', options: ['accelerate', 'alleviate', 'associate', 'appreciate'] },
+    ],
+    sentences: ['Although the task was challenging we persevered', 'Effective communication requires clarity and empathy', 'The evidence supports a completely different conclusion', 'Learning another language broadens our perspective'],
+    spelling: [{ word: 'environment', hint: 'The natural world around us' }, { word: 'communication', hint: 'The exchange of information' }, { word: 'independent', hint: 'Able to act by yourself' }, { word: 'opportunity', hint: 'A favourable chance' }, { word: 'achievement', hint: 'Something completed successfully' }],
+  },
+}
+
+function learnerLevel(year = '') {
+  const yearNumber = Number(String(year).match(/\d+/)?.[0] || 4)
+  if (yearNumber <= 3) return 'beginner'
+  if (yearNumber >= 7) return 'master'
+  return 'explorer'
+}
+
 function GameHeader({ title, subtitle, score, onBack, icon: Icon }) {
   return (
     <div className="game-header">
@@ -51,11 +95,11 @@ function GameHeader({ title, subtitle, score, onBack, icon: Icon }) {
   )
 }
 
-function WordQuest({ onBack, onEarn }) {
+function WordQuest({ onBack, onEarn, questions, levelLabel }) {
   const [index, setIndex] = useState(0)
   const [answer, setAnswer] = useState('')
   const [score, setScore] = useState(0)
-  const question = wordQuestions[index % wordQuestions.length]
+  const question = questions[index % questions.length]
   const correct = answer === question.answer
 
   const choose = (option) => {
@@ -68,20 +112,20 @@ function WordQuest({ onBack, onEarn }) {
   }
 
   const next = () => {
-    setIndex((value) => (value + 1) % wordQuestions.length)
+    setIndex((value) => (value + 1) % questions.length)
     setAnswer('')
   }
 
   return (
     <div className="game-stage game-stage--words">
-      <GameHeader title="Word Quest" subtitle="Vocabulary challenge" score={score} onBack={onBack} icon={BookOpen} />
-      <div className="game-progress"><span style={{ width: `${((index % wordQuestions.length) + 1) / wordQuestions.length * 100}%` }} /></div>
+      <GameHeader title="Word Galaxy 3D" subtitle={`${levelLabel} · Vocabulary mission`} score={score} onBack={onBack} icon={BookOpen} />
+      <div className="game-progress"><span style={{ width: `${((index % questions.length) + 1) / questions.length * 100}%` }} /></div>
       <section className="word-game-card">
         <div className="word-game-card__badge"><Sparkles size={22} /></div>
         <span>Which word matches this meaning?</span>
         <h3>“{question.clue}”</h3>
-        <div className="word-options">{question.options.map((option) => <button className={answer ? option === question.answer ? 'correct' : option === answer ? 'wrong' : 'dimmed' : ''} onClick={() => choose(option)} key={option}><span>{option}</span>{answer && option === question.answer && <Check size={18} />}{answer === option && !correct && <X size={18} />}</button>)}</div>
-        {answer && <div className={`game-result ${correct ? 'correct' : 'wrong'}`}><strong>{correct ? 'Brilliant! +1 star' : `Almost! The answer is “${question.answer}”.`}</strong><button onClick={next}>Next word <ArrowRight size={16} /></button></div>}
+        <WordGalaxy3D options={question.options} onPick={choose} disabled={Boolean(answer)} />
+        {answer && <div className={`game-result ${correct ? 'correct' : 'wrong'}`}><strong>{correct ? 'Mission complete! +1 star' : `Navigation correction: the answer is “${question.answer}”.`}</strong><button onClick={next}>Next galaxy <ArrowRight size={16} /></button></div>}
       </section>
     </div>
   )
@@ -91,13 +135,13 @@ function shuffledTokens(sentence) {
   return sentence.split(' ').map((word, index) => ({ id: `${index}-${word}`, word })).sort(() => Math.random() - 0.5)
 }
 
-function SentenceSprint({ onBack, onEarn }) {
+function SentenceSprint({ onBack, onEarn, sentences, levelLabel }) {
   const [index, setIndex] = useState(0)
-  const [tokens, setTokens] = useState(() => shuffledTokens(sentenceQuestions[0]))
+  const [tokens, setTokens] = useState(() => shuffledTokens(sentences[0]))
   const [selected, setSelected] = useState([])
   const [result, setResult] = useState('')
   const [score, setScore] = useState(0)
-  const sentence = sentenceQuestions[index]
+  const sentence = sentences[index]
 
   const addWord = (token) => {
     if (result || selected.some((item) => item.id === token.id)) return
@@ -125,16 +169,16 @@ function SentenceSprint({ onBack, onEarn }) {
   }
 
   const next = () => {
-    const nextIndex = (index + 1) % sentenceQuestions.length
+    const nextIndex = (index + 1) % sentences.length
     setIndex(nextIndex)
-    setTokens(shuffledTokens(sentenceQuestions[nextIndex]))
+    setTokens(shuffledTokens(sentences[nextIndex]))
     setSelected([])
     setResult('')
   }
 
   return (
     <div className="game-stage game-stage--sentences">
-      <GameHeader title="Sentence Sprint" subtitle="Build a perfect sentence" score={score} onBack={onBack} icon={Puzzle} />
+      <GameHeader title="Grammar Bridge 3D" subtitle={`${levelLabel} · Build the path`} score={score} onBack={onBack} icon={Puzzle} />
       <section className="sentence-game-card">
         <span>Tap the words in the correct order</span>
         <div className={`sentence-answer ${result}`}>
@@ -148,12 +192,12 @@ function SentenceSprint({ onBack, onEarn }) {
   )
 }
 
-function ListenAndSpell({ onBack, onEarn }) {
+function ListenAndSpell({ onBack, onEarn, words, levelLabel }) {
   const [index, setIndex] = useState(0)
   const [input, setInput] = useState('')
   const [result, setResult] = useState('')
   const [score, setScore] = useState(0)
-  const item = spellingWords[index]
+  const item = words[index]
 
   const speak = () => {
     if (!('speechSynthesis' in window)) return
@@ -175,14 +219,14 @@ function ListenAndSpell({ onBack, onEarn }) {
   }
 
   const next = () => {
-    setIndex((value) => (value + 1) % spellingWords.length)
+    setIndex((value) => (value + 1) % words.length)
     setInput('')
     setResult('')
   }
 
   return (
     <div className="game-stage game-stage--spelling">
-      <GameHeader title="Listen & Spell" subtitle="Hear it, type it, master it" score={score} onBack={onBack} icon={Volume2} />
+      <GameHeader title="Sound Safari 3D" subtitle={`${levelLabel} · Hear it and master it`} score={score} onBack={onBack} icon={Volume2} />
       <section className="spelling-game-card">
         <div className="sound-orb" onClick={speak} role="button" tabIndex="0" onKeyDown={(event) => event.key === 'Enter' && speak()}><i /><i /><span><Volume2 size={34} /></span></div>
         <h3>Listen to the word</h3>
@@ -198,26 +242,28 @@ function ListenAndSpell({ onBack, onEarn }) {
 export default function StudentGames({ learner, onEarnStars }) {
   const [activeGame, setActiveGame] = useState('')
   const [sessionStars, setSessionStars] = useState(0)
+  const level = learnerLevel(learner.year)
+  const content = levelContent[level]
 
   const earn = (stars) => {
     setSessionStars((value) => value + stars)
     onEarnStars(stars)
   }
 
-  if (activeGame === 'words') return <WordQuest onBack={() => setActiveGame('')} onEarn={earn} />
-  if (activeGame === 'sentences') return <SentenceSprint onBack={() => setActiveGame('')} onEarn={earn} />
-  if (activeGame === 'spelling') return <ListenAndSpell onBack={() => setActiveGame('')} onEarn={earn} />
+  if (activeGame === 'words') return <WordQuest onBack={() => setActiveGame('')} onEarn={earn} questions={content.words} levelLabel={content.label} />
+  if (activeGame === 'sentences') return <SentenceSprint onBack={() => setActiveGame('')} onEarn={earn} sentences={content.sentences} levelLabel={content.label} />
+  if (activeGame === 'spelling') return <ListenAndSpell onBack={() => setActiveGame('')} onEarn={earn} words={content.spelling} levelLabel={content.label} />
 
   const games = [
-    { id: 'words', title: 'Word Quest', description: 'Match clues to vocabulary and grow your word power.', icon: BookOpen, color: 'purple', reward: '+1 star' },
-    { id: 'sentences', title: 'Sentence Sprint', description: 'Put scrambled words in order before time runs away.', icon: Puzzle, color: 'pink', reward: '+2 stars' },
-    { id: 'spelling', title: 'Listen & Spell', description: 'Listen to clear English and type the word you hear.', icon: Volume2, color: 'green', reward: '+2 stars' },
+    { id: 'words', title: 'Word Galaxy 3D', description: 'Pilot through space and capture the correct vocabulary orb.', icon: BookOpen, color: 'purple', reward: '+1 star' },
+    { id: 'sentences', title: 'Grammar Bridge 3D', description: 'Place word blocks in order to build a bridge across the void.', icon: Puzzle, color: 'pink', reward: '+2 stars' },
+    { id: 'spelling', title: 'Sound Safari 3D', description: 'Follow the sound beacon, hear English and spell each discovery.', icon: Volume2, color: 'green', reward: '+2 stars' },
   ]
 
   return (
     <div className="games-hub portal-view">
       <section className="games-hero">
-        <div><span className="portal-kicker">TutorPro English Game Zone</span><h1>Play, practise, power up!</h1><p>{learner.name} can build vocabulary, grammar and listening skills while earning stars.</p></div>
+        <div><span className="portal-kicker">TutorPro English 3D Game Zone</span><div className={`adaptive-level adaptive-level--${level}`}><Gamepad2 size={14} /> {content.label} · {learner.year}</div><h1>Enter a world built for your level.</h1><p>{content.description} Every mission adapts to {learner.name}’s current school year.</p></div>
         <div className="games-star-bank"><span><Star size={25} fill="currentColor" /></span><div><small>This session</small><strong>{sessionStars} stars</strong><em>{learner.gameStars || 0} all-time</em></div></div>
         <Gamepad2 className="games-hero__icon" size={110} />
       </section>
