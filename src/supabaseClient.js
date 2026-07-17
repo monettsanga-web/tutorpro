@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
 const environment = import.meta.env || {}
-const supabaseUrl = environment.VITE_SUPABASE_URL || ''
-const supabaseKey = environment.VITE_SUPABASE_ANON_KEY || ''
+const defaultSupabaseUrl = 'https://losmkvvwzijipqrlelyt.supabase.co'
+const defaultSupabaseKey = 'sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL'
+const browserRuntime = typeof window !== 'undefined'
+const supabaseUrl = environment.VITE_SUPABASE_URL || (browserRuntime ? defaultSupabaseUrl : '')
+const supabaseKey = environment.VITE_SUPABASE_ANON_KEY || (browserRuntime ? defaultSupabaseKey : '')
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey)
 
