@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { SiWechat } from 'react-icons/si'
 import {
   ArrowRight,
   Ban,
@@ -57,7 +58,7 @@ import { createBooking, getBookings, getBookingStats, rateCompletedBooking, remo
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import PayPalCheckout from './PayPalCheckout.jsx'
-import { recordPayment, getPayments, removeStudentPayments } from './payments.js'
+import { recordPayment, getPayments, removeStudentPayments, updatePaymentStatus } from './payments.js'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
@@ -468,8 +469,23 @@ function PaymentsPanel({ account, learner, onAccountChange }) {
     { id: 'intensive-8', name: 'Intensive pack', detail: 'Eight 25-minute classes', amount: 64, badge: 'Best progress' },
   ]
   const [selectedPlan, setSelectedPlan] = useState(plans[1])
+  const [paymentMethod, setPaymentMethod] = useState('paypal')
   const [confirmation, setConfirmation] = useState('')
+  const [wechatReference, setWechatReference] = useState('')
+  const [wechatPayer, setWechatPayer] = useState('')
+  const [wechatError, setWechatError] = useState('')
   const payments = getPayments({ accountId: account.id, learnerId: learner.id })
+  const pendingWechat = payments.find((payment) => payment.provider === 'wechat-pay' && payment.status === 'pending')
+  const wechatQrUrl = import.meta.env.VITE_WECHAT_PAY_QR_URL || ''
+
+  if (account.status === 'suspended' || learner.accessStatus === 'suspended') {
+    return (
+      <div className="payments-view portal-view">
+        <div className="portal-page-heading"><div><span className="portal-kicker">Payment access</span><h1>Payments unavailable</h1><p>A suspended profile cannot submit or complete payments.</p></div></div>
+        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Student profile · Suspended</small><h2>Restore {learner.name} before making a payment.</h2><p>The administrator must reactivate this student profile before PayPal or WeChat Pay can be used.</p></div></section>
+      </div>
+    )
+  }
 
   const completePayment = (paypalResult) => {
     recordPayment({
@@ -488,26 +504,68 @@ function PaymentsPanel({ account, learner, onAccountChange }) {
     setConfirmation(`${selectedPlan.name} payment confirmed for ${learner.name}. Booking is now unlocked.`)
   }
 
+  const submitWechatPayment = (event) => {
+    event.preventDefault()
+    setWechatError('')
+    const reference = wechatReference.trim()
+    if (reference.length < 6) {
+      setWechatError('Enter the WeChat Pay transaction reference shown in your payment history.')
+      return
+    }
+    try {
+      recordPayment({
+        accountId: account.id,
+        learnerId: learner.id,
+        provider: 'wechat-pay',
+        transactionId: reference,
+        payerName: wechatPayer.trim(),
+        amount: selectedPlan.amount,
+        currency: 'USD',
+        plan: selectedPlan.name,
+        status: 'pending',
+      })
+      setConfirmation(`WeChat Pay reference submitted for ${learner.name}. Booking unlocks after administrator verification.`)
+      setWechatReference('')
+      setWechatPayer('')
+    } catch (paymentError) {
+      setWechatError(paymentError.message)
+    }
+  }
+
   return (
     <div className="payments-view portal-view">
       <section className="payment-hero">
-        <div><span className="portal-kicker">Secure family payments</span><h1>Learn now. Pay safely with PayPal.</h1><p>Choose a lesson plan for {learner.name}. Successful payment immediately unlocks lesson booking.</p></div>
+        <div><span className="portal-kicker">Secure family payments</span><h1>Choose how you’d like to pay.</h1><p>Pay for {learner.name} with PayPal or submit a WeChat Pay transaction for administrator verification.</p></div>
         <div className={`payment-status-card payment-status-card--${learner.paymentStatus}`}><span><ShieldCheck size={23} /></span><div><small>Booking status</small><strong>{learner.paymentStatus === 'paid' ? 'Paid & unlocked' : 'Payment required'}</strong></div></div>
       </section>
-      {confirmation && <div className="portal-success payment-confirmation"><CheckCircle2 size={19} /><div><strong>Thank you!</strong><span>{confirmation}</span></div></div>}
+      {confirmation && <div className="portal-success payment-confirmation"><CheckCircle2 size={19} /><div><strong>Payment update</strong><span>{confirmation}</span></div></div>}
+      <div className="payment-method-picker" role="group" aria-label="Choose payment method">
+        <button className={paymentMethod === 'paypal' ? 'active paypal' : 'paypal'} onClick={() => { setPaymentMethod('paypal'); setConfirmation('') }}><span className="paypal-mini-logo"><i>Pay</i><b>Pal</b></span><div><strong>PayPal</strong><small>Instant checkout and booking unlock</small></div>{paymentMethod === 'paypal' && <CheckCircle2 size={19} />}</button>
+        <button className={paymentMethod === 'wechat' ? 'active wechat' : 'wechat'} onClick={() => { setPaymentMethod('wechat'); setConfirmation('') }}><span className="wechat-mini-logo"><SiWechat /></span><div><strong>WeChat Pay</strong><small>Submit transaction for admin verification</small></div>{paymentMethod === 'wechat' && <CheckCircle2 size={19} />}</button>
+      </div>
       <div className="payment-layout">
         <section className="portal-card payment-plans-card">
           <div className="portal-card__heading"><div><span className="portal-kicker">Choose a plan</span><h2>Lesson credits</h2><p>All payments are shown in USD.</p></div><span className="portal-card__icon"><CreditCard size={22} /></span></div>
-          <div className="payment-plan-list">{plans.map((plan) => <button className={selectedPlan.id === plan.id ? 'active' : ''} onClick={() => { setSelectedPlan(plan); setConfirmation('') }} key={plan.id}><span><i>{plan.badge}</i><strong>{plan.name}</strong><small>{plan.detail}</small></span><b>${plan.amount}</b>{selectedPlan.id === plan.id && <CheckCircle2 size={20} />}</button>)}</div>
+          <div className="payment-plan-list">{plans.map((plan) => <button className={selectedPlan.id === plan.id ? 'active' : ''} onClick={() => { setSelectedPlan(plan); setConfirmation(''); setWechatError('') }} key={plan.id}><span><i>{plan.badge}</i><strong>{plan.name}</strong><small>{plan.detail}</small></span><b>${plan.amount}</b>{selectedPlan.id === plan.id && <CheckCircle2 size={20} />}</button>)}</div>
         </section>
-        <section className="portal-card paypal-card">
-          <div className="paypal-card__brand"><span>Pay</span><strong>Pal</strong></div>
-          <h2>Complete payment</h2>
-          <div className="paypal-order"><span>{selectedPlan.name}</span><strong>${selectedPlan.amount.toFixed(2)} USD</strong></div>
-          <PayPalCheckout key={`${learner.id}-${selectedPlan.id}`} amount={selectedPlan.amount} currency="USD" description={`TutorPro English - ${selectedPlan.name} for ${learner.name}`} onSuccess={completePayment} />
-        </section>
+        {paymentMethod === 'paypal' ? (
+          <section className="portal-card paypal-card">
+            <div className="paypal-card__brand"><span>Pay</span><strong>Pal</strong></div>
+            <h2>Complete payment</h2>
+            <div className="paypal-order"><span>{selectedPlan.name}</span><strong>${selectedPlan.amount.toFixed(2)} USD</strong></div>
+            <PayPalCheckout key={`${learner.id}-${selectedPlan.id}`} amount={selectedPlan.amount} currency="USD" description={`TutorPro English - ${selectedPlan.name} for ${learner.name}`} onSuccess={completePayment} />
+          </section>
+        ) : (
+          <section className="portal-card wechat-pay-card">
+            <div className="wechat-pay-brand"><span><SiWechat /></span><div><strong>WeChat Pay</strong><small>微信支付</small></div></div>
+            <h2>{pendingWechat ? 'Verification pending' : 'Submit your payment'}</h2>
+            {wechatQrUrl ? <img className="wechat-merchant-qr" src={wechatQrUrl} alt="TutorPro English WeChat Pay merchant QR code" /> : <div className="wechat-qr-placeholder"><SiWechat /><strong>Merchant QR</strong><span>Set VITE_WECHAT_PAY_QR_URL to display your official payment QR code.</span></div>}
+            <div className="paypal-order"><span>{selectedPlan.name}</span><strong>${selectedPlan.amount.toFixed(2)} USD</strong></div>
+            {pendingWechat ? <div className="wechat-pending"><Clock3 size={20} /><div><strong>Reference received</strong><span>{pendingWechat.transactionId} · Waiting for administrator approval</span></div></div> : <form className="wechat-reference-form" onSubmit={submitWechatPayment}><label><span>WeChat payer name <i>optional</i></span><input value={wechatPayer} onChange={(event) => setWechatPayer(event.target.value)} placeholder="Name shown in WeChat Pay" /></label><label><span>Transaction reference *</span><input value={wechatReference} onChange={(event) => setWechatReference(event.target.value)} placeholder="Enter WeChat Pay transaction ID" /></label>{wechatError && <div className="portal-error" role="alert">{wechatError}</div>}<button className="wechat-submit-button" type="submit"><SiWechat /> I have paid with WeChat Pay</button><p><ShieldCheck size={13} /> Booking remains locked until an administrator verifies the transaction.</p></form>}
+          </section>
+        )}
       </div>
-      <section className="portal-card payment-history-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Account records</span><h2>Payment history</h2></div></div>{payments.length ? <div className="payment-history-list">{payments.map((payment) => <div key={payment.id}><span><CreditCard size={16} /></span><div><strong>{payment.plan}</strong><small>{new Date(payment.createdAt).toLocaleDateString()} · PayPal {payment.transactionId && `· ${payment.transactionId.slice(-8)}`}</small></div><b>${payment.amount.toFixed(2)}</b><em>{payment.status}</em></div>)}</div> : <EmptyState icon={CreditCard} title="No payments yet" text="Completed PayPal transactions will appear here." />}</section>
+      <section className="portal-card payment-history-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Account records</span><h2>Payment history</h2></div></div>{payments.length ? <div className="payment-history-list">{payments.map((payment) => <div key={payment.id}><span className={payment.provider === 'wechat-pay' ? 'wechat-history-icon' : ''}>{payment.provider === 'wechat-pay' ? <SiWechat /> : <CreditCard size={16} />}</span><div><strong>{payment.plan}</strong><small>{new Date(payment.createdAt).toLocaleDateString()} · {payment.provider === 'wechat-pay' ? 'WeChat Pay' : 'PayPal'} {payment.transactionId && `· ${payment.transactionId.slice(-8)}`}</small></div><b>${payment.amount.toFixed(2)}</b><em className={`payment-history-status payment-history-status--${payment.status}`}>{payment.status}</em></div>)}</div> : <EmptyState icon={CreditCard} title="No payments yet" text="PayPal and WeChat Pay records will appear here." />}</section>
     </div>
   )
 }
@@ -1112,6 +1170,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [studentToRemove, setStudentToRemove] = useState(null)
+  const [adminPaymentError, setAdminPaymentError] = useState('')
 
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
@@ -1130,6 +1189,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const studentProfiles = students.flatMap((student) => (student.children?.length ? student.children : [student.child]).map((learner) => ({ account: student, learner })))
   const bookings = getBookings()
   const bookingStats = getBookingStats()
+  const allPayments = getPayments()
+  const pendingPayments = allPayments.filter((payment) => payment.status === 'pending').length
   const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
   const bookingProfile = studentProfiles.find((profile) => profile.learner.id === bookingStudentId) || studentProfiles[0] || null
   const bookingStudent = bookingProfile?.account || null
@@ -1148,6 +1209,16 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const setLearnerStatus = (accountId, learnerId, accessStatus) => {
     updateLearnerAccess(accountId, learnerId, accessStatus)
     refresh()
+  }
+  const reviewWechatPayment = (payment, status) => {
+    setAdminPaymentError('')
+    try {
+      updatePaymentStatus(payment.id, status, account.email || account.id)
+      if (status === 'completed') updateLearnerPayment(payment.accountId, payment.learnerId, 'paid')
+      refresh()
+    } catch (paymentError) {
+      setAdminPaymentError(paymentError.message)
+    }
   }
   const removeStudentRegistration = async (profile, isFinalStudent) => {
     const isPrimary = profile.account.child?.id === profile.learner.id
@@ -1191,6 +1262,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
     { id: 'students', label: 'Students', icon: GraduationCap },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
+    { id: 'payments', label: 'Payments', icon: CreditCard, badge: pendingPayments },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
 
@@ -1250,6 +1322,10 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         ) : (
           <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests or book an available teacher slot for a student.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
         )
+      )}
+
+      {active === 'payments' && (
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Payment verification</span><h1>Payments</h1><p>Review WeChat Pay references and monitor completed PayPal transactions.</p></div></div>{adminPaymentError && <div className="portal-error" role="alert">{adminPaymentError}</div>}<div className="portal-stat-grid portal-stat-grid--three"><article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Pending verification</small><strong>{pendingPayments}</strong><em>WeChat Pay</em></div></article><article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Completed</small><strong>{allPayments.filter((payment) => payment.status === 'completed').length}</strong><em>All providers</em></div></article><article><span className="stat-icon stat-icon--blue"><CreditCard size={21} /></span><div><small>Total records</small><strong>{allPayments.length}</strong><em>Payment history</em></div></article></div><section className="portal-card admin-payments-list">{allPayments.length ? allPayments.map((payment) => { const family = getAccountById(payment.accountId); const paymentLearner = family?.children?.find((item) => item.id === payment.learnerId); return <div className="admin-payment-row" key={payment.id}><span className={payment.provider === 'wechat-pay' ? 'wechat' : 'paypal'}>{payment.provider === 'wechat-pay' ? <SiWechat /> : <CreditCard size={18} />}</span><div><strong>{paymentLearner?.name || 'Removed student'} · {payment.plan}</strong><small>{family?.parentName || 'Family account'} · {payment.provider === 'wechat-pay' ? 'WeChat Pay' : 'PayPal'} · {payment.transactionId || 'No reference'}</small></div><b>${payment.amount.toFixed(2)}</b><em className={`payment-history-status payment-history-status--${payment.status}`}>{payment.status}</em>{payment.status === 'pending' && <div className="admin-payment-actions"><button onClick={() => reviewWechatPayment(payment, 'completed')}><Check size={15} /> Approve</button><button onClick={() => reviewWechatPayment(payment, 'rejected')}><X size={15} /> Reject</button></div>}</div> }) : <EmptyState icon={CreditCard} title="No payment records" text="PayPal and WeChat Pay activity will appear here." />}</section></div>
       )}
 
       {active === 'profile' && (

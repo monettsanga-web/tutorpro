@@ -13,7 +13,9 @@ A responsive TutorPro English website with automatic location-aware translation,
 - One family account can manage one to three named student profiles
 - Individual payment status, schedules, progress and display photo for each student
 - Unpaid students are automatically prevented from booking
-- PayPal checkout, lesson-credit plans and per-student payment history
+- PayPal checkout plus WeChat Pay reference submission and per-student payment history
+- WeChat Pay transactions require administrator verification before booking unlocks
+- Suspended student or family profiles cannot submit payments
 - Adaptive 3D English games for Years 1–3, 4–6 and 7–11 with persistent stars
 - WebGL Word Galaxy, 3D Grammar Bridge and speech-powered Sound Safari missions
 - One rating and optional review after every completed class
@@ -54,6 +56,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Paid/unpaid controls for every individual learner
 - Select a specific student name and book an available teacher slot on their behalf
 - Platform-wide booking status controls
+- WeChat Pay transaction approval/rejection and automatic paid-status updates
 - Overview metrics for students, teachers and lessons
 - Hover/focus account menu on the homepage with direct dashboard access and secure logout
 
@@ -100,4 +103,4 @@ The core-flow test covers registration, login, multi-student accounts, payment s
 
 ## Data and authentication note
 
-The current build is a fully interactive browser prototype. Accounts, game rewards, payments, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.
+The current build is a fully interactive browser prototype. Accounts, game rewards, payments, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Live classroom files are shared only for the active room session and should use authenticated cloud object storage in production. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro English password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. PayPal uses its sandbox client by default; set `VITE_PAYPAL_CLIENT_ID` and verify completed orders with a server-side webhook before accepting real payments. Set `VITE_WECHAT_PAY_QR_URL` to your official merchant QR image. The included WeChat Pay flow submits a transaction reference for administrator review; automated WeChat Pay order verification still requires a WeChat Pay merchant account and secure server API. Connect the included data and media functions to a hosted authentication, database and file-storage service before serving real customers across devices.

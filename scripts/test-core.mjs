@@ -148,6 +148,19 @@ const payment = payments.recordPayment({
   status: 'completed',
 })
 assert(payment.amount === 32 && payments.getPayments({ learnerId: repairedLearner.id }).length === 1, 'Payment recording failed.')
+let wechatLearner = repairedFamily.children.find((item) => item.name === 'Jamie')
+auth.updateLearnerAccess(family.id, wechatLearner.id, 'suspended')
+await rejects(
+  () => payments.recordPayment({ accountId: family.id, learnerId: wechatLearner.id, provider: 'wechat-pay', transactionId: 'WECHAT-SUSPENDED', amount: 10, currency: 'USD', plan: 'Weekly lesson', status: 'pending' }),
+  'A suspended student profile submitted a payment.',
+)
+const activeWechatFamily = auth.updateLearnerAccess(family.id, wechatLearner.id, 'active')
+wechatLearner = activeWechatFamily.children.find((item) => item.id === wechatLearner.id)
+const wechatPayment = payments.recordPayment({ accountId: family.id, learnerId: wechatLearner.id, provider: 'wechat-pay', transactionId: 'WECHAT-TEST-001', amount: 10, currency: 'USD', plan: 'Weekly lesson', status: 'pending' })
+assert(wechatPayment.status === 'pending', 'WeChat Pay submission was not marked pending.')
+payments.updatePaymentStatus(wechatPayment.id, 'completed', 'test-admin')
+const paidWechatFamily = auth.updateLearnerPayment(family.id, wechatLearner.id, 'paid')
+assert(paidWechatFamily.children.find((item) => item.id === wechatLearner.id).paymentStatus === 'paid', 'Approved WeChat Pay did not unlock the student.')
 await rejects(
   () => payments.recordPayment({ accountId: family.id, learnerId: repairedLearner.id, provider: 'paypal', transactionId: '', amount: -1, plan: 'Invalid', status: 'completed' }),
   'An invalid payment was accepted.',

@@ -22,14 +22,18 @@ export function recordPayment(details) {
   const amount = Number(details.amount)
   const status = details.status || 'completed'
   if (!account || account.role !== 'student' || !learner) throw new Error('Payment is not attached to a valid student profile.')
+  if (account.status === 'suspended' || learner.accessStatus === 'suspended') throw new Error('Suspended student profiles cannot submit payments.')
   if (!Number.isFinite(amount) || amount <= 0 || amount > 10000) throw new Error('Invalid payment amount.')
   if (!details.plan?.trim()) throw new Error('Choose a valid lesson plan.')
-  if (!['pending', 'completed', 'refunded', 'failed'].includes(status)) throw new Error('Invalid payment status.')
+  if (!['pending', 'completed', 'rejected', 'refunded', 'failed'].includes(status)) throw new Error('Invalid payment status.')
   if ((details.provider || 'paypal') === 'paypal' && status === 'completed' && !details.transactionId) {
     throw new Error('A completed PayPal payment requires a transaction ID.')
   }
   const existing = details.transactionId && payments.find((payment) => payment.transactionId === details.transactionId)
-  if (existing) return existing
+  if (existing) {
+    if (existing.accountId === details.accountId && existing.learnerId === details.learnerId && ['pending', 'completed'].includes(existing.status)) return existing
+    throw new Error('This payment reference has already been used. Enter a new WeChat Pay transaction reference.')
+  }
   const payment = {
     id: crypto.randomUUID(),
     accountId: details.accountId,
@@ -46,6 +50,21 @@ export function recordPayment(details) {
   payments.unshift(payment)
   writePayments(payments)
   return payment
+}
+
+export function updatePaymentStatus(paymentId, status, reviewer = '') {
+  if (!['pending', 'completed', 'rejected', 'refunded', 'failed'].includes(status)) throw new Error('Invalid payment status.')
+  const payments = readPayments()
+  const index = payments.findIndex((payment) => payment.id === paymentId)
+  if (index < 0) throw new Error('Payment record not found.')
+  payments[index] = {
+    ...payments[index],
+    status,
+    reviewedBy: reviewer,
+    reviewedAt: new Date().toISOString(),
+  }
+  writePayments(payments)
+  return payments[index]
 }
 
 export function removeStudentPayments(accountId, learnerId) {

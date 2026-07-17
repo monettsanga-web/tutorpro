@@ -3549,6 +3549,61 @@
 
 .payment-confirmation { margin: 17px 0 0; }
 
+.payment-method-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.payment-method-picker > button {
+  display: grid;
+  min-height: 72px;
+  grid-template-columns: auto 1fr auto;
+  gap: 11px;
+  align-items: center;
+  border: 1px solid var(--portal-line);
+  border-radius: 14px;
+  padding: 11px 14px;
+  background: #fff;
+  text-align: left;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.payment-method-picker > button:hover { transform: translateY(-2px); box-shadow: 0 9px 22px rgba(50,21,104,0.08); }
+.payment-method-picker > button.active.paypal { border-color: #1685c5; background: #f0f8fd; }
+.payment-method-picker > button.active.wechat { border-color: #20ad58; background: #f0fbf4; }
+.payment-method-picker > button > div { display: flex; flex-direction: column; }
+.payment-method-picker strong { font-size: 0.75rem; }
+.payment-method-picker small { color: var(--portal-muted); font-size: 0.58rem; }
+.payment-method-picker > button > svg { color: #4ba263; }
+
+.paypal-mini-logo {
+  display: flex;
+  width: 46px;
+  height: 43px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: #eaf4fb;
+  font-size: 0.63rem;
+  font-style: italic;
+  font-weight: 900;
+}
+.paypal-mini-logo i { color: #003087; font-style: normal; }
+.paypal-mini-logo b { color: #009cde; }
+
+.wechat-mini-logo {
+  display: grid;
+  width: 46px;
+  height: 43px;
+  place-items: center;
+  border-radius: 11px;
+  background: #e5f9ec;
+  color: #07a84f;
+  font-size: 1.45rem;
+}
+
 .payment-layout {
   display: grid;
   grid-template-columns: 1fr 390px;
@@ -3595,15 +3650,58 @@
 .paypal-processing.success { background: #ecf8ef; color: #34774a; }
 .paypal-checkout > p { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 10px 0 0; color: #8794a4; font-size: 0.52rem; text-align: center; }
 
+.wechat-pay-card { align-self: start; }
+.wechat-pay-brand { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; }
+.wechat-pay-brand > span { display: grid; width: 45px; height: 45px; place-items: center; border-radius: 12px; background: #e4f8eb; color: #07a84f; font-size: 1.55rem; }
+.wechat-pay-brand > div { display: flex; flex-direction: column; }
+.wechat-pay-brand strong { font-size: 0.85rem; }
+.wechat-pay-brand small { color: #22a85a; font-size: 0.59rem; }
+.wechat-pay-card h2 { margin-bottom: 13px; font-size: 1.2rem; }
+.wechat-merchant-qr { display: block; width: 175px; height: 175px; margin: 0 auto 14px; border: 8px solid #fff; border-radius: 11px; object-fit: contain; box-shadow: 0 8px 25px rgba(20,80,42,0.15); }
+.wechat-qr-placeholder { display: flex; min-height: 135px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; margin-bottom: 14px; border: 1px dashed #9dd8b0; border-radius: 12px; background: #f1fbf4; color: #319b55; text-align: center; }
+.wechat-qr-placeholder > svg { font-size: 2rem; }
+.wechat-qr-placeholder strong { font-size: 0.68rem; }
+.wechat-qr-placeholder span { max-width: 245px; color: #6e9c7c; font-size: 0.54rem; }
+.wechat-reference-form { display: grid; gap: 11px; }
+.wechat-reference-form label { display: grid; gap: 5px; color: #365044; font-size: 0.62rem; font-weight: 750; }
+.wechat-reference-form label i { color: var(--portal-muted); font-size: 0.52rem; font-style: normal; font-weight: 500; }
+.wechat-reference-form input { min-height: 42px; border: 1px solid #cfe4d5; border-radius: 9px; outline: 0; padding: 0 10px; color: #284232; font-size: 0.68rem; }
+.wechat-reference-form input:focus { border-color: #1cad52; box-shadow: 0 0 0 3px rgba(28,173,82,0.1); }
+.wechat-submit-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 9px; background: linear-gradient(115deg, #079f49, #27bf62); color: #fff; font-size: 0.68rem; font-weight: 800; box-shadow: 0 8px 18px rgba(7,159,73,0.2); }
+.wechat-reference-form > p { display: flex; align-items: flex-start; gap: 5px; margin: 0; color: #799083; font-size: 0.51rem; line-height: 1.5; }
+.wechat-pending { display: flex; align-items: center; gap: 10px; border: 1px solid #f0d69b; border-radius: 11px; padding: 12px; background: #fff8e8; color: #aa761c; }
+.wechat-pending > div { display: flex; min-width: 0; flex-direction: column; }
+.wechat-pending strong { font-size: 0.68rem; }
+.wechat-pending span { overflow: hidden; color: #987c4c; font-size: 0.55rem; text-overflow: ellipsis; white-space: nowrap; }
+
 .payment-history-card { margin-top: 18px; }
 .payment-history-list { display: grid; }
 .payment-history-list > div { display: grid; grid-template-columns: auto 1fr auto auto; gap: 11px; align-items: center; min-height: 67px; border-top: 1px solid var(--portal-line); }
 .payment-history-list > div > span { display: grid; width: 37px; height: 37px; place-items: center; border-radius: 10px; background: #e9f2fc; color: #1571b9; }
+.payment-history-list > div > span.wechat-history-icon { background: #e5f9ec; color: #08a64e; font-size: 1.2rem; }
 .payment-history-list > div > div { display: flex; flex-direction: column; }
 .payment-history-list strong { font-size: 0.7rem; }
 .payment-history-list small { color: var(--portal-muted); font-size: 0.55rem; }
 .payment-history-list b { font-size: 0.72rem; }
 .payment-history-list em { border-radius: 15px; padding: 4px 7px; background: #e3f5e8; color: #2e7e49; font-size: 0.52rem; font-style: normal; font-weight: 800; text-transform: uppercase; }
+.payment-history-status--pending { background: #fff1d5 !important; color: #9a6710 !important; }
+.payment-history-status--rejected,
+.payment-history-status--failed { background: #fde6e1 !important; color: #a34431 !important; }
+.payment-history-status--refunded { background: #e9e5f8 !important; color: #6d50ad !important; }
+
+.admin-payments-list { padding-top: 8px; padding-bottom: 8px; }
+.admin-payment-row { display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 12px; align-items: center; min-height: 76px; border-bottom: 1px solid var(--portal-line); }
+.admin-payment-row:last-child { border-bottom: 0; }
+.admin-payment-row > span { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 11px; font-size: 1.3rem; }
+.admin-payment-row > span.wechat { background: #e4f8eb; color: #08a64e; }
+.admin-payment-row > span.paypal { background: #e6f1fa; color: #0874b6; }
+.admin-payment-row > div:not(.admin-payment-actions) { display: flex; min-width: 0; flex-direction: column; }
+.admin-payment-row strong { overflow: hidden; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+.admin-payment-row small { overflow: hidden; color: var(--portal-muted); font-size: 0.56rem; text-overflow: ellipsis; white-space: nowrap; }
+.admin-payment-row > b { font-size: 0.72rem; }
+.admin-payment-actions { display: flex; gap: 5px; }
+.admin-payment-actions button { display: inline-flex; min-height: 32px; align-items: center; gap: 4px; border: 0; border-radius: 7px; padding: 0 8px; background: #e4f5e9; color: #2d7b49; font-size: 0.57rem; font-weight: 800; }
+.admin-payment-actions button + button { background: #fde9e5; color: #aa4936; }
 
 @keyframes paypal-spin { to { transform: rotate(360deg); } }
 
@@ -5017,6 +5115,23 @@
 
   .payment-status-card {
     min-width: 0;
+  }
+
+  .payment-method-picker {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-payment-row {
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .admin-payment-row > b,
+  .admin-payment-row > em,
+  .admin-payment-actions {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .portal-stat-grid,
