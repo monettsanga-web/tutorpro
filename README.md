@@ -7,6 +7,7 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 ### Student / parent
 
 - Two-step family and learner registration
+- Sign up and log in with Gmail, Yahoo Mail, WeChat ID, WhatsApp number or another email provider
 - One family account can manage one to three named student profiles
 - Individual payment status, schedules, progress and display photo for each student
 - Unpaid students are automatically prevented from booking
@@ -28,6 +29,7 @@ A responsive TutorPro website with animated marketing pages, role-based registra
 - Booking acceptance, decline and lesson completion
 - Click-and-drag weekly availability painting
 - Locked booked slots that cannot be offered to another student
+- Private Zoom or VooV classroom links visible only to booked students, teachers and administrators
 - Profile, lesson and rating overview
 
 ### Administrator
@@ -58,4 +60,4 @@ npm run build
 
 ## Data and authentication note
 
-The current build is a fully interactive browser prototype. Accounts, approval states, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Passwords are salted and hashed with the Web Crypto API. Before using the platform with real customers across multiple devices, connect the included data and media functions to a hosted authentication, database and file-storage service such as Supabase, Firebase or a custom API.
+The current build is a fully interactive browser prototype. Accounts, approval states, profiles, ratings and bookings persist on the current device using local storage; uploaded profile photos and introduction videos use IndexedDB. Passwords are salted and hashed with the Web Crypto API. Gmail, Yahoo, WeChat and WhatsApp currently work as validated account identifiers with a TutorPro password. Production OAuth or one-time-code authentication requires provider app credentials and a hosted authentication service. Before using the platform with real customers across multiple devices, connect the included data and media functions to a hosted authentication, database and file-storage service such as Supabase, Firebase or a custom API.

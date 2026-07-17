@@ -7,6 +7,16 @@ const ADMIN_EMAIL_HASH = 'bf6e66f2c7c1acfaa4a3899a3e054f5bf185f18456c35cde73c36c
 
 const normalizeEmail = (email) => email.trim().toLowerCase()
 
+function normalizeLoginId(provider = 'email', value = '') {
+  const trimmed = value.trim()
+  if (provider === 'whatsapp') return trimmed.replace(/[\s()-]/g, '')
+  return trimmed.toLowerCase()
+}
+
+function accountLoginId(account) {
+  return normalizeLoginId(account.authProvider || 'email', account.loginId || account.email || '')
+}
+
 function readAccounts() {
   try {
     const current = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]')
@@ -110,6 +120,7 @@ export function initializePlatform() {
         ],
         rating: 5,
         lessonsCompleted: 284,
+        classroom: { platform: 'zoom', zoomLink: '', voovLink: '' },
       },
     })
     changed = true
@@ -148,10 +159,12 @@ export function hasAdminAccount() {
 
 export async function registerAccount(details) {
   const accounts = readAccounts()
-  const email = normalizeEmail(details.email)
+  const authProvider = details.authProvider || 'email'
+  const loginId = normalizeLoginId(authProvider, details.email)
+  const email = ['email', 'gmail', 'yahoo'].includes(authProvider) ? normalizeEmail(details.email) : ''
 
-  if (accounts.some((account) => account.email === email)) {
-    throw new Error('An account with this email already exists. Try logging in instead.')
+  if (accounts.some((account) => accountLoginId(account) === loginId)) {
+    throw new Error('An account with this login already exists. Try logging in instead.')
   }
 
   const salt = createSalt()
@@ -175,6 +188,8 @@ export async function registerAccount(details) {
     status: 'active',
     parentName: details.parentName.trim(),
     email,
+    loginId,
+    authProvider,
     passwordHash: await hashPassword(details.password, salt),
     salt,
     child: learner,
@@ -192,10 +207,12 @@ export async function registerAccount(details) {
 
 export async function registerTeacher(details) {
   const accounts = readAccounts()
-  const email = normalizeEmail(details.email)
+  const authProvider = details.authProvider || 'email'
+  const loginId = normalizeLoginId(authProvider, details.email)
+  const email = ['email', 'gmail', 'yahoo'].includes(authProvider) ? normalizeEmail(details.email) : ''
 
-  if (accounts.some((account) => account.email === email)) {
-    throw new Error('An account with this email already exists.')
+  if (accounts.some((account) => accountLoginId(account) === loginId)) {
+    throw new Error('An account with this login already exists.')
   }
 
   const salt = createSalt()
@@ -205,6 +222,8 @@ export async function registerTeacher(details) {
     status: 'pending',
     fullName: details.fullName.trim(),
     email,
+    loginId,
+    authProvider,
     passwordHash: await hashPassword(details.password, salt),
     salt,
     createdAt: new Date().toISOString(),
@@ -227,6 +246,7 @@ export async function registerTeacher(details) {
       ],
       rating: 0,
       lessonsCompleted: 0,
+      classroom: { platform: 'zoom', zoomLink: '', voovLink: '' },
     },
   }
 
@@ -251,6 +271,8 @@ export async function createTeacherByAdmin(details) {
     createdByAdmin: true,
     fullName: details.fullName.trim(),
     email,
+    loginId: email,
+    authProvider: 'email',
     passwordHash: await hashPassword(details.password, salt),
     salt,
     createdAt: new Date().toISOString(),
@@ -265,6 +287,7 @@ export async function createTeacherByAdmin(details) {
       availability: [],
       rating: 0,
       lessonsCompleted: 0,
+      classroom: { platform: 'zoom', zoomLink: '', voovLink: '' },
     },
   }
 
@@ -293,6 +316,8 @@ export async function registerAdmin(emailValue, password) {
     status: 'active',
     fullName: 'TutorPro Administrator',
     email,
+    loginId: email,
+    authProvider: 'email',
     passwordHash: await hashPassword(password, salt),
     salt,
     createdAt: new Date().toISOString(),
@@ -303,9 +328,8 @@ export async function registerAdmin(emailValue, password) {
   return publicAccount(account)
 }
 
-export async function loginAccount(emailValue, password) {
-  const email = normalizeEmail(emailValue)
-  const account = readAccounts().find((item) => item.email === email)
+export async function loginAccount(loginValue, password) {
+  const account = readAccounts().find((item) => accountLoginId(item) === normalizeLoginId(item.authProvider || 'email', loginValue))
 
   if (!account || !account.passwordHash) {
     throw new Error('We could not find a login-enabled account with that email.')

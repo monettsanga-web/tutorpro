@@ -19,6 +19,18 @@ import {
 import { hasAdminAccount, loginAccount, registerAdmin, registerTeacher } from './auth.js'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
+const teacherProviders = [
+  ['gmail', 'Gmail', 'G'], ['yahoo', 'Yahoo', 'Y!'], ['wechat', 'WeChat', 'We'], ['whatsapp', 'WhatsApp', 'WA'], ['email', 'Other email', '@'],
+]
+
+function validTeacherLogin(provider, value) {
+  const login = value.trim()
+  if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
+  if (provider === 'yahoo') return /^[^\s@]+@yahoo\.[a-z.]{2,}$/i.test(login)
+  if (provider === 'wechat') return /^[a-z][-_a-z0-9]{5,19}$/i.test(login)
+  if (provider === 'whatsapp') return /^\+?[0-9\s()-]{8,20}$/.test(login)
+  return /^\S+@\S+\.\S+$/.test(login)
+}
 
 export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPortal }) {
   const isAdmin = mode === 'admin'
@@ -30,7 +42,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
   const [errors, setErrors] = useState({})
   const [created, setCreated] = useState(null)
   const [form, setForm] = useState({
-    fullName: '', email: '', password: '', confirmPassword: '',
+    fullName: '', authProvider: 'gmail', email: '', password: '', confirmPassword: '',
     specialization: 'Both Curricula', bio: '', education: '', experience: '', languages: '', credentials: [],
   })
 
@@ -53,7 +65,9 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
   const validateCredentials = () => {
     const next = {}
     if (!isAdmin && view !== 'login' && form.fullName.trim().length < 2) next.fullName = 'Enter your full name.'
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Enter a valid email.'
+    if (isAdmin && !/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Enter a valid administrator email.'
+    if (!isAdmin && view === 'login' && form.email.trim().length < 3) next.email = 'Enter your account login.'
+    if (!isAdmin && view !== 'login' && !validTeacherLogin(form.authProvider, form.email)) next.email = 'Enter a valid login for the selected provider.'
     if (form.password.length < 8 || !/[0-9]/.test(form.password)) next.password = 'Use 8+ characters with a number.'
     if (view !== 'login' && form.password !== form.confirmPassword) next.confirmPassword = 'Passwords do not match.'
     setErrors(next)
@@ -147,7 +161,8 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
               {step === 1 ? (
                 <form className="auth-form" onSubmit={nextTeacherStep} noValidate>
                   <label><span>Full name</span><div className={`input-wrap ${errors.fullName ? 'input-wrap--error' : ''}`}><UserRound size={18} /><input autoFocus name="fullName" autoComplete="name" value={form.fullName} onChange={update} placeholder="Your full name" /></div>{errors.fullName && <small className="field-error">{errors.fullName}</small>}</label>
-                  <label><span>Email address</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input name="email" autoComplete="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
+                  <fieldset className="provider-picker"><legend>Choose how to sign in</legend><div>{teacherProviders.map(([id, label, mark]) => <button type="button" className={form.authProvider === id ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, authProvider: id, email: '' }))} key={id}><span>{mark}</span>{label}</button>)}</div></fieldset>
+                  <label><span>{form.authProvider === 'wechat' ? 'WeChat ID' : form.authProvider === 'whatsapp' ? 'WhatsApp number' : 'Email address'}</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input name="email" autoComplete="username" value={form.email} onChange={update} placeholder={form.authProvider === 'wechat' ? 'Your WeChat ID' : form.authProvider === 'whatsapp' ? '+63 912 345 6789' : 'teacher@example.com'} /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
                   <div className="auth-form__row">
                     <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={update} placeholder="8+ characters" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
                     <label><span>Confirm password</span><div className={`input-wrap ${errors.confirmPassword ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.confirmPassword} onChange={update} placeholder="Repeat password" /></div>{errors.confirmPassword && <small className="field-error">{errors.confirmPassword}</small>}</label>
@@ -196,7 +211,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
 function LoginForm({ form, update, errors, showPassword, setShowPassword, submitting, onSubmit }) {
   return (
     <form className="auth-form" onSubmit={onSubmit} noValidate>
-      <label><span>Email address</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus name="email" autoComplete="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
+      <label><span>Email, WeChat ID or WhatsApp number</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus name="email" autoComplete="username" value={form.email} onChange={update} placeholder="Enter your account login" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
       <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={form.password} onChange={update} placeholder="Your password" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
       <button className="button button--primary button--full auth-submit" type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Open teacher dashboard'} {!submitting && <ArrowRight size={17} />}</button>
     </form>

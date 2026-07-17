@@ -23,8 +23,32 @@ const yearOptions = [
   'Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11',
 ]
 
+const signUpProviders = [
+  { id: 'gmail', label: 'Gmail', mark: 'G' },
+  { id: 'yahoo', label: 'Yahoo Mail', mark: 'Y!' },
+  { id: 'wechat', label: 'WeChat', mark: 'We' },
+  { id: 'whatsapp', label: 'WhatsApp', mark: 'WA' },
+  { id: 'email', label: 'Other email', mark: '@' },
+]
+
+function providerField(provider) {
+  if (provider === 'wechat') return { label: 'WeChat ID', placeholder: 'Your WeChat ID', inputMode: 'text' }
+  if (provider === 'whatsapp') return { label: 'WhatsApp number', placeholder: '+63 912 345 6789', inputMode: 'tel' }
+  return { label: provider === 'gmail' ? 'Gmail address' : provider === 'yahoo' ? 'Yahoo Mail address' : 'Email address', placeholder: provider === 'gmail' ? 'you@gmail.com' : provider === 'yahoo' ? 'you@yahoo.com' : 'you@example.com', inputMode: 'email' }
+}
+
+function validProviderLogin(provider, value) {
+  const login = value.trim()
+  if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
+  if (provider === 'yahoo') return /^[^\s@]+@yahoo\.[a-z.]{2,}$/i.test(login)
+  if (provider === 'wechat') return /^[a-z][-_a-z0-9]{5,19}$/i.test(login)
+  if (provider === 'whatsapp') return /^\+?[0-9\s()-]{8,20}$/.test(login)
+  return /^\S+@\S+\.\S+$/.test(login)
+}
+
 const initialForm = {
   parentName: '',
+  authProvider: 'gmail',
   email: '',
   password: '',
   confirmPassword: '',
@@ -83,7 +107,7 @@ export default function AuthModal({
   const validateAccountStep = () => {
     const nextErrors = {}
     if (form.parentName.trim().length < 2) nextErrors.parentName = 'Enter your full name.'
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = 'Enter a valid email address.'
+    if (!validProviderLogin(form.authProvider, form.email)) nextErrors.email = `Enter a valid ${providerField(form.authProvider).label.toLowerCase()}.`
     if (form.password.length < 8) nextErrors.password = 'Use at least 8 characters.'
     else if (!/[0-9]/.test(form.password)) nextErrors.password = 'Add at least one number.'
     if (form.confirmPassword !== form.password) nextErrors.confirmPassword = 'Passwords do not match.'
@@ -132,7 +156,7 @@ export default function AuthModal({
   const submitLogin = async (event) => {
     event.preventDefault()
     const nextErrors = {}
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = 'Enter your email address.'
+    if (form.email.trim().length < 3) nextErrors.email = 'Enter your email, WeChat ID or WhatsApp number.'
     if (!form.password) nextErrors.password = 'Enter your password.'
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) return
@@ -223,10 +247,14 @@ export default function AuthModal({
                     </div>
                     <FieldError>{errors.parentName}</FieldError>
                   </label>
+                  <fieldset className="provider-picker">
+                    <legend>Choose how to sign in</legend>
+                    <div>{signUpProviders.map((provider) => <button type="button" className={form.authProvider === provider.id ? 'active' : ''} onClick={() => { setForm((current) => ({ ...current, authProvider: provider.id, email: '' })); setErrors((current) => ({ ...current, email: '' })) }} key={provider.id}><span>{provider.mark}</span>{provider.label}</button>)}</div>
+                  </fieldset>
                   <label>
-                    <span>Email address</span>
+                    <span>{providerField(form.authProvider).label}</span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
-                      <Mail size={18} /><input autoComplete="email" inputMode="email" name="email" value={form.email} onChange={updateField} placeholder="you@example.com" />
+                      <Mail size={18} /><input autoComplete={['gmail', 'yahoo', 'email'].includes(form.authProvider) ? 'email' : 'username'} inputMode={providerField(form.authProvider).inputMode} name="email" value={form.email} onChange={updateField} placeholder={providerField(form.authProvider).placeholder} />
                     </div>
                     <FieldError>{errors.email}</FieldError>
                   </label>
@@ -337,9 +365,9 @@ export default function AuthModal({
               {formError && <div className="auth-alert" role="alert">{formError}</div>}
               <form className="auth-form auth-form--login" onSubmit={submitLogin} noValidate>
                 <label>
-                  <span>Email address</span>
+                  <span>Email, WeChat ID or WhatsApp number</span>
                   <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
-                    <Mail size={18} /><input autoFocus autoComplete="email" inputMode="email" name="email" value={form.email} onChange={updateField} placeholder="you@example.com" />
+                    <Mail size={18} /><input autoFocus autoComplete="username" name="email" value={form.email} onChange={updateField} placeholder="Enter your account login" />
                   </div>
                   <FieldError>{errors.email}</FieldError>
                 </label>
@@ -382,7 +410,7 @@ export default function AuthModal({
             <div className="account-view">
               <div className="account-view__top">
                 <span className="account-avatar">{currentAccount.parentName.slice(0, 1).toUpperCase()}</span>
-                <div><span>Family account</span><h2 id="auth-title">Hi, {currentAccount.parentName.split(' ')[0]}</h2><p>{currentAccount.email}</p></div>
+                <div><span>Family account</span><h2 id="auth-title">Hi, {currentAccount.parentName.split(' ')[0]}</h2><p>{currentAccount.loginId || currentAccount.email}</p></div>
               </div>
               <div className="account-view__student">
                 <span className="auth-heading__icon"><GraduationCap size={22} /></span>

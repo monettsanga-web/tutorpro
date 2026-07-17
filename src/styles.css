@@ -1989,6 +1989,74 @@ h3 {
   gap: 16px;
 }
 
+.provider-picker {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.provider-picker legend {
+  margin-bottom: 7px;
+  color: var(--ink);
+  font-size: 0.73rem;
+  font-weight: 750;
+}
+
+.provider-picker > div {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.provider-picker button {
+  display: flex;
+  min-width: 0;
+  min-height: 50px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid #d7e0db;
+  border-radius: 9px;
+  padding: 4px;
+  background: #fff;
+  color: #64736f;
+  font-size: 0.53rem;
+  font-weight: 750;
+  line-height: 1.1;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.provider-picker button:hover {
+  border-color: #9aaca5;
+  transform: translateY(-1px);
+}
+
+.provider-picker button.active {
+  border-color: var(--coral);
+  background: #fff0ec;
+  color: var(--coral-dark);
+  box-shadow: 0 0 0 2px rgba(239, 118, 94, 0.08);
+}
+
+.provider-picker button > span {
+  display: grid;
+  min-width: 23px;
+  height: 23px;
+  place-items: center;
+  border-radius: 7px;
+  background: #edf2ef;
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.provider-picker button.active > span {
+  background: var(--coral);
+  color: #fff;
+}
+
 .auth-form--login {
   gap: 19px;
 }
@@ -2508,6 +2576,10 @@ h3 {
 
   .auth-form__row {
     grid-template-columns: 1fr;
+  }
+
+  .provider-picker > div {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .frequency-field > div {

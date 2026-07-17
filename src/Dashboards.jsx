@@ -286,7 +286,7 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
           {!adminPreview && <button onClick={onLogout}><LogOut size={18} /> Log out</button>}
           <div className="portal-mini-user">
             <ProfilePhoto accountId={account.id} name={displayName(account)} refreshKey={mediaVersion} className="portal-avatar-media" />
-            <div><strong>{displayName(account)}</strong><small>{account.email}</small></div>
+            <div><strong>{displayName(account)}</strong><small>{account.loginId || account.email}</small></div>
           </div>
         </div>
       </aside>
@@ -314,6 +314,9 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   const teacher = getAccountById(booking.teacherId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
   const person = showStudent ? learner?.name : showTeacher ? teacher?.fullName : ''
+  const classroom = teacher?.teacher?.classroom || {}
+  const meetingPlatform = classroom.platform === 'voov' ? 'VooV' : 'Zoom'
+  const meetingLink = classroom.platform === 'voov' ? classroom.voovLink : classroom.zoomLink
 
   return (
     <article className="lesson-card">
@@ -325,6 +328,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
         <h3>{booking.focus}</h3>
         <p>{person && <strong>{person} · </strong>}{formatLessonDate(booking.date, booking.time)} at {formatTime(booking.time)}</p>
+        {booking.status === 'confirmed' && (meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noreferrer"><Video size={13} /> Join with {meetingPlatform}<ShieldCheck size={11} /></a> : <span className="meeting-link-pending"><Clock3 size={12} /> Teacher will add the private meeting link</span>)}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
@@ -682,7 +686,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Learning preferences</span><h2>Shape the learning path</h2></div>{profileSaved && <span className="saved-label"><Check size={14} /> Saved</span>}</div>
               <label><span>Main learning goal</span><select value={profile.goal} onChange={(event) => setProfile((value) => ({ ...value, goal: event.target.value }))}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
               <label><span>Preferred lesson rhythm</span><select value={profile.frequency} onChange={(event) => setProfile((value) => ({ ...value, frequency: event.target.value }))}><option>1–2 weekly</option><option>4–5 weekly</option><option>Not sure</option></select></label>
-              <div className="profile-info-row"><div><span>Parent / guardian</span><strong>{account.parentName}</strong></div><div><span>Account email</span><strong>{account.email}</strong></div></div>
+              <div className="profile-info-row"><div><span>Parent / guardian</span><strong>{account.parentName}</strong></div><div><span>Account login</span><strong>{account.loginId || account.email}</strong></div></div>
               <button className="portal-primary-button" onClick={saveProfile}>Save profile changes</button>
             </section>
             <section className="portal-card achievements-card">
@@ -712,6 +716,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [mediaVersion, setMediaVersion] = useState(0)
   const [mediaError, setMediaError] = useState('')
   const [feedbackBooking, setFeedbackBooking] = useState(null)
+  const [classroom, setClassroom] = useState(account.teacher.classroom || { platform: 'zoom', zoomLink: '', voovLink: '' })
+  const [classroomSaved, setClassroomSaved] = useState(false)
+  const [classroomError, setClassroomError] = useState('')
   const bookings = getBookings({ teacherId: account.id })
   const pending = bookings.filter((booking) => booking.status === 'pending').length
   void version
@@ -779,9 +786,29 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     window.setTimeout(() => setSaved(false), 2000)
   }
 
+  const saveClassroom = () => {
+    const links = [classroom.zoomLink, classroom.voovLink].filter(Boolean)
+    if (links.some((link) => !/^https:\/\//i.test(link))) {
+      setClassroomError('Meeting links must start with https:// so students can open them safely.')
+      return
+    }
+    const activeLink = classroom.platform === 'zoom' ? classroom.zoomLink : classroom.voovLink
+    if (!activeLink) {
+      setClassroomError(`Add the ${classroom.platform === 'zoom' ? 'Zoom' : 'VooV'} meeting link before selecting it as the classroom platform.`)
+      return
+    }
+    const updated = updateTeacherProfile(account.id, { classroom })
+    setAccount(updated)
+    onAccountChange(updated)
+    setClassroomError('')
+    setClassroomSaved(true)
+    window.setTimeout(() => setClassroomSaved(false), 2200)
+  }
+
   const nav = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'bookings', label: 'Bookings', icon: ClipboardCheck, badge: pending },
+    { id: 'classroom', label: 'Classroom', icon: Video },
     { id: 'schedule', label: 'Availability', icon: CalendarDays },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
@@ -827,6 +854,27 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               return <BookingCard key={booking.id} booking={booking} showStudent actions={actions} />
             }) : <EmptyState title="No bookings yet" text="Approved teachers will see student requests here." />}
           </section>
+        </div>
+      )}
+
+      {active === 'classroom' && (
+        <div className="portal-view">
+          <div className="portal-page-heading"><div><span className="portal-kicker">Private virtual classroom</span><h1>Class platform</h1><p>Choose Zoom or VooV and add the private link students will use for confirmed lessons.</p></div>{classroomSaved && <span className="saved-label"><Check size={14} /> Classroom saved</span>}</div>
+          {classroomError && <div className="portal-error" role="alert">{classroomError}</div>}
+          <div className="classroom-layout">
+            <section className="portal-card classroom-settings">
+              <div className="platform-choice">
+                <button className={classroom.platform === 'zoom' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'zoom' })); setClassroomError('') }}><span className="platform-logo platform-logo--zoom">Z</span><div><strong>Zoom</strong><small>Use Zoom for upcoming classes</small></div><i>{classroom.platform === 'zoom' && <Check size={14} />}</i></button>
+                <button className={classroom.platform === 'voov' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'voov' })); setClassroomError('') }}><span className="platform-logo platform-logo--voov">V</span><div><strong>VooV Meeting</strong><small>Use VooV for upcoming classes</small></div><i>{classroom.platform === 'voov' && <Check size={14} />}</i></button>
+              </div>
+              <div className="classroom-link-fields">
+                <label><span>Zoom meeting link</span><div><Video size={17} /><input type="url" value={classroom.zoomLink || ''} onChange={(event) => setClassroom((current) => ({ ...current, zoomLink: event.target.value }))} placeholder="https://zoom.us/j/…" /></div></label>
+                <label><span>VooV meeting link</span><div><Video size={17} /><input type="url" value={classroom.voovLink || ''} onChange={(event) => setClassroom((current) => ({ ...current, voovLink: event.target.value }))} placeholder="https://voovmeeting.com/…" /></div></label>
+              </div>
+              <button className="portal-primary-button" onClick={saveClassroom}><ShieldCheck size={16} /> Save private classroom</button>
+            </section>
+            <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>The active meeting link is only visible inside confirmed student lessons, your teacher dashboard, and the administrator dashboard.</p><ul><li><Check size={14} /> Hidden from public teacher profiles</li><li><Check size={14} /> Hidden from unbooked students</li><li><Check size={14} /> Visible to administrators</li></ul></aside>
+          </div>
         </div>
       )}
 
@@ -1012,11 +1060,11 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(teacher)} title="Access teacher dashboard"><Eye size={15} /> Open</button>{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(teacher)} title="Access teacher dashboard"><Eye size={15} /> Open</button>{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Payment</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · {student.status}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="payment-control"><span className={`payment-badge payment-badge--${rowLearner.paymentStatus}`}>{rowLearner.paymentStatus}</span><button onClick={() => setPaymentStatus(student.id, rowLearner.id, rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid')}>Mark {rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid'}</button></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{student.status === 'active' ? <button className="table-action table-action--suspend" onClick={() => setStatus(student.id, 'suspended')} title="Suspend family account"><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setStatus(student.id, 'active')} title="Restore family account"><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Payment</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · {student.status}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="payment-control"><span className={`payment-badge payment-badge--${rowLearner.paymentStatus}`}>{rowLearner.paymentStatus}</span><button onClick={() => setPaymentStatus(student.id, rowLearner.id, rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid')}>Mark {rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid'}</button></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{student.status === 'active' ? <button className="table-action table-action--suspend" onClick={() => setStatus(student.id, 'suspended')} title="Suspend family account"><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setStatus(student.id, 'active')} title="Restore family account"><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'bookings' && (
