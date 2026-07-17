@@ -24,6 +24,23 @@ const countryLanguages = {
   SA: 'ar', AE: 'ar', QA: 'ar', EG: 'ar', VN: 'vi', TH: 'th',
 }
 
+function readSavedLanguage() {
+  try {
+    return localStorage.getItem('tutorpro_language') || ''
+  } catch {
+    return ''
+  }
+}
+
+function saveLanguage(language) {
+  try {
+    if (language) localStorage.setItem('tutorpro_language', language)
+    else localStorage.removeItem('tutorpro_language')
+  } catch {
+    // Translation still works for the current visit when storage is unavailable.
+  }
+}
+
 function browserLanguage() {
   const locale = navigator.language || 'en'
   if (locale.toLowerCase().startsWith('fil') || locale.toLowerCase().startsWith('tl')) return 'tl'
@@ -64,12 +81,12 @@ function changeGoogleLanguage(language) {
 }
 
 export default function AutoTranslate() {
-  const [language, setLanguage] = useState(() => localStorage.getItem('tutorpro_language') || 'en')
-  const [automatic, setAutomatic] = useState(() => !localStorage.getItem('tutorpro_language'))
+  const [language, setLanguage] = useState(() => readSavedLanguage() || 'en')
+  const [automatic, setAutomatic] = useState(() => !readSavedLanguage())
 
   useEffect(() => {
     let cancelled = false
-    const saved = localStorage.getItem('tutorpro_language')
+    const saved = readSavedLanguage()
 
     const initialise = async () => {
       const targetLanguage = saved || await detectLocationLanguage()
@@ -105,7 +122,7 @@ export default function AutoTranslate() {
   const chooseLanguage = async (event) => {
     const selection = event.target.value
     if (selection === 'auto') {
-      localStorage.removeItem('tutorpro_language')
+      saveLanguage('')
       setAutomatic(true)
       const detectedLanguage = await detectLocationLanguage()
       setLanguage(detectedLanguage)
@@ -114,7 +131,7 @@ export default function AutoTranslate() {
     }
     setLanguage(selection)
     setAutomatic(false)
-    localStorage.setItem('tutorpro_language', selection)
+    saveLanguage(selection)
     changeGoogleLanguage(selection)
   }
 

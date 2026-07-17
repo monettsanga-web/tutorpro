@@ -308,7 +308,7 @@ function CurriculumCarousel({ onBook }) {
             <div className="curriculum-carousel__actions"><a className="button button--cream" href="#programmes">Explore programmes <ArrowRight size={16} /></a><button className="carousel-text-button" onClick={onBook}>Start with a free class</button></div>
           </div>
           <div className="curriculum-carousel__visual" key={`image-${activeSlide.id}`}>
-            <img src={driveImage(activeSlide.id)} alt={`${activeSlide.title} English learning book series`} loading={activeIndex === 0 ? 'eager' : 'lazy'} onError={(event) => { event.currentTarget.src = `https://lh3.googleusercontent.com/d/${activeSlide.id}=w1600` }} />
+            <img src={driveImage(activeSlide.id)} alt={`${activeSlide.title} English learning book series`} loading={activeIndex === 0 ? 'eager' : 'lazy'} referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `https://lh3.googleusercontent.com/d/${activeSlide.id}=w1600` }} />
           </div>
           <button className="curriculum-arrow curriculum-arrow--prev" onClick={() => showSlide(activeIndex - 1)} aria-label="Previous curriculum"><ChevronLeft size={23} /></button>
           <button className="curriculum-arrow curriculum-arrow--next" onClick={() => showSlide(activeIndex + 1)} aria-label="Next curriculum"><ChevronRight size={23} /></button>
@@ -316,7 +316,7 @@ function CurriculumCarousel({ onBook }) {
         </div>
 
         <div className="curriculum-thumbnails" role="tablist" aria-label="Choose curriculum slide">
-          {curriculumSlides.map((slide, index) => <button role="tab" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onClick={() => showSlide(index)} key={slide.id}><img src={driveImage(slide.id)} alt="" loading="lazy" /><span>{slide.title}</span></button>)}
+          {curriculumSlides.map((slide, index) => <button role="tab" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onClick={() => showSlide(index)} key={slide.id}><img src={driveImage(slide.id)} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `https://lh3.googleusercontent.com/d/${slide.id}=w320` }} /><span>{slide.title}</span></button>)}
         </div>
       </div>
     </section>

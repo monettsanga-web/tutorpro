@@ -2149,6 +2149,80 @@ h3 {
   font-size: 0.72rem;
 }
 
+/* ---------- Runtime recovery ---------- */
+.fatal-error {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 25%, #e7f8b9, #f6f1ff 64%);
+}
+
+.fatal-error__card {
+  width: min(520px, 100%);
+  border: 1px solid rgba(50, 21, 104, 0.12);
+  border-radius: 25px;
+  padding: 42px;
+  background: #fff;
+  box-shadow: 0 28px 70px rgba(50, 21, 104, 0.15);
+  text-align: center;
+}
+
+.fatal-error__card > span {
+  display: grid;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 20px;
+  place-items: center;
+  border-radius: 21px;
+  background: #ffe7ef;
+  color: #d23f70;
+}
+
+.fatal-error__card small {
+  color: var(--coral-dark);
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.fatal-error__card h1 {
+  margin: 8px 0 12px;
+  font-size: 2rem;
+}
+
+.fatal-error__card p {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.fatal-error__card > div {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 22px;
+}
+
+.fatal-error__card button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 750;
+}
+
+.fatal-error__card button:first-child {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
 /* ---------- Automatic language control ---------- */
 .language-control {
   position: fixed;

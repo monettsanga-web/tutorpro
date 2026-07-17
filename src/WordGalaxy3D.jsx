@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { Gamepad2 } from 'lucide-react'
 
@@ -15,9 +15,12 @@ function labelTexture(text) {
   canvas.width = 512
   canvas.height = 144
   const context = canvas.getContext('2d')
+  if (!context) return new THREE.Texture()
   context.clearRect(0, 0, canvas.width, canvas.height)
   context.fillStyle = 'rgba(20, 9, 50, 0.84)'
-  context.roundRect(10, 12, 492, 120, 35)
+  context.beginPath()
+  if (typeof context.roundRect === 'function') context.roundRect(10, 12, 492, 120, 35)
+  else context.rect(10, 12, 492, 120)
   context.fill()
   context.strokeStyle = 'rgba(255,255,255,0.5)'
   context.lineWidth = 4
@@ -35,6 +38,15 @@ function labelTexture(text) {
 export default function WordGalaxy3D({ options, onPick, disabled = false }) {
   const canvasRef = useRef(null)
   const onPickRef = useRef(onPick)
+  const [webglSupported] = useState(() => {
+    try {
+      const testCanvas = document.createElement('canvas')
+      return Boolean(testCanvas.getContext('webgl2') || testCanvas.getContext('webgl'))
+    } catch {
+      return false
+    }
+  })
+  const [rendererFailed, setRendererFailed] = useState(false)
 
   useEffect(() => {
     onPickRef.current = onPick
@@ -42,9 +54,15 @@ export default function WordGalaxy3D({ options, onPick, disabled = false }) {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return undefined
+    if (!canvas || !webglSupported || rendererFailed) return undefined
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
+    let renderer
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
+    } catch {
+      window.setTimeout(() => setRendererFailed(true), 0)
+      return undefined
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setClearColor(0x160934, 1)
     renderer.shadowMap.enabled = true
@@ -165,8 +183,9 @@ export default function WordGalaxy3D({ options, onPick, disabled = false }) {
       camera.aspect = width / height
       camera.updateProjectionMatrix()
     }
-    const observer = new ResizeObserver(resize)
-    observer.observe(canvas)
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null
+    if (observer) observer.observe(canvas)
+    else window.addEventListener('resize', resize)
     resize()
 
     const clock = new THREE.Clock()
@@ -190,7 +209,8 @@ export default function WordGalaxy3D({ options, onPick, disabled = false }) {
 
     return () => {
       cancelAnimationFrame(frame)
-      observer.disconnect()
+      observer?.disconnect()
+      if (!observer) window.removeEventListener('resize', resize)
       canvas.removeEventListener('pointerdown', pointerDown)
       scene.traverse((object) => {
         object.geometry?.dispose?.()
@@ -204,7 +224,16 @@ export default function WordGalaxy3D({ options, onPick, disabled = false }) {
       })
       renderer.dispose()
     }
-  }, [options, disabled])
+  }, [options, disabled, webglSupported, rendererFailed])
+
+  if (!webglSupported || rendererFailed) {
+    return (
+      <div className="word-galaxy-3d word-galaxy-3d--fallback">
+        <div><Gamepad2 size={32} /><strong>3D mode is unavailable in this browser.</strong><span>You can still complete the mission using the answer buttons.</span></div>
+        <div className="galaxy-answer-dock galaxy-answer-dock--fallback">{options.map((option) => <button disabled={disabled} onClick={() => onPick(option)} key={option}>{option}</button>)}</div>
+      </div>
+    )
+  }
 
   return (
     <div className={`word-galaxy-3d ${disabled ? 'disabled' : ''}`}>

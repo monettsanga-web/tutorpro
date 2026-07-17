@@ -17,6 +17,22 @@ function accountLoginId(account) {
   return normalizeLoginId(account.authProvider || 'email', account.loginId || account.email || '')
 }
 
+function validLoginId(provider, value) {
+  const login = value.trim()
+  if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
+  if (provider === 'yahoo') return /^[^\s@]+@yahoo\.[a-z.]{2,}$/i.test(login)
+  if (provider === 'wechat') return /^[a-z][-_a-z0-9]{5,19}$/i.test(login)
+  if (provider === 'whatsapp') return /^\+?[0-9\s()-]{8,20}$/.test(login)
+  return /^\S+@\S+\.\S+$/.test(login)
+}
+
+function validateNewCredentials(provider, login, password) {
+  if (!validLoginId(provider, login)) throw new Error('Enter a valid login for the selected provider.')
+  if (typeof password !== 'string' || password.length < 8 || !/[0-9]/.test(password)) {
+    throw new Error('Passwords must contain at least eight characters and one number.')
+  }
+}
+
 function readAccounts() {
   try {
     const current = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]')
@@ -162,9 +178,13 @@ export async function registerAccount(details) {
   const authProvider = details.authProvider || 'email'
   const loginId = normalizeLoginId(authProvider, details.email)
   const email = ['email', 'gmail', 'yahoo'].includes(authProvider) ? normalizeEmail(details.email) : ''
+  validateNewCredentials(authProvider, details.email, details.password)
 
   if (accounts.some((account) => accountLoginId(account) === loginId)) {
     throw new Error('An account with this login already exists. Try logging in instead.')
+  }
+  if (details.parentName?.trim().length < 2 || details.childName?.trim().length < 2 || !details.year || !details.curriculum) {
+    throw new Error('Complete the parent and student profile before creating the account.')
   }
 
   const salt = createSalt()
@@ -210,9 +230,13 @@ export async function registerTeacher(details) {
   const authProvider = details.authProvider || 'email'
   const loginId = normalizeLoginId(authProvider, details.email)
   const email = ['email', 'gmail', 'yahoo'].includes(authProvider) ? normalizeEmail(details.email) : ''
+  validateNewCredentials(authProvider, details.email, details.password)
 
   if (accounts.some((account) => accountLoginId(account) === loginId)) {
     throw new Error('An account with this login already exists.')
+  }
+  if (details.fullName?.trim().length < 2 || !details.specialization || details.bio?.trim().length < 30) {
+    throw new Error('Complete the required teacher profile information before registering.')
   }
 
   const salt = createSalt()
@@ -259,6 +283,8 @@ export async function registerTeacher(details) {
 export async function createTeacherByAdmin(details) {
   const accounts = readAccounts()
   const email = normalizeEmail(details.email)
+  validateNewCredentials('email', details.email, details.password)
+  if (details.fullName?.trim().length < 2) throw new Error('Enter the teacher’s full name.')
   if (accounts.some((account) => account.email === email)) {
     throw new Error('An account with this email already exists.')
   }
@@ -299,6 +325,7 @@ export async function createTeacherByAdmin(details) {
 export async function registerAdmin(emailValue, password) {
   const accounts = readAccounts()
   const email = normalizeEmail(emailValue)
+  validateNewCredentials('email', emailValue, password)
   if (await hashText(email) !== ADMIN_EMAIL_HASH) {
     throw new Error('The administrator email could not be verified.')
   }
@@ -375,6 +402,9 @@ export function updateStudentProfile(accountId, childChanges, learnerId) {
 export function addStudentLearner(accountId, details) {
   const account = readAccounts().find((item) => item.id === accountId)
   if (!account || (account.role || 'student') !== 'student') throw new Error('Family account not found.')
+  if (details.name?.trim().length < 2 || !details.year || !details.curriculum || !details.goal) {
+    throw new Error('Complete the student name, year, curriculum and learning goal.')
+  }
   const children = normalizeLearners(account)
   if (children.length >= 3) throw new Error('A family account can include up to three students.')
   const learner = {

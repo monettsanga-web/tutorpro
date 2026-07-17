@@ -67,9 +67,13 @@ npm run dev
 ## Checks
 
 ```bash
+npm test
 npm run lint
 npm run build
+npm audit
 ```
+
+The core-flow test covers registration, login, multi-student accounts, payment status, teacher availability, booking conflicts, lesson feedback, ratings and PayPal records.
 
 ## Data and authentication note
 

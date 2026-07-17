@@ -4,6 +4,10 @@ const DB_VERSION = 1
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') {
+      reject(new Error('This browser does not support profile media storage.'))
+      return
+    }
     const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onupgradeneeded = () => {
       const database = request.result

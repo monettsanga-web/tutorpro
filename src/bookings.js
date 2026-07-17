@@ -31,9 +31,19 @@ export function createBooking(details) {
     throw new Error('This teacher is not currently available for bookings.')
   }
   const studentAccount = getAccountById(details.studentId)
-  const learner = studentAccount?.children?.find((item) => item.id === details.learnerId) || studentAccount?.child
-  if (!studentAccount || !learner) throw new Error('Choose a valid student profile before booking.')
+  const learner = details.learnerId
+    ? studentAccount?.children?.find((item) => item.id === details.learnerId)
+    : studentAccount?.child
+  if (!studentAccount || studentAccount.role !== 'student' || studentAccount.status !== 'active' || !learner) {
+    throw new Error('Choose an active and valid student profile before booking.')
+  }
   if (learner.paymentStatus !== 'paid') throw new Error(`${learner.name} is currently unpaid. An administrator must mark the student as paid before booking.`)
+  if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')
+  if (!details.focus?.trim()) throw new Error('Choose a lesson focus before booking.')
+  const lessonDate = new Date(`${details.date}T${details.time}:00`)
+  if (!details.date || !details.time || Number.isNaN(lessonDate.getTime()) || lessonDate <= new Date()) {
+    throw new Error('Choose a future lesson date and time.')
+  }
 
   const startMinutes = timeToMinutes(details.time)
   if (startMinutes % 30 !== 0 || startMinutes < 0 || startMinutes >= 1440) {
@@ -48,12 +58,16 @@ export function createBooking(details) {
 
   const requestedEnd = startMinutes + (Math.ceil(Number(details.duration) / 30) * 30)
   const conflict = bookings.some((booking) => {
-    if (booking.teacherId !== details.teacherId || booking.date !== details.date || ['cancelled', 'declined'].includes(booking.status)) return false
+    if (booking.date !== details.date || ['cancelled', 'declined'].includes(booking.status)) return false
+    const sameTeacher = booking.teacherId === details.teacherId
+    const bookedLearnerId = booking.learnerId || studentAccount.child?.id
+    const sameLearner = booking.studentId === details.studentId && bookedLearnerId === learner.id
+    if (!sameTeacher && !sameLearner) return false
     const bookingStart = timeToMinutes(booking.time)
     const bookingEnd = bookingStart + (Math.ceil(Number(booking.duration) / 30) * 30)
     return startMinutes < bookingEnd && requestedEnd > bookingStart
   })
-  if (conflict) throw new Error('That lesson time has just been taken. Please choose another available slot.')
+  if (conflict) throw new Error('That time conflicts with an existing teacher or student lesson. Please choose another available slot.')
 
   const booking = {
     id: crypto.randomUUID(),
@@ -78,6 +92,8 @@ export function updateBooking(bookingId, changes) {
   const bookings = readBookings()
   const index = bookings.findIndex((booking) => booking.id === bookingId)
   if (index < 0) throw new Error('Booking not found.')
+  const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'declined']
+  if (changes.status && !validStatuses.includes(changes.status)) throw new Error('Invalid booking status.')
   bookings[index] = { ...bookings[index], ...changes, updatedAt: new Date().toISOString() }
   writeBookings(bookings)
   return bookings[index]
@@ -94,6 +110,7 @@ export function rateCompletedBooking(bookingId, studentId, rating, comment = '')
   if (booking.studentRating) throw new Error('This lesson has already been rated.')
   const score = Number(rating)
   if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error('Choose a rating from one to five stars.')
+  if (comment.trim().length > 500) throw new Error('Keep the rating comment under 500 characters.')
 
   const updated = updateBooking(bookingId, {
     studentRating: { score, comment: comment.trim(), createdAt: new Date().toISOString() },
@@ -111,7 +128,9 @@ export function rateCompletedBooking(bookingId, studentId, rating, comment = '')
 export function saveTeacherFeedback(bookingId, teacherId, feedback) {
   const booking = readBookings().find((item) => item.id === bookingId)
   if (!booking || booking.teacherId !== teacherId) throw new Error('This lesson is not assigned to the teacher account.')
+  if (!['confirmed', 'completed'].includes(booking.status)) throw new Error('Confirm the lesson before adding post-class feedback.')
   if (!feedback.summary?.trim()) throw new Error('Add a short class summary before saving feedback.')
+  if (feedback.summary.trim().length > 1000) throw new Error('Keep the class summary under 1,000 characters.')
   return updateBooking(bookingId, {
     status: 'completed',
     teacherFeedback: {
