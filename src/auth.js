@@ -498,14 +498,19 @@ export async function loginAccount(loginValue, password) {
   return publicAccount(account)
 }
 
-export function updateAccount(accountId, changes) {
+export function updateLocalAccount(accountId, changes) {
   const accounts = readAccounts()
   const index = accounts.findIndex((account) => account.id === accountId)
   if (index < 0) throw new Error('Account not found.')
   accounts[index] = { ...accounts[index], ...changes, updatedAt: new Date().toISOString() }
   writeAccounts(accounts)
-  queueCloudProfileUpdate(accounts[index])
   return publicAccount(accounts[index])
+}
+
+export function updateAccount(accountId, changes) {
+  const updated = updateLocalAccount(accountId, changes)
+  queueCloudProfileUpdate(updated)
+  return updated
 }
 
 export function updateTeacherProfile(accountId, teacherChanges) {

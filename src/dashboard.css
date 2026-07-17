@@ -4167,6 +4167,7 @@
 
 .table-access-button {
   display: inline-flex;
+  min-width: 58px;
   height: 33px;
   align-items: center;
   gap: 5px;
@@ -4177,6 +4178,12 @@
   color: #246bbd;
   font-size: 0.6rem;
   font-weight: 800;
+}
+
+.table-access-button:disabled,
+.table-action:disabled {
+  cursor: wait;
+  opacity: 0.48;
 }
 
 .table-action--approve { background: #e4f5e9; color: #2e7d4b; }

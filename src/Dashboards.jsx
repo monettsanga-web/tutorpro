@@ -49,6 +49,7 @@ import {
   removeStudentLearner,
   updateAccount,
   updateLearnerAccess,
+  updateLocalAccount,
   updateStudentProfile,
   updateTeacherProfile,
 } from './auth.js'
@@ -56,7 +57,7 @@ import { createBooking, getBookings, getBookingStats, rateCompletedBooking, remo
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
-import { cloudSyncEnabled, fetchCloudProfiles, subscribeToCloudProfiles, verifyCloudAdmin } from './cloudProfiles.js'
+import { cloudSyncEnabled, fetchCloudProfiles, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
@@ -1196,6 +1197,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [studentToRemove, setStudentToRemove] = useState(null)
   const [cloudStatus, setCloudStatus] = useState(cloudSyncEnabled() ? 'connecting' : 'local')
   const [cloudError, setCloudError] = useState('')
+  const [adminActionError, setAdminActionError] = useState('')
+  const [processingAccountId, setProcessingAccountId] = useState('')
 
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
@@ -1268,13 +1271,77 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   void version
 
   const refresh = () => setVersion((value) => value + 1)
-  const setStatus = (accountId, status) => {
-    updateAccount(accountId, { status })
-    refresh()
+  const setStatus = async (accountId, status) => {
+    setAdminActionError('')
+    setProcessingAccountId(accountId)
+    const previousStatus = getAccountById(accountId)?.status
+    try {
+      const updated = updateAccount(accountId, { status })
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      const profiles = cloudSyncEnabled() ? await fetchCloudProfiles() : []
+      if (profiles.length) mergeCloudAccounts(profiles)
+      refresh()
+    } catch (statusError) {
+      if (previousStatus) updateLocalAccount(accountId, { status: previousStatus })
+      setAdminActionError(`${statusError.message} The status was not changed. Confirm this administrator exists in Supabase admin_members.`)
+    } finally {
+      setProcessingAccountId('')
+    }
   }
-  const setLearnerStatus = (accountId, learnerId, accessStatus) => {
-    updateLearnerAccess(accountId, learnerId, accessStatus)
-    refresh()
+
+  const openManagedTeacher = async (teacherId) => {
+    setAdminActionError('')
+    setProcessingAccountId(teacherId)
+    try {
+      if (cloudSyncEnabled()) {
+        const profiles = await fetchCloudProfiles()
+        if (profiles.length) mergeCloudAccounts(profiles)
+      }
+      const teacher = getAccountById(teacherId)
+      if (!teacher || teacher.role !== 'teacher') throw new Error('Teacher profile could not be loaded.')
+      setManagedLearnerId('')
+      setManagedAccount(teacher)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (openError) {
+      setAdminActionError(openError.message)
+    } finally {
+      setProcessingAccountId('')
+    }
+  }
+
+  const openManagedStudent = async (studentId, learnerId) => {
+    setAdminActionError('')
+    setProcessingAccountId(studentId)
+    try {
+      if (cloudSyncEnabled()) {
+        const profiles = await fetchCloudProfiles()
+        if (profiles.length) mergeCloudAccounts(profiles)
+      }
+      const student = getAccountById(studentId)
+      if (!student || student.role !== 'student') throw new Error('Student profile could not be loaded.')
+      setManagedLearnerId(learnerId)
+      setManagedAccount(student)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (openError) {
+      setAdminActionError(openError.message)
+    } finally {
+      setProcessingAccountId('')
+    }
+  }
+  const setLearnerStatus = async (accountId, learnerId, accessStatus) => {
+    setAdminActionError('')
+    setProcessingAccountId(accountId)
+    const previous = getAccountById(accountId)
+    try {
+      const updated = updateLearnerAccess(accountId, learnerId, accessStatus)
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      refresh()
+    } catch (statusError) {
+      if (previous) updateLocalAccount(accountId, { children: previous.children, child: previous.child })
+      setAdminActionError(`${statusError.message} The student status was not changed in Supabase.`)
+    } finally {
+      setProcessingAccountId('')
+    }
   }
   const removeStudentRegistration = async (profile, isFinalStudent) => {
     const isPrimary = profile.account.child?.id === profile.learner.id
@@ -1343,6 +1410,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+      {adminActionError && <div className="portal-error admin-action-error" role="alert">{adminActionError}</div>}
       {active === 'overview' && (
         <div className="portal-view">
           <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
@@ -1354,18 +1422,18 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro English</em></div></article>
           </div>
           <div className="admin-overview-grid">
-            <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button onClick={() => setStatus(teacher.id, 'approved')}><Check size={15} /> Approve</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
+            <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button type="button" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id}><Check size={15} /> {processingAccountId === teacher.id ? 'Saving…' : 'Approve'}</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
             <section className="portal-card admin-health-card"><span className="portal-kicker">Platform health</span><h2>Booking flow</h2><div className="health-donut" style={{ '--health': bookingStats.total ? `${Math.round((bookingStats.completed / bookingStats.total) * 100)}%` : '0%' }}><span><strong>{bookingStats.total ? Math.round((bookingStats.completed / bookingStats.total) * 100) : 0}%</strong><small>completed</small></span></div><dl><div><dt><i className="dot dot--orange" />Pending</dt><dd>{bookingStats.pending}</dd></div><div><dt><i className="dot dot--blue" />Confirmed</dt><dd>{bookingStats.confirmed}</dd></div><div><dt><i className="dot dot--green" />Completed</dt><dd>{bookingStats.completed}</dd></div></dl></section>
           </div>
         </div>
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button className="table-access-button" onClick={() => setManagedAccount(teacher)} title="Access teacher dashboard"><Eye size={15} /> Open</button>{teacher.status !== 'approved' && <button className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} title="Approve"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} title="Reject"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} title="Suspend"><Ban size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'bookings' && (
