@@ -16,7 +16,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { loginAccount, registerAdmin, registerTeacher } from './auth.js'
+import { loginAccount, registerTeacher } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -116,21 +116,6 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
     }
   }
 
-  const submitAdminSetup = async (event) => {
-    event.preventDefault()
-    if (!validateCredentials()) return
-    setSubmitting(true)
-    try {
-      const account = await registerAdmin(form.email, form.password)
-      onAuthenticated(account)
-      onEnterPortal(account)
-    } catch (submitError) {
-      setError(submitError.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   const handleFiles = (event) => {
     const files = Array.from(event.target.files || []).slice(0, 5)
     setForm((current) => ({ ...current, credentials: files.map((file) => file.name) }))
@@ -189,17 +174,15 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
 
           {isAdmin && (
             <>
-              <div className="auth-heading role-login-heading"><span className="auth-heading__icon auth-heading__icon--admin"><ShieldCheck size={22} /></span><div><span>{view === 'setup' ? 'First-time secure setup' : 'Restricted access'}</span><h2 id="role-access-title">{view === 'setup' ? 'Create the admin account' : 'Administrator login'}</h2><p>{view === 'setup' ? 'Set the password for the locked administrator email.' : 'Manage teachers, students and bookings.'}</p></div></div>
-              <form className="auth-form" onSubmit={view === 'setup' ? submitAdminSetup : submitLogin} noValidate>
+              <div className="auth-heading role-login-heading"><span className="auth-heading__icon auth-heading__icon--admin"><ShieldCheck size={22} /></span><div><span>Restricted access</span><h2 id="role-access-title">Administrator login</h2><p>Sign in with the administrator account configured in Supabase.</p></div></div>
+              <form className="auth-form" onSubmit={submitLogin} noValidate>
                 <label><span>Administrator email</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus name="email" type="email" autoComplete="email" value={form.email} onChange={update} placeholder="Enter administrator email" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
-                <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete={view === 'setup' ? 'new-password' : 'current-password'} value={form.password} onChange={update} placeholder={view === 'setup' ? 'Create a strong password' : 'Your admin password'} /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
-                {view === 'setup' && <label><span>Confirm password</span><div className={`input-wrap ${errors.confirmPassword ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.confirmPassword} onChange={update} placeholder="Repeat admin password" /></div>{errors.confirmPassword && <small className="field-error">{errors.confirmPassword}</small>}</label>}
-                <button className="button button--primary button--full auth-submit" type="submit" disabled={submitting}>{submitting ? 'Please wait…' : view === 'setup' ? 'Create secure admin account' : 'Open admin dashboard'} {!submitting && <ArrowRight size={17} />}</button>
+                <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={form.password} onChange={update} placeholder="Your admin password" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
+                <button className="button button--primary button--full auth-submit" type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Open admin dashboard'} {!submitting && <ArrowRight size={17} />}</button>
               </form>
-              <div className="admin-security-note"><ShieldCheck size={17} /><span><strong>Administrator-only area</strong><small>All platform controls are available after login.</small></span></div>
+              <div className="admin-security-note"><ShieldCheck size={17} /><span><strong>Administrator-only area</strong><small>This device authenticates directly with Supabase.</small></span></div>
             </>
-          )}
-        </div>
+          )}        </div>
       </section>
     </div>
   )
