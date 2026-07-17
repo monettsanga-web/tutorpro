@@ -101,7 +101,7 @@ npm run build
 npm audit
 ```
 
-The core-flow test covers registration, login, multi-student accounts, payment status, teacher availability, booking conflicts, private classroom access, lesson feedback, ratings and PayPal records.
+The core-flow test covers registration, login, multi-student accounts, payment status, teacher availability, booking conflicts, private classroom access, lesson feedback, ratings and payment records. The synchronization test verifies that student and teacher sign-ups appear in Admin, and that admin approvals, paid/unpaid changes and suspensions flow back to the correct dashboard.
 
 ## Data and authentication note
 

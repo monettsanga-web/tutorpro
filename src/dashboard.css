@@ -4159,6 +4159,29 @@
   color: #fff;
 }
 
+.admin-live-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 9px 10px;
+  border-radius: 20px;
+  padding: 5px 8px;
+  background: rgba(223, 247, 166, 0.11);
+  color: #dff7a6;
+  font-size: 0.54rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-live-sync i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #90df61;
+  box-shadow: 0 0 0 4px rgba(144, 223, 97, 0.12);
+}
+
 .admin-welcome h1 {
   margin-bottom: 8px;
   color: #fff;

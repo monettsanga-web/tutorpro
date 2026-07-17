@@ -699,7 +699,40 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const upcoming = bookings.find((booking) => booking.date >= today() && ['pending', 'confirmed'].includes(booking.status))
   const completed = bookings.filter((booking) => booking.status === 'completed').length
   const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
+  const studentSyncCallbacks = useRef({ onAccountChange, onLogout })
   void bookingVersion
+
+  useEffect(() => {
+    studentSyncCallbacks.current = { onAccountChange, onLogout }
+  }, [onAccountChange, onLogout])
+
+  useEffect(() => {
+    const synchronize = () => {
+      const latest = getAccountById(initialAccount.id)
+      if (!latest) {
+        studentSyncCallbacks.current.onLogout()
+        return
+      }
+      const currentStillExists = latest.children?.some((item) => item.id === activeLearnerId)
+      setAccount(latest)
+      studentSyncCallbacks.current.onAccountChange(latest)
+      if (!currentStillExists && latest.children?.[0]) {
+        const nextLearner = latest.children[0]
+        setActiveLearnerId(nextLearner.id)
+        setProfile({ goal: nextLearner.goal, frequency: nextLearner.frequency })
+      }
+    }
+    window.addEventListener('storage', synchronize)
+    window.addEventListener('tutorpro:data-change', synchronize)
+    window.addEventListener('focus', synchronize)
+    const interval = window.setInterval(synchronize, 3000)
+    return () => {
+      window.removeEventListener('storage', synchronize)
+      window.removeEventListener('tutorpro:data-change', synchronize)
+      window.removeEventListener('focus', synchronize)
+      window.clearInterval(interval)
+    }
+  }, [initialAccount.id, activeLearnerId])
 
   const chooseLearner = (learnerId) => {
     const nextLearner = learners.find((item) => item.id === learnerId)
@@ -878,7 +911,35 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [classroomError, setClassroomError] = useState('')
   const bookings = getBookings({ teacherId: account.id })
   const pending = bookings.filter((booking) => booking.status === 'pending').length
+  const teacherSyncCallbacks = useRef({ onAccountChange, onLogout })
   void version
+
+  useEffect(() => {
+    teacherSyncCallbacks.current = { onAccountChange, onLogout }
+  }, [onAccountChange, onLogout])
+
+  useEffect(() => {
+    const synchronize = () => {
+      const latest = getAccountById(initialAccount.id)
+      if (!latest) {
+        teacherSyncCallbacks.current.onLogout()
+        return
+      }
+      setAccount(latest)
+      setVersion((value) => value + 1)
+      teacherSyncCallbacks.current.onAccountChange(latest)
+    }
+    window.addEventListener('storage', synchronize)
+    window.addEventListener('tutorpro:data-change', synchronize)
+    window.addEventListener('focus', synchronize)
+    const interval = window.setInterval(synchronize, 3000)
+    return () => {
+      window.removeEventListener('storage', synchronize)
+      window.removeEventListener('tutorpro:data-change', synchronize)
+      window.removeEventListener('focus', synchronize)
+      window.clearInterval(interval)
+    }
+  }, [initialAccount.id])
 
   const refresh = () => setVersion((value) => value + 1)
 
@@ -1293,7 +1354,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
       {active === 'overview' && (
         <div className="portal-view">
-          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><h1>Everything important, under control.</h1><p>Review your community, approve teachers and keep every booking moving.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
+          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><span className="admin-live-sync"><i /> Live registration sync</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student profiles</small><strong>{studentProfiles.length}</strong><em>{students.length} family accounts</em></div></article>
             <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>
