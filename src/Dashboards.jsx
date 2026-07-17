@@ -1175,10 +1175,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
     window.addEventListener('storage', synchronize)
+    window.addEventListener('tutorpro:data-change', synchronize)
     window.addEventListener('focus', synchronize)
-    const interval = window.setInterval(synchronize, 5000)
+    const interval = window.setInterval(synchronize, 3000)
     return () => {
       window.removeEventListener('storage', synchronize)
+      window.removeEventListener('tutorpro:data-change', synchronize)
       window.removeEventListener('focus', synchronize)
       window.clearInterval(interval)
     }

@@ -38,6 +38,14 @@ assert(auth.getApprovedTeachers().length === 1, 'The approved seed teacher was n
 const migratedFamily = auth.getAccountById('legacy-family')
 assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.paymentStatus === 'paid' && migratedFamily.child.accessStatus === 'active', 'Legacy student migration failed.')
 
+storage.set('tutorpro_accounts_v1', JSON.stringify([{
+  id: 'older-v1-family',
+  parentName: 'Older Parent',
+  email: 'older@example.com',
+  child: { name: 'Older Learner', year: 'Year 2', curriculum: 'Oxford', goal: 'Reading' },
+}]))
+assert(auth.getAccounts('student').some((account) => account.id === 'older-v1-family'), 'A legacy student registration was hidden when current accounts already existed.')
+
 await rejects(
   () => auth.registerAccount({ parentName: 'Parent', email: 'bad@example.com', password: 'short' }),
   'Weak account credentials were accepted.',
@@ -55,6 +63,7 @@ let family = await auth.registerAccount({
   frequency: '1–2 weekly',
 })
 assert(family.children.length === 1 && family.child.paymentStatus === 'unpaid', 'Student registration failed.')
+assert(auth.getAccounts('student').some((account) => account.id === family.id), 'New student registration did not appear in the administrator data source.')
 
 family = auth.addStudentLearner(family.id, { name: 'Jamie', year: 'Year 7', curriculum: 'Oxford', goal: 'Writing and grammar', frequency: '1–2 weekly' })
 family = auth.addStudentLearner(family.id, { name: 'Taylor', year: 'Year 3', curriculum: 'Cambridge', goal: 'Reading comprehension', frequency: '1–2 weekly' })
@@ -80,6 +89,7 @@ let teacher = await auth.registerTeacher({
   languages: 'English',
   credentials: [],
 })
+assert(auth.getAccounts('teacher').some((account) => account.id === teacher.id && account.status === 'pending'), 'New teacher registration did not appear as pending for the administrator.')
 teacher = auth.updateAccount(teacher.id, { status: 'approved' })
 
 const future = new Date()
@@ -182,6 +192,7 @@ assert(auth.getAccountById(removableFamily.id).children.length === 1, 'Removing 
 assert(!bookings.getBookings({ studentId: removableFamily.id }).some((item) => item.learnerId === removableLearner.id), 'Removed student bookings were not cleaned up.')
 assert(payments.getPayments({ learnerId: removableLearner.id }).length === 0, 'Removed student payment records were not cleaned up.')
 assert(auth.removeStudentAccount(removableFamily.id) && !auth.getAccountById(removableFamily.id), 'Removing the final family registration failed.')
+assert(auth.removeStudentAccount('older-v1-family') && !auth.getAccountById('older-v1-family'), 'Removed legacy registration reappeared in the administrator data source.')
 
 const loggedIn = await auth.loginAccount('family@example.com', 'Family123')
 assert(loggedIn.id === family.id, 'Login failed.')

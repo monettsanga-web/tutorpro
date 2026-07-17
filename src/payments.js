@@ -13,6 +13,7 @@ function readPayments() {
 
 function writePayments(payments) {
   localStorage.setItem(PAYMENTS_KEY, JSON.stringify(payments))
+  if (typeof window !== 'undefined') window.queueMicrotask(() => window.dispatchEvent(new Event('tutorpro:data-change')))
 }
 
 export function recordPayment(details) {

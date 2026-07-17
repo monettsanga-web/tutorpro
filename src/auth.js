@@ -33,25 +33,43 @@ function validateNewCredentials(provider, login, password) {
   }
 }
 
-function readAccounts() {
+function readStoredArray(key) {
   try {
-    const current = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]')
-    if (Array.isArray(current) && current.length) return current
-
-    const legacy = JSON.parse(localStorage.getItem(LEGACY_ACCOUNTS_KEY) || '[]')
-    if (Array.isArray(legacy) && legacy.length) {
-      const migrated = legacy.map((account) => ({ ...account, role: 'student', status: 'active' }))
-      writeAccounts(migrated)
-      return migrated
-    }
-    return []
+    const value = JSON.parse(localStorage.getItem(key) || '[]')
+    return Array.isArray(value) ? value : []
   } catch {
     return []
   }
 }
 
+function readAccounts() {
+  const current = readStoredArray(ACCOUNTS_KEY)
+  const legacy = readStoredArray(LEGACY_ACCOUNTS_KEY)
+  if (!legacy.length) return current
+
+  const merged = [...current]
+  let changed = false
+  legacy.forEach((legacyAccount) => {
+    const login = accountLoginId(legacyAccount)
+    const duplicate = merged.some((account) => account.id === legacyAccount.id || (login && accountLoginId(account) === login))
+    if (!duplicate) {
+      merged.push({
+        ...legacyAccount,
+        role: legacyAccount.role === 'teacher' ? 'teacher' : 'student',
+        status: legacyAccount.status || 'active',
+      })
+      changed = true
+    }
+  })
+  if (changed) writeAccounts(merged)
+  return merged
+}
+
 function writeAccounts(accounts) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
+  if (typeof window !== 'undefined') {
+    window.queueMicrotask(() => window.dispatchEvent(new Event('tutorpro:data-change')))
+  }
 }
 
 function readSessionId() {
@@ -536,6 +554,11 @@ export function removeStudentAccount(accountId) {
   const account = accounts.find((item) => item.id === accountId)
   if (!account || !['student', 'parent'].includes(account.role || 'student')) throw new Error('Family account not found.')
   writeAccounts(accounts.filter((item) => item.id !== accountId))
+  const legacyAccounts = readStoredArray(LEGACY_ACCOUNTS_KEY)
+  const removedLogin = accountLoginId(account)
+  if (legacyAccounts.some((item) => item.id === accountId || (removedLogin && accountLoginId(item) === removedLogin))) {
+    localStorage.setItem(LEGACY_ACCOUNTS_KEY, JSON.stringify(legacyAccounts.filter((item) => item.id !== accountId && (!removedLogin || accountLoginId(item) !== removedLogin))))
+  }
   clearSessionId(accountId)
   return true
 }

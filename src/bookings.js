@@ -14,6 +14,7 @@ function readBookings() {
 
 function writeBookings(bookings) {
   localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings))
+  if (typeof window !== 'undefined') window.queueMicrotask(() => window.dispatchEvent(new Event('tutorpro:data-change')))
 }
 
 export function getBookings(filters = {}) {
