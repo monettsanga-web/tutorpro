@@ -42,7 +42,7 @@ export async function signInCloudProfile(login, password) {
     ? { email: identifier.toLowerCase(), password }
     : { phone: identifier.replace(/[\s()-]/g, ''), password }
   const { data, error } = await supabase.auth.signInWithPassword(credentials)
-  if (error) return null
+  if (error) throw new Error(`Supabase login failed: ${error.message}`)
   const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
   if (profileError) throw new Error(`Shared profile could not be loaded: ${profileError.message}`)
   return profileRowToAccount(profile)

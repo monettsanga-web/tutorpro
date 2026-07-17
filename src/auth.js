@@ -467,18 +467,23 @@ export function mergeCloudAccounts(cloudAccounts) {
 
 export async function loginAccount(loginValue, password) {
   let account = readAccounts().find((item) => accountLoginId(item) === normalizeLoginId(item.authProvider || 'email', loginValue))
+  let cloudLoginError = null
   if (cloudSyncEnabled()) {
-    const cloudAccount = await signInCloudProfile(loginValue, password)
-    if (cloudAccount) {
-      account = mergeCloudAccounts([cloudAccount])[0]
-      if (account.status === 'suspended' || account.status === 'rejected') throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
-      writeSessionId(account.id)
-      return account
+    try {
+      const cloudAccount = await signInCloudProfile(loginValue, password)
+      if (cloudAccount) {
+        account = mergeCloudAccounts([cloudAccount])[0]
+        if (account.status === 'suspended' || account.status === 'rejected') throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
+        writeSessionId(account.id)
+        return account
+      }
+    } catch (error) {
+      cloudLoginError = error
     }
   }
 
   if (!account || !account.passwordHash) {
-    throw new Error('We could not find a login-enabled account with that email.')
+    throw cloudLoginError || new Error('We could not find a login-enabled account with that email.')
   }
   if (account.status === 'suspended' || account.status === 'rejected') {
     throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)

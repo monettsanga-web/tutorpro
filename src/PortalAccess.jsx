@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { hasAdminAccount, loginAccount, registerAdmin, registerTeacher } from './auth.js'
+import { cloudSyncEnabled } from './cloudProfiles.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -31,7 +32,7 @@ function validTeacherLogin(provider, value) {
 
 export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPortal }) {
   const isAdmin = mode === 'admin'
-  const [view, setView] = useState(isAdmin ? (hasAdminAccount() ? 'login' : 'setup') : 'register')
+  const [view, setView] = useState(isAdmin ? (cloudSyncEnabled() || hasAdminAccount() ? 'login' : 'setup') : 'register')
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
