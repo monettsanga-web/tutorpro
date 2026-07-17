@@ -46,7 +46,11 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Teacher approval, rejection and suspension controls
 - Direct access to any teacher dashboard from the teacher table
 - Per-student profile suspension and restoration with clear learner-facing status messages
+- Safe removal of individual student profiles or final family registrations with typed confirmation
+- Automatic cleanup of removed student bookings, payments and profile media
 - Direct access to each student dashboard
+- Live admin refresh when student or teacher registrations change in another tab
+- Per-tab sessions so an administrator can stay logged in while testing student or teacher registration separately
 - Paid/unpaid controls for every individual learner
 - Select a specific student name and book an available teacher slot on their behalf
 - Platform-wide booking status controls

@@ -3917,6 +3917,97 @@
   margin-top: 5px;
 }
 
+.remove-student-dialog {
+  width: min(560px, 100%);
+}
+
+.remove-student-dialog__icon {
+  display: grid;
+  width: 65px;
+  height: 65px;
+  margin-bottom: 20px;
+  place-items: center;
+  border-radius: 20px;
+  background: #ffe7ef;
+  color: #bf3765;
+  transform: rotate(-3deg);
+}
+
+.remove-student-dialog h2 {
+  margin: 5px 35px 9px 0;
+  font-size: 1.65rem;
+}
+
+.remove-student-dialog > p {
+  color: var(--portal-muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.remove-student-dialog ul {
+  display: grid;
+  gap: 7px;
+  margin: 17px 0;
+  border-radius: 12px;
+  padding: 13px;
+  background: #fff4f7;
+  color: #8d5267;
+  font-size: 0.63rem;
+  list-style: none;
+}
+
+.remove-student-dialog li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.remove-student-dialog label {
+  display: grid;
+  gap: 6px;
+  margin: 17px 0;
+  color: #4f3c59;
+  font-size: 0.65rem;
+}
+
+.remove-student-dialog input {
+  min-height: 45px;
+  border: 1px solid #dfccd3;
+  border-radius: 9px;
+  outline: 0;
+  padding: 0 11px;
+  color: #36283d;
+  font: inherit;
+}
+
+.remove-student-dialog input:focus {
+  border-color: #c94370;
+  box-shadow: 0 0 0 3px rgba(201, 67, 112, 0.1);
+}
+
+.danger-confirm-button {
+  display: inline-flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 14px;
+  background: linear-gradient(115deg, #b72f5c, #df4779);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(183, 47, 92, 0.2);
+}
+
+.danger-confirm-button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+  opacity: 0.45;
+  box-shadow: none;
+}
+
 .admin-booking-view {
   animation: portal-view-in 420ms ease both;
 }
@@ -4204,6 +4295,8 @@
 .table-action--approve { background: #e4f5e9; color: #2e7d4b; }
 .table-action--reject { background: #fde9e5; color: #aa4936; }
 .table-action--suspend { background: #fff2db; color: #a76f12; }
+.table-action--delete { background: #ffe8ef; color: #bf3765; }
+.table-action--delete:hover { background: #d93f73; color: #fff; }
 
 .admin-preview-pill {
   position: fixed;
@@ -5027,6 +5120,53 @@
     margin-right: -15px;
     margin-left: -15px;
     border-radius: 0;
+    padding: 10px 14px;
+  }
+
+  .admin-table {
+    min-width: 0;
+  }
+
+  .admin-table__head {
+    display: none;
+  }
+
+  .admin-table--teachers .admin-table__row,
+  .admin-table--students .admin-table__row {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: 1fr !important;
+    gap: 0;
+    margin: 10px 0;
+    overflow: hidden;
+    border: 1px solid var(--portal-line);
+    border-radius: 14px;
+    padding: 13px;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(50, 21, 104, 0.05);
+  }
+
+  .admin-table__row > div {
+    min-height: 43px;
+    justify-content: center;
+    border-bottom: 1px solid #eef0f4;
+    padding: 7px 0;
+  }
+
+  .admin-table__row > div:last-child {
+    min-height: 46px;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .table-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .payment-control {
+    align-items: flex-start;
+    flex-direction: row;
   }
 
   .portal-dialog-backdrop {

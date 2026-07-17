@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  Trash2,
   TrendingUp,
   Upload,
   UserCheck,
@@ -44,18 +45,20 @@ import {
   getAccountById,
   getAccounts,
   getApprovedTeachers,
+  removeStudentAccount,
+  removeStudentLearner,
   updateAccount,
   updateLearnerAccess,
   updateLearnerPayment,
   updateStudentProfile,
   updateTeacherProfile,
 } from './auth.js'
-import { createBooking, getBookings, getBookingStats, rateCompletedBooking, saveTeacherFeedback, updateBooking } from './bookings.js'
+import { createBooking, getBookings, getBookingStats, rateCompletedBooking, removeStudentBookingData, saveTeacherFeedback, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import PayPalCheckout from './PayPalCheckout.jsx'
-import { recordPayment, getPayments } from './payments.js'
-import { saveProfileMedia } from './media.js'
+import { recordPayment, getPayments, removeStudentPayments } from './payments.js'
+import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
@@ -1063,6 +1066,42 @@ function AddTeacherDialog({ onClose, onCreated }) {
   )
 }
 
+function RemoveStudentDialog({ profile, onClose, onConfirm }) {
+  const [confirmation, setConfirmation] = useState('')
+  const [removing, setRemoving] = useState(false)
+  const [error, setError] = useState('')
+  const isFinalStudent = (profile.account.children?.length || 1) <= 1
+  const matches = confirmation.trim().toLowerCase() === profile.learner.name.trim().toLowerCase()
+
+  const remove = async () => {
+    if (!matches) return
+    setRemoving(true)
+    setError('')
+    try {
+      await onConfirm(profile, isFinalStudent)
+    } catch (removeError) {
+      setError(removeError.message)
+      setRemoving(false)
+    }
+  }
+
+  return (
+    <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="portal-dialog remove-student-dialog" role="dialog" aria-modal="true" aria-labelledby="remove-student-title">
+        <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
+        <span className="remove-student-dialog__icon"><Trash2 size={28} /></span>
+        <span className="portal-kicker">Permanent administrator action</span>
+        <h2 id="remove-student-title">Remove {profile.learner.name}’s registration?</h2>
+        <p>{isFinalStudent ? 'This is the final student in the family account, so the entire family login will also be removed.' : 'The family account and its other student profiles will remain active.'}</p>
+        <ul><li><Trash2 size={14} /> Student profile and display photo</li><li><Trash2 size={14} /> Student booking and classroom history</li><li><Trash2 size={14} /> Student payment records</li></ul>
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        <label><span>Type <strong>{profile.learner.name}</strong> to confirm</span><input autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder={profile.learner.name} /></label>
+        <div className="portal-dialog__actions"><button className="portal-secondary-button" onClick={onClose} disabled={removing}>Keep registration</button><button className="danger-confirm-button" onClick={remove} disabled={!matches || removing}><Trash2 size={16} /> {removing ? 'Removing…' : isFinalStudent ? 'Remove family registration' : 'Remove student profile'}</button></div>
+      </section>
+    </div>
+  )
+}
+
 export function AdminDashboard({ account, onHome, onLogout }) {
   const [active, setActive] = useState('overview')
   const [version, setVersion] = useState(0)
@@ -1072,6 +1111,20 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
+  const [studentToRemove, setStudentToRemove] = useState(null)
+
+  useEffect(() => {
+    const synchronize = () => setVersion((value) => value + 1)
+    window.addEventListener('storage', synchronize)
+    window.addEventListener('focus', synchronize)
+    const interval = window.setInterval(synchronize, 5000)
+    return () => {
+      window.removeEventListener('storage', synchronize)
+      window.removeEventListener('focus', synchronize)
+      window.clearInterval(interval)
+    }
+  }, [])
+
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
   const studentProfiles = students.flatMap((student) => (student.children?.length ? student.children : [student.child]).map((learner) => ({ account: student, learner })))
@@ -1094,6 +1147,21 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   }
   const setLearnerStatus = (accountId, learnerId, accessStatus) => {
     updateLearnerAccess(accountId, learnerId, accessStatus)
+    refresh()
+  }
+  const removeStudentRegistration = async (profile, isFinalStudent) => {
+    const isPrimary = profile.account.child?.id === profile.learner.id
+    removeStudentBookingData(profile.account.id, isFinalStudent ? undefined : profile.learner.id, isPrimary)
+    removeStudentPayments(profile.account.id, isFinalStudent ? undefined : profile.learner.id)
+    if (isFinalStudent) {
+      await Promise.allSettled((profile.account.children || [profile.learner]).map((learner) => deleteProfileMediaOwner(`${profile.account.id}-${learner.id}`)))
+      await deleteProfileMediaOwner(profile.account.id).catch(() => 0)
+      removeStudentAccount(profile.account.id)
+    } else {
+      await deleteProfileMediaOwner(`${profile.account.id}-${profile.learner.id}`).catch(() => 0)
+      removeStudentLearner(profile.account.id, profile.learner.id)
+    }
+    setStudentToRemove(null)
     refresh()
   }
   const setBookingStatus = (bookingId, status) => {
@@ -1170,7 +1238,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Payment</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="payment-control"><span className={`payment-badge payment-badge--${rowLearner.paymentStatus}`}>{rowLearner.paymentStatus}</span><button onClick={() => setPaymentStatus(student.id, rowLearner.id, rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid')}>Mark {rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid'}</button></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>}</div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner separately, including payment and dashboard access.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Payment</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="payment-control"><span className={`payment-badge payment-badge--${rowLearner.paymentStatus}`}>{rowLearner.paymentStatus}</span><button onClick={() => setPaymentStatus(student.id, rowLearner.id, rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid')}>Mark {rowLearner.paymentStatus === 'paid' ? 'unpaid' : 'paid'}</button></div><div className="table-actions"><button className="table-access-button" onClick={() => { setManagedAccount(student); setManagedLearnerId(rowLearner.id) }} title="Access student dashboard"><Eye size={15} /> Open</button>{rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'bookings' && (
@@ -1188,6 +1256,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro English Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
       )}
       {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}
+      {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
     </PortalShell>
   )
 }

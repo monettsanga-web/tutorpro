@@ -44,6 +44,29 @@ export async function saveProfileMedia(accountId, kind, file) {
   return { fileName: file.name, mimeType: file.type, updatedAt: new Date().toISOString() }
 }
 
+export async function deleteProfileMediaOwner(accountId) {
+  if (!accountId || typeof indexedDB === 'undefined') return 0
+  const database = await openDatabase()
+  let removed = 0
+  await new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE_NAME, 'readwrite')
+    const request = transaction.objectStore(STORE_NAME).openCursor()
+    request.onsuccess = () => {
+      const cursor = request.result
+      if (!cursor) return
+      if (cursor.value?.accountId === accountId || String(cursor.key).startsWith(`${accountId}:`)) {
+        cursor.delete()
+        removed += 1
+      }
+      cursor.continue()
+    }
+    transaction.oncomplete = resolve
+    transaction.onerror = () => reject(transaction.error || new Error('Profile media could not be removed.'))
+  })
+  database.close()
+  return removed
+}
+
 export async function getProfileMedia(accountId, kind) {
   if (!accountId || typeof indexedDB === 'undefined') return null
   const database = await openDatabase()

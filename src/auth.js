@@ -54,6 +54,34 @@ function writeAccounts(accounts) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
 }
 
+function readSessionId() {
+  try {
+    return (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(SESSION_KEY) : null) || localStorage.getItem(SESSION_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writeSessionId(accountId) {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(SESSION_KEY, accountId)
+      localStorage.removeItem(SESSION_KEY)
+    } else localStorage.setItem(SESSION_KEY, accountId)
+  } catch {
+    localStorage.setItem(SESSION_KEY, accountId)
+  }
+}
+
+function clearSessionId(accountId) {
+  try {
+    if (typeof sessionStorage !== 'undefined' && (!accountId || sessionStorage.getItem(SESSION_KEY) === accountId)) sessionStorage.removeItem(SESSION_KEY)
+    if (!accountId || localStorage.getItem(SESSION_KEY) === accountId) localStorage.removeItem(SESSION_KEY)
+  } catch {
+    // Session cleanup is best-effort when browser storage is restricted.
+  }
+}
+
 function createSalt() {
   const bytes = crypto.getRandomValues(new Uint8Array(16))
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -159,7 +187,7 @@ export function initializePlatform() {
 
 export function getCurrentAccount() {
   try {
-    const accountId = localStorage.getItem(SESSION_KEY)
+    const accountId = readSessionId()
     if (!accountId) return null
     return publicAccount(readAccounts().find((account) => account.id === accountId))
   } catch {
@@ -234,7 +262,7 @@ export async function registerAccount(details) {
 
   accounts.push(account)
   writeAccounts(accounts)
-  localStorage.setItem(SESSION_KEY, account.id)
+  writeSessionId(account.id)
   return publicAccount(account)
 }
 
@@ -289,7 +317,7 @@ export async function registerTeacher(details) {
 
   accounts.push(account)
   writeAccounts(accounts)
-  localStorage.setItem(SESSION_KEY, account.id)
+  writeSessionId(account.id)
   return publicAccount(account)
 }
 
@@ -364,7 +392,7 @@ export async function registerAdmin(emailValue, password) {
   }
   accounts.push(account)
   writeAccounts(accounts)
-  localStorage.setItem(SESSION_KEY, account.id)
+  writeSessionId(account.id)
   return publicAccount(account)
 }
 
@@ -383,7 +411,7 @@ export async function loginAccount(loginValue, password) {
     throw new Error('That password is not correct. Please try again.')
   }
 
-  localStorage.setItem(SESSION_KEY, account.id)
+  writeSessionId(account.id)
   return publicAccount(account)
 }
 
@@ -490,6 +518,28 @@ export function updateLearnerAccess(accountId, learnerId, accessStatus) {
   return updateStudentProfile(accountId, { accessStatus }, learnerId)
 }
 
+export function removeStudentLearner(accountId, learnerId) {
+  const accounts = readAccounts()
+  const index = accounts.findIndex((account) => account.id === accountId)
+  if (index < 0 || !['student', 'parent'].includes(accounts[index].role || 'student')) throw new Error('Family account not found.')
+  const children = normalizeLearners(accounts[index])
+  if (!children.some((learner) => learner.id === learnerId)) throw new Error('Student profile not found.')
+  if (children.length <= 1) throw new Error('The final student profile must be removed with the family registration.')
+  const updatedChildren = children.filter((learner) => learner.id !== learnerId)
+  accounts[index] = { ...accounts[index], children: updatedChildren, child: updatedChildren[0], updatedAt: new Date().toISOString() }
+  writeAccounts(accounts)
+  return publicAccount(accounts[index])
+}
+
+export function removeStudentAccount(accountId) {
+  const accounts = readAccounts()
+  const account = accounts.find((item) => item.id === accountId)
+  if (!account || !['student', 'parent'].includes(account.role || 'student')) throw new Error('Family account not found.')
+  writeAccounts(accounts.filter((item) => item.id !== accountId))
+  clearSessionId(accountId)
+  return true
+}
+
 export function logoutAccount() {
-  localStorage.removeItem(SESSION_KEY)
+  clearSessionId()
 }

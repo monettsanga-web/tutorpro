@@ -153,6 +153,23 @@ await rejects(
   'An invalid payment was accepted.',
 )
 
+let removableFamily = await auth.registerAccount({ parentName: 'Remove Parent', email: 'remove@example.com', password: 'Remove123', childName: 'Keep', year: 'Year 3', curriculum: 'Cambridge', goal: 'Reading', frequency: '1–2 weekly' })
+removableFamily = auth.addStudentLearner(removableFamily.id, { name: 'Remove Me', year: 'Year 6', curriculum: 'Oxford', goal: 'Grammar', frequency: '1–2 weekly' })
+let removableLearner = removableFamily.children[1]
+removableFamily = auth.updateLearnerPayment(removableFamily.id, removableLearner.id, 'paid')
+removableLearner = removableFamily.children.find((item) => item.id === removableLearner.id)
+const removalDate = new Date(future)
+removalDate.setDate(removalDate.getDate() + 21)
+bookings.createBooking({ studentId: removableFamily.id, learnerId: removableLearner.id, learnerName: removableLearner.name, learnerProfile: removableLearner, teacherId: teacher.id, date: schedule.formatDateKey(removalDate), time, duration: 25, focus: 'Grammar' })
+payments.recordPayment({ accountId: removableFamily.id, learnerId: removableLearner.id, provider: 'paypal', transactionId: 'REMOVE-PAYPAL-001', amount: 10, plan: 'Weekly lesson', status: 'completed' })
+bookings.removeStudentBookingData(removableFamily.id, removableLearner.id)
+payments.removeStudentPayments(removableFamily.id, removableLearner.id)
+auth.removeStudentLearner(removableFamily.id, removableLearner.id)
+assert(auth.getAccountById(removableFamily.id).children.length === 1, 'Removing an additional student profile failed.')
+assert(!bookings.getBookings({ studentId: removableFamily.id }).some((item) => item.learnerId === removableLearner.id), 'Removed student bookings were not cleaned up.')
+assert(payments.getPayments({ learnerId: removableLearner.id }).length === 0, 'Removed student payment records were not cleaned up.')
+assert(auth.removeStudentAccount(removableFamily.id) && !auth.getAccountById(removableFamily.id), 'Removing the final family registration failed.')
+
 const loggedIn = await auth.loginAccount('family@example.com', 'Family123')
 assert(loggedIn.id === family.id, 'Login failed.')
 assert(bookings.getBookingStats().completed === 1, 'Booking statistics are incorrect.')

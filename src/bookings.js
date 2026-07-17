@@ -206,6 +206,19 @@ export function getClassroomAccess(bookingId, account, now = new Date()) {
   return { allowed: true, booking, startsAt, opensAt, closesAt }
 }
 
+export function removeStudentBookingData(accountId, learnerId, includeLegacyPrimary = false) {
+  const bookings = readBookings()
+  const remaining = bookings.filter((booking) => {
+    if (booking.studentId !== accountId) return true
+    if (!learnerId) return false
+    if (!booking.learnerId) return !includeLegacyPrimary
+    return booking.learnerId !== learnerId
+  })
+  const removed = bookings.length - remaining.length
+  if (removed) writeBookings(remaining)
+  return removed
+}
+
 export function getBookingStats() {
   const bookings = readBookings()
   return {

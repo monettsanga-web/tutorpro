@@ -48,6 +48,18 @@ export function recordPayment(details) {
   return payment
 }
 
+export function removeStudentPayments(accountId, learnerId) {
+  const payments = readPayments()
+  const remaining = payments.filter((payment) => {
+    if (payment.accountId !== accountId) return true
+    if (!learnerId) return false
+    return payment.learnerId !== learnerId
+  })
+  const removed = payments.length - remaining.length
+  if (removed) writePayments(remaining)
+  return removed
+}
+
 export function getPayments(filters = {}) {
   return readPayments()
     .filter((payment) => !filters.accountId || payment.accountId === filters.accountId)
