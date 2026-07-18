@@ -14,11 +14,15 @@ import {
   MessageCircle,
   Mic,
   MicOff,
+  Maximize2,
+  Minimize2,
   MonitorUp,
   MoreVertical,
   Paperclip,
+  Pause,
   PenTool,
   PhoneOff,
+  Play,
   Presentation,
   Radio,
   Send,
@@ -37,11 +41,20 @@ import { createClassroomTransport } from './classroomTransport.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024
+const turnServer = import.meta.env.VITE_CLASSROOM_TURN_URL
+  ? {
+      urls: import.meta.env.VITE_CLASSROOM_TURN_URL,
+      username: import.meta.env.VITE_CLASSROOM_TURN_USERNAME || '',
+      credential: import.meta.env.VITE_CLASSROOM_TURN_CREDENTIAL || '',
+    }
+  : null
 const rtcConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    ...(turnServer ? [turnServer] : []),
   ],
+  iceCandidatePoolSize: 10,
 }
 
 function formatTime(time) {
@@ -122,7 +135,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [micOn, setMicOn] = useState(true)
   const [cameraOn, setCameraOn] = useState(true)
   const [screenSharing, setScreenSharing] = useState(false)
+  const [screenPaused, setScreenPaused] = useState(false)
+  const [screenFit, setScreenFit] = useState('fit')
+  const [stageFullscreen, setStageFullscreen] = useState(false)
   const [remoteScreenSharing, setRemoteScreenSharing] = useState(false)
+  const [remoteScreenPaused, setRemoteScreenPaused] = useState(false)
+  const [remoteScreenFit, setRemoteScreenFit] = useState('fit')
   const [presentedFile, setPresentedFile] = useState(null)
   const [connectionStatus, setConnectionStatus] = useState('waiting')
   const [participantCount, setParticipantCount] = useState(1)
@@ -152,6 +170,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   useEffect(() => {
     annotationPermissionRef.current = studentAnnotationAllowed
   }, [studentAnnotationAllowed])
+
+  useEffect(() => {
+    const updateFullscreenState = () => setStageFullscreen(document.fullscreenElement === stageRef.current)
+    document.addEventListener('fullscreenchange', updateFullscreenState)
+    return () => document.removeEventListener('fullscreenchange', updateFullscreenState)
+  }, [])
 
   const requestMedia = async () => {
     setMediaError('')
@@ -304,6 +328,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'screen-state') {
         setRemoteScreenSharing(Boolean(message.active))
+        setRemoteScreenPaused(Boolean(message.active && message.paused))
+        if (['fit', 'fill'].includes(message.fit)) setRemoteScreenFit(message.fit)
         if (message.active) setPresentedFile(null)
         return
       }
@@ -408,17 +434,50 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const stopScreenShare = async () => {
-    screenStreamRef.current?.getTracks().forEach((track) => track.stop())
+    const stream = screenStreamRef.current
     screenStreamRef.current = null
+    stream?.getTracks().forEach((track) => {
+      track.onended = null
+      track.stop()
+    })
     const cameraTrack = cameraStreamRef.current?.getVideoTracks()[0]
     const sender = peerRef.current?.getSenders().find((item) => item.track?.kind === 'video')
     if (sender && cameraTrack) await sender.replaceTrack(cameraTrack)
     setVideoStream(sharedScreenVideoRef.current, null)
-    transportRef.current?.send({ type: 'screen-state', active: false })
+    transportRef.current?.send({ type: 'screen-state', active: false, paused: false })
+    setScreenPaused(false)
     setScreenSharing(false)
   }
 
+  const toggleScreenPause = () => {
+    const track = screenStreamRef.current?.getVideoTracks()[0]
+    if (!track) return
+    const paused = !screenPaused
+    track.enabled = !paused
+    setScreenPaused(paused)
+    transportRef.current?.send({ type: 'screen-state', active: true, paused, fit: screenFit })
+  }
+
+  const toggleScreenFit = () => {
+    const fit = screenFit === 'fit' ? 'fill' : 'fit'
+    setScreenFit(fit)
+    transportRef.current?.send({ type: 'screen-state', active: true, paused: screenPaused, fit })
+  }
+
+  const toggleStageFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen()
+      else await stageRef.current?.requestFullscreen()
+    } catch {
+      setMediaError('Full-screen lesson board is not available in this browser.')
+    }
+  }
+
   const toggleScreenShare = async () => {
+    if (account.role === 'student') {
+      setMediaError('Only the teacher can present a screen in this classroom.')
+      return
+    }
     if (screenSharing) {
       await stopScreenShare()
       return
@@ -428,16 +487,22 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       return
     }
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+      setMediaError('')
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 15, max: 30 } },
+        audio: true,
+      })
       const screenTrack = stream.getVideoTracks()[0]
       screenStreamRef.current = stream
       const sender = peerRef.current?.getSenders().find((item) => item.track?.kind === 'video')
       if (sender) await sender.replaceTrack(screenTrack)
       setVideoStream(sharedScreenVideoRef.current, stream)
       setPresentedFile(null)
-      transportRef.current?.send({ type: 'screen-state', active: true })
+      setScreenPaused(false)
+      setScreenFit('fit')
+      transportRef.current?.send({ type: 'screen-state', active: true, paused: false, fit: 'fit' })
       setScreenSharing(true)
-      screenTrack.onended = stopScreenShare
+      screenTrack.onended = () => { stopScreenShare() }
     } catch (error) {
       if (error.name !== 'NotAllowedError') setMediaError('Screen sharing could not be started.')
     }
@@ -615,7 +680,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <span className="classroom-brand"><Presentation size={20} /> TutorPro English Classroom</span>
             <small>{account.role === 'teacher' ? 'Teacher room' : account.role === 'admin' ? 'Administrator access' : 'Booked student room'}</small>
             <h1>Ready for class, {participantName}?</h1>
-            <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at {formatTime(roomBooking.time)}</p>
+            <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at <strong className="classroom-lesson-time">{formatTime(roomBooking.time)}</strong></p>
             <div className="prejoin-room-id"><span><ShieldCheck size={16} /></span><div><small>Unique classroom ID</small><strong>{roomBooking.classroomId}</strong></div><button onClick={copyRoomId}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div>
             {mediaError && <div className="classroom-error"><WifiOff size={17} /> {mediaError}</div>}
             {!mediaReady ? <button className="classroom-main-button" onClick={requestMedia}><Camera size={18} /> Enable camera & microphone</button> : <button className="classroom-main-button" onClick={joinClass}><Video size={18} /> Enter private classroom</button>}
@@ -651,7 +716,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           </div>
 
           <div className="classroom-lesson-board" ref={stageRef}>
-            {screenSharing ? <video className="classroom-presentation-video" ref={sharedScreenVideoRef} autoPlay muted playsInline /> : remoteScreenSharing ? <video className="classroom-presentation-video" ref={remoteVideoRef} autoPlay playsInline /> : presentedFile ? <div className="classroom-file-presentation">{presentedFile.type?.startsWith('image/') ? <img src={presentedFile.dataUrl} alt={presentedFile.name} /> : presentedFile.type === 'application/pdf' ? <object data={presentedFile.dataUrl} type="application/pdf" aria-label={presentedFile.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{presentedFile.name}</strong><span>This browser cannot embed the PDF.</span><a href={presentedFile.dataUrl} download={presentedFile.name}>Open PDF</a></div></object> : <div><Presentation size={54} /><strong>{presentedFile.name}</strong><span>Use the download button to open this lesson file.</span></div>}<small><Paperclip size={13} /> {presentedFile.name}</small></div> : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            {screenSharing ? <video className={`classroom-presentation-video classroom-presentation-video--${screenFit}`} ref={sharedScreenVideoRef} autoPlay muted playsInline /> : remoteScreenSharing ? <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline /> : presentedFile ? <div className="classroom-file-presentation">{presentedFile.type?.startsWith('image/') ? <img src={presentedFile.dataUrl} alt={presentedFile.name} /> : presentedFile.type === 'application/pdf' ? <object data={presentedFile.dataUrl} type="application/pdf" aria-label={presentedFile.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{presentedFile.name}</strong><span>This browser cannot embed the PDF.</span><a href={presentedFile.dataUrl} download={presentedFile.name}>Open PDF</a></div></object> : <div><Presentation size={54} /><strong>{presentedFile.name}</strong><span>Use the download button to open this lesson file.</span></div>}<small><Paperclip size={13} /> {presentedFile.name}</small></div> : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
             <canvas
               ref={annotationCanvasRef}
               className={annotationMode ? 'annotation-canvas active' : 'annotation-canvas'}
@@ -662,6 +728,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             />
             {textEditor && <div className="annotation-text-editor" style={{ left: `${textEditor.x * 100}%`, top: `${textEditor.y * 100}%` }}><input autoFocus value={textDraft} onChange={(event) => setTextDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') commitTextAnnotation(); if (event.key === 'Escape') setTextEditor(null) }} placeholder="Type on the lesson…" maxLength="120" /><button onClick={commitTextAnnotation}><Check size={15} /></button><button onClick={() => setTextEditor(null)}><X size={15} /></button></div>}
             {annotationMode && <div className="annotation-toolbar"><button className={annotationTool === 'pen' ? 'active' : ''} onClick={() => setAnnotationTool('pen')} title="Pen"><PenTool size={17} /></button><button className={annotationTool === 'highlighter' ? 'active' : ''} onClick={() => setAnnotationTool('highlighter')} title="Highlighter"><Circle size={17} /></button><button className={annotationTool === 'text' ? 'active' : ''} onClick={() => setAnnotationTool('text')} title="Text"><Type size={17} /></button><button className={annotationTool === 'eraser' ? 'active' : ''} onClick={() => setAnnotationTool('eraser')} title="Eraser"><Eraser size={17} /></button><label title="Ink colour"><input type="color" value={annotationColor} onChange={(event) => setAnnotationColor(event.target.value)} /></label><button onClick={clearAnnotations} title="Clear annotations"><Trash2 size={17} /></button><button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button></div>}
+            {screenSharing && <div className="screen-share-controls" role="toolbar" aria-label="Teacher screen sharing controls"><span><i /> You are presenting</span><button onClick={toggleScreenPause} title={screenPaused ? 'Resume screen sharing' : 'Pause screen sharing'}>{screenPaused ? <Play size={16} /> : <Pause size={16} />}<b>{screenPaused ? 'Resume' : 'Pause'}</b></button><button onClick={toggleScreenFit} title="Change screen fit"><MonitorUp size={16} /><b>{screenFit === 'fit' ? 'Fill' : 'Fit'}</b></button><button onClick={toggleStageFullscreen} title={stageFullscreen ? 'Exit full screen' : 'Open lesson board full screen'}>{stageFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<b>{stageFullscreen ? 'Exit' : 'Full screen'}</b></button><button className="stop" onClick={stopScreenShare} title="Stop screen sharing"><X size={16} /><b>Stop</b></button></div>}
             <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
           </div>
         </section>
@@ -685,7 +752,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
       <footer className="classroom-controls">
         <div><button className={micOn ? 'active' : 'off'} onClick={toggleMic}>{micOn ? <Mic size={20} /> : <MicOff size={20} />}<span>{micOn ? 'Mute' : 'Unmute'}</span></button><button className={cameraOn ? 'active' : 'off'} onClick={toggleCamera} disabled={screenSharing}>{cameraOn ? <Camera size={20} /> : <CameraOff size={20} />}<span>{cameraOn ? 'Camera' : 'Start video'}</span></button></div>
-        <div><button className={screenSharing ? 'active sharing' : ''} onClick={toggleScreenShare}><MonitorUp size={20} /><span>{screenSharing ? 'Stop share' : 'Share screen'}</span></button><button className={annotationMode ? 'active annotation' : ''} onClick={() => setAnnotationMode((active) => !active)} disabled={account.role === 'student' && !studentAnnotationAllowed} title={account.role === 'student' && !studentAnnotationAllowed ? 'The teacher must allow annotation first' : 'Annotate the lesson board'}><PenTool size={20} /><span>{account.role === 'student' && !studentAnnotationAllowed ? 'Permission needed' : 'Annotate'}</span></button>{account.role === 'teacher' && <button className={studentAnnotationAllowed ? 'active permission' : ''} onClick={toggleStudentAnnotationPermission}>{studentAnnotationAllowed ? <Unlock size={20} /> : <Lock size={20} />}<span>{studentAnnotationAllowed ? 'Revoke drawing' : 'Allow student'}</span></button>}<label className="control-file-button"><FileUp size={20} /><span>Share file</span><input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*" onChange={uploadFile} /></label><button onClick={() => setSidebarOpen((open) => !open)}><Users size={20} /><span>Chat & files</span></button></div>
+        <div>{account.role !== 'student' && <button className={screenSharing ? 'active sharing' : ''} onClick={toggleScreenShare}><MonitorUp size={20} /><span>{screenSharing ? 'Stop share' : 'Share screen'}</span></button>}<button className={annotationMode ? 'active annotation' : ''} onClick={() => setAnnotationMode((active) => !active)} disabled={account.role === 'student' && !studentAnnotationAllowed} title={account.role === 'student' && !studentAnnotationAllowed ? 'The teacher must allow annotation first' : 'Annotate the lesson board'}><PenTool size={20} /><span>{account.role === 'student' && !studentAnnotationAllowed ? 'Permission needed' : 'Annotate'}</span></button>{account.role === 'teacher' && <button className={studentAnnotationAllowed ? 'active permission' : ''} onClick={toggleStudentAnnotationPermission}>{studentAnnotationAllowed ? <Unlock size={20} /> : <Lock size={20} />}<span>{studentAnnotationAllowed ? 'Revoke drawing' : 'Allow student'}</span></button>}<label className="control-file-button"><FileUp size={20} /><span>Share file</span><input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*" onChange={uploadFile} /></label><button onClick={() => setSidebarOpen((open) => !open)}><Users size={20} /><span>Chat & files</span></button></div>
         <button className="leave-class-button" onClick={leaveClass}><PhoneOff size={21} /><span>Leave class</span></button>
       </footer>
     </main>

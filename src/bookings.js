@@ -24,9 +24,12 @@ function queueCloudBooking(booking) {
   })
 }
 
-export function mergeCloudBookings(cloudBookings) {
-  if (!Array.isArray(cloudBookings) || !cloudBookings.length) return getBookings()
-  const bookings = readBookings()
+export function mergeCloudBookings(cloudBookings, options = {}) {
+  if (!Array.isArray(cloudBookings)) return getBookings()
+  const cloudIds = new Set(cloudBookings.map((booking) => booking.id))
+  const bookings = options.reconcile
+    ? readBookings().filter((booking) => !booking.cloudBooking || cloudIds.has(booking.id))
+    : readBookings()
   cloudBookings.forEach((cloudBooking) => {
     const index = bookings.findIndex((booking) => booking.id === cloudBooking.id)
     if (index < 0) bookings.push(cloudBooking)
@@ -250,6 +253,15 @@ export function removeStudentBookingData(accountId, learnerId, includeLegacyPrim
     removedBookings.forEach((booking) => deleteCloudBooking(booking.id).catch(() => {}))
   }
   return removed
+}
+
+export function removeTeacherBookingData(accountId) {
+  const bookings = readBookings()
+  const removedBookings = bookings.filter((booking) => booking.teacherId === accountId)
+  if (!removedBookings.length) return 0
+  writeBookings(bookings.filter((booking) => booking.teacherId !== accountId))
+  removedBookings.forEach((booking) => deleteCloudBooking(booking.id).catch(() => {}))
+  return removedBookings.length
 }
 
 export function getBookingStats() {

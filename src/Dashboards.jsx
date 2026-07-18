@@ -47,13 +47,14 @@ import {
   mergeCloudAccounts,
   removeStudentAccount,
   removeStudentLearner,
+  removeTeacherAccount,
   updateAccount,
   updateLearnerAccess,
   updateLocalAccount,
   updateStudentProfile,
   updateTeacherProfile,
 } from './auth.js'
-import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, removeStudentBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
+import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
@@ -371,7 +372,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
       <div className="lesson-card__main">
         <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
         <h3>{booking.focus}</h3>
-        <p>{person && <strong>{person} · </strong>}{formatLessonDate(booking.date, booking.time)} at {formatTime(booking.time)}</p>
+        <p>{person && <strong>{person} · </strong>}{formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time)}</strong></p>
         {booking.status === 'confirmed' && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> Enter private classroom <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
@@ -933,7 +934,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   useEffect(() => {
     const synchronize = () => {
       const latest = getAccountById(initialAccount.id)
-      if (!latest) {
+      if (!latest || ['rejected', 'suspended', 'removed'].includes(latest.status)) {
         teacherSyncCallbacks.current.onLogout()
         return
       }
@@ -956,7 +957,13 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   useEffect(() => {
     if (!cloudSyncEnabled()) return undefined
     let active = true
-    const synchronizeCloud = async () => {
+    const synchronizeCloud = async (change) => {
+      if (!active) return
+      if (change?.eventType === 'DELETE' && change.old?.id === initialAccount.id) {
+        try { updateLocalAccount(initialAccount.id, { status: 'removed' }) } catch { /* The local profile may already be gone. */ }
+        teacherSyncCallbacks.current.onLogout()
+        return
+      }
       try {
         const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
         if (active) {
@@ -964,7 +971,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           mergeCloudBookings(sharedBookings)
         }
       } catch {
-        // The teacher dashboard keeps its offline copy until cloud access returns.
+        // The teacher dashboard keeps its offline copy until cloud connectivity recovers.
       }
     }
     synchronizeCloud()
@@ -977,7 +984,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       unsubscribeBookings()
       window.clearInterval(interval)
     }
-  }, [])
+  }, [initialAccount.id])
 
   const refresh = () => setVersion((value) => value + 1)
 
@@ -1196,7 +1203,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   )
 }
 
-export function AdminTeacherProfile({ teacher, onBack, onStatusChange, processing, error }) {
+export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove, processing, error }) {
   const profile = teacher.teacher || {}
   const credentials = Array.isArray(profile.credentials) ? profile.credentials : []
   const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
@@ -1214,6 +1221,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, processin
           {teacher.status !== 'approved' && <button className="approve" onClick={() => onStatusChange(teacher.id, 'approved')} disabled={processing}><UserCheck size={16} /> {processing ? 'Saving…' : 'Approve teacher'}</button>}
           {teacher.status === 'approved' && <button className="suspend" onClick={() => onStatusChange(teacher.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend</button>}
           {teacher.status !== 'rejected' && !teacher.systemProfile && <button className="reject" onClick={() => onStatusChange(teacher.id, 'rejected')} disabled={processing}><XCircle size={16} /> Reject</button>}
+          {!teacher.systemProfile && onRemove && <button className="delete" onClick={() => onRemove(teacher)} disabled={processing}><Trash2 size={16} /> Delete profile</button>}
         </div>
       </section>
       <div className="admin-teacher-profile-grid">
@@ -1324,6 +1332,42 @@ function AddTeacherDialog({ onClose, onCreated }) {
   )
 }
 
+function RemoveTeacherDialog({ teacher, onClose, onConfirm }) {
+  const [confirmation, setConfirmation] = useState('')
+  const [removing, setRemoving] = useState(false)
+  const [error, setError] = useState('')
+  const teacherName = teacher.fullName || 'New Teacher'
+  const matches = confirmation.trim().toLowerCase() === teacherName.trim().toLowerCase()
+
+  const remove = async () => {
+    if (!matches) return
+    setRemoving(true)
+    setError('')
+    try {
+      await onConfirm(teacher)
+    } catch (removeError) {
+      setError(removeError.message)
+      setRemoving(false)
+    }
+  }
+
+  return (
+    <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="portal-dialog remove-student-dialog" role="dialog" aria-modal="true" aria-labelledby="remove-teacher-title">
+        <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
+        <span className="remove-student-dialog__icon"><Trash2 size={28} /></span>
+        <span className="portal-kicker">Permanent administrator action</span>
+        <h2 id="remove-teacher-title">Delete {teacherName}’s teacher profile?</h2>
+        <p>This removes the teacher from TutorPro English and revokes dashboard access. This action cannot be undone.</p>
+        <ul><li><Trash2 size={14} /> Teacher profile, photo and introduction video</li><li><Trash2 size={14} /> Assigned bookings and private classrooms</li><li><Trash2 size={14} /> Teacher dashboard access</li></ul>
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        <label><span>Type <strong>{teacherName}</strong> to confirm</span><input autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder={teacherName} /></label>
+        <div className="portal-dialog__actions"><button className="portal-secondary-button" onClick={onClose} disabled={removing}>Keep teacher</button><button className="danger-confirm-button" onClick={remove} disabled={!matches || removing}><Trash2 size={16} /> {removing ? 'Deleting…' : 'Delete teacher profile'}</button></div>
+      </section>
+    </div>
+  )
+}
+
 function RemoveStudentDialog({ profile, onClose, onConfirm }) {
   const [confirmation, setConfirmation] = useState('')
   const [removing, setRemoving] = useState(false)
@@ -1370,6 +1414,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [studentToRemove, setStudentToRemove] = useState(null)
+  const [teacherToRemove, setTeacherToRemove] = useState(null)
   const [cloudStatus, setCloudStatus] = useState(cloudSyncEnabled() ? 'connecting' : 'local')
   const [cloudError, setCloudError] = useState('')
   const [adminActionError, setAdminActionError] = useState('')
@@ -1398,8 +1443,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         if (!authorized) throw new Error('This Supabase user is not listed in admin_members.')
         const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
         if (!active) return
-        mergeCloudAccounts(profiles)
-        mergeCloudBookings(sharedBookings)
+        mergeCloudAccounts(profiles, { reconcile: true })
+        mergeCloudBookings(sharedBookings, { reconcile: true })
         setCloudStatus('connected')
         setCloudError('')
         setVersion((value) => value + 1)
@@ -1457,7 +1502,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       const updated = updateAccount(accountId, { status })
       if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the status update in time.')
       const profiles = cloudSyncEnabled() ? await withTimeout(fetchCloudProfiles(), 8000, 'Supabase profile refresh timed out.') : []
-      if (profiles.length) mergeCloudAccounts(profiles)
+      if (profiles.length) mergeCloudAccounts(profiles, { reconcile: true })
       const refreshed = getAccountById(accountId)
       if (refreshed) setManagedAccount((current) => current?.id === accountId ? refreshed : current)
       refresh()
@@ -1484,7 +1529,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     if (cloudSyncEnabled()) {
       withTimeout(fetchCloudProfiles(), 8000, 'Cloud refresh timed out.')
         .then((profiles) => {
-          if (profiles.length) mergeCloudAccounts(profiles)
+          if (profiles.length) mergeCloudAccounts(profiles, { reconcile: true })
           const refreshed = getAccountById(teacherId)
           if (refreshed?.role === 'teacher') setManagedAccount(refreshed)
         })
@@ -1508,7 +1553,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     if (cloudSyncEnabled()) {
       withTimeout(fetchCloudProfiles(), 8000, 'Cloud refresh timed out.')
         .then((profiles) => {
-          if (profiles.length) mergeCloudAccounts(profiles)
+          if (profiles.length) mergeCloudAccounts(profiles, { reconcile: true })
           const refreshed = getAccountById(studentId)
           if (refreshed?.role === 'student') setManagedAccount(refreshed)
         })
@@ -1557,6 +1602,25 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     setStudentToRemove(null)
     refresh()
   }
+  const removeTeacherRegistration = async (teacher) => {
+    setAdminActionError('')
+    setProcessingAccountId(teacher.id)
+    try {
+      await withTimeout(removeTeacherAccount(teacher.id), 10000, 'Teacher deletion was not confirmed in time.')
+      removeTeacherBookingData(teacher.id)
+      await deleteProfileMediaOwner(teacher.id).catch(() => 0)
+      if (managedAccount?.id === teacher.id) setManagedAccount(null)
+      setTeacherToRemove(null)
+      setActive('teachers')
+      refresh()
+    } catch (removeError) {
+      setAdminActionError(`${removeError.message} The teacher profile was not deleted.`)
+      throw removeError
+    } finally {
+      setProcessingAccountId('')
+    }
+  }
+
   const setBookingStatus = (bookingId, status) => {
     const previous = bookings.find((booking) => booking.id === bookingId)
     const updatedBooking = updateBooking(bookingId, { status })
@@ -1599,8 +1663,9 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     return (
       <PortalShell account={account} role="admin" active="teachers" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
         <RoleErrorBoundary onBack={exitManagedDashboard}>
-          <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} processing={processingAccountId === managedAccount.id} error={adminActionError} />
+          <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} onRemove={setTeacherToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} />
         </RoleErrorBoundary>
+        {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
       </PortalShell>
     )
   }
@@ -1637,7 +1702,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
@@ -1659,6 +1724,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro English Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
       )}
       {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}
+      {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
       {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
     </PortalShell>
   )

@@ -1,4 +1,4 @@
-import { cloudSyncEnabled, deleteCloudProfile, registerCloudProfile, signInCloudProfile, updateCloudProfile } from './cloudProfiles.js'
+import { cloudSyncEnabled, deleteCloudProfile, deleteCloudTeacherAccount, registerCloudProfile, signInCloudProfile, updateCloudProfile } from './cloudProfiles.js'
 import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
 
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
@@ -234,7 +234,12 @@ export function getCurrentAccount() {
   try {
     const accountId = readSessionId()
     if (!accountId) return null
-    return publicAccount(readAccounts().find((account) => account.id === accountId))
+    const account = publicAccount(readAccounts().find((item) => item.id === accountId))
+    if (!account || account.status === 'removed') {
+      clearSessionId(accountId)
+      return null
+    }
+    return account
   } catch {
     return null
   }
@@ -243,6 +248,7 @@ export function getCurrentAccount() {
 export function getAccounts(role) {
   return readAccounts()
     .map(publicAccount)
+    .filter((account) => account.status !== 'removed')
     .filter((account) => !role || account.role === role)
 }
 
@@ -305,7 +311,10 @@ export async function registerAccount(details) {
   }
 
   const cloud = await registerCloudProfile({ login: details.email, password: details.password, provider: authProvider, account })
-  if (cloud?.userId) account.id = cloud.userId
+  if (cloud?.userId) {
+    account.id = cloud.userId
+    account.cloudProfile = true
+  }
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
@@ -362,7 +371,10 @@ export async function registerTeacher(details) {
   }
 
   const cloud = await registerCloudProfile({ login: details.email, password: details.password, provider: authProvider, account })
-  if (cloud?.userId) account.id = cloud.userId
+  if (cloud?.userId) {
+    account.id = cloud.userId
+    account.cloudProfile = true
+  }
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
@@ -439,16 +451,22 @@ export async function registerAdmin(emailValue, password) {
     createdAt: new Date().toISOString(),
   }
   const cloud = await registerCloudProfile({ login: email, password, provider: 'email', account })
-  if (cloud?.userId) account.id = cloud.userId
+  if (cloud?.userId) {
+    account.id = cloud.userId
+    account.cloudProfile = true
+  }
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
   return publicAccount(account)
 }
 
-export function mergeCloudAccounts(cloudAccounts) {
-  if (!Array.isArray(cloudAccounts) || !cloudAccounts.length) return []
-  const accounts = readAccounts()
+export function mergeCloudAccounts(cloudAccounts, options = {}) {
+  if (!Array.isArray(cloudAccounts)) return []
+  const cloudIds = new Set(cloudAccounts.map((account) => account.id))
+  const accounts = options.reconcile
+    ? readAccounts().filter((account) => !(account.cloudProfile || account.cloudOnly) || cloudIds.has(account.id))
+    : readAccounts()
   cloudAccounts.forEach((cloudAccount) => {
     const index = accounts.findIndex((account) => account.id === cloudAccount.id || (accountLoginId(cloudAccount) && accountLoginId(account) === accountLoginId(cloudAccount)))
     if (index >= 0) {
@@ -473,7 +491,7 @@ export async function loginAccount(loginValue, password) {
       const cloudAccount = await signInCloudProfile(loginValue, password)
       if (cloudAccount) {
         account = mergeCloudAccounts([cloudAccount])[0]
-        if (account.status === 'suspended' || account.status === 'rejected') throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
+        if (['suspended', 'rejected', 'removed'].includes(account.status)) throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
         writeSessionId(account.id)
         return account
       }
@@ -485,7 +503,8 @@ export async function loginAccount(loginValue, password) {
   if (!account || !account.passwordHash) {
     throw cloudLoginError || new Error('We could not find a login-enabled account with that email.')
   }
-  if (account.status === 'suspended' || account.status === 'rejected') {
+  if (cloudLoginError && (account.cloudProfile || account.cloudOnly)) throw cloudLoginError
+  if (['suspended', 'rejected', 'removed'].includes(account.status)) {
     throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
   }
 
@@ -626,6 +645,20 @@ export function removeStudentAccount(accountId) {
   }
   clearSessionId(accountId)
   deleteCloudProfile(accountId).catch(() => {})
+  return true
+}
+
+export async function removeTeacherAccount(accountId) {
+  const accounts = readAccounts()
+  const account = accounts.find((item) => item.id === accountId)
+  if (!account || account.role !== 'teacher') throw new Error('Teacher account not found.')
+  if (account.systemProfile) throw new Error('The TutorPro English default teacher profile cannot be deleted.')
+
+  if (cloudSyncEnabled() && (account.cloudProfile || account.cloudOnly)) {
+    await deleteCloudTeacherAccount(publicAccount(account))
+  }
+  writeAccounts(accounts.filter((item) => item.id !== accountId))
+  clearSessionId(accountId)
   return true
 }
 

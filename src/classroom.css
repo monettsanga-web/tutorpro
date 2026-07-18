@@ -432,6 +432,83 @@
   background: #08040f;
 }
 
+.classroom-presentation-video--fill { object-fit: cover; }
+
+.screen-share-controls {
+  position: absolute;
+  z-index: 20;
+  bottom: 14px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100% - 24px);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 13px;
+  padding: 6px;
+  background: rgba(19,9,37,0.92);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.34);
+  transform: translateX(-50%);
+  backdrop-filter: blur(10px);
+}
+
+.screen-share-controls > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 7px;
+  color: #e7f8c1;
+  font-size: 0.54rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.screen-share-controls > span i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8dda5f;
+  box-shadow: 0 0 0 4px rgba(141,218,95,0.14);
+}
+
+.screen-share-controls button {
+  display: flex;
+  min-width: 55px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 8px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 0.5rem;
+}
+
+.screen-share-controls button:hover { background: #7048df; }
+.screen-share-controls button.stop { background: #a92e58; }
+.screen-share-controls button b { font: inherit; font-weight: 800; }
+
+.screen-share-paused {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: rgba(12,6,24,0.72);
+  color: #fff;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+
+.screen-share-paused strong { font-size: 0.82rem; }
+.screen-share-paused span { color: #b9accb; font-size: 0.58rem; }
+.classroom-lesson-time { color: #fff; font-weight: 900; }
+
 .classroom-lesson-placeholder {
   position: absolute;
   inset: 0;
@@ -749,6 +826,10 @@
   .classroom-camera-tile { width: 145px; height: 102px; flex: 0 0 auto; }
   .video-rail-status { min-width: 115px; flex: 0 0 auto; }
   .classroom-lesson-board { border-radius: 11px; }
+  .screen-share-controls { bottom: 7px; max-width: calc(100% - 14px); padding: 4px; }
+  .screen-share-controls > span { display: none; }
+  .screen-share-controls button { min-width: 42px; min-height: 34px; padding: 0 5px; }
+  .screen-share-controls button b { display: none; }
   .classroom-lesson-placeholder { padding: 18px; }
   .classroom-lesson-placeholder > span { width: 56px; height: 56px; margin-bottom: 10px; }
   .classroom-lesson-placeholder p { display: none; }

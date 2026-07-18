@@ -49,6 +49,14 @@ The repair script finds the authorized administrator without displaying the emai
 
 If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
 
+### Enable permanent teacher deletion
+
+For existing projects, run [`supabase/teacher_profile_delete.sql`](../supabase/teacher_profile_delete.sql) once. It creates an administrator-only database function that removes the selected teacher’s Auth user, profile and assigned bookings without exposing a `service_role` key. Until this update is run, the Admin Dashboard safely deactivates and hides a deleted teacher so that login is still revoked.
+
+### Cross-device classroom connection
+
+The classroom now uses the booking’s secret room token with **Supabase Realtime Broadcast** for WebRTC signaling, so the teacher and student can connect from different devices without a separate signaling server. Supabase Realtime must remain enabled for the project. A separately hosted `wss://` signaling server can still be selected with `VITE_CLASSROOM_SIGNALING_URL`.
+
 ## 5. Configure TutorPro English
 
 Copy `.env.example` to `.env.local` and add the browser-safe values:
@@ -87,5 +95,6 @@ The Admin Dashboard badge should display **Supabase live sync**. If it displays 
 
 - Keep Row Level Security enabled.
 - Never put the Supabase `service_role` key in a `VITE_` variable.
-- Use a server-side Edge Function for deleting Supabase Auth users completely.
-- Move bookings, media and classroom files into shared Supabase tables/storage before production launch.
+- Keep the administrator-only `delete_teacher_profile` RPC restricted to authenticated users; it verifies `admin_members` before deleting anything.
+- Add a production TURN service for reliable classroom media on restrictive school/corporate networks.
+- Move media and classroom files into shared Supabase Storage before production launch.

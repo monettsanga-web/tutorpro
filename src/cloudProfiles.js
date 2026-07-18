@@ -110,9 +110,29 @@ export async function updateCloudProfile(account) {
 
 export async function deleteCloudProfile(accountId) {
   if (!supabase || !accountId) return false
-  const { error } = await supabase.from('profiles').delete().eq('id', accountId)
+  const { data, error } = await supabase.from('profiles').delete().eq('id', accountId).select('id')
   if (error) throw new Error(`Shared profile deletion failed: ${error.message}`)
+  if (!data?.length) throw new Error('Shared profile deletion was blocked by Supabase permissions.')
   return true
+}
+
+export async function deleteCloudTeacherAccount(account) {
+  if (!supabase || !account?.id) return { mode: 'local' }
+  const { data, error } = await supabase.rpc('delete_teacher_profile', { target_user_id: account.id })
+  if (!error) {
+    if (!data) throw new Error('The shared teacher profile could not be found.')
+    return { mode: 'deleted' }
+  }
+
+  const functionUnavailable = error.code === 'PGRST202'
+    || /delete_teacher_profile|schema cache|function .* does not exist/i.test(error.message || '')
+  if (!functionUnavailable) throw new Error(`Shared teacher deletion failed: ${error.message}`)
+
+  // Older Supabase projects may not have the hard-delete RPC yet. Marking the
+  // profile removed revokes cloud login and hides it everywhere until the
+  // administrator runs teacher_profile_delete.sql.
+  await updateCloudProfile({ ...account, status: 'removed' })
+  return { mode: 'deactivated' }
 }
 
 export function subscribeToCloudProfiles(onChange) {

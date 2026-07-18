@@ -1087,6 +1087,11 @@
   color: #52657f;
 }
 
+.lesson-card p .lesson-time {
+  color: #293f5c;
+  font-weight: 900;
+}
+
 .lesson-card__main > small {
   display: block;
   margin-top: 5px;
@@ -1269,9 +1274,9 @@
   justify-content: flex-end;
   border-right: 1px solid #dce3ee;
   padding: 3px 9px 0 0;
-  color: #4f6179;
-  font-size: 0.58rem;
-  font-weight: 850;
+  color: #344a67;
+  font-size: 0.59rem;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1285,8 +1290,9 @@
 }
 
 .schedule-time.half {
-  color: #a2adbc;
-  font-size: 0.5rem;
+  color: #536984;
+  font-size: 0.59rem;
+  font-weight: 900;
 }
 
 .schedule-time.half::after {
@@ -2603,6 +2609,7 @@
   background: #fff;
   color: #31445e;
   font-size: 0.7rem;
+  font-weight: 850;
 }
 
 .availability-card > .portal-primary-button {
@@ -3737,6 +3744,8 @@
 .admin-teacher-profile-actions .approve { background: #dff7a6; color: #466c12; }
 .admin-teacher-profile-actions .suspend { background: #fff1c9; color: #93620a; }
 .admin-teacher-profile-actions .reject { background: #ffe1eb; color: #a62d57; }
+.admin-teacher-profile-actions .delete { border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #ffd6e4; }
+.admin-teacher-profile-actions .delete:hover { background: #bd3563; color: #fff; }
 .admin-teacher-profile-actions button:disabled { cursor: wait; opacity: 0.5; }
 
 .admin-student-profile-hero {

@@ -161,6 +161,9 @@ assert(!bookings.getBookings({ studentId: removableFamily.id }).some((item) => i
 assert(auth.removeStudentAccount(removableFamily.id) && !auth.getAccountById(removableFamily.id), 'Removing the final family registration failed.')
 assert(auth.removeStudentAccount('older-v1-family') && !auth.getAccountById('older-v1-family'), 'Removed legacy registration reappeared in the administrator data source.')
 
+const removableTeacher = await auth.createTeacherByAdmin({ fullName: 'Temporary Teacher', email: 'temporary-teacher@example.com', password: 'Teacher123', specialization: 'Cambridge', bio: 'Temporary teacher profile for deletion testing.' })
+assert(await auth.removeTeacherAccount(removableTeacher.id) && !auth.getAccountById(removableTeacher.id), 'Administrator teacher profile deletion failed.')
+
 const loggedIn = await auth.loginAccount('family@example.com', 'Family123')
 assert(loggedIn.id === family.id, 'Login failed.')
 assert(bookings.getBookingStats().completed === 1, 'Booking statistics are incorrect.')
