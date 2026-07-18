@@ -21,7 +21,7 @@ function ensureProfileChannel() {
 }
 
 function safeAccount(account) {
-  const { passwordHash: _passwordHash, salt: _salt, cloudSyncPending: _cloudSyncPending, ...profile } = account
+  const { passwordHash: _passwordHash, salt: _salt, cloudSyncPending: _cloudSyncPending, lastCloudSyncedAt: _lastCloudSyncedAt, ...profile } = account
   return profile
 }
 

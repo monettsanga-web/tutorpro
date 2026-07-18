@@ -131,7 +131,7 @@ function clearCloudSyncPending(accountId, expectedUpdatedAt) {
   const index = accounts.findIndex((account) => account.id === accountId)
   if (index < 0 || (expectedUpdatedAt && accounts[index].updatedAt !== expectedUpdatedAt)) return
   if (!accounts[index].cloudSyncPending) return
-  accounts[index] = { ...accounts[index], cloudSyncPending: false }
+  accounts[index] = { ...accounts[index], cloudSyncPending: false, lastCloudSyncedAt: expectedUpdatedAt || accounts[index].updatedAt || new Date().toISOString() }
   writeAccounts(accounts)
 }
 
@@ -194,6 +194,10 @@ export function initializePlatform() {
         account.status = account.status === 'approved' ? 'active' : (account.status || 'active')
         account.children = normalizedChildren
         account.child = normalizedChildren[0]
+        changed = true
+      }
+      if (account.cloudProfile && normalizedChildren.length > 1 && !account.lastCloudSyncedAt && !account.cloudSyncPending) {
+        account.cloudSyncPending = true
         changed = true
       }
     }
