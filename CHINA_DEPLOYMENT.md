@@ -31,7 +31,7 @@ A temporary EdgeOne project URL can be used first. A custom TutorPro English dom
 
 ## China-ready frontend changes
 
-The website build no longer depends on Google Fonts, Google Drive curriculum images, Google Translate, Google STUN, or an overseas IP-location lookup. Curriculum artwork is rendered locally and all required website images, scripts, games, and styles are included in the deployment.
+The website build no longer depends on Google Fonts, runtime Google Drive access, Google Translate, or Google STUN. Drive curriculum photos are copied into EdgeOne during the build and local fallbacks remain available. IP country detection uses two short-timeout providers with an immediate browser-language fallback, so it never blocks page rendering.
 
 ## Backend and live-classroom note
 

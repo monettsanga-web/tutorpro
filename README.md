@@ -71,7 +71,7 @@ A responsive TutorPro English website with browser-language localisation, intera
 
 ### Localisation
 
-- Detects the browser locale without depending on an overseas IP-geolocation service
+- Detects the visitor country from IP with two fast providers and falls back safely to the browser locale
 - Automatically selects English, Filipino, Korean, Chinese, Japanese, Spanish, French, German, Portuguese, Arabic, Vietnamese or Thai
 - Provides a persistent manual language selector
 - Applies language and text-direction preferences without mutating React-rendered dashboard elements
@@ -89,7 +89,7 @@ Follow [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) to create and connect 
 
 ## Deploy for mainland China
 
-The frontend is prepared for Tencent EdgeOne Pages and no longer loads Google Fonts, Google Drive images, Google Translate, Google STUN, or an overseas IP-location service.
+The frontend is prepared for Tencent EdgeOne Pages: Google Drive curriculum photos are copied into the build, while Google Fonts, Google Translate and Google STUN are not required at runtime. IP country detection uses fast fallback providers and never blocks page rendering.
 
 [![Deploy with EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build%3Aedgeone)
 

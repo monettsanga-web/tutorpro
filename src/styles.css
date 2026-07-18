@@ -2806,6 +2806,25 @@ body {
   gap: 6px;
 }
 
+.provider-picker > .china-email-guide {
+  display: flex;
+  grid-template-columns: none;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 10px;
+  border: 1px solid #f0c967;
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: linear-gradient(120deg, #fff9df, #fff4f7);
+  color: #6d4b16;
+}
+
+.china-email-guide > svg { flex: 0 0 auto; margin-top: 2px; color: #c68112; }
+.china-email-guide > div { display: flex; flex-direction: column; gap: 3px; }
+.china-email-guide strong { color: #5b3510; font-size: 0.69rem; }
+.china-email-guide p { margin: 0; color: #6d4b16; font-size: 0.59rem; line-height: 1.55; }
+.china-email-guide small { color: #8a7252; font-size: 0.48rem; line-height: 1.4; }
+
 .provider-method {
   position: relative;
   display: flex;

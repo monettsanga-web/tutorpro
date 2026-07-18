@@ -1,1 +1,1 @@
-TutorPro English production build 2026-07-18 all-dashboard-login-fix
+TutorPro English production build 2026-07-18 ip-language-chinese-registration

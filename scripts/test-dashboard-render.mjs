@@ -14,6 +14,7 @@ const vite = await createServer({ server: { middlewareMode: true }, appType: 'cu
 try {
   const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile } = await vite.ssrLoadModule('/src/Dashboards.jsx')
   const { default: PortalAccess } = await vite.ssrLoadModule('/src/PortalAccess.jsx')
+  const { default: AuthProviderPicker } = await vite.ssrLoadModule('/src/AuthProviderPicker.jsx')
   const { default: LetterBubbleAdventure } = await vite.ssrLoadModule('/src/LetterBubbleAdventure.jsx')
   const callbacks = { onAccountChange() {}, onHome() {}, onLogout() {} }
 
@@ -35,6 +36,9 @@ try {
   const adminLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'admin', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
   const teacherLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'teacher', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
   const letterGameHtml = renderToString(React.createElement(LetterBubbleAdventure, { onBack() {}, onEarn() {} }))
+  sessionStorage.setItem('tutorpro_visitor_country', 'CN')
+  const chineseProviderHtml = renderToString(React.createElement(AuthProviderPicker, { value: 'email', onSelect() {} }))
+  sessionStorage.removeItem('tutorpro_visitor_country')
 
   if (!studentHtml.includes('Finish this student registration')) throw new Error('Incomplete student recovery view failed to render.')
   if (!teacherHtml.includes('Good day')) throw new Error('Incomplete teacher dashboard failed to render.')
@@ -44,6 +48,7 @@ try {
   if (!adminLoginHtml.includes('Administrator login') || adminLoginHtml.includes('Create the admin account')) throw new Error('Admin Portal did not default to login on a new device.')
   if (!teacherLoginHtml.includes('Teacher login')) throw new Error('Teacher Portal did not default to login.')
   if (!letterGameHtml.includes('Alphabet Bubble Adventure') || !letterGameHtml.includes('Find this letter') || !letterGameHtml.includes('letter-round-count') || !letterGameHtml.includes('of 26')) throw new Error('Interactive A–Z letter game failed to render.')
+  if (!chineseProviderHtml.includes('中国家长注册提示') || !chineseProviderHtml.includes('其他邮箱 / Other email') || !chineseProviderHtml.includes('请不要使用 Gmail')) throw new Error('Chinese parent email guidance failed to render.')
   process.stdout.write('Student, Teacher and Admin dashboard rendering: PASS\n')
 } finally {
   await vite.close()

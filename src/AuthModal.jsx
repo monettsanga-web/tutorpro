@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { loginAccount, logoutAccount, registerAccount } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
+import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 
 const yearOptions = [
   'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6',
@@ -71,12 +72,14 @@ export default function AuthModal({
 }) {
   const [view, setView] = useState(initialMode)
   const [registerStep, setRegisterStep] = useState(1)
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState(() => ({ ...initialForm, authProvider: isChineseVisitor(currentVisitorLocale()) ? 'email' : 'gmail' }))
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [createdAccount, setCreatedAccount] = useState(null)
+  const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
+  const chineseVisitor = isChineseVisitor(visitorLocale)
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -89,6 +92,13 @@ export default function AuthModal({
       document.body.style.overflow = ''
     }
   }, [onClose])
+
+  useEffect(() => subscribeToVisitorLocale((locale) => {
+    setVisitorLocale(locale)
+    if (isChineseVisitor(locale)) {
+      setForm((current) => current.authProvider === 'gmail' && !current.email ? { ...current, authProvider: 'email' } : current)
+    }
+  }), [])
 
   const updateField = (event) => {
     const { name, value, checked, type } = event.target
@@ -195,13 +205,13 @@ export default function AuthModal({
             <strong>Tutor<span>Pro</span> English</strong>
           </div>
           <div className="auth-story__content">
-            <span className="kicker kicker--light">Your learning space</span>
-            <h2>Big confidence starts with a small first step.</h2>
-            <p>Create your family account and tell us what would make the biggest difference for your child.</p>
+            <span className="kicker kicker--light">{chineseVisitor ? '您的专属学习空间' : 'Your learning space'}</span>
+            <h2>{chineseVisitor ? '自信成长，从勇敢迈出第一步开始。' : 'Big confidence starts with a small first step.'}</h2>
+            <p>{chineseVisitor ? '创建家庭账户，并告诉我们哪些学习目标对您的孩子最重要。' : 'Create your family account and tell us what would make the biggest difference for your child.'}</p>
             <ul>
-              <li><span><Check size={15} /></span> Free first one-to-one class</li>
-              <li><span><Check size={15} /></span> Cambridge & Oxford aligned</li>
-              <li><span><Check size={15} /></span> A plan shaped around your child</li>
+              <li><span><Check size={15} /></span> {chineseVisitor ? '免费一对一试听课' : 'Free first one-to-one class'}</li>
+              <li><span><Check size={15} /></span> {chineseVisitor ? '对接剑桥与牛津课程体系' : 'Cambridge & Oxford aligned'}</li>
+              <li><span><Check size={15} /></span> {chineseVisitor ? '为您的孩子定制学习计划' : 'A plan shaped around your child'}</li>
             </ul>
           </div>
           <div className="auth-story__quote">
@@ -218,9 +228,9 @@ export default function AuthModal({
               <div className="auth-heading">
                 <span className="auth-heading__icon"><UserRound size={22} /></span>
                 <div>
-                  <span>{registerStep === 1 ? 'Step 1 of 2' : 'Step 2 of 2'}</span>
-                  <h2 id="auth-title">{registerStep === 1 ? 'Create your account' : 'Tell us about your learner'}</h2>
-                  <p>{registerStep === 1 ? 'Start free. No card or commitment needed.' : 'We’ll use this to shape the right first lesson.'}</p>
+                  <span>{chineseVisitor ? `第 ${registerStep} 步，共 2 步` : registerStep === 1 ? 'Step 1 of 2' : 'Step 2 of 2'}</span>
+                  <h2 id="auth-title">{chineseVisitor ? (registerStep === 1 ? '创建家长账户' : '填写学生学习信息') : registerStep === 1 ? 'Create your account' : 'Tell us about your learner'}</h2>
+                  <p>{chineseVisitor ? (registerStep === 1 ? '免费开始，无需银行卡，也没有长期合约。' : '我们将根据这些信息准备合适的第一节课。') : registerStep === 1 ? 'Start free. No card or commitment needed.' : 'We’ll use this to shape the right first lesson.'}</p>
                 </div>
               </div>
 
@@ -234,15 +244,15 @@ export default function AuthModal({
               {registerStep === 1 ? (
                 <form className="auth-form" onSubmit={continueRegistration} noValidate>
                   <label>
-                    <span>Parent or guardian name</span>
+                    <span>{chineseVisitor ? '家长或监护人姓名' : 'Parent or guardian name'}</span>
                     <div className={`input-wrap ${errors.parentName ? 'input-wrap--error' : ''}`}>
-                      <UserRound size={18} /><input autoFocus autoComplete="name" name="parentName" value={form.parentName} onChange={updateField} placeholder="Your full name" />
+                      <UserRound size={18} /><input autoFocus autoComplete="name" name="parentName" value={form.parentName} onChange={updateField} placeholder={chineseVisitor ? '请输入您的姓名' : 'Your full name'} />
                     </div>
                     <FieldError>{errors.parentName}</FieldError>
                   </label>
                   <AuthProviderPicker value={form.authProvider} onSelect={(provider) => { setForm((current) => ({ ...current, authProvider: provider, email: '' })); setErrors((current) => ({ ...current, email: '' })) }} />
                   <label>
-                    <span>{providerField(form.authProvider).label}</span>
+                    <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}</span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
                       <Mail size={18} /><input autoComplete={['gmail', 'yahoo', 'email'].includes(form.authProvider) ? 'email' : 'username'} inputMode={providerField(form.authProvider).inputMode} name="email" value={form.email} onChange={updateField} placeholder={providerField(form.authProvider).placeholder} />
                     </div>
@@ -250,7 +260,7 @@ export default function AuthModal({
                   </label>
                   <div className="auth-form__row">
                     <label>
-                      <span>Password</span>
+                      <span>{chineseVisitor ? '密码' : 'Password'}</span>
                       <div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}>
                         <LockKeyhole size={18} /><input autoComplete="new-password" name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={updateField} placeholder="8+ characters" />
                         <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
@@ -258,7 +268,7 @@ export default function AuthModal({
                       <FieldError>{errors.password}</FieldError>
                     </label>
                     <label>
-                      <span>Confirm password</span>
+                      <span>{chineseVisitor ? '确认密码' : 'Confirm password'}</span>
                       <div className={`input-wrap ${errors.confirmPassword ? 'input-wrap--error' : ''}`}>
                         <LockKeyhole size={18} /><input autoComplete="new-password" name="confirmPassword" type={showPassword ? 'text' : 'password'} value={form.confirmPassword} onChange={updateField} placeholder="Repeat password" />
                       </div>
@@ -267,61 +277,61 @@ export default function AuthModal({
                   </div>
                   <label className="check-field">
                     <input type="checkbox" name="terms" checked={form.terms} onChange={updateField} />
-                    <span>I confirm I am registering this student as their parent or guardian.</span>
+                    <span>{chineseVisitor ? '我确认本人是该学生的家长或法定监护人。' : 'I confirm I am registering this student as their parent or guardian.'}</span>
                   </label>
                   <FieldError>{errors.terms}</FieldError>
                   <button className="button button--primary button--full auth-submit" type="submit">
-                    Continue to student profile <ArrowRight size={17} />
+                    {chineseVisitor ? '继续填写学生资料' : 'Continue to student profile'} <ArrowRight size={17} />
                   </button>
                 </form>
               ) : (
                 <form className="auth-form" onSubmit={completeRegistration} noValidate>
                   <label>
-                    <span>Student’s first name</span>
+                    <span>{chineseVisitor ? '学生名字' : 'Student’s first name'}</span>
                     <div className={`input-wrap ${errors.childName ? 'input-wrap--error' : ''}`}>
-                      <GraduationCap size={18} /><input autoFocus autoComplete="off" name="childName" value={form.childName} onChange={updateField} placeholder="First name" />
+                      <GraduationCap size={18} /><input autoFocus autoComplete="off" name="childName" value={form.childName} onChange={updateField} placeholder={chineseVisitor ? '请输入学生名字' : 'First name'} />
                     </div>
                     <FieldError>{errors.childName}</FieldError>
                   </label>
                   <div className="auth-form__row">
                     <label>
-                      <span>School year</span>
+                      <span>{chineseVisitor ? '在读年级' : 'School year'}</span>
                       <select className={errors.year ? 'select-error' : ''} name="year" value={form.year} onChange={updateField}>
-                        <option value="">Choose year</option>
+                        <option value="">{chineseVisitor ? '请选择年级' : 'Choose year'}</option>
                         {yearOptions.map((year) => <option key={year}>{year}</option>)}
                       </select>
                       <FieldError>{errors.year}</FieldError>
                     </label>
                     <label>
-                      <span>Curriculum</span>
+                      <span>{chineseVisitor ? '课程体系' : 'Curriculum'}</span>
                       <select className={errors.curriculum ? 'select-error' : ''} name="curriculum" value={form.curriculum} onChange={updateField}>
-                        <option value="">Choose curriculum</option>
-                        <option>Cambridge</option>
-                        <option>Oxford</option>
-                        <option>Not sure yet</option>
+                        <option value="">{chineseVisitor ? '请选择课程体系' : 'Choose curriculum'}</option>
+                        <option value="Cambridge">{chineseVisitor ? '剑桥课程 Cambridge' : 'Cambridge'}</option>
+                        <option value="Oxford">{chineseVisitor ? '牛津课程 Oxford' : 'Oxford'}</option>
+                        <option value="Not sure yet">{chineseVisitor ? '暂不确定' : 'Not sure yet'}</option>
                       </select>
                       <FieldError>{errors.curriculum}</FieldError>
                     </label>
                   </div>
                   <label>
-                    <span>Main learning goal</span>
+                    <span>{chineseVisitor ? '主要学习目标' : 'Main learning goal'}</span>
                     <select className={errors.goal ? 'select-error' : ''} name="goal" value={form.goal} onChange={updateField}>
-                      <option value="">What should we focus on?</option>
-                      <option>Speaking with confidence</option>
-                      <option>Reading comprehension</option>
-                      <option>Writing and grammar</option>
-                      <option>Schoolwork and exam support</option>
-                      <option>Build an all-round foundation</option>
+                      <option value="">{chineseVisitor ? '请选择重点学习方向' : 'What should we focus on?'}</option>
+                      <option value="Speaking with confidence">{chineseVisitor ? '自信开口说英语' : 'Speaking with confidence'}</option>
+                      <option value="Reading comprehension">{chineseVisitor ? '提升阅读理解' : 'Reading comprehension'}</option>
+                      <option value="Writing and grammar">{chineseVisitor ? '写作与语法' : 'Writing and grammar'}</option>
+                      <option value="Schoolwork and exam support">{chineseVisitor ? '校内课程与考试辅导' : 'Schoolwork and exam support'}</option>
+                      <option value="Build an all-round foundation">{chineseVisitor ? '全面夯实英语基础' : 'Build an all-round foundation'}</option>
                     </select>
                     <FieldError>{errors.goal}</FieldError>
                   </label>
                   <fieldset className="frequency-field">
-                    <legend>Preferred lesson rhythm</legend>
+                    <legend>{chineseVisitor ? '希望的上课频率' : 'Preferred lesson rhythm'}</legend>
                     <div>
                       {['1–2 weekly', '4–5 weekly', 'Not sure'].map((frequency) => (
                         <label key={frequency} className={form.frequency === frequency ? 'selected' : ''}>
                           <input type="radio" name="frequency" value={frequency} checked={form.frequency === frequency} onChange={updateField} />
-                          <span>{frequency}</span>
+                          <span>{chineseVisitor ? ({ '1–2 weekly': '每周 1–2 节', '4–5 weekly': '每周 4–5 节', 'Not sure': '暂不确定' }[frequency]) : frequency}</span>
                         </label>
                       ))}
                     </div>
@@ -330,14 +340,14 @@ export default function AuthModal({
                   {preferredTeacher && <div className="selected-teacher"><UserRound size={16} /><span><strong>{preferredTeacher.fullName} selected</strong><small>{preferredTeacher.teacher.specialization}</small></span></div>}
                   {selectedPlan && <div className="selected-plan"><Sparkles size={16} /> {selectedPlan} plan selected</div>}
                   <div className="auth-form__actions">
-                    <button className="button button--outline" type="button" onClick={() => setRegisterStep(1)}><ArrowLeft size={16} /> Back</button>
+                    <button className="button button--outline" type="button" onClick={() => setRegisterStep(1)}><ArrowLeft size={16} /> {chineseVisitor ? '返回' : 'Back'}</button>
                     <button className="button button--primary" type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? 'Creating account…' : 'Create my free account'} {!isSubmitting && <ArrowRight size={17} />}
+                      {isSubmitting ? (chineseVisitor ? '正在创建账户…' : 'Creating account…') : (chineseVisitor ? '创建免费账户' : 'Create my free account')} {!isSubmitting && <ArrowRight size={17} />}
                     </button>
                   </div>
                 </form>
               )}
-              <p className="auth-switch">Already have an account? <button onClick={() => switchView('login')}>Log in</button></p>
+              <p className="auth-switch">{chineseVisitor ? '已经有账户？' : 'Already have an account?'} <button onClick={() => switchView('login')}>{chineseVisitor ? '登录' : 'Log in'}</button></p>
               <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Applying as a teacher? Open teacher registration</button>
             </>
           )}
