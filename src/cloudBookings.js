@@ -1,5 +1,23 @@
 import { supabase } from './supabaseClient.js'
 
+const bookingListeners = new Set()
+let bookingChannel = null
+
+function emitBookingChange(change) {
+  bookingListeners.forEach((listener) => {
+    try { listener(change) } catch { /* Keep the shared channel alive for other dashboards. */ }
+  })
+}
+
+function ensureBookingChannel() {
+  if (!supabase || bookingChannel) return bookingChannel
+  bookingChannel = supabase
+    .channel('tutorpro-bookings')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, emitBookingChange)
+    .subscribe()
+  return bookingChannel
+}
+
 function rowToBooking(row) {
   const data = row.booking_data && typeof row.booking_data === 'object' ? row.booking_data : {}
   return {
@@ -50,9 +68,7 @@ export async function deleteCloudBooking(bookingId) {
 
 export function subscribeToCloudBookings(onChange) {
   if (!supabase) return () => {}
-  const channel = supabase
-    .channel('tutorpro-bookings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, onChange)
-    .subscribe()
-  return () => { supabase.removeChannel(channel) }
+  bookingListeners.add(onChange)
+  ensureBookingChannel()
+  return () => { bookingListeners.delete(onChange) }
 }
