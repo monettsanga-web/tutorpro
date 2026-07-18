@@ -1083,8 +1083,25 @@
   font-size: 0.66rem;
 }
 
-.lesson-card p strong {
-  color: #52657f;
+.lesson-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lesson-card__details > span { color: var(--portal-muted); }
+
+.lesson-card p .booking-person-name {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 7px;
+  padding: 3px 7px;
+  background: #effbd5;
+  color: #321568;
+  font-size: 0.71rem;
+  font-weight: 900;
+  line-height: 1.35;
 }
 
 .lesson-card p .lesson-time {
@@ -2154,6 +2171,43 @@
   gap: 7px;
   margin-bottom: 16px;
 }
+
+.admin-managed-goal {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd4f2;
+  border-radius: 13px;
+  padding: 14px;
+  background: linear-gradient(120deg, #f8f4ff, #f3fbdf);
+}
+
+.admin-managed-goal > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  color: #334866;
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+.admin-managed-goal em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 20px;
+  padding: 4px 7px;
+  background: #7048df;
+  color: #fff;
+  font-size: 0.52rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.admin-managed-goal > strong { color: #321568; font-size: 0.8rem; line-height: 1.45; }
+.admin-managed-goal > small { color: var(--portal-muted); font-size: 0.57rem; line-height: 1.5; }
 
 .profile-info-row {
   display: grid;
@@ -3769,6 +3823,17 @@
 .admin-student-profile-hero .profile-tags span { background: rgba(255,255,255,0.11); color: #edf3ff; }
 .admin-student-profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .admin-student-profile-grid .portal-card h2 { font-size: 1.16rem; }
+.admin-goal-editor { border-color: #dcd2f2; background: linear-gradient(145deg, #fff, #fbf8ff); }
+.admin-goal-editor__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.admin-goal-editor__heading h2 { margin-bottom: 4px; }
+.admin-goal-editor__heading p { margin: 0; color: var(--portal-muted); font-size: 0.61rem; line-height: 1.5; }
+.admin-goal-editor textarea { width: 100%; min-height: 100px; margin-top: 14px; border: 1px solid #d8cee9; border-radius: 11px; outline: 0; padding: 11px 12px; background: #fff; color: #321568; font: inherit; font-size: 0.72rem; font-weight: 700; line-height: 1.55; resize: vertical; }
+.admin-goal-editor textarea:focus { border-color: #7048df; box-shadow: 0 0 0 3px rgba(112,72,223,0.1); }
+.admin-goal-editor textarea:disabled { cursor: wait; opacity: 0.6; }
+.admin-goal-editor .portal-error { margin: 9px 0 0; }
+.admin-goal-editor__actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.admin-goal-editor__actions small { color: var(--portal-muted); font-size: 0.53rem; }
+.admin-goal-editor__actions .portal-primary-button { min-height: 38px; flex: 0 0 auto; }
 
 .admin-teacher-profile-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
 .admin-teacher-profile-grid .portal-card h2 { font-size: 1.16rem; }
@@ -5163,6 +5228,9 @@
   .admin-teacher-profile-actions { width: 100%; }
   .admin-teacher-profile-grid,
   .admin-student-profile-grid { grid-template-columns: 1fr; }
+  .admin-goal-editor__heading,
+  .admin-goal-editor__actions { align-items: stretch; flex-direction: column; }
+  .admin-goal-editor__actions .portal-primary-button { width: 100%; }
   .role-error-card > div { flex-direction: column; width: 100%; }
   .role-error-card button { justify-content: center; }
 

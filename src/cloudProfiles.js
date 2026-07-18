@@ -1,5 +1,7 @@
 import { isSupabaseConfigured, supabase } from './supabaseClient.js'
 
+const PROFILE_SYNC_CHANNEL = 'tutorpro-profile-live-updates'
+
 function safeAccount(account) {
   const { passwordHash: _passwordHash, salt: _salt, ...profile } = account
   return profile
@@ -18,6 +20,18 @@ function metadataFor(account) {
 
 export function cloudSyncEnabled() {
   return isSupabaseConfigured
+}
+
+function broadcastProfileRefresh() {
+  if (!supabase) return
+  const channel = supabase.channel(PROFILE_SYNC_CHANNEL)
+  channel.send({
+    type: 'broadcast',
+    event: 'profile-refresh',
+    payload: { changedAt: new Date().toISOString() },
+  }).catch(() => {
+    // Postgres Changes and polling remain available if Broadcast reconnects.
+  })
 }
 
 export async function registerCloudProfile({ login, password, provider, account }) {
@@ -105,6 +119,7 @@ export async function updateCloudProfile(account) {
     .single()
   if (error) throw new Error(`Shared profile update failed: ${error.message}`)
   if (!data?.id) throw new Error('Shared profile update was blocked by Supabase permissions.')
+  broadcastProfileRefresh()
   return { ...payload, ...data }
 }
 
@@ -138,7 +153,8 @@ export async function deleteCloudTeacherAccount(account) {
 export function subscribeToCloudProfiles(onChange) {
   if (!supabase) return () => {}
   const channel = supabase
-    .channel('tutorpro-admin-profiles')
+    .channel(PROFILE_SYNC_CHANNEL, { config: { broadcast: { self: false, ack: true } } })
+    .on('broadcast', { event: 'profile-refresh' }, ({ payload }) => onChange({ eventType: 'BROADCAST', new: payload }))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, onChange)
     .subscribe()
   return () => { supabase.removeChannel(channel) }

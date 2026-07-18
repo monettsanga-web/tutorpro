@@ -68,6 +68,13 @@ const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro English user'
 const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
+const LEARNING_GOALS = [
+  'Speaking with confidence',
+  'Reading comprehension',
+  'Writing and grammar',
+  'Schoolwork and exam support',
+  'Build an all-round foundation',
+]
 
 function withTimeout(promise, milliseconds, message) {
   return Promise.race([
@@ -358,7 +365,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   const student = getAccountById(booking.studentId)
   const teacher = getAccountById(booking.teacherId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
-  const person = showStudent ? learner?.name : showTeacher ? teacher?.fullName : ''
+  const person = showStudent ? (learner?.name || booking.learnerName) : showTeacher ? (teacher?.fullName || booking.teacherName) : ''
   const classroom = teacher?.teacher?.classroom || {}
   const meetingPlatform = classroom.platform === 'voov' ? 'VooV' : 'Zoom'
   const meetingLink = classroom.platform === 'voov' ? classroom.voovLink : classroom.zoomLink
@@ -372,7 +379,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
       <div className="lesson-card__main">
         <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
         <h3>{booking.focus}</h3>
-        <p>{person && <strong>{person} · </strong>}{formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time)}</strong></p>
+        <p className="lesson-card__details">{person && <strong className="booking-person-name">{showTeacher ? 'Teacher' : 'Student'}: {person}</strong>}<span>{formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time)}</strong></span></p>
         {booking.status === 'confirmed' && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> Enter private classroom <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
@@ -433,7 +440,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     let createdCount = 0
     try {
       for (const selection of selectedLessons) {
-        let booking = createBooking({ ...form, ...selection, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
+        let booking = createBooking({ ...form, ...selection, teacherId: selectedTeacherId, teacherName: selectedTeacher.fullName, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
         if (adminBooking) booking = updateBooking(booking.id, { status: 'confirmed' })
         if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The shared booking database did not respond in time.')
         createdCount += 1
@@ -616,7 +623,7 @@ function AddStudentDialog({ account, onClose, onAdded }) {
         <form className="admin-teacher-form" onSubmit={submit}>
           <div className="admin-teacher-form__row"><label><span>Student name</span><input autoFocus name="name" value={form.name} onChange={update} placeholder="First name" /></label><label><span>School year</span><select name="year" value={form.year} onChange={update}><option value="">Choose year</option>{Array.from({ length: 11 }, (_, index) => <option key={index}>Year {index + 1}</option>)}</select></label></div>
           <div className="admin-teacher-form__row"><label><span>Curriculum</span><select name="curriculum" value={form.curriculum} onChange={update}><option>Cambridge</option><option>Oxford</option><option>Not sure yet</option></select></label><label><span>Lesson rhythm</span><select name="frequency" value={form.frequency} onChange={update}><option>1–2 weekly</option><option>4–5 weekly</option><option>Not sure</option></select></label></div>
-          <label><span>Main learning goal</span><select name="goal" value={form.goal} onChange={update}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+          <label><span>Main learning goal</span><select name="goal" value={form.goal} onChange={update}>{LEARNING_GOALS.map((goal) => <option key={goal}>{goal}</option>)}</select></label>
           <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button"><Plus size={16} /> Add student profile</button></div>
         </form>
       </section>
@@ -673,9 +680,13 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         studentSyncCallbacks.current.onLogout()
         return
       }
+      const currentLearner = latest.children?.find((item) => item.id === activeLearnerId) || latest.child
       const currentStillExists = latest.children?.some((item) => item.id === activeLearnerId)
       setAccount(latest)
       studentSyncCallbacks.current.onAccountChange(latest)
+      if (currentLearner?.goalManagedByAdmin) {
+        setProfile((value) => ({ ...value, goal: currentLearner.goal }))
+      }
       if (!currentStillExists && latest.children?.[0]) {
         const nextLearner = latest.children[0]
         setActiveLearnerId(nextLearner.id)
@@ -711,7 +722,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     synchronizeCloud()
     const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
     const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
-    const interval = window.setInterval(synchronizeCloud, 5000)
+    const interval = window.setInterval(synchronizeCloud, 3000)
     return () => {
       active = false
       unsubscribeProfiles()
@@ -751,7 +762,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   }
 
   const saveProfile = () => {
-    const updated = updateStudentProfile(account.id, profile, learner.id)
+    const updated = updateStudentProfile(account.id, { frequency: profile.frequency }, learner.id)
     setAccount(updated)
     onAccountChange(updated)
     setProfileSaved(true)
@@ -864,7 +875,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <div className="profile-layout">
             <section className="portal-card profile-edit-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Learning preferences</span><h2>Shape the learning path</h2></div>{profileSaved && <span className="saved-label"><Check size={14} /> Saved</span>}</div>
-              <label><span>Main learning goal</span><select value={profile.goal} onChange={(event) => setProfile((value) => ({ ...value, goal: event.target.value }))}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+              <div className="admin-managed-goal"><span>Main Learning Goal <em><ShieldCheck size={12} /> Admin managed</em></span><strong>{learner.goal || 'Not provided'}</strong><small>Parents can view this goal. Only the TutorPro English administrator can type or change it.</small></div>
               <label><span>Preferred lesson rhythm</span><select value={profile.frequency} onChange={(event) => setProfile((value) => ({ ...value, frequency: event.target.value }))}><option>1–2 weekly</option><option>4–5 weekly</option><option>Not sure</option></select></label>
               <div className="profile-info-row"><div><span>Parent / guardian</span><strong>{account.parentName}</strong></div><div><span>Account login</span><strong>{account.loginId || account.email}</strong></div></div>
               <button className="portal-primary-button" onClick={saveProfile}>Save profile changes</button>
@@ -977,7 +988,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     synchronizeCloud()
     const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
     const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
-    const interval = window.setInterval(synchronizeCloud, 5000)
+    const interval = window.setInterval(synchronizeCloud, 3000)
     return () => {
       active = false
       unsubscribeProfiles()
@@ -1012,6 +1023,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     try {
       const updated = updateAccount(account.id, { fullName: name })
       if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the name update in time.')
+      bookings.forEach((booking) => updateBooking(booking.id, { teacherName: name }))
       setAccount(updated)
       onAccountChange(updated)
       setNameSaved(true)
@@ -1235,7 +1247,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
   )
 }
 
-export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onRemove, processing, error }) {
+export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onGoalChange, onRemove, processing, error }) {
   const learners = (account.children?.length ? account.children : account.child ? [account.child] : []).filter(Boolean)
   const learner = learners.find((item) => item.id === learnerId) || learners[0] || {
     id: `incomplete-${account.id}`,
@@ -1255,6 +1267,26 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const effectiveStatus = account.status === 'suspended' ? 'suspended' : learner.accessStatus || 'active'
   const learnerBookings = getBookings({ studentId: account.id }).filter((booking) => booking.learnerId ? booking.learnerId === learner.id : learner === learners[0])
   const completedLessons = learnerBookings.filter((booking) => booking.status === 'completed').length
+  const [goalDraft, setGoalDraft] = useState(learner.goal || '')
+  const [goalError, setGoalError] = useState('')
+  const [goalSaved, setGoalSaved] = useState(false)
+
+  const saveGoal = async () => {
+    const goal = goalDraft.trim()
+    if (goal.length < 3 || goal.length > 180) {
+      setGoalError('Type a learning goal between 3 and 180 characters.')
+      return
+    }
+    setGoalError('')
+    setGoalSaved(false)
+    try {
+      await onGoalChange(account.id, learner.id, goal)
+      setGoalSaved(true)
+      window.setTimeout(() => setGoalSaved(false), 2200)
+    } catch (saveError) {
+      setGoalError(saveError.message)
+    }
+  }
 
   return (
     <div className="portal-view admin-student-profile-view">
@@ -1272,7 +1304,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       {isIncomplete && <div className="student-profile-suspension"><GraduationCap size={20} /><div><strong>This registration is incomplete</strong><span>Open the student account and add the learner name, school year, curriculum and learning goal.</span></div></div>}
       <div className="admin-student-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
-        <section className="portal-card"><span className="portal-kicker">Learning profile</span><h2>Programme preferences</h2><dl className="admin-teacher-detail-list"><div><dt>Main goal</dt><dd>{learner.goal || 'Not provided'}</dd></div><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
+        <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family remain separate.</p></section>
       </div>
@@ -1501,6 +1533,9 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     try {
       const updated = updateAccount(accountId, { status })
       if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the status update in time.')
+      if (updated.role === 'teacher') {
+        getBookings({ teacherId: accountId }).forEach((booking) => updateBooking(booking.id, { teacherName: updated.fullName || booking.teacherName || 'Teacher' }))
+      }
       const profiles = cloudSyncEnabled() ? await withTimeout(fetchCloudProfiles(), 8000, 'Supabase profile refresh timed out.') : []
       if (profiles.length) mergeCloudAccounts(profiles, { reconcile: true })
       const refreshed = getAccountById(accountId)
@@ -1562,6 +1597,29 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         })
     }
   }
+  const setLearnerGoal = async (accountId, learnerId, goal) => {
+    const normalizedGoal = goal.trim()
+    if (normalizedGoal.length < 3 || normalizedGoal.length > 180) throw new Error('Type a learning goal between 3 and 180 characters.')
+    setAdminActionError('')
+    setProcessingAccountId(accountId)
+    const previous = getAccountById(accountId)
+    try {
+      const updated = updateStudentProfile(accountId, { goal: normalizedGoal, goalManagedByAdmin: true }, learnerId)
+      if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the learning goal in time.')
+      setManagedAccount((current) => current?.id === accountId ? updated : current)
+      refresh()
+      return updated
+    } catch (goalUpdateError) {
+      const reverted = previous ? updateLocalAccount(accountId, { children: previous.children, child: previous.child }) : null
+      if (reverted) setManagedAccount((current) => current?.id === accountId ? reverted : current)
+      const message = `${goalUpdateError.message} The learning goal was not changed.`
+      setAdminActionError(message)
+      throw new Error(message, { cause: goalUpdateError })
+    } finally {
+      setProcessingAccountId('')
+    }
+  }
+
   const setLearnerStatus = async (accountId, learnerId, accessStatus) => {
     setAdminActionError('')
     setProcessingAccountId(accountId)
@@ -1674,7 +1732,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     return (
       <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
         <RoleErrorBoundary onBack={exitManagedDashboard}>
-          <AdminStudentProfile account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} />
+          <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} />
         </RoleErrorBoundary>
         {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
       </PortalShell>

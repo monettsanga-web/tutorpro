@@ -115,6 +115,7 @@ const booking = bookings.createBooking({
   focus: 'Speaking with confidence',
 })
 assert(booking.status === 'pending', 'Booking creation failed.')
+assert(booking.teacherName === teacher.fullName && booking.learnerName === learner.name, 'Booking participant names were not saved for cross-device display.')
 const studentRoom = bookings.getBookings({ studentId: family.id }).find((item) => item.id === booking.id)
 const teacherRoom = bookings.getBookings({ teacherId: teacher.id }).find((item) => item.id === booking.id)
 assert(studentRoom.classroomId === teacherRoom.classroomId && studentRoom.classroomToken === teacherRoom.classroomToken, 'Teacher and student did not receive the same classroom credentials.')

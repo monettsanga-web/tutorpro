@@ -581,9 +581,14 @@ export function repairStudentForBooking(accountId, learnerSnapshot) {
 export function updateStudentProfile(accountId, childChanges, learnerId) {
   const account = readAccounts().find((item) => item.id === accountId)
   if (!account || (account.role || 'student') !== 'student') throw new Error('Student account not found.')
+  const normalizedChanges = { ...childChanges }
+  if (typeof normalizedChanges.goal === 'string') {
+    normalizedChanges.goal = normalizedChanges.goal.trim()
+    if (normalizedChanges.goal.length < 3 || normalizedChanges.goal.length > 180) throw new Error('Learning goals must contain between 3 and 180 characters.')
+  }
   const children = normalizeLearners(account)
   const targetId = learnerId || children[0]?.id
-  const updatedChildren = children.map((learner) => learner.id === targetId ? { ...learner, ...childChanges } : learner)
+  const updatedChildren = children.map((learner) => learner.id === targetId ? { ...learner, ...normalizedChanges } : learner)
   if (!updatedChildren.some((learner) => learner.id === targetId)) throw new Error('Student profile not found.')
   return updateAccount(accountId, { children: updatedChildren, child: updatedChildren[0] })
 }

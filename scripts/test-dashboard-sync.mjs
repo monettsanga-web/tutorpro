@@ -52,12 +52,16 @@ if (!adminStudents.some((account) => account.id === family.id)) throw new Error(
 if (!adminTeachers.some((account) => account.id === teacher.id && account.status === 'pending')) throw new Error('Teacher signup did not synchronize as pending.')
 
 auth.updateLearnerAccess(family.id, family.child.id, 'suspended')
+auth.updateStudentProfile(family.id, { goal: 'Speak confidently during school presentations', goalManagedByAdmin: true }, family.child.id)
 auth.updateAccount(teacher.id, { status: 'approved', fullName: 'Updated Synced Teacher' })
 
 activeSession = studentTab
 const studentAfterAdmin = auth.getAccountById(family.id)
 if (studentAfterAdmin.child.accessStatus !== 'suspended') {
   throw new Error('Admin student controls did not synchronize back to Student data.')
+}
+if (studentAfterAdmin.child.goal !== 'Speak confidently during school presentations' || !studentAfterAdmin.child.goalManagedByAdmin) {
+  throw new Error('Admin-only learning goal did not synchronize back to the parent dashboard.')
 }
 
 activeSession = teacherTab
