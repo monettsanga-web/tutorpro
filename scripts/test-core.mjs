@@ -17,6 +17,8 @@ storage.set('tutorpro_accounts_v2', JSON.stringify([{
   parentName: 'Legacy Parent',
   email: 'legacy@example.com',
   child: { name: 'Legacy Learner', year: 'Year 4', curriculum: 'Cambridge', goal: 'Reading' },
+}, {
+  id: 'teacher-monett', role: 'teacher', status: 'approved', systemProfile: true, fullName: 'Monett Sanga', teacher: { availabilitySlots: [] },
 }]))
 
 function assert(condition, message) {
@@ -34,7 +36,7 @@ async function rejects(callback, message) {
 }
 
 auth.initializePlatform()
-assert(auth.getApprovedTeachers().length === 1, 'The approved seed teacher was not created.')
+assert(!auth.getAccounts('teacher').some((account) => account.id === 'teacher-monett' || account.fullName === 'Monett Sanga'), 'The removed sample teacher profile was recreated.')
 const migratedFamily = auth.getAccountById('legacy-family')
 assert(migratedFamily.role === 'student' && migratedFamily.status === 'active' && migratedFamily.child.id && migratedFamily.child.accessStatus === 'active', 'Legacy student migration failed.')
 

@@ -30,6 +30,7 @@ The SQL creates:
 In **Authentication → Providers**:
 
 - Enable Email for Gmail, Yahoo and other email-address registrations.
+- For immediate teacher login without an “Email not confirmed” step, open the Email provider settings and turn **Confirm email** off. If confirmation stays on, users must open the Supabase confirmation email before signing in on another device; the registration device can still use its verified local password.
 - Enable Phone only if WhatsApp-number users should authenticate on multiple devices.
 - Enable Anonymous Sign-Ins so WeChat-ID registrations can be mirrored into the Admin Dashboard.
 - Configure an SMTP provider before production email confirmation.

@@ -494,7 +494,7 @@ function TeacherShowcase({ onChooseTeacher }) {
           <p>Watch teacher introductions, compare experience and choose the educator who feels right for your child.</p>
         </div>
         <div className="public-teacher-grid">
-          {teachers.map((teacher) => (
+          {teachers.length ? teachers.map((teacher) => (
             <article className="public-teacher-card" key={teacher.id}>
               <div className="public-teacher-card__video"><IntroVideo accountId={teacher.id} compact /></div>
               <div className="public-teacher-card__profile">
@@ -506,7 +506,7 @@ function TeacherShowcase({ onChooseTeacher }) {
               <div className="public-teacher-facts"><span><strong>{teacher.teacher.experience}</strong> years</span><span><strong>{teacher.teacher.lessonsCompleted || 0}</strong> lessons</span><span><strong>{teacher.teacher.languages?.split(',')[0]}</strong> language</span></div>
               <button className="button button--primary button--full" onClick={() => onChooseTeacher(teacher)}>Choose {teacher.fullName.split(' ')[0]} <ArrowRight size={17} /></button>
             </article>
-          ))}
+          )) : <div className="public-teachers-empty"><span><Users size={28} /></span><div><h3>Teacher profiles are being prepared.</h3><p>Approved TutorPro English teachers will appear here as soon as their profiles are ready.</p></div></div>}
         </div>
       </div>
     </section>

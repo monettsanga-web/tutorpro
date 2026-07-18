@@ -7,6 +7,7 @@ const SESSION_KEY = 'tutorpro_session_v2'
 const ADMIN_EMAIL_HASH = 'bf6e66f2c7c1acfaa4a3899a3e054f5bf185f18456c35cde73c36c9176102a33'
 
 const normalizeEmail = (email) => email.trim().toLowerCase()
+const isEmailConfirmationError = (error) => /email not confirmed/i.test(error?.message || '')
 
 function normalizeLoginId(provider = 'email', value = '') {
   const trimmed = value.trim()
@@ -165,8 +166,9 @@ function publicAccount(account) {
 }
 
 export function initializePlatform() {
-  const accounts = readAccounts()
-  let changed = false
+  const storedAccounts = readAccounts()
+  const accounts = storedAccounts.filter((account) => account.id !== 'teacher-monett' && !account.systemProfile)
+  let changed = accounts.length !== storedAccounts.length
 
   accounts.forEach((account) => {
     if (['student', 'parent'].includes(account.role || 'student') && (account.child || account.children?.length)) {
@@ -193,40 +195,6 @@ export function initializePlatform() {
     }
   })
 
-  if (!accounts.some((account) => account.id === 'teacher-monett')) {
-    accounts.push({
-      id: 'teacher-monett',
-      role: 'teacher',
-      status: 'approved',
-      systemProfile: true,
-      fullName: 'Monett Sanga',
-      email: 'monett@tutorpro.example',
-      createdAt: new Date().toISOString(),
-      teacher: {
-        specialization: 'Both Curricula',
-        bio: 'Experienced English teacher for eight years with learners of different nationalities.',
-        education: 'Bachelor of Elementary Education',
-        experience: 8,
-        languages: 'English, Filipino and Korean',
-        credentials: ['Bachelor of Elementary Education'],
-        availabilitySlots: buildWeeklySlots([0, 1, 2, 3, 4], '16:00', '20:00'),
-        availability: [
-          { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },
-          { day: 'Tuesday', enabled: true, from: '16:00', to: '20:00' },
-          { day: 'Wednesday', enabled: true, from: '16:00', to: '20:00' },
-          { day: 'Thursday', enabled: true, from: '16:00', to: '20:00' },
-          { day: 'Friday', enabled: true, from: '16:00', to: '20:00' },
-          { day: 'Saturday', enabled: false, from: '09:00', to: '15:00' },
-          { day: 'Sunday', enabled: false, from: '09:00', to: '15:00' },
-        ],
-        rating: 5,
-        lessonsCompleted: 284,
-        classroom: { platform: 'zoom', zoomLink: '', voovLink: '' },
-      },
-    })
-    changed = true
-  }
-
   if (changed) writeAccounts(accounts)
 }
 
@@ -248,6 +216,7 @@ export function getCurrentAccount() {
 export function getAccounts(role) {
   return readAccounts()
     .map(publicAccount)
+    .filter((account) => account.id !== 'teacher-monett' && !account.systemProfile)
     .filter((account) => account.status !== 'removed')
     .filter((account) => !role || account.role === role)
 }
@@ -500,10 +469,15 @@ export async function loginAccount(loginValue, password) {
     }
   }
 
+  const confirmationPending = isEmailConfirmationError(cloudLoginError)
   if (!account || !account.passwordHash) {
+    if (confirmationPending) throw new Error('This registration is waiting for email activation. Open the TutorPro English confirmation email once, then log in again on this device.')
     throw cloudLoginError || new Error('We could not find a login-enabled account with that email.')
   }
-  if (cloudLoginError && (account.cloudProfile || account.cloudOnly)) throw cloudLoginError
+  // Supabase projects with Confirm email enabled do not issue a cloud session
+  // immediately. The verified local password still lets a new registration use
+  // its pending dashboard on the same device without exposing a Supabase error.
+  if (cloudLoginError && (account.cloudProfile || account.cloudOnly) && !confirmationPending) throw cloudLoginError
   if (['suspended', 'rejected', 'removed'].includes(account.status)) {
     throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
   }
