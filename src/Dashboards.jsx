@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Clock3,
+  CloudUpload,
   Eye,
   Film,
   Flame,
@@ -48,6 +49,7 @@ import {
   removeStudentAccount,
   removeStudentLearner,
   removeTeacherAccount,
+  syncPendingCloudProfile,
   updateAccount,
   updateLearnerAccess,
   updateLocalAccount,
@@ -594,23 +596,36 @@ function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 function AddStudentDialog({ account, onClose, onAdded }) {
   const [form, setForm] = useState({ name: '', year: '', curriculum: 'Cambridge', goal: 'Speaking with confidence', frequency: '1–2 weekly' })
   const [error, setError] = useState('')
+  const [pendingAccount, setPendingAccount] = useState(null)
+  const [syncing, setSyncing] = useState(false)
 
   const update = (event) => {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
     setError('')
   }
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
-    if (form.name.trim().length < 2 || !form.year) {
+    if (!pendingAccount && (form.name.trim().length < 2 || !form.year)) {
       setError('Add the student name and school year.')
       return
     }
+    setSyncing(true)
+    setError('')
+    let profileToSync = pendingAccount
     try {
-      const updated = addStudentLearner(account.id, form)
-      onAdded(updated, updated.children[updated.children.length - 1].id)
+      profileToSync = profileToSync || addStudentLearner(account.id, form)
+      const learnerId = profileToSync.children[profileToSync.children.length - 1].id
+      setPendingAccount(profileToSync)
+      const synchronized = await withTimeout(syncPendingCloudProfile(profileToSync.id), 10000, 'The shared student database did not respond in time.')
+      setPendingAccount(null)
+      onAdded(synchronized || profileToSync, learnerId)
     } catch (addError) {
-      setError(addError.message)
+      setError(profileToSync
+        ? `${addError.message} The additional student is saved on this device and TutorPro English will keep retrying cloud synchronization. Confirm the parent email, then select “Retry shared sync”—do not add the student again.`
+        : addError.message)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -624,7 +639,7 @@ function AddStudentDialog({ account, onClose, onAdded }) {
           <div className="admin-teacher-form__row"><label><span>Student name</span><input autoFocus name="name" value={form.name} onChange={update} placeholder="First name" /></label><label><span>School year</span><select name="year" value={form.year} onChange={update}><option value="">Choose year</option>{Array.from({ length: 11 }, (_, index) => <option key={index}>Year {index + 1}</option>)}</select></label></div>
           <div className="admin-teacher-form__row"><label><span>Curriculum</span><select name="curriculum" value={form.curriculum} onChange={update}><option>Cambridge</option><option>Oxford</option><option>Not sure yet</option></select></label><label><span>Lesson rhythm</span><select name="frequency" value={form.frequency} onChange={update}><option>1–2 weekly</option><option>4–5 weekly</option><option>Not sure</option></select></label></div>
           <label><span>Main learning goal</span><select name="goal" value={form.goal} onChange={update}>{LEARNING_GOALS.map((goal) => <option key={goal}>{goal}</option>)}</select></label>
-          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button"><Plus size={16} /> Add student profile</button></div>
+          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose} disabled={syncing}>Cancel</button><button type="submit" className="portal-primary-button" disabled={syncing}>{pendingAccount ? <CloudUpload size={16} /> : <Plus size={16} />} {syncing ? 'Synchronizing…' : pendingAccount ? 'Retry shared sync' : 'Add & synchronize student'}</button></div>
         </form>
       </section>
     </div>
@@ -710,6 +725,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     let active = true
     const synchronizeCloud = async () => {
       try {
+        await syncPendingCloudProfile(initialAccount.id).catch(() => null)
         const [profiles, publicTeachers, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchPublicTeachers().catch(() => []), fetchCloudBookings()])
         if (active) {
           mergeCloudAccounts([...profiles, ...publicTeachers])
@@ -729,7 +745,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       unsubscribeBookings()
       window.clearInterval(interval)
     }
-  }, [])
+  }, [initialAccount.id])
 
   const chooseLearner = (learnerId) => {
     const nextLearner = learners.find((item) => item.id === learnerId)

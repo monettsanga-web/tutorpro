@@ -126,10 +126,21 @@ function normalizeLearners(account) {
   }))
 }
 
+function clearCloudSyncPending(accountId, expectedUpdatedAt) {
+  const accounts = readAccounts()
+  const index = accounts.findIndex((account) => account.id === accountId)
+  if (index < 0 || (expectedUpdatedAt && accounts[index].updatedAt !== expectedUpdatedAt)) return
+  if (!accounts[index].cloudSyncPending) return
+  accounts[index] = { ...accounts[index], cloudSyncPending: false }
+  writeAccounts(accounts)
+}
+
 function queueCloudProfileUpdate(account) {
-  updateCloudProfile(publicAccount(account)).catch(() => {
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('tutorpro:cloud-error'))
-  })
+  updateCloudProfile(publicAccount(account))
+    .then(() => clearCloudSyncPending(account.id, account.updatedAt))
+    .catch(() => {
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('tutorpro:cloud-error'))
+    })
 }
 
 function publicAccount(account) {
@@ -440,12 +451,24 @@ export function mergeCloudAccounts(cloudAccounts, options = {}) {
     const index = accounts.findIndex((account) => account.id === cloudAccount.id || (accountLoginId(cloudAccount) && accountLoginId(account) === accountLoginId(cloudAccount)))
     if (index >= 0) {
       const local = accounts[index]
-      accounts[index] = {
-        ...local,
-        ...cloudAccount,
-        ...(cloudAccount.publicTeacher ? { teacher: { ...(local.teacher || {}), ...(cloudAccount.teacher || {}) } } : {}),
-        passwordHash: local.passwordHash,
-        salt: local.salt,
+      if (local.cloudSyncPending && !cloudAccount.publicTeacher) {
+        accounts[index] = {
+          ...local,
+          id: cloudAccount.id,
+          role: cloudAccount.role,
+          status: cloudAccount.status,
+          cloudProfile: true,
+          passwordHash: local.passwordHash,
+          salt: local.salt,
+        }
+      } else {
+        accounts[index] = {
+          ...local,
+          ...cloudAccount,
+          ...(cloudAccount.publicTeacher ? { teacher: { ...(local.teacher || {}), ...(cloudAccount.teacher || {}) } } : {}),
+          passwordHash: local.passwordHash,
+          salt: local.salt,
+        }
       }
     } else accounts.push({ ...cloudAccount, cloudOnly: !cloudAccount.publicTeacher })
   })
@@ -502,9 +525,21 @@ export function updateLocalAccount(accountId, changes) {
 }
 
 export function updateAccount(accountId, changes) {
-  const updated = updateLocalAccount(accountId, changes)
+  const updated = updateLocalAccount(accountId, {
+    ...changes,
+    ...(cloudSyncEnabled() ? { cloudSyncPending: true } : {}),
+  })
   queueCloudProfileUpdate(updated)
   return updated
+}
+
+export async function syncPendingCloudProfile(accountId) {
+  const account = readAccounts().find((item) => item.id === accountId)
+  if (!account) throw new Error('Account not found.')
+  if (!cloudSyncEnabled() || !account.cloudSyncPending) return publicAccount(account)
+  await updateCloudProfile(publicAccount(account))
+  clearCloudSyncPending(account.id, account.updatedAt)
+  return getAccountById(account.id)
 }
 
 export function updateTeacherProfile(accountId, teacherChanges) {

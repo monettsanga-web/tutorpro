@@ -70,6 +70,11 @@ assert(auth.getAccounts('student').some((account) => account.id === family.id), 
 family = auth.addStudentLearner(family.id, { name: 'Jamie', year: 'Year 7', curriculum: 'Oxford', goal: 'Writing and grammar', frequency: '1–2 weekly' })
 family = auth.addStudentLearner(family.id, { name: 'Taylor', year: 'Year 3', curriculum: 'Cambridge', goal: 'Reading comprehension', frequency: '1–2 weekly' })
 assert(family.children.length === 3, 'Multi-student family profiles failed.')
+family = auth.updateLocalAccount(family.id, { cloudSyncPending: true })
+auth.mergeCloudAccounts([{ ...family, children: [family.children[0]], child: family.children[0], cloudSyncPending: false, cloudProfile: true }])
+family = auth.getAccountById(family.id)
+assert(family.children.length === 3, 'A stale cloud profile removed an additional locally pending student.')
+family = auth.updateLocalAccount(family.id, { cloudSyncPending: false })
 await rejects(
   () => auth.addStudentLearner(family.id, { name: 'Fourth', year: 'Year 2', curriculum: 'Oxford', goal: 'Reading comprehension' }),
   'The three-student account limit failed.',
