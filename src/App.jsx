@@ -66,20 +66,20 @@ const programmes = {
 }
 
 const curriculumSlides = [
-  { id: '1ENm8p2-G_glMXNyojA6e180EEWFIELYO', image: 'assets/curriculum/power-up.jpg', title: 'Power Up', publisher: 'Cambridge', level: 'Primary series', tone: 'cyan' },
-  { id: '1DR1mPyBwMFLXXPvYDX4RpGOkXS3pEf5L', image: 'assets/curriculum/power-up-academy.jpg', title: 'Power Up Academy', publisher: 'Cambridge', level: 'Young learners', tone: 'orange' },
-  { id: '1TZdRANL2OTg50UiTTcFIV17-E-ULyfxv', image: 'assets/curriculum/grammar-friends.jpg', title: 'Grammar Friends', publisher: 'Oxford', level: 'Grammar series', tone: 'violet' },
-  { id: '1IYX1WmS69ZuuKQeIwQSt0Y2qJHcjoHPC', image: 'assets/curriculum/family-and-friends.jpg', title: 'Family and Friends', publisher: 'Oxford', level: 'Primary series', tone: 'green' },
-  { id: '1zvWowq1nDpftZLior_jOHiDLrECOXZSc', image: 'assets/curriculum/think.jpg', title: 'THiNK', publisher: 'Cambridge', level: 'Secondary series', tone: 'pink' },
-  { id: '1glUQpYaPNfGP2HGjaCJE3TWyIVlSzIgq', image: 'assets/curriculum/global-english.jpg', title: 'Global English', publisher: 'Cambridge', level: 'Primary series', tone: 'blue' },
-  { id: '1LVx0W1YK8TuSRLu97kQl-ydGsQBOfuvu', image: 'assets/curriculum/phonics-monster-asap.jpg', title: 'Phonics Monster ASAP', publisher: 'A-List', level: 'Phonics', tone: 'lime' },
-  { id: '1_E3DCPaqM_o-oDK9UGpEKKL7_SAGr9_I', image: 'assets/curriculum/best-phonics.jpg', title: 'Best Phonics', publisher: 'A-List', level: 'Early readers', tone: 'green' },
-  { id: '1Xd2aZnnrWIn-OtFoRqVadMtxG_ng7hIM', image: 'assets/curriculum/everybody-up.jpg', title: 'Everybody Up', publisher: 'Oxford', level: 'Primary series', tone: 'violet' },
-  { id: '1RCJobEvIAqmM80-9vOE8a9RrQqvD3cZq', image: 'assets/curriculum/lets-go.jpg', title: "Let's Go", publisher: 'Oxford', level: 'Young learners', tone: 'yellow' },
-  { id: '1jycufY6vwbEwLkwp3Rl6nHAY538Fo4l3', image: 'assets/curriculum/phonics-monster.jpg', title: 'Phonics Monster', publisher: 'A-List', level: 'Phonics', tone: 'yellow' },
-  { id: '1GWmHeEDtpOw1WZQ--rBLiPkAIGKWMnwX', image: 'assets/curriculum/ready-set-sing.jpg', title: 'Ready, Set, Sing!', publisher: 'A-List', level: 'Early learners', tone: 'yellow' },
-  { id: '1XXrOahvCyezLd1tX8MIlP8H9-v3yxFlo', image: 'assets/curriculum/smart-up.jpg', title: 'Smart Up', publisher: 'A-List', level: 'Primary series', tone: 'blue' },
-  { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', image: 'assets/curriculum/wonderful-world.jpg', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
+  { id: '1ENm8p2-G_glMXNyojA6e180EEWFIELYO', image: 'assets/curriculum/power-up-drive.jpg', title: 'Power Up', publisher: 'Cambridge', level: 'Primary series', tone: 'cyan' },
+  { id: '1DR1mPyBwMFLXXPvYDX4RpGOkXS3pEf5L', image: 'assets/curriculum/power-up-academy-drive.jpg', title: 'Power Up Academy', publisher: 'Cambridge', level: 'Young learners', tone: 'orange' },
+  { id: '1TZdRANL2OTg50UiTTcFIV17-E-ULyfxv', image: 'assets/curriculum/grammar-friends-drive.jpg', title: 'Grammar Friends', publisher: 'Oxford', level: 'Grammar series', tone: 'violet' },
+  { id: '1IYX1WmS69ZuuKQeIwQSt0Y2qJHcjoHPC', image: 'assets/curriculum/family-and-friends-drive.jpg', title: 'Family and Friends', publisher: 'Oxford', level: 'Primary series', tone: 'green' },
+  { id: '1zvWowq1nDpftZLior_jOHiDLrECOXZSc', image: 'assets/curriculum/think-drive.jpg', title: 'THiNK', publisher: 'Cambridge', level: 'Secondary series', tone: 'pink' },
+  { id: '1glUQpYaPNfGP2HGjaCJE3TWyIVlSzIgq', image: 'assets/curriculum/global-english-drive.jpg', title: 'Global English', publisher: 'Cambridge', level: 'Primary series', tone: 'blue' },
+  { id: '1LVx0W1YK8TuSRLu97kQl-ydGsQBOfuvu', image: 'assets/curriculum/phonics-monster-asap-drive.jpg', title: 'Phonics Monster ASAP', publisher: 'A-List', level: 'Phonics', tone: 'lime' },
+  { id: '1_E3DCPaqM_o-oDK9UGpEKKL7_SAGr9_I', image: 'assets/curriculum/best-phonics-drive.jpg', title: 'Best Phonics', publisher: 'A-List', level: 'Early readers', tone: 'green' },
+  { id: '1Xd2aZnnrWIn-OtFoRqVadMtxG_ng7hIM', image: 'assets/curriculum/everybody-up-drive.jpg', title: 'Everybody Up', publisher: 'Oxford', level: 'Primary series', tone: 'violet' },
+  { id: '1RCJobEvIAqmM80-9vOE8a9RrQqvD3cZq', image: 'assets/curriculum/lets-go-drive.jpg', title: "Let's Go", publisher: 'Oxford', level: 'Young learners', tone: 'yellow' },
+  { id: '1jycufY6vwbEwLkwp3Rl6nHAY538Fo4l3', image: 'assets/curriculum/phonics-monster-drive.jpg', title: 'Phonics Monster', publisher: 'A-List', level: 'Phonics', tone: 'yellow' },
+  { id: '1GWmHeEDtpOw1WZQ--rBLiPkAIGKWMnwX', image: 'assets/curriculum/ready-set-sing-drive.jpg', title: 'Ready, Set, Sing!', publisher: 'A-List', level: 'Early learners', tone: 'yellow' },
+  { id: '1XXrOahvCyezLd1tX8MIlP8H9-v3yxFlo', image: 'assets/curriculum/smart-up-drive.jpg', title: 'Smart Up', publisher: 'A-List', level: 'Primary series', tone: 'blue' },
+  { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', image: 'assets/curriculum/wonderful-world-drive.jpg', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
 ]
 
 const faqs = [

@@ -91,7 +91,7 @@ Follow [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) to create and connect 
 
 The frontend is prepared for Tencent EdgeOne Pages and no longer loads Google Fonts, Google Drive images, Google Translate, Google STUN, or an overseas IP-location service.
 
-[![Deploy with EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build)
+[![Deploy with EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build%3Aedgeone)
 
 See [`CHINA_DEPLOYMENT.md`](CHINA_DEPLOYMENT.md) for setup, domain, ICP, Supabase and live-classroom considerations.
 

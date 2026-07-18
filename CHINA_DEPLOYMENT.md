@@ -6,7 +6,7 @@ GitHub Pages can be slow or unreachable from mainland China. TutorPro English is
 
 Open this link while signed in to Tencent EdgeOne:
 
-[Deploy TutorPro English to Tencent EdgeOne Pages](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build)
+[Deploy TutorPro English to Tencent EdgeOne Pages](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build%3Aedgeone)
 
 Then:
 
@@ -14,7 +14,7 @@ Then:
 2. Confirm the branch is `arena/019f690b-tutorpro`.
 3. Confirm the detected settings:
    - Install command: `npm ci`
-   - Build command: `npm run build`
+   - Build command: `npm run build:edgeone`
    - Output directory: `dist`
    - Node.js: `22.17.1`
 4. Select **Create Now**.
