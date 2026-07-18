@@ -1,6 +1,24 @@
 import { isSupabaseConfigured, supabase } from './supabaseClient.js'
 
 const PROFILE_SYNC_CHANNEL = 'tutorpro-profile-live-updates'
+const profileListeners = new Set()
+let profileChannel = null
+
+function emitProfileChange(change) {
+  profileListeners.forEach((listener) => {
+    try { listener(change) } catch { /* One dashboard listener must not stop the others. */ }
+  })
+}
+
+function ensureProfileChannel() {
+  if (!supabase || profileChannel) return profileChannel
+  profileChannel = supabase
+    .channel(PROFILE_SYNC_CHANNEL, { config: { broadcast: { self: false, ack: true } } })
+    .on('broadcast', { event: 'profile-refresh' }, ({ payload }) => emitProfileChange({ eventType: 'BROADCAST', new: payload }))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, emitProfileChange)
+    .subscribe()
+  return profileChannel
+}
 
 function safeAccount(account) {
   const { passwordHash: _passwordHash, salt: _salt, ...profile } = account
@@ -23,8 +41,8 @@ export function cloudSyncEnabled() {
 }
 
 function broadcastProfileRefresh() {
-  if (!supabase) return
-  const channel = supabase.channel(PROFILE_SYNC_CHANNEL)
+  const channel = ensureProfileChannel()
+  if (!channel) return
   channel.send({
     type: 'broadcast',
     event: 'profile-refresh',
@@ -168,10 +186,7 @@ export async function deleteCloudTeacherAccount(account) {
 
 export function subscribeToCloudProfiles(onChange) {
   if (!supabase) return () => {}
-  const channel = supabase
-    .channel(PROFILE_SYNC_CHANNEL, { config: { broadcast: { self: false, ack: true } } })
-    .on('broadcast', { event: 'profile-refresh' }, ({ payload }) => onChange({ eventType: 'BROADCAST', new: payload }))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, onChange)
-    .subscribe()
-  return () => { supabase.removeChannel(channel) }
+  profileListeners.add(onChange)
+  ensureProfileChannel()
+  return () => { profileListeners.delete(onChange) }
 }
