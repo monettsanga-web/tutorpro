@@ -28,7 +28,8 @@ import {
 import AuthModal from './AuthModal.jsx'
 import PortalAccess from './PortalAccess.jsx'
 import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
-import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, updateAccount } from './auth.js'
+import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
+import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
 import { IntroVideo, ProfilePhoto } from './ProfileMedia.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -65,20 +66,20 @@ const programmes = {
 }
 
 const curriculumSlides = [
-  { id: '1ENm8p2-G_glMXNyojA6e180EEWFIELYO', title: 'Power Up', publisher: 'Cambridge', level: 'Primary series', tone: 'cyan' },
-  { id: '1DR1mPyBwMFLXXPvYDX4RpGOkXS3pEf5L', title: 'Power Up Academy', publisher: 'Cambridge', level: 'Young learners', tone: 'orange' },
-  { id: '1TZdRANL2OTg50UiTTcFIV17-E-ULyfxv', title: 'Grammar Friends', publisher: 'Oxford', level: 'Grammar series', tone: 'violet' },
-  { id: '1IYX1WmS69ZuuKQeIwQSt0Y2qJHcjoHPC', title: 'Family and Friends', publisher: 'Oxford', level: 'Primary series', tone: 'green' },
-  { id: '1zvWowq1nDpftZLior_jOHiDLrECOXZSc', title: 'THiNK', publisher: 'Cambridge', level: 'Secondary series', tone: 'pink' },
-  { id: '1glUQpYaPNfGP2HGjaCJE3TWyIVlSzIgq', title: 'Global English', publisher: 'Cambridge', level: 'Primary series', tone: 'blue' },
-  { id: '1LVx0W1YK8TuSRLu97kQl-ydGsQBOfuvu', title: 'Phonics Monster ASAP', publisher: 'A-List', level: 'Phonics', tone: 'lime' },
-  { id: '1_E3DCPaqM_o-oDK9UGpEKKL7_SAGr9_I', title: 'Best Phonics', publisher: 'A-List', level: 'Early readers', tone: 'green' },
-  { id: '1Xd2aZnnrWIn-OtFoRqVadMtxG_ng7hIM', title: 'Everybody Up', publisher: 'Oxford', level: 'Primary series', tone: 'violet' },
-  { id: '1RCJobEvIAqmM80-9vOE8a9RrQqvD3cZq', title: "Let's Go", publisher: 'Oxford', level: 'Young learners', tone: 'yellow' },
-  { id: '1jycufY6vwbEwLkwp3Rl6nHAY538Fo4l3', title: 'Phonics Monster', publisher: 'A-List', level: 'Phonics', tone: 'yellow' },
-  { id: '1GWmHeEDtpOw1WZQ--rBLiPkAIGKWMnwX', title: 'Ready, Set, Sing!', publisher: 'A-List', level: 'Early learners', tone: 'yellow' },
-  { id: '1XXrOahvCyezLd1tX8MIlP8H9-v3yxFlo', title: 'Smart Up', publisher: 'A-List', level: 'Primary series', tone: 'blue' },
-  { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
+  { id: '1ENm8p2-G_glMXNyojA6e180EEWFIELYO', image: 'assets/curriculum/power-up.jpg', title: 'Power Up', publisher: 'Cambridge', level: 'Primary series', tone: 'cyan' },
+  { id: '1DR1mPyBwMFLXXPvYDX4RpGOkXS3pEf5L', image: 'assets/curriculum/power-up-academy.jpg', title: 'Power Up Academy', publisher: 'Cambridge', level: 'Young learners', tone: 'orange' },
+  { id: '1TZdRANL2OTg50UiTTcFIV17-E-ULyfxv', image: 'assets/curriculum/grammar-friends.jpg', title: 'Grammar Friends', publisher: 'Oxford', level: 'Grammar series', tone: 'violet' },
+  { id: '1IYX1WmS69ZuuKQeIwQSt0Y2qJHcjoHPC', image: 'assets/curriculum/family-and-friends.jpg', title: 'Family and Friends', publisher: 'Oxford', level: 'Primary series', tone: 'green' },
+  { id: '1zvWowq1nDpftZLior_jOHiDLrECOXZSc', image: 'assets/curriculum/think.jpg', title: 'THiNK', publisher: 'Cambridge', level: 'Secondary series', tone: 'pink' },
+  { id: '1glUQpYaPNfGP2HGjaCJE3TWyIVlSzIgq', image: 'assets/curriculum/global-english.jpg', title: 'Global English', publisher: 'Cambridge', level: 'Primary series', tone: 'blue' },
+  { id: '1LVx0W1YK8TuSRLu97kQl-ydGsQBOfuvu', image: 'assets/curriculum/phonics-monster-asap.jpg', title: 'Phonics Monster ASAP', publisher: 'A-List', level: 'Phonics', tone: 'lime' },
+  { id: '1_E3DCPaqM_o-oDK9UGpEKKL7_SAGr9_I', image: 'assets/curriculum/best-phonics.jpg', title: 'Best Phonics', publisher: 'A-List', level: 'Early readers', tone: 'green' },
+  { id: '1Xd2aZnnrWIn-OtFoRqVadMtxG_ng7hIM', image: 'assets/curriculum/everybody-up.jpg', title: 'Everybody Up', publisher: 'Oxford', level: 'Primary series', tone: 'violet' },
+  { id: '1RCJobEvIAqmM80-9vOE8a9RrQqvD3cZq', image: 'assets/curriculum/lets-go.jpg', title: "Let's Go", publisher: 'Oxford', level: 'Young learners', tone: 'yellow' },
+  { id: '1jycufY6vwbEwLkwp3Rl6nHAY538Fo4l3', image: 'assets/curriculum/phonics-monster.jpg', title: 'Phonics Monster', publisher: 'A-List', level: 'Phonics', tone: 'yellow' },
+  { id: '1GWmHeEDtpOw1WZQ--rBLiPkAIGKWMnwX', image: 'assets/curriculum/ready-set-sing.jpg', title: 'Ready, Set, Sing!', publisher: 'A-List', level: 'Early learners', tone: 'yellow' },
+  { id: '1XXrOahvCyezLd1tX8MIlP8H9-v3yxFlo', image: 'assets/curriculum/smart-up.jpg', title: 'Smart Up', publisher: 'A-List', level: 'Primary series', tone: 'blue' },
+  { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', image: 'assets/curriculum/wonderful-world.jpg', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
 ]
 
 const faqs = [
@@ -271,7 +272,8 @@ function Stats() {
 function CurriculumCover({ slide, compact = false }) {
   const shortPublisher = slide.publisher === 'National Geographic Learning' ? 'NGL' : slide.publisher
   return (
-    <div className={`curriculum-book-cover curriculum-book-cover--${slide.tone} ${compact ? 'curriculum-book-cover--compact' : ''}`} role="img" aria-label={`${slide.title} by ${slide.publisher}`}>
+    <div className={`curriculum-book-cover curriculum-book-cover--${slide.tone} ${slide.image ? 'curriculum-book-cover--photo' : ''} ${compact ? 'curriculum-book-cover--compact' : ''}`} role="img" aria-label={`${slide.title} by ${slide.publisher}`}>
+      {slide.image && <img className="curriculum-cover-photo" src={assetUrl(slide.image)} alt={`${slide.title} English learning book series`} loading={compact ? 'lazy' : 'eager'} />}
       <div className="curriculum-book-cover__book">
         <span>{shortPublisher}</span>
         <i aria-hidden="true">Aa</i>
@@ -694,10 +696,34 @@ export default function App() {
   const [activePortal, setActivePortal] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState('')
   const [preferredTeacher, setPreferredTeacher] = useState(null)
+  const [teacherVersion, setTeacherVersion] = useState(0)
   const [currentAccount, setCurrentAccount] = useState(() => {
     initializePlatform()
     return getCurrentAccount()
   })
+  void teacherVersion
+
+  useEffect(() => {
+    let active = true
+    const refreshTeachers = async () => {
+      try {
+        const teachers = await fetchPublicTeachers()
+        if (!active) return
+        mergeCloudAccounts(teachers)
+        setTeacherVersion((value) => value + 1)
+      } catch {
+        // Existing browser data remains available until Supabase reconnects.
+      }
+    }
+    refreshTeachers()
+    const unsubscribe = subscribeToCloudProfiles(refreshTeachers)
+    const interval = window.setInterval(refreshTeachers, 10000)
+    return () => {
+      active = false
+      unsubscribe()
+      window.clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     const elements = document.querySelectorAll(

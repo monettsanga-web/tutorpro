@@ -224,3 +224,34 @@ $$;
 
 revoke all on function public.delete_teacher_profile(uuid) from public;
 grant execute on function public.delete_teacher_profile(uuid) to authenticated;
+
+-- Public, sanitized directory used by the homepage and student booking screen.
+create or replace function public.get_public_teachers()
+returns table (id uuid, full_name text, teacher jsonb, updated_at timestamptz)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    p.id,
+    coalesce(nullif(p.full_name, ''), nullif(p.display_name, ''), 'TutorPro English Teacher'),
+    jsonb_build_object(
+      'specialization', coalesce(p.profile_data->'teacher'->>'specialization', 'Both Curricula'),
+      'bio', coalesce(p.profile_data->'teacher'->>'bio', 'TutorPro English teacher profile.'),
+      'education', coalesce(p.profile_data->'teacher'->>'education', 'To be updated'),
+      'experience', coalesce((p.profile_data->'teacher'->>'experience')::numeric, 0),
+      'languages', coalesce(p.profile_data->'teacher'->>'languages', 'English'),
+      'rating', coalesce((p.profile_data->'teacher'->>'rating')::numeric, 0),
+      'ratingCount', coalesce((p.profile_data->'teacher'->>'ratingCount')::integer, 0),
+      'lessonsCompleted', coalesce((p.profile_data->'teacher'->>'lessonsCompleted')::integer, 0),
+      'availabilitySlots', coalesce(p.profile_data->'teacher'->'availabilitySlots', '[]'::jsonb)
+    ),
+    p.updated_at
+  from public.profiles p
+  where p.role = 'teacher' and p.status = 'approved'
+  order by p.updated_at desc;
+$$;
+
+revoke all on function public.get_public_teachers() from public;
+grant execute on function public.get_public_teachers() to anon, authenticated;

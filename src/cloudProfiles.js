@@ -96,6 +96,22 @@ export async function fetchCloudProfiles() {
   return (data || []).map(profileRowToAccount)
 }
 
+export async function fetchPublicTeachers() {
+  if (!supabase) return []
+  const { data, error } = await supabase.rpc('get_public_teachers')
+  if (error) throw new Error(`Approved teachers could not be loaded: ${error.message}`)
+  return (data || []).map((row) => ({
+    id: row.id,
+    role: 'teacher',
+    status: 'approved',
+    fullName: row.full_name || 'TutorPro English Teacher',
+    teacher: row.teacher && typeof row.teacher === 'object' ? row.teacher : {},
+    updatedAt: row.updated_at,
+    publicTeacher: true,
+    cloudProfile: true,
+  }))
+}
+
 export async function updateCloudProfile(account) {
   if (!supabase || !account?.id) return null
   const payload = {

@@ -443,10 +443,11 @@ export function mergeCloudAccounts(cloudAccounts, options = {}) {
       accounts[index] = {
         ...local,
         ...cloudAccount,
+        ...(cloudAccount.publicTeacher ? { teacher: { ...(local.teacher || {}), ...(cloudAccount.teacher || {}) } } : {}),
         passwordHash: local.passwordHash,
         salt: local.salt,
       }
-    } else accounts.push({ ...cloudAccount, cloudOnly: true })
+    } else accounts.push({ ...cloudAccount, cloudOnly: !cloudAccount.publicTeacher })
   })
   writeAccounts(accounts)
   return cloudAccounts.map((account) => publicAccount(accounts.find((item) => item.id === account.id) || account))

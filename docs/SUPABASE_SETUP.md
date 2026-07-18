@@ -50,6 +50,10 @@ The repair script finds the authorized administrator without displaying the emai
 
 If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
 
+### Enable approved teachers on the homepage and booking screen
+
+For existing projects, run [`supabase/public_teachers.sql`](../supabase/public_teachers.sql) once. It creates a sanitized public directory containing only approved teachers’ display names, teaching biographies, ratings, languages and availability. Emails, login IDs and private classroom links are never returned. Approved teachers then appear automatically on the homepage and in the Student Dashboard teacher selector across devices.
+
 ### Enable permanent teacher deletion
 
 For existing projects, run [`supabase/teacher_profile_delete.sql`](../supabase/teacher_profile_delete.sql) once. It creates an administrator-only database function that removes the selected teacher’s Auth user, profile and assigned bookings without exposing a `service_role` key. Until this update is run, the Admin Dashboard safely deactivates and hides a deleted teacher so that login is still revoked.

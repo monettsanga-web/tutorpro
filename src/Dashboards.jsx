@@ -60,7 +60,7 @@ import OnlineClassroom from './OnlineClassroom.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
-import { cloudSyncEnabled, fetchCloudProfiles, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
+import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
@@ -710,9 +710,9 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     let active = true
     const synchronizeCloud = async () => {
       try {
-        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
+        const [profiles, publicTeachers, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchPublicTeachers().catch(() => []), fetchCloudBookings()])
         if (active) {
-          mergeCloudAccounts(profiles)
+          mergeCloudAccounts([...profiles, ...publicTeachers])
           mergeCloudBookings(sharedBookings)
         }
       } catch {
