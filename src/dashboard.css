@@ -422,7 +422,7 @@
 
 .portal-card {
   border: 1px solid var(--portal-line);
-  border-radius: 17px;
+  border-radius: 21px;
   padding: 25px;
   background: #fff;
   box-shadow: 0 8px 30px rgba(21, 46, 88, 0.05);
@@ -1269,8 +1269,9 @@
   justify-content: flex-end;
   border-right: 1px solid #dce3ee;
   padding: 3px 9px 0 0;
-  color: #78899f;
-  font-size: 0.55rem;
+  color: #4f6179;
+  font-size: 0.58rem;
+  font-weight: 850;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1346,6 +1347,12 @@
   z-index: 2;
   background: #dcecff;
   box-shadow: inset 0 0 0 2px rgba(40, 121, 216, 0.55);
+}
+
+.schedule-body--multi .schedule-cell.selectable,
+.schedule-body--multi .schedule-cell.selected {
+  cursor: crosshair;
+  touch-action: none;
 }
 
 .schedule-cell.selected {
@@ -1577,6 +1584,23 @@
   opacity: 0;
 }
 
+.multi-book-tip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 11px;
+  border: 1px solid #d9cff0;
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: #f6f2ff;
+  color: #5e4c78;
+}
+
+.multi-book-tip > svg { flex: 0 0 auto; color: var(--portal-blue); }
+.multi-book-tip span { flex: 1; font-size: 0.59rem; line-height: 1.45; }
+.multi-book-tip strong { color: var(--portal-navy); }
+.multi-book-tip em { border-radius: 14px; padding: 4px 7px; background: #fff; color: var(--portal-blue); font-size: 0.52rem; font-style: normal; font-weight: 850; white-space: nowrap; }
+
 .booking-confirm-bar {
   display: grid;
   grid-template-columns: 1fr minmax(180px, 0.55fr) auto;
@@ -1609,7 +1633,8 @@
 
 .booking-confirm-bar strong {
   overflow: hidden;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 850;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1962,6 +1987,21 @@
   color: #9db0ca;
   font-size: 0.59rem;
 }
+
+.teacher-name-editor {
+  display: grid;
+  grid-template-columns: 1fr minmax(230px, 0.75fr) auto auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+.teacher-name-editor h2 { margin-bottom: 3px; font-size: 1.15rem; }
+.teacher-name-editor p { margin: 0; color: var(--portal-muted); font-size: 0.6rem; }
+.teacher-name-editor label { display: grid; gap: 5px; }
+.teacher-name-editor label > span { color: #41556e; font-size: 0.61rem; font-weight: 750; }
+.teacher-name-editor input { min-height: 43px; border: 1px solid #d9e2ee; border-radius: 9px; outline: 0; padding: 0 11px; color: #283d58; font-size: 0.74rem; font-weight: 750; }
+.teacher-name-editor input:focus { border-color: var(--portal-blue); box-shadow: 0 0 0 3px rgba(112,72,223,0.1); }
+.teacher-name-editor .portal-error { grid-column: 1 / -1; margin: 0; }
 
 .teacher-public-profile-grid {
   display: grid;
@@ -4779,6 +4819,12 @@
     grid-template-columns: 1fr;
   }
 
+  .teacher-name-editor {
+    grid-template-columns: 1fr 1fr;
+  }
+  .teacher-name-editor > div:first-child,
+  .teacher-name-editor .portal-error { grid-column: 1 / -1; }
+
   .game-card-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -4902,6 +4948,13 @@
   .booking-confirm-bar > .portal-primary-button {
     grid-column: auto;
   }
+
+  .teacher-name-editor {
+    grid-template-columns: 1fr;
+  }
+  .teacher-name-editor > div:first-child,
+  .teacher-name-editor .portal-error { grid-column: auto; }
+  .teacher-name-editor .portal-primary-button { width: 100%; }
 
   .family-student-switcher {
     align-items: stretch;

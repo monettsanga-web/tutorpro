@@ -76,7 +76,10 @@ p {
 
 h1,
 h2,
-h3,
+h3 {
+  font-family: 'Nunito', 'Manrope', 'DM Sans', system-ui, sans-serif;
+}
+
 .logo__text {
   font-family: 'Manrope', 'DM Sans', system-ui, sans-serif;
 }
@@ -190,7 +193,7 @@ h3 {
   justify-content: center;
   gap: 9px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 0 20px;
   font-weight: 750;
   line-height: 1;
@@ -1317,8 +1320,11 @@ h3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 25px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
 .benefit {
@@ -1329,8 +1335,12 @@ h3 {
 }
 
 .benefit:first-child {
-  border-left: 1px solid var(--line);
+  border-left: 0;
 }
+
+.benefit:nth-child(1) { background: #fff7fb; }
+.benefit:nth-child(2) { background: #fffdf3; }
+.benefit:nth-child(3) { background: #f5faff; }
 
 .benefit__number {
   position: absolute;

@@ -18,13 +18,15 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Teacher feedback, strengths, next steps and homework shown on completed lessons
 - 24-hour weekly lesson calendar divided into 30-minute slots
 - One-to-one booking restricted to teacher-approved availability
+- Click-and-drag multi-booking for up to twelve non-overlapping lesson times
+- Bold 30-minute time labels, multi-selection count and shared notes
 - Booking history, calendar status tracking and cancellation
 - Editable learning preferences
 
 ### Teacher
 
 - Teacher registration and professional profile application
-- Display photo and introduction-video uploads for the public teacher showcase
+- Editable teacher display name, display photo and introduction-video uploads for the public teacher showcase
 - Public teacher discovery with experience, ratings and teacher selection
 - Post-class student feedback with strengths, next steps and optional homework
 - Credential filename capture for administrator review

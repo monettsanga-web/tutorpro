@@ -113,9 +113,10 @@ function ScheduleCalendar({
   bookings = [],
   editable = false,
   onPaint,
-  selectedLesson,
+  selectedLessons = [],
   onSelect,
   duration = 25,
+  multiSelect = false,
 }) {
   const dates = weekDates(weekOffset)
   const available = new Set(availabilitySlots)
@@ -129,6 +130,22 @@ function ScheduleCalendar({
     const count = Math.ceil(Number(booking.duration) / 30)
     for (let index = 0; index < count; index += 1) {
       occupied.set(`${booking.date}-${minutesToTime(start + (index * 30))}`, { booking, isStart: index === 0 })
+    }
+  })
+
+  const selectedCells = new Set()
+  const selectedCellOwners = new Map()
+  const selectedStartKeys = new Set()
+  selectedLessons.forEach((selection) => {
+    if (!selection?.date || !selection?.time) return
+    const start = timeToMinutes(selection.time)
+    const count = Math.ceil(Number(selection.duration || duration) / 30)
+    const startKey = `${selection.date}-${selection.time}`
+    selectedStartKeys.add(startKey)
+    for (let index = 0; index < count; index += 1) {
+      const cellKey = `${selection.date}-${minutesToTime(start + (index * 30))}`
+      selectedCells.add(cellKey)
+      selectedCellOwners.set(cellKey, selection)
     }
   })
 
@@ -167,8 +184,24 @@ function ScheduleCalendar({
     applyPaint(slotKey, dragState.current.shouldAdd)
   }
 
+  const startBookingSelection = (event, date, time, selectable, selectedOwner) => {
+    if (editable || !multiSelect || !onSelect || event.button !== 0 || (!selectable && !selectedOwner)) return
+    event.preventDefault()
+    const mode = selectedOwner ? 'remove' : 'add'
+    dragState.current = { booking: true, mode }
+    onSelect(selectedOwner || { date, time }, mode)
+  }
+
+  const continueBookingSelection = (date, time, selectable, selectedOwner) => {
+    if (!dragState.current?.booking || !multiSelect || !onSelect) return
+    const mode = dragState.current.mode
+    if (mode === 'add' && selectable) onSelect({ date, time }, 'add')
+    if (mode === 'remove' && selectedOwner) onSelect(selectedOwner, 'remove')
+  }
+
   const canSelect = (dayIndex, dateKey, time) => {
     if (!onSelect) return false
+    if (selectedStartKeys.has(`${dateKey}-${time}`)) return true
     const start = timeToMinutes(time)
     const count = Math.ceil(Number(duration) / 30)
     const now = new Date()
@@ -178,17 +211,9 @@ function ScheduleCalendar({
       if ((start + (index * 30)) >= 1440) return false
       if (!available.has(makeSlotKey(dayIndex, slotTime))) return false
       if (occupied.has(`${dateKey}-${slotTime}`)) return false
+      if (multiSelect && selectedCells.has(`${dateKey}-${slotTime}`)) return false
     }
     return true
-  }
-
-  const selectedCells = new Set()
-  if (selectedLesson?.date && selectedLesson?.time) {
-    const start = timeToMinutes(selectedLesson.time)
-    const count = Math.ceil(Number(selectedLesson.duration || duration) / 30)
-    for (let index = 0; index < count; index += 1) {
-      selectedCells.add(`${selectedLesson.date}-${minutesToTime(start + (index * 30))}`)
-    }
   }
 
   return (
@@ -211,7 +236,7 @@ function ScheduleCalendar({
             return <div className={`schedule-day-heading ${current ? 'current' : ''}`} key={dateKey}><span>{date.toLocaleDateString('en', { weekday: 'short' })}</span><strong>{date.getDate()}</strong></div>
           })}
         </div>
-        <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''}`}>
+        <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''} ${multiSelect ? 'schedule-body--multi' : ''}`}>
           {HALF_HOUR_TIMES.map((time) => (
             <div className="schedule-row" key={time}>
               <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{time}</div>
@@ -221,7 +246,8 @@ function ScheduleCalendar({
                 const bookingCell = occupied.get(`${dateKey}-${time}`)
                 const isAvailable = available.has(slotKey)
                 const selectable = canSelect(dayIndex, dateKey, time)
-                const isSelected = selectedCells.has(`${dateKey}-${time}`)
+                const selectedOwner = selectedCellOwners.get(`${dateKey}-${time}`)
+                const isSelected = Boolean(selectedOwner)
                 const isPast = new Date(`${dateKey}T${time}:00`) <= new Date()
                 const student = bookingCell ? getAccountById(bookingCell.booking.studentId) : null
                 const bookedLearner = student?.children?.find((item) => item.id === bookingCell?.booking.learnerId) || student?.child
@@ -242,11 +268,12 @@ function ScheduleCalendar({
                     aria-label={`${date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${time}${isAvailable ? ', available' : ', unavailable'}`}
                     aria-pressed={editable ? isAvailable : isSelected}
                     disabled={!editable && !selectable && !isSelected}
-                    onPointerDown={(event) => startPaint(event, slotKey, Boolean(bookingCell))}
-                    onPointerEnter={() => continuePaint(slotKey, Boolean(bookingCell))}
+                    onPointerDown={(event) => { startPaint(event, slotKey, Boolean(bookingCell)); startBookingSelection(event, dateKey, time, selectable, selectedOwner) }}
+                    onPointerEnter={() => { continuePaint(slotKey, Boolean(bookingCell)); continueBookingSelection(dateKey, time, selectable, selectedOwner) }}
                     onClick={(event) => {
                       if (editable && event.detail === 0 && !bookingCell) applyPaint(slotKey, !isAvailable)
-                      if (!editable && selectable) onSelect({ date: dateKey, time })
+                      if (!editable && !multiSelect && selectable) onSelect({ date: dateKey, time }, 'toggle')
+                      if (!editable && multiSelect && event.detail === 0 && (selectable || selectedOwner)) onSelect(selectedOwner || { date: dateKey, time }, selectedOwner ? 'remove' : 'add')
                     }}
                   >
                     {bookingCell?.isStart && <span><strong>{bookedLearner?.name || 'Booked lesson'}</strong><small>{bookingCell.booking.focus}</small></span>}
@@ -358,46 +385,69 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
 function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking = false }) {
   const teachers = getApprovedTeachers()
   const learner = learnerProp || account.child
-  const [form, setForm] = useState({ teacherId: account.preferredTeacherId || '', date: '', time: '', duration: '25', focus: learner.goal, note: '' })
+  const [form, setForm] = useState({ teacherId: account.preferredTeacherId || '', duration: '25', focus: learner.goal, note: '' })
+  const [selectedLessons, setSelectedLessons] = useState([])
   const [weekOffset, setWeekOffset] = useState(0)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [successCount, setSuccessCount] = useState(0)
   const selectedTeacherId = teachers.some((teacher) => teacher.id === form.teacherId) ? form.teacherId : teachers[0]?.id || ''
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId)
   const teacherBookings = selectedTeacherId ? getBookings({ teacherId: selectedTeacherId }) : []
 
   const update = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-      ...(['teacherId', 'duration'].includes(name) ? { date: '', time: '' } : {}),
-    }))
+    setForm((current) => ({ ...current, [name]: value }))
+    if (['teacherId', 'duration'].includes(name)) setSelectedLessons([])
     setError('')
-    setSuccess(false)
+    setSuccessCount(0)
   }
 
-  const selectSlot = ({ date, time }) => {
-    setForm((current) => ({ ...current, date, time }))
+  const selectSlot = ({ date, time }, mode = 'toggle') => {
+    const key = `${date}-${time}`
+    setSelectedLessons((current) => {
+      const exists = current.some((selection) => `${selection.date}-${selection.time}` === key)
+      if (mode === 'remove' || (mode === 'toggle' && exists)) return current.filter((selection) => `${selection.date}-${selection.time}` !== key)
+      if (exists || current.length >= 12) return current
+      const start = timeToMinutes(time)
+      const end = start + (Math.ceil(Number(form.duration) / 30) * 30)
+      const overlaps = current.some((selection) => {
+        if (selection.date !== date) return false
+        const selectedStart = timeToMinutes(selection.time)
+        const selectedEnd = selectedStart + (Math.ceil(Number(selection.duration || form.duration) / 30) * 30)
+        return start < selectedEnd && end > selectedStart
+      })
+      if (overlaps) return current
+      return [...current, { date, time, duration: Number(form.duration) }].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+    })
     setError('')
-    setSuccess(false)
+    setSuccessCount(0)
   }
 
   const submit = async (event) => {
     event.preventDefault()
-    if (!selectedTeacherId || !form.date || !form.time || !form.focus) {
-      setError('Choose an available time on the calendar to continue.')
+    if (!selectedTeacherId || !selectedLessons.length || !form.focus) {
+      setError('Choose one or more available times on the calendar to continue.')
       return
     }
+    let createdCount = 0
     try {
-      let booking = createBooking({ ...form, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
-      if (adminBooking) booking = updateBooking(booking.id, { status: 'confirmed' })
-      if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The shared booking database did not respond in time.')
-      setSuccess(true)
-      setForm((current) => ({ ...current, date: '', time: '', note: '' }))
+      for (const selection of selectedLessons) {
+        let booking = createBooking({ ...form, ...selection, teacherId: selectedTeacherId, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
+        if (adminBooking) booking = updateBooking(booking.id, { status: 'confirmed' })
+        if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The shared booking database did not respond in time.')
+        createdCount += 1
+      }
+      setSuccessCount(createdCount)
+      setSelectedLessons([])
+      setForm((current) => ({ ...current, note: '' }))
       onBooked()
     } catch (bookingError) {
-      setError(bookingError.message)
+      if (createdCount) {
+        setSuccessCount(createdCount)
+        setSelectedLessons((current) => current.slice(createdCount))
+        onBooked()
+      }
+      setError(`${createdCount ? `${createdCount} lesson${createdCount > 1 ? 's were' : ' was'} saved. ` : ''}${bookingError.message}`)
     }
   }
 
@@ -424,7 +474,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
   return (
     <div className="portal-view">
       <div className="portal-page-heading">
-        <div><span className="portal-kicker">Live availability</span><h1>Book a class</h1><p>Only teacher-approved times can be selected. Every row is a 30-minute calendar slot.</p></div>
+        <div><span className="portal-kicker">Live availability</span><h1>Book one or multiple classes</h1><p>Click individual times or click and drag across the teacher’s available 30-minute slots.</p></div>
       </div>
       <section className="portal-card booking-calendar-card">
         <div className="booking-controls">
@@ -433,30 +483,31 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
           <fieldset className="compact-duration"><legend>Lesson length</legend><div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span>{duration} min</span></label>)}</div></fieldset>
         </div>
 
-        {success && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>{adminBooking ? 'Lesson booked and confirmed!' : 'Lesson requested!'}</strong><span>{adminBooking ? 'The student and teacher calendars are now reserved.' : 'The selected slot is now reserved while confirmation is pending.'}</span></div></div>}
+        {successCount > 0 && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>{successCount} lesson{successCount > 1 ? 's' : ''} {adminBooking ? 'booked and confirmed!' : 'requested!'}</strong><span>{adminBooking ? 'The student and teacher calendars are reserved.' : 'The selected times are reserved while confirmation is pending.'}</span></div></div>}
         {error && <div className="portal-error" role="alert">{error}</div>}
 
         {teachers.length && selectedTeacher ? (
-          <ScheduleCalendar
+          <><div className="multi-book-tip"><CalendarPlus size={17} /><span><strong>Multi-book mode</strong> Click a time to select it, or hold and drag across several available times. Click selected times again to remove them.</span><em>{selectedLessons.length}/12 selected</em></div><ScheduleCalendar
             weekOffset={weekOffset}
             onWeekOffset={setWeekOffset}
             availabilitySlots={selectedTeacher.teacher.availabilitySlots || []}
             bookings={teacherBookings}
             duration={Number(form.duration)}
-            selectedLesson={form}
+            selectedLessons={selectedLessons}
             onSelect={selectSlot}
-          />
+            multiSelect
+          /></>
         ) : (
           <EmptyState icon={Users} title="Teachers are being prepared" text="An administrator needs to approve a teacher before new lessons can be requested." />
         )}
 
         <form className="booking-confirm-bar" onSubmit={submit}>
-          <div className={form.date && form.time ? 'selected' : ''}>
+          <div className={selectedLessons.length ? 'selected' : ''}>
             <span className="portal-card__icon"><Clock3 size={21} /></span>
-            <div><small>{form.date && form.time ? 'Selected lesson' : 'Choose an available slot'}</small><strong>{form.date && form.time ? `${formatLessonDate(form.date, form.time, true)} at ${formatTime(form.time)}` : 'No time selected yet'}</strong><em>{form.duration} min lesson · {form.duration === '50' ? 'uses 2 calendar slots' : 'uses 1 calendar slot'}</em></div>
+            <div><small>{selectedLessons.length ? `${selectedLessons.length} lesson time${selectedLessons.length > 1 ? 's' : ''} selected` : 'Click or drag across available times'}</small><strong>{selectedLessons.length ? `${formatLessonDate(selectedLessons[0].date, selectedLessons[0].time, true)} at ${formatTime(selectedLessons[0].time)}${selectedLessons.length > 1 ? ` + ${selectedLessons.length - 1} more` : ''}` : 'No time selected yet'}</strong><em>{form.duration} min per lesson · select up to 12 times</em></div>
           </div>
-          <label><span>Note <i>optional</i></span><input name="note" value={form.note} onChange={update} placeholder="Note for the teacher" /></label>
-          <button className="portal-primary-button" type="submit" disabled={!form.date || !form.time}>{adminBooking ? 'Book and confirm' : 'Request lesson'} <ArrowRight size={17} /></button>
+          <label><span>Note <i>applies to all selected lessons</i></span><input name="note" value={form.note} onChange={update} placeholder="Note for the teacher" /></label>
+          <button className="portal-primary-button" type="submit" disabled={!selectedLessons.length}>{adminBooking ? `Book ${selectedLessons.length || ''} & confirm` : `Request ${selectedLessons.length || ''} lesson${selectedLessons.length === 1 ? '' : 's'}`} <ArrowRight size={17} /></button>
         </form>
       </section>
     </div>
@@ -862,6 +913,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [saved, setSaved] = useState(false)
   const [mediaVersion, setMediaVersion] = useState(0)
   const [mediaError, setMediaError] = useState('')
+  const [teacherName, setTeacherName] = useState(account.fullName)
+  const [nameSaved, setNameSaved] = useState(false)
+  const [nameError, setNameError] = useState('')
   const [feedbackBooking, setFeedbackBooking] = useState(null)
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [classroom, setClassroom] = useState(account.teacher.classroom || { platform: 'zoom', zoomLink: '', voovLink: '' })
@@ -938,6 +992,29 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       setMediaError(uploadError.message)
     }
     event.target.value = ''
+  }
+
+  const saveTeacherName = async () => {
+    const name = teacherName.trim()
+    setNameError('')
+    if (name.length < 2 || name.length > 80) {
+      setNameError('Enter a teacher display name between 2 and 80 characters.')
+      return
+    }
+    const previousName = account.fullName
+    try {
+      const updated = updateAccount(account.id, { fullName: name })
+      if (cloudSyncEnabled()) await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the name update in time.')
+      setAccount(updated)
+      onAccountChange(updated)
+      setNameSaved(true)
+      window.setTimeout(() => setNameSaved(false), 2000)
+    } catch (saveError) {
+      const reverted = updateLocalAccount(account.id, { fullName: previousName })
+      setAccount(reverted)
+      setTeacherName(previousName)
+      setNameError(saveError.message)
+    }
   }
 
   const recordCompletedLesson = (booking) => {
@@ -1107,6 +1184,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
         <div className="portal-view">
           <section className="teacher-profile-hero"><div className="teacher-profile-photo-wrap"><ProfilePhoto accountId={account.id} name={account.fullName} refreshKey={mediaVersion} className="teacher-profile-photo" /><label title="Upload display photo"><Camera size={16} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherMedia(event, 'avatar')} /></label></div><div><StatusBadge status={account.status} /><h1>{account.fullName}</h1><p>{account.teacher.specialization} · {account.teacher.experience} years experience</p></div><div className="teacher-profile-hero__score"><Star size={21} /><strong>{account.teacher.rating || 'New'}</strong><span>{account.teacher.ratingCount ? `${account.teacher.ratingCount} class ratings` : 'rating'}</span></div></section>
           {mediaError && <div className="portal-error" role="alert">{mediaError}</div>}
+          <section className="portal-card teacher-name-editor"><div><span className="portal-kicker">Public teacher name</span><h2>Edit display name</h2><p>This name appears to parents, students, bookings and the Admin Dashboard.</p></div><label><span>Teacher display name</span><input value={teacherName} onChange={(event) => { setTeacherName(event.target.value); setNameSaved(false); setNameError('') }} maxLength="80" /></label><button className="portal-primary-button" onClick={saveTeacherName}>Save name <Check size={16} /></button>{nameSaved && <span className="saved-label"><Check size={14} /> Saved</span>}{nameError && <div className="portal-error" role="alert">{nameError}</div>}</section>
           <div className="teacher-public-profile-grid">
             <section className="portal-card teacher-profile-detail"><span className="portal-kicker">Professional profile</span><h2>About my teaching</h2><p className="teacher-bio">{account.teacher.bio}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{account.teacher.education}</strong></div><div><span>Languages</span><strong>{account.teacher.languages}</strong></div><div><span>Credentials</span><strong>{account.teacher.credentials?.length || 0} submitted</strong></div></div></section>
             <section className="portal-card teacher-video-manager"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2></div><span className="portal-card__icon"><Film size={21} /></span></div><IntroVideo accountId={account.id} refreshKey={mediaVersion} /><label className="media-upload-button"><Upload size={16} /> Upload introduction video<input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => uploadTeacherMedia(event, 'intro-video')} /></label><p>MP4 or WebM, up to 50 MB. Parents and visitors can watch this before choosing a teacher.</p></section>
