@@ -1192,13 +1192,92 @@ h3 {
   pointer-events: none;
 }
 
-.curriculum-carousel__visual img {
+.curriculum-book-cover {
+  --cover: #0ba9bd;
+  --cover-accent: #ffe65c;
+  position: relative;
+  display: grid;
   width: 100%;
   height: 100%;
-  max-height: 461px;
-  object-fit: contain;
-  background: #fff;
+  min-height: 430px;
+  overflow: hidden;
+  place-items: center;
+  background: radial-gradient(circle at 72% 18%, rgba(255,255,255,0.95), rgba(240,248,255,0.8) 27%, #dbeff3 72%);
+  perspective: 1000px;
 }
+
+.curriculum-book-cover--orange { --cover: #ee7523; --cover-accent: #ffd952; }
+.curriculum-book-cover--violet { --cover: #5a2a91; --cover-accent: #ff7eae; }
+.curriculum-book-cover--green { --cover: #32a958; --cover-accent: #ffe45c; }
+.curriculum-book-cover--pink { --cover: #e83e7d; --cover-accent: #ffd957; }
+.curriculum-book-cover--blue { --cover: #117ec1; --cover-accent: #bce94e; }
+.curriculum-book-cover--lime { --cover: #8dbd20; --cover-accent: #5b2c91; }
+.curriculum-book-cover--yellow { --cover: #efb516; --cover-accent: #5a2a91; }
+.curriculum-book-cover--sky { --cover: #238db1; --cover-accent: #f5ce35; }
+
+.curriculum-book-cover__book {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  width: min(300px, 58%);
+  min-height: 375px;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  border: 7px solid rgba(255,255,255,0.84);
+  border-radius: 14px 25px 25px 14px;
+  padding: 32px 27px;
+  background: var(--cover);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--cover), white 13%), var(--cover));
+  box-shadow: -13px 16px 0 color-mix(in srgb, var(--cover), black 22%), 0 28px 55px rgba(29,45,73,0.3);
+  color: #fff;
+  transform: rotateY(-8deg) rotateZ(-3deg);
+}
+
+.curriculum-book-cover__book::before,
+.curriculum-book-cover__book::after {
+  position: absolute;
+  border-radius: 50%;
+  content: '';
+}
+
+.curriculum-book-cover__book::before { top: -65px; right: -55px; width: 190px; height: 190px; background: var(--cover-accent); opacity: 0.9; }
+.curriculum-book-cover__book::after { top: 75px; left: -38px; width: 125px; height: 125px; border: 22px solid rgba(255,255,255,0.14); }
+.curriculum-book-cover__book > span { position: absolute; z-index: 2; top: 22px; left: 25px; border-radius: 20px; padding: 5px 8px; background: rgba(255,255,255,0.18); font-size: 0.58rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+.curriculum-book-cover__book > i { position: absolute; z-index: 2; top: 65px; right: 30px; display: grid; width: 95px; height: 95px; place-items: center; border: 5px solid rgba(255,255,255,0.82); border-radius: 29px; background: var(--cover-accent); box-shadow: 0 13px 25px rgba(28,27,55,0.22); color: var(--cover); font-family: 'Trebuchet MS', sans-serif; font-size: 2.4rem; font-style: normal; font-weight: 900; transform: rotate(7deg); }
+.curriculum-book-cover__book > strong { position: relative; z-index: 2; margin-bottom: 8px; color: #fff; font-family: 'Trebuchet MS', system-ui, sans-serif; font-size: clamp(1.8rem,3vw,2.75rem); font-weight: 900; letter-spacing: -0.05em; line-height: 0.95; text-shadow: 0 5px 14px rgba(0,0,0,0.18); }
+.curriculum-book-cover__book > small { position: relative; z-index: 2; color: rgba(255,255,255,0.88); font-size: 0.66rem; font-weight: 800; }
+.curriculum-book-cover__book > em { position: relative; z-index: 2; margin-top: 22px; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 8px; color: rgba(255,255,255,0.7); font-size: 0.48rem; font-style: normal; }
+
+.curriculum-book-cover__book--back {
+  position: absolute;
+  z-index: 1;
+  right: 7%;
+  width: 230px;
+  min-height: 305px;
+  filter: saturate(0.75) brightness(0.86);
+  opacity: 0.75;
+  transform: rotateY(-8deg) rotateZ(10deg);
+}
+.curriculum-book-cover__book--back strong { font-size: 1.5rem; }
+.curriculum-book-cover__book--back > span { display: block; }
+
+.curriculum-cover-shapes i { position: absolute; z-index: 2; border-radius: 50%; background: var(--cover-accent); box-shadow: 0 12px 25px rgba(31,44,70,0.18); }
+.curriculum-cover-shapes i:nth-child(1) { top: 12%; left: 9%; width: 62px; height: 62px; }
+.curriculum-cover-shapes i:nth-child(2) { right: 7%; bottom: 8%; width: 92px; height: 92px; opacity: 0.62; }
+.curriculum-cover-shapes i:nth-child(3) { bottom: 19%; left: 6%; width: 34px; height: 34px; opacity: 0.48; }
+
+.curriculum-book-cover--compact {
+  width: 45px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 6px;
+  background: var(--cover);
+  background: color-mix(in srgb, var(--cover), white 20%);
+}
+.curriculum-book-cover--compact .curriculum-book-cover__book { width: 30px; min-height: 29px; border: 2px solid rgba(255,255,255,0.8); border-radius: 3px 6px 6px 3px; padding: 0; box-shadow: -3px 3px 0 color-mix(in srgb, var(--cover), black 22%); transform: rotate(-5deg); }
+.curriculum-book-cover--compact .curriculum-book-cover__book > * { display: none; }
+.curriculum-book-cover--compact .curriculum-book-cover__book > i { position: static; display: grid; width: 18px; height: 18px; border: 0; border-radius: 5px; box-shadow: none; color: var(--cover); font-size: 0.55rem; transform: none; }
 
 .curriculum-arrow {
   position: absolute;
@@ -3661,6 +3740,15 @@ body {
     margin: 0 12px 12px;
     border-radius: 16px;
   }
+
+  .curriculum-book-cover { min-height: 275px; }
+  .curriculum-book-cover__book { width: 165px; min-height: 220px; border-width: 4px; padding: 20px 16px; }
+  .curriculum-book-cover__book > span { top: 13px; left: 14px; font-size: 0.43rem; }
+  .curriculum-book-cover__book > i { top: 45px; right: 17px; width: 56px; height: 56px; border-width: 3px; border-radius: 17px; font-size: 1.25rem; }
+  .curriculum-book-cover__book > strong { font-size: 1.45rem; }
+  .curriculum-book-cover__book > small { font-size: 0.49rem; }
+  .curriculum-book-cover__book > em { margin-top: 10px; font-size: 0.38rem; }
+  .curriculum-book-cover__book--back { right: 5%; width: 135px; min-height: 175px; }
 
   .curriculum-arrow {
     top: 70%;

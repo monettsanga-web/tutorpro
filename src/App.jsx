@@ -81,8 +81,6 @@ const curriculumSlides = [
   { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
 ]
 
-const driveImage = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w1600`
-
 const faqs = [
   {
     question: 'What curricula do you follow?',
@@ -270,6 +268,22 @@ function Stats() {
   )
 }
 
+function CurriculumCover({ slide, compact = false }) {
+  const shortPublisher = slide.publisher === 'National Geographic Learning' ? 'NGL' : slide.publisher
+  return (
+    <div className={`curriculum-book-cover curriculum-book-cover--${slide.tone} ${compact ? 'curriculum-book-cover--compact' : ''}`} role="img" aria-label={`${slide.title} by ${slide.publisher}`}>
+      <div className="curriculum-book-cover__book">
+        <span>{shortPublisher}</span>
+        <i aria-hidden="true">Aa</i>
+        <strong>{slide.title}</strong>
+        <small>{slide.level}</small>
+        <em>TutorPro English materials</em>
+      </div>
+      {!compact && <><div className="curriculum-book-cover__book curriculum-book-cover__book--back"><span>{shortPublisher}</span><strong>{slide.title}</strong></div><div className="curriculum-cover-shapes" aria-hidden="true"><i /><i /><i /></div></>}
+    </div>
+  )
+}
+
 function CurriculumCarousel({ onBook }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -308,7 +322,7 @@ function CurriculumCarousel({ onBook }) {
             <div className="curriculum-carousel__actions"><a className="button button--cream" href="#programmes">Explore programmes <ArrowRight size={16} /></a><button className="carousel-text-button" onClick={onBook}>Start with a free class</button></div>
           </div>
           <div className="curriculum-carousel__visual" key={`image-${activeSlide.id}`}>
-            <img src={driveImage(activeSlide.id)} alt={`${activeSlide.title} English learning book series`} loading={activeIndex === 0 ? 'eager' : 'lazy'} referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `https://lh3.googleusercontent.com/d/${activeSlide.id}=w1600` }} />
+            <CurriculumCover slide={activeSlide} />
           </div>
           <button className="curriculum-arrow curriculum-arrow--prev" onClick={() => showSlide(activeIndex - 1)} aria-label="Previous curriculum"><ChevronLeft size={23} /></button>
           <button className="curriculum-arrow curriculum-arrow--next" onClick={() => showSlide(activeIndex + 1)} aria-label="Next curriculum"><ChevronRight size={23} /></button>
@@ -316,7 +330,7 @@ function CurriculumCarousel({ onBook }) {
         </div>
 
         <div className="curriculum-thumbnails" role="tablist" aria-label="Choose curriculum slide">
-          {curriculumSlides.map((slide, index) => <button role="tab" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onClick={() => showSlide(index)} key={slide.id}><img src={driveImage(slide.id)} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `https://lh3.googleusercontent.com/d/${slide.id}=w320` }} /><span>{slide.title}</span></button>)}
+          {curriculumSlides.map((slide, index) => <button role="tab" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onClick={() => showSlide(index)} key={slide.id}><CurriculumCover slide={slide} compact /><span>{slide.title}</span></button>)}
         </div>
       </div>
     </section>

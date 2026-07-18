@@ -85,20 +85,21 @@ export const chatLanguages = [
 export async function translateChatText(text, targetLanguage) {
   if (!text?.trim() || targetLanguage === 'en') return text
   const endpoint = import.meta.env?.VITE_TRANSLATION_API_URL
-    || 'https://translate.googleapis.com/translate_a/single'
-  try {
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 5000)
-    const url = `${endpoint}?client=gtx&sl=auto&tl=${encodeURIComponent(targetLanguage)}&dt=t&q=${encodeURIComponent(text.trim())}`
-    const response = await fetch(url, { signal: controller.signal })
-    window.clearTimeout(timeout)
-    if (response.ok) {
-      const result = await response.json()
-      const translated = Array.isArray(result?.[0]) ? result[0].map((part) => part?.[0] || '').join('') : ''
-      if (translated) return translated
+  if (endpoint) {
+    try {
+      const controller = new AbortController()
+      const timeout = window.setTimeout(() => controller.abort(), 5000)
+      const url = `${endpoint}?client=gtx&sl=auto&tl=${encodeURIComponent(targetLanguage)}&dt=t&q=${encodeURIComponent(text.trim())}`
+      const response = await fetch(url, { signal: controller.signal })
+      window.clearTimeout(timeout)
+      if (response.ok) {
+        const result = await response.json()
+        const translated = Array.isArray(result?.[0]) ? result[0].map((part) => part?.[0] || '').join('') : ''
+        if (translated) return translated
+      }
+    } catch {
+      // Fall through to the safe classroom phrase dictionary.
     }
-  } catch {
-    // Fall through to the safe classroom phrase dictionary.
   }
   const phrase = classroomPhrases[targetLanguage]?.[text.trim().toLowerCase()]
   return phrase || `${text} (${chatLanguages.find((language) => language.code === targetLanguage)?.label || targetLanguage})`

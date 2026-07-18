@@ -1,6 +1,6 @@
 # TutorPro English
 
-A responsive TutorPro English website with automatic location-aware translation, interactive English games, a Google Drive-powered curriculum carousel, role-based dashboards and lesson booking.
+A responsive TutorPro English website with browser-language localisation, interactive English games, a self-contained curriculum carousel, role-based dashboards and lesson booking.
 
 ## Included portals
 
@@ -13,6 +13,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 - One family account can manage one to three named student profiles
 - Individual schedules, progress and display photo for each student
 - Adaptive 3D English games for Years 1–3, 4–6 and 7–11 with persistent stars
+- Interactive A–Z Alphabet Bubble Adventure with letter names, phonics sounds and animated rewards
 - WebGL Word Galaxy, 3D Grammar Bridge and speech-powered Sound Safari missions
 - One rating and optional review after every completed class
 - Teacher feedback, strengths, next steps and homework shown on completed lessons
@@ -21,7 +22,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Click-and-drag multi-booking for up to twelve non-overlapping lesson times
 - Bold 30-minute time labels, multi-selection count and shared notes
 - Booking history, calendar status tracking and cancellation
-- Editable learning preferences
+- Parent-visible learning goals with custom goal editing restricted to administrators
 
 ### Teacher
 
@@ -63,7 +64,6 @@ A responsive TutorPro English website with automatic location-aware translation,
 - Automatic merging of older and current registration records so no student disappears from Admin
 - Per-tab sessions so an administrator can stay logged in while testing student or teacher registration separately
 - New teachers appear as pending for approval; new students appear with active/suspended profile controls
-- Paid/unpaid controls for every individual learner
 - Select a specific student name and book an available teacher slot on their behalf
 - Platform-wide booking status controls
 - Overview metrics for students, teachers and lessons
@@ -71,7 +71,7 @@ A responsive TutorPro English website with automatic location-aware translation,
 
 ### Localisation
 
-- Detects the visitor country through IP geolocation with browser-language fallback
+- Detects the browser locale without depending on an overseas IP-geolocation service
 - Automatically selects English, Filipino, Korean, Chinese, Japanese, Spanish, French, German, Portuguese, Arabic, Vietnamese or Thai
 - Provides a persistent manual language selector
 - Applies language and text-direction preferences without mutating React-rendered dashboard elements
@@ -87,6 +87,14 @@ A responsive TutorPro English website with automatic location-aware translation,
 
 Follow [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md) to create and connect the free Supabase project securely.
 
+## Deploy for mainland China
+
+The frontend is prepared for Tencent EdgeOne Pages and no longer loads Google Fonts, Google Drive images, Google Translate, Google STUN, or an overseas IP-location service.
+
+[![Deploy with EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build)
+
+See [`CHINA_DEPLOYMENT.md`](CHINA_DEPLOYMENT.md) for setup, domain, ICP, Supabase and live-classroom considerations.
+
 ## Run locally
 
 ```bash
@@ -96,19 +104,13 @@ npm run dev
 
 ## Online classroom signaling
 
-The classroom uses peer-to-peer WebRTC for video, audio and screen sharing. For a same-browser two-tab demo, it automatically uses `BroadcastChannel`. For students and teachers on different devices, run the included signaling service:
+The classroom uses peer-to-peer WebRTC for video, audio and screen sharing. Same-browser tabs use `BroadcastChannel`, while separate devices use Supabase Realtime signaling by default. The included WebSocket service remains available as an optional dedicated signaling path:
 
 ```bash
 npm run classroom:server
 ```
 
-Copy `.env.example` to `.env.local` and set:
-
-```env
-VITE_CLASSROOM_SIGNALING_URL=ws://localhost:8787
-```
-
-Use a hosted `wss://` signaling endpoint and TURN credentials in production. Camera, microphone and screen sharing require HTTPS or localhost. Every room is isolated by its booking-specific classroom ID and secret token.
+Set `VITE_CLASSROOM_SIGNALING_URL` only when a hosted secure `wss://` service is available. Production deployments—especially cross-border China lessons—should also configure China-accessible TURN credentials. Camera, microphone and screen sharing require HTTPS or localhost. Every room is isolated by its booking-specific classroom ID and secret token.
 
 ## Checks
 

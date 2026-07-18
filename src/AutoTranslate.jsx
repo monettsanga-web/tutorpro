@@ -17,13 +17,6 @@ const languages = [
   { code: 'th', label: 'ไทย' },
 ]
 
-const countryLanguages = {
-  PH: 'tl', KR: 'ko', CN: 'zh-CN', TW: 'zh-TW', HK: 'zh-TW', JP: 'ja',
-  ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
-  FR: 'fr', DE: 'de', AT: 'de', BR: 'pt', PT: 'pt',
-  SA: 'ar', AE: 'ar', QA: 'ar', EG: 'ar', VN: 'vi', TH: 'th',
-}
-
 function readSavedLanguage() {
   try { return localStorage.getItem('tutorpro_language') || '' } catch { return '' }
 }
@@ -47,18 +40,8 @@ function browserLanguage() {
 }
 
 async function detectLocationLanguage() {
-  try {
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 3500)
-    const response = await fetch('https://ipapi.co/json/', { signal: controller.signal })
-    window.clearTimeout(timeout)
-    if (response.ok) {
-      const location = await response.json()
-      return countryLanguages[location.country_code] || browserLanguage()
-    }
-  } catch {
-    return browserLanguage()
-  }
+  // Browser locale works immediately in mainland China and avoids relying on
+  // an overseas IP-location service that may be slow or unavailable.
   return browserLanguage()
 }
 
