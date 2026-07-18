@@ -16,7 +16,7 @@ Then:
    - Install command: `npm ci`
    - Build command: `npm run build`
    - Output directory: `dist`
-   - Node.js: `22.11.0`
+   - Node.js: `22.17.1`
 4. Select **Create Now**.
 5. After the build finishes, copy the EdgeOne project URL and test it from a mainland China mobile connection.
 
