@@ -14,6 +14,7 @@ const vite = await createServer({ server: { middlewareMode: true }, appType: 'cu
 try {
   const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile } = await vite.ssrLoadModule('/src/Dashboards.jsx')
   const { default: PortalAccess } = await vite.ssrLoadModule('/src/PortalAccess.jsx')
+  const { default: LetterBubbleAdventure } = await vite.ssrLoadModule('/src/LetterBubbleAdventure.jsx')
   const callbacks = { onAccountChange() {}, onHome() {}, onLogout() {} }
 
   const incompleteStudent = {
@@ -33,6 +34,7 @@ try {
   const adminStudentHtml = renderToString(React.createElement(AdminStudentProfile, { account: incompleteStudent, learnerId: '', onBack() {}, onStatusChange() {}, onGoalChange() {}, onRemove() {}, processing: false, error: '' }))
   const adminLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'admin', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
   const teacherLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'teacher', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
+  const letterGameHtml = renderToString(React.createElement(LetterBubbleAdventure, { onBack() {}, onEarn() {} }))
 
   if (!studentHtml.includes('Finish this student registration')) throw new Error('Incomplete student recovery view failed to render.')
   if (!teacherHtml.includes('Good day')) throw new Error('Incomplete teacher dashboard failed to render.')
@@ -41,6 +43,7 @@ try {
   if (!adminStudentHtml.includes('Parent and login details') || !adminStudentHtml.includes('Incomplete student profile') || !adminStudentHtml.includes('Main Learning Goal') || !adminStudentHtml.includes('Only administrators can edit')) throw new Error('Administrator student profile controls failed to render.')
   if (!adminLoginHtml.includes('Administrator login') || adminLoginHtml.includes('Create the admin account')) throw new Error('Admin Portal did not default to login on a new device.')
   if (!teacherLoginHtml.includes('Teacher login')) throw new Error('Teacher Portal did not default to login.')
+  if (!letterGameHtml.includes('Alphabet Bubble Adventure') || !letterGameHtml.includes('Find this letter') || !letterGameHtml.includes('letter-round-count') || !letterGameHtml.includes('of 26')) throw new Error('Interactive A–Z letter game failed to render.')
   process.stdout.write('Student, Teacher and Admin dashboard rendering: PASS\n')
 } finally {
   await vite.close()

@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import LetterBubbleAdventure from './LetterBubbleAdventure.jsx'
 import WordGalaxy3D from './WordGalaxy3D.jsx'
 import {
+  ALargeSmall,
   ArrowLeft,
   ArrowRight,
   BookOpen,
@@ -250,11 +252,13 @@ export default function StudentGames({ learner, onEarnStars }) {
     onEarnStars(stars)
   }
 
+  if (activeGame === 'letters') return <LetterBubbleAdventure onBack={() => setActiveGame('')} onEarn={earn} />
   if (activeGame === 'words') return <WordQuest onBack={() => setActiveGame('')} onEarn={earn} questions={content.words} levelLabel={content.label} />
   if (activeGame === 'sentences') return <SentenceSprint onBack={() => setActiveGame('')} onEarn={earn} sentences={content.sentences} levelLabel={content.label} />
   if (activeGame === 'spelling') return <ListenAndSpell onBack={() => setActiveGame('')} onEarn={earn} words={content.spelling} levelLabel={content.label} />
 
   const games = [
+    { id: 'letters', title: 'Alphabet Bubble Adventure', description: 'Listen to every letter from A to Z and pop the matching magic bubble.', icon: ALargeSmall, color: 'blue', reward: '+1 each letter' },
     { id: 'words', title: 'Word Galaxy 3D', description: 'Pilot through space and capture the correct vocabulary orb.', icon: BookOpen, color: 'purple', reward: '+1 star' },
     { id: 'sentences', title: 'Grammar Bridge 3D', description: 'Place word blocks in order to build a bridge across the void.', icon: Puzzle, color: 'pink', reward: '+2 stars' },
     { id: 'spelling', title: 'Sound Safari 3D', description: 'Follow the sound beacon, hear English and spell each discovery.', icon: Volume2, color: 'green', reward: '+2 stars' },
