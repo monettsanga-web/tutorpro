@@ -49,6 +49,7 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 - Editable teacher display name, display photo and introduction-video uploads for the public teacher showcase
 - Public teacher discovery with experience, ratings and teacher selection
 - Post-class student feedback with strengths, next steps and optional homework
+- List/calendar booking views with hover-or-tap feedback access from each student name
 - Credential filename capture for administrator review
 - Approval-status visibility
 - Booking acceptance, decline and lesson completion
@@ -75,6 +76,7 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 - Teacher approval, rejection and suspension controls
 - Teacher and Student Open controls enter a safe administrator profile view immediately, even when Supabase refresh is slow
 - Dedicated administrator teacher profile with biography, credentials, availability, classroom and booking details
+- All bookings grouped by teacher profile with teacher and status filters for pending, confirmed, completed, cancelled and declined lessons
 - Private recorded-answer playback, AI interview assessment, recommendation, concerns and complete applicant transcript
 - Teacher approval/rejection/suspension requires Supabase to return the updated row and reports RLS errors instead of showing a false success
 - Per-student profile suspension and restoration with clear learner-facing status messages

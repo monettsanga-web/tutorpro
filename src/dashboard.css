@@ -1485,6 +1485,12 @@
   opacity: 0.75;
 }
 
+.schedule-feedback-target { cursor: pointer; }
+.schedule-feedback-target:hover { color: #5f2785 !important; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.schedule-feedback-prompt { position: absolute; bottom: 1px; left: 5px; display: inline-flex; align-items: center; gap: 3px; opacity: 0; color: #6a3189; font-size: 0.39rem; font-weight: 900; line-height: 1; pointer-events: none; text-transform: uppercase; transform: translateY(2px); transition: opacity 120ms ease, transform 120ms ease; }
+.schedule-feedback-target:hover ~ .schedule-booking-detail { opacity: 0; }
+.schedule-feedback-target:hover ~ .schedule-feedback-prompt { opacity: 1; transform: translateY(0); }
+
 .schedule-cell > span em {
   position: absolute;
   top: 1px;
@@ -1926,6 +1932,14 @@
   padding-top: 8px;
   padding-bottom: 8px;
 }
+
+.teacher-bookings-heading { align-items: center; }
+.teacher-booking-view-toggle { display: inline-flex; flex: 0 0 auto; gap: 4px; border: 1px solid #d8dfe9; border-radius: 11px; padding: 4px; background: #f5f7fa; }
+.teacher-booking-view-toggle button { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 8px; padding: 0 12px; background: transparent; color: #6a7b91; font-size: 0.62rem; font-weight: 850; }
+.teacher-booking-view-toggle button.active { background: #321568; box-shadow: 0 5px 13px rgba(50,21,104,0.18); color: #fff; }
+.teacher-feedback-instruction { background: linear-gradient(100deg, #f2ecff, #f8fbdc); color: #5e3b8c; }
+.teacher-feedback-instruction small { color: #766789; }
+.teacher-booking-calendar .schedule-cell.booked.booking-start { box-shadow: inset 3px 0 0 #ec5b98, 0 0 0 1px rgba(236,91,152,0.08); }
 
 /* Profile media */
 .profile-media-photo {
@@ -4984,6 +4998,43 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+.admin-booking-filter-card { padding: 15px; }
+.admin-booking-filterbar { display: grid; grid-template-columns: minmax(220px, 0.38fr) minmax(0, 1fr); gap: 18px; align-items: end; }
+.admin-booking-filterbar > label,
+.admin-booking-filterbar > div { display: grid; min-width: 0; gap: 7px; }
+.admin-booking-filterbar > label > span,
+.admin-booking-filterbar > div > span { color: #596d87; font-size: 0.54rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+.admin-booking-filterbar select { width: 100%; min-height: 42px; border: 1px solid #d7dfe9; border-radius: 10px; outline: 0; padding: 0 35px 0 11px; background: #fff; color: #30455f; font-size: 0.65rem; font-weight: 750; }
+.admin-booking-filterbar select:focus { border-color: #7048df; box-shadow: 0 0 0 3px rgba(112,72,223,0.1); }
+.booking-status-filters { display: flex; min-width: 0; gap: 5px; overflow-x: auto; scrollbar-width: thin; }
+.booking-status-filter { display: inline-flex; min-height: 42px; flex: 1 0 auto; align-items: center; justify-content: center; gap: 7px; border: 1px solid #dce2ea; border-radius: 10px; padding: 0 9px; background: #fff; color: #60738c; font-size: 0.56rem; font-weight: 850; }
+.booking-status-filter strong { display: grid; min-width: 20px; height: 20px; place-items: center; border-radius: 10px; background: #edf1f6; color: #52667f; font-size: 0.48rem; }
+.booking-status-filter.active { border-color: #321568; background: #321568; box-shadow: 0 6px 15px rgba(50,21,104,0.16); color: #fff; }
+.booking-status-filter.active strong { background: rgba(255,255,255,0.18); color: #fff; }
+.booking-status-filter--pending:not(.active) { border-color: #f2d1ad; background: #fff9ef; color: #a26725; }
+.booking-status-filter--confirmed:not(.active) { border-color: #cbdff7; background: #f3f8ff; color: #316cae; }
+.booking-status-filter--completed:not(.active) { border-color: #d6e8b6; background: #f7fce9; color: #5c8127; }
+.booking-status-filter--cancelled:not(.active),
+.booking-status-filter--declined:not(.active) { border-color: #ebd4dc; background: #fff7fa; color: #9b526b; }
+.admin-teacher-booking-groups { display: grid; gap: 16px; }
+.admin-teacher-booking-group { overflow: hidden; padding: 0; }
+.admin-teacher-booking-group > header { display: grid; grid-template-columns: auto minmax(190px, 1fr) auto auto; gap: 13px; align-items: center; border-bottom: 1px solid #e1dbe9; padding: 15px 18px; background: linear-gradient(115deg, #f7f3fd, #fbfde9); }
+.admin-booking-teacher-photo { width: 58px; height: 58px; border: 4px solid #fff; border-radius: 17px; box-shadow: 0 8px 18px rgba(50,21,104,0.13); }
+.admin-teacher-booking-profile { min-width: 0; }
+.admin-teacher-booking-profile > div { display: flex; align-items: center; gap: 7px; }
+.admin-teacher-booking-profile > div > span:last-child { color: #8a7e95; font-size: 0.48rem; font-weight: 850; text-transform: uppercase; }
+.admin-teacher-booking-profile h2 { margin: 4px 0 1px; overflow: hidden; color: #352348; font-size: 1.02rem; text-overflow: ellipsis; white-space: nowrap; }
+.admin-teacher-booking-profile p { margin: 0; color: #756984; font-size: 0.57rem; }
+.admin-teacher-booking-group > header dl { display: flex; gap: 5px; margin: 0; }
+.admin-teacher-booking-group > header dl div { display: grid; min-width: 62px; place-items: center; border-radius: 9px; padding: 7px 8px; background: rgba(255,255,255,0.78); }
+.admin-teacher-booking-group > header dt { color: #897b93; font-size: 0.43rem; font-weight: 800; text-transform: uppercase; }
+.admin-teacher-booking-group > header dd { margin: 0; color: #4e376a; font-size: 0.75rem; font-weight: 900; }
+.admin-open-teacher-profile { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 6px; border: 1px solid #d6c9e7; border-radius: 9px; padding: 0 10px; background: #fff; color: #65468c; font-size: 0.56rem; font-weight: 850; white-space: nowrap; }
+.admin-open-teacher-profile:hover { border-color: #7048df; background: #f5f0ff; }
+.admin-teacher-booking-list { padding: 0 18px; }
+.booking-status-control { display: grid; gap: 4px; }
+.booking-status-control > span { color: #7e8da0; font-size: 0.45rem; font-weight: 850; text-transform: uppercase; }
+
 .booking-status-select {
   min-height: 36px;
   border: 1px solid var(--portal-line);
@@ -5357,6 +5408,9 @@
   .admin-health-card {
     max-width: none;
   }
+
+  .admin-teacher-booking-group > header { grid-template-columns: auto minmax(180px, 1fr) auto; }
+  .admin-open-teacher-profile { grid-column: 2 / -1; justify-self: end; }
 }
 
 @media (max-width: 900px) {
@@ -5383,6 +5437,8 @@
   .portal-main {
     margin-left: 0;
   }
+
+  .admin-booking-filterbar { grid-template-columns: 1fr; align-items: stretch; }
 
   .portal-menu {
     display: grid;
@@ -5493,6 +5549,17 @@
   .portal-page-heading .portal-primary-button {
     width: 100%;
   }
+
+  .teacher-booking-view-toggle { width: 100%; }
+  .teacher-booking-view-toggle button { flex: 1; }
+  .admin-booking-filter-card { padding: 12px; }
+  .booking-status-filters { margin-right: -12px; padding-right: 12px; }
+  .booking-status-filter { flex: 0 0 auto; min-width: 94px; }
+  .admin-teacher-booking-group > header { grid-template-columns: auto minmax(0, 1fr); padding: 14px; }
+  .admin-teacher-booking-group > header dl { grid-column: 1 / -1; width: 100%; }
+  .admin-teacher-booking-group > header dl div { min-width: 0; flex: 1; }
+  .admin-open-teacher-profile { grid-column: 1 / -1; width: 100%; justify-self: stretch; }
+  .admin-teacher-booking-list { padding: 0 13px; }
 
   .schedule-page-heading,
   .schedule-save-actions {
@@ -5890,4 +5957,9 @@
   .role-login-heading {
     margin-top: 20px;
   }
+}
+
+@media (hover: none) {
+  .schedule-feedback-target ~ .schedule-booking-detail { opacity: 0; }
+  .schedule-feedback-target ~ .schedule-feedback-prompt { opacity: 1; transform: translateY(0); }
 }

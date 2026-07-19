@@ -12,7 +12,7 @@ globalThis.sessionStorage = globalThis.localStorage
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
 try {
-  const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile, BookingSlotDialog, FeedbackDialog, SupportInbox } = await vite.ssrLoadModule('/src/Dashboards.jsx')
+  const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile, AdminTeacherBookingGroups, BookingSlotDialog, FeedbackDialog, ScheduleCalendar, SupportInbox } = await vite.ssrLoadModule('/src/Dashboards.jsx')
   const { default: PortalAccess } = await vite.ssrLoadModule('/src/PortalAccess.jsx')
   const { default: TeacherAIInterview } = await vite.ssrLoadModule('/src/TeacherAIInterview.jsx')
   const { default: SupportChatWidget } = await vite.ssrLoadModule('/src/SupportChatWidget.jsx')
@@ -48,6 +48,12 @@ try {
     onClose() {}, onChanged() {},
   }))
   const feedbackDialogHtml = renderToString(React.createElement(FeedbackDialog, { booking: { id: 'feedback-test', studentId: 'student-test', learnerId: 'learner-test', learnerName: 'Alex', teacherId: 'teacher-test', status: 'confirmed' }, teacherId: 'teacher-test', onClose() {}, onSaved() {} }))
+  const weekDate = new Date()
+  weekDate.setDate(weekDate.getDate() - ((weekDate.getDay() + 6) % 7))
+  const calendarDate = `${weekDate.getFullYear()}-${String(weekDate.getMonth() + 1).padStart(2, '0')}-${String(weekDate.getDate()).padStart(2, '0')}`
+  const recordedBooking = { id: 'booking-filter-test', studentId: 'student-test', learnerId: 'learner-test', learnerName: 'Alex', teacherId: 'teacher-test', teacherName: 'Teacher Test', date: calendarDate, time: '16:00', duration: 25, focus: 'Speaking', status: 'confirmed' }
+  const teacherCalendarHtml = renderToString(React.createElement(ScheduleCalendar, { weekOffset: 0, onWeekOffset() {}, bookings: [recordedBooking], onBookingOpen() {}, onBookingFeedback() {} }))
+  const adminTeacherBookingsHtml = renderToString(React.createElement(AdminTeacherBookingGroups, { bookings: [recordedBooking], teachers: [{ id: 'teacher-test', fullName: 'Teacher Test', status: 'approved', teacher: { specialization: 'Cambridge', experience: 5 } }], onStatusChange() {}, onOpenTeacher() {}, onEnterClassroom() {}, onManageBooking() {} }))
   const supportInboxHtml = renderToString(React.createElement(SupportInbox, { onUnreadChange() {} }))
   sessionStorage.setItem('tutorpro_visitor_country', 'CN')
   const chineseProviderHtml = renderToString(React.createElement(AuthProviderPicker, { value: 'email', onSelect() {} }))
@@ -70,6 +76,8 @@ try {
   if (!letterGameHtml.includes('Alphabet Bubble Adventure') || !letterGameHtml.includes('Find this letter') || !letterGameHtml.includes('letter-round-count') || !letterGameHtml.includes('of 26')) throw new Error('Interactive A–Z letter game failed to render.')
   if (!bookingDialogHtml.includes('booking-comment-editor') || !bookingDialogHtml.includes('Alex') || !bookingDialogHtml.includes('Save comment') || !bookingDialogHtml.includes('Cancel booking') || !bookingDialogHtml.includes('Parent booking note') || !bookingDialogHtml.includes('Add calendar reminder')) throw new Error('Responsive booking comment, calendar and cancellation controls failed to render.')
   if (!feedbackDialogHtml.includes('Words or phrases to practise') || !feedbackDialogHtml.includes('Grammar to practise') || !feedbackDialogHtml.includes('Verb tenses') || !feedbackDialogHtml.includes('Sentence structure')) throw new Error('Vocabulary and grammar feedback selectors failed to render.')
+  if (!teacherCalendarHtml.includes('schedule-feedback-target') || !teacherCalendarHtml.includes('Write feedback') || !teacherCalendarHtml.includes('Alex')) throw new Error('Teacher calendar hover feedback control failed to render.')
+  if (!adminTeacherBookingsHtml.includes('Teacher booking profile') || !adminTeacherBookingsHtml.includes('All teachers') || !adminTeacherBookingsHtml.includes('Pending') || !adminTeacherBookingsHtml.includes('Confirmed') || !adminTeacherBookingsHtml.includes('Completed') || !adminTeacherBookingsHtml.includes('Cancelled') || !adminTeacherBookingsHtml.includes('Declined') || !adminTeacherBookingsHtml.includes('Open profile')) throw new Error('Administrator teacher-grouped booking filters failed to render.')
   if (!chineseProviderHtml.includes('中国家长注册提示') || !chineseProviderHtml.includes('其他邮箱 / Other email') || !chineseProviderHtml.includes('请不要使用 Gmail')) throw new Error('Chinese parent email guidance failed to render.')
   if (!chineseSupportHtml.includes('联系管理员') || !chineseSupportHtml.includes('中文家长咨询')) throw new Error('Chinese parent support launcher failed to render.')
   if (!embeddedSupportHtml.includes('support-widget--embedded') || !embeddedSupportHtml.includes('TutorPro 中文家长客服') || !embeddedSupportHtml.includes('support-file-button') || !embeddedSupportHtml.includes('image/png')) throw new Error('Embedded parent-dashboard support chat and attachment control failed to render.')
