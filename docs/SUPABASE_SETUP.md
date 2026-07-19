@@ -50,6 +50,10 @@ The repair script finds the authorized administrator without displaying the emai
 
 If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
 
+### Enable bilingual parent support chat
+
+Run [`supabase/support_chat.sql`](../supabase/support_chat.sql) once. It creates the private Chinese/English website chat, secure visitor conversation tokens, and the administrator support inbox. Parents can message before or after registration; only the conversation holder and authorized administrators can read the thread.
+
 ### Enable approved teachers on the homepage and booking screen
 
 For existing projects, run [`supabase/public_teachers.sql`](../supabase/public_teachers.sql) once. It creates a sanitized public directory containing only approved teachers’ display names, teaching biographies, ratings, languages and availability. Emails, login IDs and private classroom links are never returned. Approved teachers then appear automatically on the homepage and in the Student Dashboard teacher selector across devices.

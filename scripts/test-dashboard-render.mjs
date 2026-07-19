@@ -12,8 +12,9 @@ globalThis.sessionStorage = globalThis.localStorage
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
 try {
-  const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile, BookingSlotDialog } = await vite.ssrLoadModule('/src/Dashboards.jsx')
+  const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile, BookingSlotDialog, SupportInbox } = await vite.ssrLoadModule('/src/Dashboards.jsx')
   const { default: PortalAccess } = await vite.ssrLoadModule('/src/PortalAccess.jsx')
+  const { default: SupportChatWidget } = await vite.ssrLoadModule('/src/SupportChatWidget.jsx')
   const { default: PremiumMotion } = await vite.ssrLoadModule('/src/PremiumMotion.jsx')
   const { default: AuthProviderPicker } = await vite.ssrLoadModule('/src/AuthProviderPicker.jsx')
   const { default: LetterBubbleAdventure } = await vite.ssrLoadModule('/src/LetterBubbleAdventure.jsx')
@@ -43,8 +44,10 @@ try {
     account: { id: 'teacher-test', role: 'teacher', fullName: 'Teacher Test' },
     onClose() {}, onChanged() {},
   }))
+  const supportInboxHtml = renderToString(React.createElement(SupportInbox, { onUnreadChange() {} }))
   sessionStorage.setItem('tutorpro_visitor_country', 'CN')
   const chineseProviderHtml = renderToString(React.createElement(AuthProviderPicker, { value: 'email', onSelect() {} }))
+  const chineseSupportHtml = renderToString(React.createElement(SupportChatWidget))
   sessionStorage.removeItem('tutorpro_visitor_country')
 
   if (!studentHtml.includes('Finish this student registration')) throw new Error('Incomplete student recovery view failed to render.')
@@ -58,6 +61,8 @@ try {
   if (!letterGameHtml.includes('Alphabet Bubble Adventure') || !letterGameHtml.includes('Find this letter') || !letterGameHtml.includes('letter-round-count') || !letterGameHtml.includes('of 26')) throw new Error('Interactive A–Z letter game failed to render.')
   if (!bookingDialogHtml.includes('booking-comment-editor') || !bookingDialogHtml.includes('Alex') || !bookingDialogHtml.includes('Save comment') || !bookingDialogHtml.includes('Cancel booking') || !bookingDialogHtml.includes('Parent booking note')) throw new Error('Responsive booking comment and cancellation controls failed to render.')
   if (!chineseProviderHtml.includes('中国家长注册提示') || !chineseProviderHtml.includes('其他邮箱 / Other email') || !chineseProviderHtml.includes('请不要使用 Gmail')) throw new Error('Chinese parent email guidance failed to render.')
+  if (!chineseSupportHtml.includes('联系管理员') || !chineseSupportHtml.includes('中文家长咨询')) throw new Error('Chinese parent support launcher failed to render.')
+  if (!supportInboxHtml.includes('Parent support inbox') || !supportInboxHtml.includes('Live inbox')) throw new Error('Administrator support inbox failed to render.')
   process.stdout.write('Student, Teacher and Admin dashboard rendering: PASS\n')
 } finally {
   await vite.close()

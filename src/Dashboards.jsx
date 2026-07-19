@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Ban,
@@ -28,6 +28,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  Send,
   ShieldCheck,
   Sparkles,
   Star,
@@ -66,6 +67,7 @@ import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
+import { fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus } from './supportChat.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -1449,6 +1451,126 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   )
 }
 
+export function SupportInbox({ onUnreadChange }) {
+  const [conversations, setConversations] = useState([])
+  const [selectedId, setSelectedId] = useState('')
+  const [thread, setThread] = useState(null)
+  const [draft, setDraft] = useState('')
+  const [query, setQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const messagesRef = useRef(null)
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const rows = await fetchAdminSupportConversations()
+      setConversations(rows)
+      onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
+      setError('')
+      if (!selectedId && rows[0]) setSelectedId(rows[0].id)
+    } catch (loadError) {
+      setError(loadError.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [onUnreadChange, selectedId])
+
+  const loadThread = useCallback(async (conversationId = selectedId) => {
+    if (!conversationId) return
+    try {
+      const next = await fetchAdminSupportThread(conversationId)
+      setThread(next)
+      setError('')
+      await loadConversations()
+    } catch (loadError) {
+      setError(loadError.message)
+    }
+  }, [loadConversations, selectedId])
+
+  useEffect(() => {
+    let active = true
+    const refresh = async () => {
+      if (!active) return
+      await loadConversations()
+      if (selectedId) await loadThread(selectedId)
+    }
+    refresh()
+    const interval = window.setInterval(refresh, 5000)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+    }
+  }, [loadConversations, loadThread, selectedId])
+
+  useEffect(() => {
+    const element = messagesRef.current
+    if (element) element.scrollTop = element.scrollHeight
+  }, [thread?.messages?.length])
+
+  const selectConversation = (conversationId) => {
+    setSelectedId(conversationId)
+    setThread(null)
+    setDraft('')
+  }
+
+  const reply = async (event) => {
+    event.preventDefault()
+    if (!selectedId || !draft.trim()) return
+    setSending(true)
+    setError('')
+    try {
+      await sendAdminSupportMessage(selectedId, draft.trim())
+      setDraft('')
+      await loadThread(selectedId)
+    } catch (sendError) {
+      setError(sendError.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const toggleStatus = async () => {
+    if (!thread) return
+    setSending(true)
+    try {
+      await setSupportConversationStatus(thread.id, thread.status === 'closed' ? 'open' : 'closed')
+      await loadThread(thread.id)
+    } catch (statusError) {
+      setError(statusError.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const normalizedQuery = query.trim().toLowerCase()
+  const filtered = conversations.filter((item) => !normalizedQuery
+    || item.parent_name?.toLowerCase().includes(normalizedQuery)
+    || item.email?.toLowerCase().includes(normalizedQuery)
+    || item.last_message?.toLowerCase().includes(normalizedQuery))
+
+  return (
+    <div className="portal-view support-inbox-view">
+      <div className="portal-page-heading"><div><span className="portal-kicker">Bilingual parent care</span><h1>Parent support inbox</h1><p>Reply to Chinese and international parents directly from TutorPro English.</p></div><span className="support-inbox-live"><i /> Live inbox</span></div>
+      {error && <div className="portal-error" role="alert">{error}</div>}
+      <section className="support-inbox">
+        <aside className="support-conversation-list">
+          <label><MessageSquareText size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search parent or email…" /></label>
+          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_count) > 0 && <i>{conversation.unread_count}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
+        </aside>
+
+        <div className="support-admin-thread">
+          {thread ? <>
+            <header><div><span>{initials(thread.parentName)}</span><div><strong>{thread.parentName}</strong><small>{thread.email} · {/^zh/.test(thread.language) ? 'Chinese' : thread.language || 'English'}</small></div></div><button onClick={toggleStatus} disabled={sending}>{thread.status === 'closed' ? 'Reopen' : 'Close conversation'}</button></header>
+            <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p><time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
+            <form onSubmit={reply}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || !draft.trim()}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
+          </> : <div className="support-thread-placeholder"><MessageSquareText size={36} /><h2>Select a conversation</h2><p>Parent details and private messages will appear here.</p></div>}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function AddTeacherDialog({ onClose, onCreated }) {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' })
   const [error, setError] = useState('')
@@ -1588,6 +1710,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [cloudError, setCloudError] = useState('')
   const [adminActionError, setAdminActionError] = useState('')
   const [processingAccountId, setProcessingAccountId] = useState('')
+  const [supportUnread, setSupportUnread] = useState(0)
 
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
@@ -1632,6 +1755,25 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       active = false
       unsubscribeProfiles()
       unsubscribeBookings()
+      window.clearInterval(interval)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!cloudSyncEnabled()) return undefined
+    let active = true
+    const refreshSupportCount = async () => {
+      try {
+        const conversations = await fetchAdminSupportConversations()
+        if (active) setSupportUnread(conversations.reduce((total, item) => total + Number(item.unread_count || 0), 0))
+      } catch {
+        // The support SQL may not be installed yet; the inbox shows setup guidance when opened.
+      }
+    }
+    refreshSupportCount()
+    const interval = window.setInterval(refreshSupportCount, 8000)
+    return () => {
+      active = false
       window.clearInterval(interval)
     }
   }, [])
@@ -1842,6 +1984,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
     { id: 'students', label: 'Students', icon: GraduationCap },
+    { id: 'support', label: 'Parent support', icon: MessageSquareText, badge: supportUnread },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
@@ -1903,6 +2046,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'students' && (
         <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
+
+      {active === 'support' && <SupportInbox onUnreadChange={setSupportUnread} />}
 
       {active === 'bookings' && (
         adminBooking ? (

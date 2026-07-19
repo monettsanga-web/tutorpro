@@ -15,6 +15,8 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 
 ### Student / parent
 
+- Built-in Chinese/English parent support chat with private administrator replies
+- Guest and registered-parent conversations with secure local thread access
 - Two-step family and learner registration
 - Sign up and log in with Gmail, Yahoo Mail, WeChat ID, WhatsApp number or another email provider
 - Official branded icons for Gmail, Yahoo, WeChat, WhatsApp and other email methods
@@ -57,6 +59,7 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 
 ### Administrator
 
+- Live parent support inbox with unread badges, Chinese-language identification, replies and close/reopen controls
 - Supabase administrator login on every device; the Admin Portal never falls back to a device-local signup screen
 - Shared realtime bookings so teacher and student receive the same classroom ID and room token
 - Private administrator email; the authorized address is never displayed publicly
