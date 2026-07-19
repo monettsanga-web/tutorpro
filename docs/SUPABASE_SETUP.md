@@ -50,9 +50,9 @@ The repair script finds the authorized administrator without displaying the emai
 
 If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
 
-### Enable AI teacher applicant evaluation
+### Enable private recorded teacher interviews and AI evaluation
 
-The required interview flow works immediately with a structured fallback. Follow [`docs/TEACHER_AI_INTERVIEW.md`](TEACHER_AI_INTERVIEW.md) to deploy the optional private AI evaluator and configure an OpenAI-compatible model key. Internal summaries and transcripts are restricted to the Administrator Teacher Profile.
+Run the complete contents of [`supabase/teacher_interview_recordings.sql`](../supabase/teacher_interview_recordings.sql) to create the private audio bucket, expiring applicant upload sessions and Administrator-only playback. Then follow [`docs/TEACHER_AI_INTERVIEW.md`](TEACHER_AI_INTERVIEW.md) for browser requirements and the optional private AI evaluator. The structured evaluation works without an external model; recordings, summaries and transcripts remain restricted to the Administrator Teacher Profile.
 
 ### Enable bilingual parent support chat
 

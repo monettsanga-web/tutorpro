@@ -90,11 +90,19 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
     setError('')
   }
 
-  const completeInterview = async (interview) => {
+  const completeInterview = async (interview, recordingCredentials) => {
     setSubmitting(true)
     setError('')
     try {
       const account = await registerTeacher({ ...form, interview })
+      if (recordingCredentials) {
+        try {
+          const { linkTeacherInterviewSession } = await import('./teacherInterviewMedia.js')
+          await linkTeacherInterviewSession(recordingCredentials, account.id)
+        } catch (recordingError) {
+          setError(`Your application was created, but the private audio needs attention: ${recordingError.message}`)
+        }
+      }
       setCreated(account)
       onAuthenticated(account)
       setView('success')
@@ -178,7 +186,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
           )}
 
           {!isAdmin && view === 'success' && created && (
-            <div className="role-success"><span><CheckCircle2 size={36} /></span><span className="kicker">Application received</span><h2 id="role-access-title">Your teacher studio is ready.</h2><p>The administrator can now review your profile, credentials and completed AI interview. You can open your dashboard while approval is pending.</p><div><FileCheck2 size={20} /><span><strong>Profile and interview status</strong><small>Completed · Pending administrator review</small></span></div><button className="button button--primary button--full" onClick={() => onEnterPortal(created)}>Open teacher dashboard <ArrowRight size={17} /></button></div>
+            <div className="role-success"><span><CheckCircle2 size={36} /></span><span className="kicker">Application received</span><h2 id="role-access-title">Your teacher studio is ready.</h2><p>The administrator can now review your profile, credentials, reviewed transcript and recorded AI interview. You can open your dashboard while approval is pending.</p><div><FileCheck2 size={20} /><span><strong>Profile and recorded interview</strong><small>{created.teacher?.interview?.recordingStatus === 'securely-uploaded' ? 'Audio secured · Pending administrator review' : 'Transcript saved · Audio storage setup pending'}</small></span></div><button className="button button--primary button--full" onClick={() => onEnterPortal(created)}>Open teacher dashboard <ArrowRight size={17} /></button></div>
           )}
 
           {isAdmin && (

@@ -318,7 +318,7 @@ export async function registerTeacher(details) {
   if (details.fullName?.trim().length < 2 || !details.specialization || details.bio?.trim().length < 30) {
     throw new Error('Complete the required teacher profile information before registering.')
   }
-  if (!details.interview?.completedAt || !Array.isArray(details.interview?.transcript) || details.interview.transcript.length < 10) {
+  if (!details.interview?.completedAt || !Array.isArray(details.interview?.transcript) || details.interview.transcript.length < 14) {
     throw new Error('Complete the required AI teacher interview before submitting your application.')
   }
 

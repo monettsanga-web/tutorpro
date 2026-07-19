@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises'
+
 const storage = new Map()
 globalThis.localStorage = {
   getItem: (key) => storage.get(key) ?? null,
@@ -35,6 +37,9 @@ async function rejects(callback, message) {
   }
   assert(rejected, message)
 }
+
+const recordedInterviewSql = await readFile(new URL('../supabase/teacher_interview_recordings.sql', import.meta.url), 'utf8')
+assert(recordedInterviewSql.includes("'teacher-interview-recordings'") && recordedInterviewSql.includes('Admins read private interview recordings') && recordedInterviewSql.includes('complete_teacher_interview_session'), 'Private recorded-interview storage and administrator access SQL is incomplete.')
 
 auth.initializePlatform()
 assert(!auth.getAccounts('teacher').some((account) => account.id === 'teacher-monett' || account.fullName === 'Monett Sanga'), 'The removed sample teacher profile was recreated.')

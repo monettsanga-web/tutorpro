@@ -217,6 +217,18 @@ begin
   end if;
 
   delete from public.bookings where teacher_id = target_user_id::text;
+  if to_regclass('public.teacher_interview_sessions') is not null then
+    execute $cleanup$
+      delete from storage.objects
+      where bucket_id = 'teacher-interview-recordings'
+        and name in (
+          select r.storage_path
+          from public.teacher_interview_recordings r
+          join public.teacher_interview_sessions s on s.id = r.session_id
+          where s.profile_id = $1
+        )
+    $cleanup$ using target_user_id;
+  end if;
   delete from auth.users where id = target_user_id;
   return found;
 end;
