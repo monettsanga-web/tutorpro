@@ -201,6 +201,8 @@
   font-weight: 800;
 }
 
+.tencent-provider-badge { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 10px 8px; border: 1px solid rgba(188,233,78,0.24); border-radius: 15px; padding: 6px 8px; background: rgba(188,233,78,0.1); color: #dafa8d; font-size: 0.5rem; font-weight: 850; }
+
 .prejoin-details h1 {
   max-width: 480px;
   margin: 8px 0 11px;
@@ -356,6 +358,14 @@
   height: 100%;
   object-fit: cover;
 }
+
+.tencent-video-view { width: 100%; height: 100%; overflow: hidden; background: #090510; }
+.tencent-video-view video { width: 100% !important; height: 100% !important; object-fit: cover; }
+.tencent-screen-view { position: absolute; z-index: 1; inset: 0; }
+.tencent-screen-view video { object-fit: contain; }
+.tencent-screen-sharing-state { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; background: radial-gradient(circle, #33205a, #130a25 72%); color: #bce94e; text-align: center; }
+.tencent-screen-sharing-state strong { color: #fff; font-size: 1rem; }
+.tencent-screen-sharing-state span { color: #b9adc7; font-size: 0.62rem; }
 
 .classroom-camera-tile--local video {
   transform: scaleX(-1);

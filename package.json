@@ -25,6 +25,7 @@
     "react-dom": "19.2.7",
     "react-icons": "5.5.0",
     "three": "0.180.0",
+    "trtc-sdk-v5": "5.18.3",
     "ws": "8.21.0"
   },
   "devDependencies": {

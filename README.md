@@ -58,6 +58,7 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 - Locked booked slots that cannot be offered to another student
 - Private Zoom or VooV fallback links visible only to booked students, teachers and administrators
 - Unique TutorPro English classroom for every confirmed booking
+- Optional embedded VooV / Tencent RTC engine with booking-authorized UserSig
 - Live camera, microphone, screen sharing, synchronized annotation and lesson-file sharing
 - Larger teacher/student camera tiles on the left with a large central lesson, screen-share and presentation board
 - Uploaded images and PDFs can be presented and annotated directly on the classroom board
@@ -129,7 +130,7 @@ npm run dev
 
 ## Online classroom signaling
 
-The classroom uses peer-to-peer WebRTC for video, audio and screen sharing. Same-browser tabs use `BroadcastChannel`. Separate devices use Supabase Realtime first and the secured `classroom_signals` table through ordinary HTTPS polling when WebSockets are blocked. Classroom credentials are deterministically repaired from the shared booking ID, preventing two devices from displaying the same room while silently using different tokens. The included WebSocket service remains available as an optional dedicated signaling path:
+The classroom supports two embedded media engines. Teachers can select **VooV / Tencent RTC** for Tencent-managed in-website video, audio and screen sharing, authenticated by the private `trtc-usersig` Supabase function. See [`docs/TRTC_CLASSROOM.md`](docs/TRTC_CLASSROOM.md). If Tencent RTC is not configured, the classroom uses peer-to-peer WebRTC. Same-browser tabs use `BroadcastChannel`; separate devices use Supabase Realtime first and the secured `classroom_signals` HTTPS fallback. Classroom credentials are deterministically repaired from the shared booking ID. The included WebSocket service remains available as an optional signaling path:
 
 ```bash
 npm run classroom:server

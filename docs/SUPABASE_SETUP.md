@@ -50,6 +50,10 @@ The repair script finds the authorized administrator without displaying the emai
 
 Run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor, and run it again after classroom or booking-status upgrades. It creates secured shared bookings, separate ongoing/absent class states, and a short-lived `classroom_signals` table. The student and teacher receive deterministic credentials for the exact same booked room; WebRTC offers, answers and ICE candidates can fall back to authenticated HTTPS polling when a school network or region blocks Realtime WebSockets.
 
+### Enable embedded VooV / Tencent RTC
+
+After creating the Tencent RTC application, follow [`docs/TRTC_CLASSROOM.md`](TRTC_CLASSROOM.md). Add the public SDKAppID to EdgeOne, keep the SDKSecretKey in Supabase secrets, and deploy the `trtc-usersig` Edge Function. The function verifies the authenticated teacher, student or administrator against the booking before issuing a temporary classroom signature.
+
 ### Enable private recorded teacher interviews and AI evaluation
 
 Run the complete contents of [`supabase/teacher_interview_recordings.sql`](../supabase/teacher_interview_recordings.sql) to create the private audio bucket, expiring applicant upload sessions and Administrator-only playback. Then follow [`docs/TEACHER_AI_INTERVIEW.md`](TEACHER_AI_INTERVIEW.md) for browser requirements and the optional private AI evaluator. The structured evaluation works without an external model; recordings, summaries and transcripts remain restricted to the Administrator Teacher Profile.

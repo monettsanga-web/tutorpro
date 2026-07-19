@@ -39,6 +39,7 @@ import {
 import { getAccountById } from './auth.js'
 import { getClassroomAccess } from './bookings.js'
 import { createClassroomTransport } from './classroomTransport.js'
+import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024
@@ -114,10 +115,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const studentAccount = getAccountById(roomBooking.studentId)
   const learner = studentAccount?.children?.find((item) => item.id === roomBooking.learnerId) || studentAccount?.child
   const teacher = getAccountById(roomBooking.teacherId)
+  const teacherClassroom = account.role === 'teacher' ? account.teacher?.classroom : teacher?.teacher?.classroom
+  const useTencentClassroom = teacherClassroom?.platform === 'voov' && isTencentClassroomConfigured()
   const participantName = account.role === 'student' ? learner?.name : account.fullName || account.parentName || 'Participant'
   const participantIdRef = useRef(`${account.id}-${crypto.randomUUID().slice(0, 8)}`)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
+  const localTencentViewRef = useRef(null)
+  const remoteTencentViewRef = useRef(null)
+  const remoteTencentScreenRef = useRef(null)
+  const trtcRef = useRef(null)
+  const trtcModuleRef = useRef(null)
   const sharedScreenVideoRef = useRef(null)
   const remoteStreamRef = useRef(null)
   const annotationCanvasRef = useRef(null)
@@ -300,22 +308,22 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (message.type === 'presence') {
         const count = Math.max(1, Number(message.count) || 1)
         setParticipantCount(count)
-        if (count > 1) {
+        if (count > 1 && !useTencentClassroom) {
           if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
           else transportRef.current?.send({ type: 'join-request', role: account.role })
         }
         return
       }
-      if (message.type === 'teacher-ready' && account.role !== 'teacher') {
+      if (message.type === 'teacher-ready' && account.role !== 'teacher' && !useTencentClassroom) {
         transportRef.current?.send({ type: 'join-request', role: account.role })
         return
       }
-      if (message.type === 'join-request' && account.role === 'teacher') {
+      if (message.type === 'join-request' && account.role === 'teacher' && !useTencentClassroom) {
         transportRef.current?.send({ type: 'annotation-permission', allowed: annotationPermissionRef.current })
         await sendTeacherOffer(Boolean(message.reconnect))
         return
       }
-      if (message.type === 'offer' && account.role !== 'teacher') {
+      if (message.type === 'offer' && account.role !== 'teacher' && !useTencentClassroom) {
         let peer = ensurePeer()
         if (peer.signalingState !== 'stable' || ['failed', 'closed'].includes(peer.connectionState)) peer = resetPeer()
         try {
@@ -329,7 +337,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         return
       }
-      if (message.type === 'answer' && account.role === 'teacher') {
+      if (message.type === 'answer' && account.role === 'teacher' && !useTencentClassroom) {
         const peer = ensurePeer()
         if (peer.signalingState !== 'have-local-offer') return
         try {
@@ -341,7 +349,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         return
       }
-      if (message.type === 'ice' && message.candidate) {
+      if (message.type === 'ice' && message.candidate && !useTencentClassroom) {
         const peer = ensurePeer()
         if (peer.remoteDescription) {
           try { await peer.addIceCandidate(message.candidate) } catch { /* Ignore stale candidates. */ }
@@ -396,6 +404,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       onMessage: handleMessage,
       onStatus: (status) => {
         setSignalingStatus(status)
+        if (useTencentClassroom) return
         if (status === 'connected' || status === 'local' || status === 'fallback') {
           setConnectionStatus((current) => current === 'connected' ? current : 'waiting')
           if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
@@ -403,9 +412,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         } else setConnectionStatus(status)
       },
     })
-    ensurePeer()
+    if (!useTencentClassroom) ensurePeer()
 
-    const connectionReminder = window.setInterval(() => {
+    const connectionReminder = useTencentClassroom ? null : window.setInterval(() => {
       if (peerRef.current?.connectionState === 'connected') return
       if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
       else transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: ['failed', 'disconnected'].includes(peerRef.current?.connectionState) })
@@ -421,7 +430,103 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       pendingIceRef.current = []
       offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey])
+  }, [joined, access.allowed, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom])
+
+  useEffect(() => {
+    if (!joined || !access.allowed || !useTencentClassroom) return undefined
+    let disposed = false
+    let tencentClient = null
+
+    const connectTencentClassroom = async () => {
+      try {
+        setConnectionStatus('connecting')
+        setSignalingStatus('tencent')
+        const [{ default: TRTC }, credentials] = await Promise.all([
+          import('trtc-sdk-v5'),
+          fetchTencentClassroomCredentials(roomBooking.id),
+        ])
+        if (disposed) return
+        const support = await TRTC.isSupported()
+        if (!support?.result) throw new Error('This browser does not support Tencent RTC. Use current Chrome, Edge or Safari.')
+
+        cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
+        cameraStreamRef.current = null
+        localStreamRef.current = null
+        setVideoStream(localVideoRef.current, null)
+
+        tencentClient = TRTC.create()
+        trtcRef.current = tencentClient
+        trtcModuleRef.current = TRTC
+        tencentClient.on(TRTC.EVENT.REMOTE_USER_ENTER, () => {
+          if (disposed) return
+          setParticipantCount(2)
+          setConnectionStatus('connected')
+        })
+        tencentClient.on(TRTC.EVENT.REMOTE_USER_EXIT, () => {
+          if (disposed) return
+          setParticipantCount(1)
+          setConnectionStatus('waiting')
+          setRemoteScreenSharing(false)
+        })
+        tencentClient.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
+          if (disposed) return
+          const isScreen = String(streamType).toLowerCase().includes('sub')
+          if (isScreen) setRemoteScreenSharing(true)
+          window.requestAnimationFrame(() => {
+            const view = isScreen ? remoteTencentScreenRef.current : remoteTencentViewRef.current
+            if (view) tencentClient.startRemoteVideo({ userId, streamType, view }).catch(() => {})
+          })
+          setParticipantCount(2)
+          setConnectionStatus('connected')
+        })
+        tencentClient.on(TRTC.EVENT.REMOTE_VIDEO_UNAVAILABLE, ({ streamType }) => {
+          if (String(streamType).toLowerCase().includes('sub')) setRemoteScreenSharing(false)
+        })
+        tencentClient.on(TRTC.EVENT.ERROR, (error) => {
+          if (!disposed) {
+            setMediaError(`Tencent RTC connection error: ${error?.message || 'Please retry the classroom.'}`)
+            setConnectionStatus('failed')
+          }
+        })
+
+        await tencentClient.enterRoom({
+          sdkAppId: credentials.sdkAppId,
+          userId: credentials.userId,
+          userSig: credentials.userSig,
+          strRoomId: credentials.roomId,
+          scene: 'rtc',
+        })
+        if (disposed) return
+        await Promise.all([
+          tencentClient.startLocalVideo({ view: localTencentViewRef.current }),
+          tencentClient.startLocalAudio(),
+        ])
+        setMediaReady(true)
+        setMicOn(true)
+        setCameraOn(true)
+        setConnectionStatus('waiting')
+      } catch (error) {
+        if (!disposed) {
+          setMediaError(error?.message || 'The embedded Tencent classroom could not start.')
+          setConnectionStatus('failed')
+        }
+      }
+    }
+
+    void connectTencentClassroom()
+    return () => {
+      disposed = true
+      if (trtcRef.current === tencentClient) trtcRef.current = null
+      trtcModuleRef.current = null
+      if (tencentClient) {
+        void tencentClient.stopScreenShare().catch(() => {})
+        void tencentClient.stopLocalVideo().catch(() => {})
+        void tencentClient.stopLocalAudio().catch(() => {})
+        void tencentClient.exitRoom().catch(() => {})
+        tencentClient.destroy()
+      }
+    }
+  }, [joined, access.allowed, roomBooking.id, reconnectKey, useTencentClassroom])
 
   useEffect(() => {
     if (!joined) return undefined
@@ -474,19 +579,40 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     setReconnectKey((value) => value + 1)
   }
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     const next = !micOn
-    cameraStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = next })
-    setMicOn(next)
+    try {
+      if (trtcRef.current) {
+        if (next) await trtcRef.current.startLocalAudio()
+        else await trtcRef.current.stopLocalAudio()
+      } else cameraStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = next })
+      setMicOn(next)
+    } catch {
+      setMediaError('The microphone could not be changed in Tencent RTC.')
+    }
   }
 
-  const toggleCamera = () => {
+  const toggleCamera = async () => {
     const next = !cameraOn
-    cameraStreamRef.current?.getVideoTracks().forEach((track) => { track.enabled = next })
-    setCameraOn(next)
+    try {
+      if (trtcRef.current) {
+        if (next) await trtcRef.current.startLocalVideo({ view: localTencentViewRef.current })
+        else await trtcRef.current.stopLocalVideo()
+      } else cameraStreamRef.current?.getVideoTracks().forEach((track) => { track.enabled = next })
+      setCameraOn(next)
+    } catch {
+      setMediaError('The camera could not be changed in Tencent RTC.')
+    }
   }
 
   const stopScreenShare = async () => {
+    if (trtcRef.current) {
+      await trtcRef.current.stopScreenShare().catch(() => {})
+      transportRef.current?.send({ type: 'screen-state', active: false, paused: false })
+      setScreenPaused(false)
+      setScreenSharing(false)
+      return
+    }
     const stream = screenStreamRef.current
     screenStreamRef.current = null
     stream?.getTracks().forEach((track) => {
@@ -503,6 +629,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const toggleScreenPause = () => {
+    if (trtcRef.current) {
+      setMediaError('Pause the shared screen from your browser’s sharing control when using Tencent RTC.')
+      return
+    }
     const track = screenStreamRef.current?.getVideoTracks()[0]
     if (!track) return
     const paused = !screenPaused
@@ -533,6 +663,20 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
     if (screenSharing) {
       await stopScreenShare()
+      return
+    }
+    if (trtcRef.current) {
+      try {
+        setMediaError('')
+        await trtcRef.current.startScreenShare()
+        setPresentedFile(null)
+        setScreenPaused(false)
+        setScreenFit('fit')
+        setScreenSharing(true)
+        transportRef.current?.send({ type: 'screen-state', active: true, paused: false, fit: 'fit' })
+      } catch (error) {
+        if (error?.extraCode !== 5302) setMediaError('Tencent RTC screen sharing could not be started.')
+      }
       return
     }
     if (!navigator.mediaDevices?.getDisplayMedia) {
@@ -718,8 +862,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
   const formatElapsed = () => `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
   const connectionLabel = connectionStatus === 'connected'
-    ? 'Live peer connected'
-    : signalingStatus === 'fallback'
+    ? useTencentClassroom ? 'Tencent RTC connected' : 'Live peer connected'
+    : signalingStatus === 'tencent'
+      ? 'Tencent RTC · waiting for participant'
+      : signalingStatus === 'fallback'
       ? 'Secure fallback · waiting for peer'
       : connectionStatus === 'local'
         ? 'Local classroom ready'
@@ -743,6 +889,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           </section>
           <section className="prejoin-details">
             <span className="classroom-brand"><Presentation size={20} /> TutorPro English Classroom</span>
+            {useTencentClassroom && <span className="tencent-provider-badge"><Video size={14} /> Embedded VooV / Tencent RTC</span>}
             <small>{account.role === 'teacher' ? 'Teacher room' : account.role === 'admin' ? 'Administrator access' : 'Booked student room'}</small>
             <h1>Ready for class, {participantName}?</h1>
             <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at <strong className="classroom-lesson-time">{formatTime(roomBooking.time)}</strong></p>
@@ -770,12 +917,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         <section className="classroom-stage">
           <div className="classroom-video-rail">
             <div className="classroom-camera-tile classroom-camera-tile--remote">
-              {!remoteScreenSharing && <video ref={remoteVideoRef} autoPlay playsInline />}
+              {useTencentClassroom ? <div className="tencent-video-view" ref={remoteTencentViewRef} /> : !remoteScreenSharing && <video ref={remoteVideoRef} autoPlay playsInline />}
               {connectionStatus !== 'connected' && <div className="camera-tile-waiting"><Radio size={22} /><span>Waiting for {account.role === 'teacher' ? learner?.name : teacher?.fullName}</span></div>}
               <span>{account.role === 'teacher' ? learner?.name || 'Student' : teacher?.fullName || 'Teacher'}</span>
             </div>
             <div className="classroom-camera-tile classroom-camera-tile--local">
-              <video ref={localVideoRef} autoPlay muted playsInline />
+              {useTencentClassroom ? <div className="tencent-video-view" ref={localTencentViewRef} /> : <video ref={localVideoRef} autoPlay muted playsInline />}
               <span>You · {participantName}</span>
               {!cameraOn && <CameraOff size={24} />}
             </div>
@@ -783,7 +930,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           </div>
 
           <div className="classroom-lesson-board" ref={stageRef}>
-            {screenSharing ? <video className={`classroom-presentation-video classroom-presentation-video--${screenFit}`} ref={sharedScreenVideoRef} autoPlay muted playsInline /> : remoteScreenSharing ? <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline /> : presentedFile ? <div className="classroom-file-presentation">{presentedFile.type?.startsWith('image/') ? <img src={presentedFile.dataUrl} alt={presentedFile.name} /> : presentedFile.type === 'application/pdf' ? <object data={presentedFile.dataUrl} type="application/pdf" aria-label={presentedFile.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{presentedFile.name}</strong><span>This browser cannot embed the PDF.</span><a href={presentedFile.dataUrl} download={presentedFile.name}>Open PDF</a></div></object> : <div><Presentation size={54} /><strong>{presentedFile.name}</strong><span>Use the download button to open this lesson file.</span></div>}<small><Paperclip size={13} /> {presentedFile.name}</small></div> : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            {screenSharing ? (useTencentClassroom ? <div className="tencent-screen-sharing-state"><MonitorUp size={44} /><strong>Your screen is live</strong><span>Tencent RTC is securely presenting it to the student.</span></div> : <video className={`classroom-presentation-video classroom-presentation-video--${screenFit}`} ref={sharedScreenVideoRef} autoPlay muted playsInline />) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presentedFile ? <div className="classroom-file-presentation">{presentedFile.type?.startsWith('image/') ? <img src={presentedFile.dataUrl} alt={presentedFile.name} /> : presentedFile.type === 'application/pdf' ? <object data={presentedFile.dataUrl} type="application/pdf" aria-label={presentedFile.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{presentedFile.name}</strong><span>This browser cannot embed the PDF.</span><a href={presentedFile.dataUrl} download={presentedFile.name}>Open PDF</a></div></object> : <div><Presentation size={54} /><strong>{presentedFile.name}</strong><span>Use the download button to open this lesson file.</span></div>}<small><Paperclip size={13} /> {presentedFile.name}</small></div> : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
             {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
             <canvas
               ref={annotationCanvasRef}

@@ -71,6 +71,7 @@ import { downloadBookingCalendar } from './bookingCalendar.js'
 import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
+import { isTencentClassroomConfigured } from './tencentClassroom.js'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
@@ -1157,6 +1158,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [classroomSaved, setClassroomSaved] = useState(false)
   const [classroomError, setClassroomError] = useState('')
   const bookings = getBookings({ teacherId: account.id })
+  const tencentClassroomReady = isTencentClassroomConfigured()
   const pending = bookings.filter((booking) => booking.status === 'pending').length
   const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
   const bookingStatusCount = (status) => status === 'all' ? bookings.length : bookings.filter((booking) => booking.status === status).length
@@ -1329,8 +1331,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       setClassroomError('Meeting links must start with https:// so students can open them safely.')
       return
     }
+    const embeddedTencent = classroom.platform === 'voov' && tencentClassroomReady
     const activeLink = classroom.platform === 'zoom' ? classroom.zoomLink : classroom.voovLink
-    if (!activeLink) {
+    if (!activeLink && !embeddedTencent) {
       setClassroomError(`Add the ${classroom.platform === 'zoom' ? 'Zoom' : 'VooV'} meeting link before selecting it as the classroom platform.`)
       return
     }
@@ -1407,11 +1410,11 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             <section className="portal-card classroom-settings">
               <div className="platform-choice">
                 <button className={classroom.platform === 'zoom' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'zoom' })); setClassroomError('') }}><span className="platform-logo platform-logo--zoom">Z</span><div><strong>Zoom</strong><small>Use Zoom for upcoming classes</small></div><i>{classroom.platform === 'zoom' && <Check size={14} />}</i></button>
-                <button className={classroom.platform === 'voov' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'voov' })); setClassroomError('') }}><span className="platform-logo platform-logo--voov">V</span><div><strong>VooV Meeting</strong><small>Use VooV for upcoming classes</small></div><i>{classroom.platform === 'voov' && <Check size={14} />}</i></button>
+                <button className={classroom.platform === 'voov' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'voov' })); setClassroomError('') }}><span className="platform-logo platform-logo--voov">V</span><div><strong>VooV / Tencent RTC</strong><small>{tencentClassroomReady ? 'Embedded securely inside TutorPro English' : 'Add a VooV fallback meeting link'}</small></div><i>{classroom.platform === 'voov' && <Check size={14} />}</i></button>
               </div>
               <div className="classroom-link-fields">
                 <label><span>Zoom meeting link</span><div><Video size={17} /><input type="url" value={classroom.zoomLink || ''} onChange={(event) => setClassroom((current) => ({ ...current, zoomLink: event.target.value }))} placeholder="https://zoom.us/j/…" /></div></label>
-                <label><span>VooV meeting link</span><div><Video size={17} /><input type="url" value={classroom.voovLink || ''} onChange={(event) => setClassroom((current) => ({ ...current, voovLink: event.target.value }))} placeholder="https://voovmeeting.com/…" /></div></label>
+                <label><span>{tencentClassroomReady ? 'Optional VooV fallback link' : 'VooV meeting link'}</span><div><Video size={17} /><input type="url" value={classroom.voovLink || ''} onChange={(event) => setClassroom((current) => ({ ...current, voovLink: event.target.value }))} placeholder="https://voovmeeting.com/…" /></div></label>
               </div>
               <button className="portal-primary-button" onClick={saveClassroom}><ShieldCheck size={16} /> Save private classroom</button>
             </section>

@@ -42,6 +42,9 @@ const recordedInterviewSql = await readFile(new URL('../supabase/teacher_intervi
 assert(recordedInterviewSql.includes("'teacher-interview-recordings'") && recordedInterviewSql.includes('Admins read private interview recordings') && recordedInterviewSql.includes('complete_teacher_interview_session'), 'Private recorded-interview storage and administrator access SQL is incomplete.')
 const bookingSyncSql = await readFile(new URL('../supabase/bookings_sync.sql', import.meta.url), 'utf8')
 assert(bookingSyncSql.includes('public.classroom_signals') && bookingSyncSql.includes('Classroom participants send signals') && bookingSyncSql.includes('prune_expired_classroom_signals') && bookingSyncSql.includes("'ongoing'") && bookingSyncSql.includes("'absent'"), 'Durable classroom signaling or separated booking statuses SQL is incomplete.')
+const trtcUserSigFunction = await readFile(new URL('../supabase/functions/trtc-usersig/index.ts', import.meta.url), 'utf8')
+assert(trtcUserSigFunction.includes('TRTC_SECRET_KEY') && trtcUserSigFunction.includes(".from('bookings')") && trtcUserSigFunction.includes('auth.getUser()') && trtcUserSigFunction.includes('genSig'), 'Secure booking-authorized Tencent UserSig generation is incomplete.')
+assert(!trtcUserSigFunction.includes('VITE_TRTC_SECRET'), 'Tencent SecretKey was exposed as a browser variable.')
 const interviewerVoiceFiles = await readdir(new URL('../public/assets/interviewer-voice/', import.meta.url))
 assert(interviewerVoiceFiles.filter((file) => file.endsWith('.wav')).length === 16, 'The complete masculine AI interviewer voice library is missing.')
 
