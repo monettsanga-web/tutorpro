@@ -548,7 +548,11 @@
 .portal-status--approved,
 .portal-status--confirmed,
 .portal-status--completed { background: #e1f4e7; color: #267547; }
+.portal-status--ongoing { background: #e8e1fb; color: #5b36a2; }
+.portal-status--ongoing::before { display: inline-block; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; background: #7b51d4; content: ''; animation: booking-ongoing-pulse 1.2s ease-in-out infinite; }
+.portal-status--absent { background: #eceff3; color: #596577; }
 .portal-status--pending { background: #fff1d5; color: #9a6710; }
+@keyframes booking-ongoing-pulse { 50% { opacity: 0.35; transform: scale(0.75); } }
 .portal-status--rejected,
 .portal-status--declined,
 .portal-status--cancelled,
@@ -1157,6 +1161,7 @@
 
 .lesson-card__actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
@@ -1436,6 +1441,13 @@
 
 .schedule-cell.booked.manageable { cursor: pointer; }
 .schedule-cell.booked.manageable:hover { z-index: 4; background: #ffd7e8; box-shadow: inset 0 0 0 2px #d83e72; }
+.schedule-cell.booked.booking-status-ongoing { background: #e9e2fb; box-shadow: inset 3px 0 0 #7850c9; }
+.schedule-cell.booked.booking-status-completed { background: #e5f5e9; box-shadow: inset 3px 0 0 #4ca66a; }
+.schedule-cell.booked.booking-status-absent { background: #eceff3; box-shadow: inset 3px 0 0 #7c8796; }
+.schedule-cell.booked.booking-status-cancelled,
+.schedule-cell.booked.booking-status-declined { background: #f3f4f6; box-shadow: inset 3px 0 0 #a7adb6; }
+.schedule-cell.booked.booking-status-cancelled > span,
+.schedule-cell.booked.booking-status-declined > span { opacity: 0.65; text-decoration: line-through; }
 
 .schedule-cell.past:not(.booked) {
   background-color: #f7f8fa;
@@ -1533,6 +1545,10 @@
 .legend-dot--available { background: #62bd85; }
 .legend-dot--selected { background: var(--portal-orange); }
 .legend-dot--booked { background: #ec5b98; }
+.legend-dot--ongoing { background: #7850c9; }
+.legend-dot--completed { background: #4ca66a; }
+.legend-dot--absent { background: #7c8796; }
+.legend-dot--cancelled { background: #a7adb6; }
 .legend-dot--unavailable { border: 1px solid #cfd8e4; background: #fafbfc; }
 
 .availability-calendar-card,
@@ -1937,6 +1953,10 @@
 .teacher-booking-view-toggle { display: inline-flex; flex: 0 0 auto; gap: 4px; border: 1px solid #d8dfe9; border-radius: 11px; padding: 4px; background: #f5f7fa; }
 .teacher-booking-view-toggle button { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 8px; padding: 0 12px; background: transparent; color: #6a7b91; font-size: 0.62rem; font-weight: 850; }
 .teacher-booking-view-toggle button.active { background: #321568; box-shadow: 0 5px 13px rgba(50,21,104,0.18); color: #fff; }
+.teacher-booking-status-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: end; padding: 14px 16px; }
+.teacher-booking-status-card > div:first-child { display: flex; min-width: 150px; flex-direction: column; gap: 3px; }
+.teacher-booking-status-card > div:first-child strong { color: #3d2c52; font-size: 0.66rem; }
+.teacher-booking-status-filters { padding-bottom: 1px; }
 .teacher-feedback-instruction { background: linear-gradient(100deg, #f2ecff, #f8fbdc); color: #5e3b8c; }
 .teacher-feedback-instruction small { color: #766789; }
 .teacher-booking-calendar .schedule-cell.booked.booking-start { box-shadow: inset 3px 0 0 #ec5b98, 0 0 0 1px rgba(236,91,152,0.08); }
@@ -2693,6 +2713,8 @@
 .lesson-action--accept { background: #e4f5e9; color: #2e7d4c; }
 .lesson-action--decline { background: #fde9e5; color: #a84835; }
 .lesson-action--complete { background: #e6f0fc; color: #2469b6; }
+.lesson-action--absent { background: #eef0f3; color: #5d6878; }
+.lesson-action--restore { background: #f1ebfb; color: #68439d; }
 
 .availability-card {
   max-width: 850px;
@@ -5013,7 +5035,9 @@
 .booking-status-filter.active strong { background: rgba(255,255,255,0.18); color: #fff; }
 .booking-status-filter--pending:not(.active) { border-color: #f2d1ad; background: #fff9ef; color: #a26725; }
 .booking-status-filter--confirmed:not(.active) { border-color: #cbdff7; background: #f3f8ff; color: #316cae; }
+.booking-status-filter--ongoing:not(.active) { border-color: #d9cdf3; background: #f6f2ff; color: #6842ad; }
 .booking-status-filter--completed:not(.active) { border-color: #d6e8b6; background: #f7fce9; color: #5c8127; }
+.booking-status-filter--absent:not(.active) { border-color: #dce0e6; background: #f5f6f8; color: #626e7d; }
 .booking-status-filter--cancelled:not(.active),
 .booking-status-filter--declined:not(.active) { border-color: #ebd4dc; background: #fff7fa; color: #9b526b; }
 .admin-teacher-booking-groups { display: grid; gap: 16px; }
@@ -5552,6 +5576,8 @@
 
   .teacher-booking-view-toggle { width: 100%; }
   .teacher-booking-view-toggle button { flex: 1; }
+  .teacher-booking-status-card { grid-template-columns: 1fr; align-items: stretch; padding: 12px; }
+  .teacher-booking-status-filters { margin-right: -12px; padding-right: 12px; overflow-x: auto; }
   .admin-booking-filter-card { padding: 12px; }
   .booking-status-filters { margin-right: -12px; padding-right: 12px; }
   .booking-status-filter { flex: 0 0 auto; min-width: 94px; }

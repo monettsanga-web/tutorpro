@@ -8,11 +8,15 @@ create table if not exists public.bookings (
   student_id text not null,
   teacher_id text not null,
   status text not null default 'pending'
-    check (status in ('pending', 'confirmed', 'completed', 'cancelled', 'declined')),
+    check (status in ('pending', 'confirmed', 'ongoing', 'completed', 'absent', 'cancelled', 'declined')),
   booking_data jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.bookings drop constraint if exists bookings_status_check;
+alter table public.bookings add constraint bookings_status_check
+  check (status in ('pending', 'confirmed', 'ongoing', 'completed', 'absent', 'cancelled', 'declined'));
 
 create index if not exists bookings_student_id_idx on public.bookings(student_id);
 create index if not exists bookings_teacher_id_idx on public.bookings(teacher_id);

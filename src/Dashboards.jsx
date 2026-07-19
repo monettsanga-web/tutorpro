@@ -107,7 +107,9 @@ const BOOKING_STATUS_OPTIONS = [
   { id: 'all', label: 'All' },
   { id: 'pending', label: 'Pending' },
   { id: 'confirmed', label: 'Confirmed' },
+  { id: 'ongoing', label: 'Ongoing' },
   { id: 'completed', label: 'Completed' },
+  { id: 'absent', label: 'Absent' },
   { id: 'cancelled', label: 'Cancelled' },
   { id: 'declined', label: 'Declined' },
 ]
@@ -161,6 +163,7 @@ export function ScheduleCalendar({
   onSelect,
   onBookingOpen,
   onBookingFeedback,
+  showInactiveBookings = false,
   duration = 25,
   multiSelect = false,
 }) {
@@ -168,7 +171,10 @@ export function ScheduleCalendar({
   const available = new Set(availabilitySlots)
   const dragState = useRef(null)
   const scrollRef = useRef(null)
-  const activeBookings = bookings.filter((booking) => !['cancelled', 'declined'].includes(booking.status))
+  const inactiveCalendarStatuses = new Set(['cancelled', 'declined', 'absent'])
+  const activeBookings = showInactiveBookings
+    ? [...bookings].sort((first, second) => Number(!inactiveCalendarStatuses.has(first.status)) - Number(!inactiveCalendarStatuses.has(second.status)))
+    : bookings.filter((booking) => !inactiveCalendarStatuses.has(booking.status))
   const occupied = new Map()
 
   activeBookings.forEach((booking) => {
@@ -297,10 +303,12 @@ export function ScheduleCalendar({
                 const isPast = new Date(`${dateKey}T${time}:00`) <= new Date()
                 const student = bookingCell ? getAccountById(bookingCell.booking.studentId) : null
                 const bookedLearner = student?.children?.find((item) => item.id === bookingCell?.booking.learnerId) || student?.child
+                const feedbackAvailable = Boolean(onBookingFeedback && bookingCell && ['confirmed', 'ongoing', 'completed'].includes(bookingCell.booking.status))
                 const classes = [
                   'schedule-cell',
                   isAvailable ? 'available' : 'unavailable',
                   bookingCell ? 'booked' : '',
+                  bookingCell ? `booking-status-${bookingCell.booking.status}` : '',
                   bookingCell && onBookingOpen ? 'manageable' : '',
                   bookingCell?.isStart ? 'booking-start' : '',
                   selectable ? 'selectable' : '',
@@ -327,7 +335,7 @@ export function ScheduleCalendar({
                       if (!editable && multiSelect && event.detail === 0 && (selectable || selectedOwner)) onSelect(selectedOwner || { date: dateKey, time }, selectedOwner ? 'remove' : 'add')
                     }}
                   >
-                    {bookingCell?.isStart && <span><strong className={onBookingFeedback && ['confirmed', 'completed'].includes(bookingCell.booking.status) ? 'schedule-feedback-target' : ''} title={onBookingFeedback && ['confirmed', 'completed'].includes(bookingCell.booking.status) ? `Write feedback for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : undefined} onPointerDown={(event) => { if (onBookingFeedback && ['confirmed', 'completed'].includes(bookingCell.booking.status)) event.stopPropagation() }} onClick={(event) => { if (onBookingFeedback && ['confirmed', 'completed'].includes(bookingCell.booking.status)) { event.stopPropagation(); onBookingFeedback(bookingCell.booking) } }}>{bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson'}</strong><small className="schedule-booking-detail">{bookingCell.booking.slotComment || bookingCell.booking.focus}</small>{onBookingFeedback && ['confirmed', 'completed'].includes(bookingCell.booking.status) && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}{bookingCell.booking.slotComment && <em>Comment</em>}</span>}
+                    {bookingCell?.isStart && <span><strong className={feedbackAvailable ? 'schedule-feedback-target' : ''} title={feedbackAvailable ? `Write feedback for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : undefined} onPointerDown={(event) => { if (feedbackAvailable) event.stopPropagation() }} onClick={(event) => { if (feedbackAvailable) { event.stopPropagation(); onBookingFeedback(bookingCell.booking) } }}>{bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson'}</strong><small className="schedule-booking-detail">{bookingCell.booking.slotComment || bookingCell.booking.focus}</small>{feedbackAvailable && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}{bookingCell.booking.slotComment && <em>Comment</em>}</span>}
                     {!editable && selectable && !bookingCell && <i>Available</i>}
                   </button>
                 )
@@ -337,10 +345,7 @@ export function ScheduleCalendar({
         </div>
       </div>
       <div className="schedule-legend">
-        <span><i className="legend-dot legend-dot--available" />Available</span>
-        <span><i className="legend-dot legend-dot--selected" />Selected</span>
-        <span><i className="legend-dot legend-dot--booked" />Booked</span>
-        <span><i className="legend-dot legend-dot--unavailable" />Unavailable</span>
+        {showInactiveBookings ? <><span><i className="legend-dot legend-dot--booked" />Confirmed</span><span><i className="legend-dot legend-dot--ongoing" />Ongoing</span><span><i className="legend-dot legend-dot--completed" />Completed</span><span><i className="legend-dot legend-dot--absent" />Absent</span><span><i className="legend-dot legend-dot--cancelled" />Cancelled / declined</span></> : <><span><i className="legend-dot legend-dot--available" />Available</span><span><i className="legend-dot legend-dot--selected" />Selected</span><span><i className="legend-dot legend-dot--booked" />Booked</span><span><i className="legend-dot legend-dot--unavailable" />Unavailable</span></>}
       </div>
     </div>
   )
@@ -423,7 +428,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
         <h3>{booking.focus}</h3>
         <p className="lesson-card__details">{person && <strong className="booking-person-name">{showTeacher ? 'Teacher' : 'Student'}: {person}</strong>}<span>{formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time)}</strong></span></p>
-        {booking.status === 'confirmed' && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> Enter private classroom <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
+        {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
         <div className="booking-utility-actions">{onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}{booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}</div>
@@ -451,7 +456,7 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
   const canCancel = account.role === 'admin'
     || (account.role === 'teacher' && account.id === booking.teacherId)
     || (account.role === 'student' && account.id === booking.studentId)
-  const cancellable = !['cancelled', 'declined', 'completed'].includes(current.status)
+  const cancellable = !['ongoing', 'completed', 'absent', 'cancelled', 'declined'].includes(current.status)
 
   const changed = (updated) => {
     setCurrent(updated)
@@ -869,7 +874,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const bookings = hasLearnerProfile
     ? allBookings.filter((booking) => booking.learnerId ? booking.learnerId === learner.id : learner.id === learners[0]?.id)
     : []
-  const upcoming = bookings.find((booking) => booking.date >= today() && ['pending', 'confirmed'].includes(booking.status))
+  const upcoming = bookings.find((booking) => booking.date >= today() && ['pending', 'confirmed', 'ongoing'].includes(booking.status))
   const completed = bookings.filter((booking) => booking.status === 'completed').length
   const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
   const studentSyncCallbacks = useRef({ onAccountChange, onLogout })
@@ -1111,8 +1116,8 @@ function TargetIcon() {
   return <TrendingUp size={25} />
 }
 
-export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false }) {
-  const [active, setActive] = useState('overview')
+export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false, initialSection = 'overview' }) {
+  const [active, setActive] = useState(initialSection)
   const [account, setAccount] = useState(() => {
     const source = initialAccount.teacher || {}
     return {
@@ -1138,6 +1143,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [scheduleWeek, setScheduleWeek] = useState(0)
   const [bookingWeek, setBookingWeek] = useState(0)
   const [bookingView, setBookingView] = useState('list')
+  const [bookingStatusFilter, setBookingStatusFilter] = useState('all')
   const [saved, setSaved] = useState(false)
   const [mediaVersion, setMediaVersion] = useState(0)
   const [mediaError, setMediaError] = useState('')
@@ -1152,6 +1158,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [classroomError, setClassroomError] = useState('')
   const bookings = getBookings({ teacherId: account.id })
   const pending = bookings.filter((booking) => booking.status === 'pending').length
+  const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
+  const bookingStatusCount = (status) => status === 'all' ? bookings.length : bookings.filter((booking) => booking.status === status).length
   const teacherSyncCallbacks = useRef({ onAccountChange, onLogout })
   void version
 
@@ -1278,7 +1286,16 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       syncBookingNow(booking)
         .then(() => notifyBookingParticipants(booking, status === 'confirmed' ? 'confirmed' : 'cancelled'))
         .catch(() => {})
-    }
+    } else if (['ongoing', 'absent'].includes(status)) syncBookingNow(booking).catch(() => {})
+    refresh()
+  }
+
+  const openTeacherClassroom = (booking) => {
+    const activeClassroomBooking = booking.status === 'confirmed'
+      ? updateBooking(booking.id, { status: 'ongoing', classStartedAt: new Date().toISOString() })
+      : booking
+    if (activeClassroomBooking.status === 'ongoing') syncBookingNow(activeClassroomBooking).catch(() => {})
+    setClassroomBooking(activeClassroomBooking)
     refresh()
   }
 
@@ -1366,16 +1383,19 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'bookings' && (
         <div className="portal-view">
-          <div className="portal-page-heading teacher-bookings-heading"><div><span className="portal-kicker">Lesson management</span><h1>Bookings</h1><p>Confirm requests, view your teaching calendar and add feedback directly from a student’s name.</p></div><div className="teacher-booking-view-toggle" role="group" aria-label="Choose booking view"><button type="button" className={bookingView === 'list' ? 'active' : ''} onClick={() => setBookingView('list')}><ClipboardCheck size={15} /> List view</button><button type="button" className={bookingView === 'calendar' ? 'active' : ''} onClick={() => setBookingView('calendar')}><CalendarDays size={15} /> Calendar view</button></div></div>
+          <div className="portal-page-heading teacher-bookings-heading"><div><span className="portal-kicker">Lesson management</span><h1>Bookings</h1><p>Keep upcoming, ongoing, completed, absent and cancelled classes clearly separated.</p></div><div className="teacher-booking-view-toggle" role="group" aria-label="Choose booking view"><button type="button" className={bookingView === 'list' ? 'active' : ''} onClick={() => setBookingView('list')}><ClipboardCheck size={15} /> List view</button><button type="button" className={bookingView === 'calendar' ? 'active' : ''} onClick={() => setBookingView('calendar')}><CalendarDays size={15} /> Calendar view</button></div></div>
+          <section className="portal-card teacher-booking-status-card"><div><span className="portal-kicker">Class status</span><strong>Choose which bookings to show</strong></div><div className="booking-status-filters teacher-booking-status-filters" role="group" aria-label="Filter teacher bookings by status">{BOOKING_STATUS_OPTIONS.map((option) => <button type="button" key={option.id} className={`booking-status-filter booking-status-filter--${option.id} ${bookingStatusFilter === option.id ? 'active' : ''}`} onClick={() => setBookingStatusFilter(option.id)}><span>{option.label}</span><strong>{bookingStatusCount(option.id)}</strong></button>)}</div></section>
           {bookingView === 'list' ? <section className="portal-card lessons-list-card">
-            {bookings.length ? bookings.map((booking) => {
+            {filteredBookings.length ? filteredBookings.map((booking) => {
               let actions = null
               if (booking.status === 'pending') actions = <><button className="lesson-action lesson-action--wide lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}>Accept</button><button className="lesson-action lesson-action--wide lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}>Decline</button></>
-              if (booking.status === 'confirmed') actions = <button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button>
+              if (booking.status === 'confirmed') actions = <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
+              if (booking.status === 'ongoing') actions = <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
               if (booking.status === 'completed') actions = <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
-              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} actions={actions} />
-            }) : <EmptyState title="No bookings yet" text="Approved teachers will see student requests here." />}
-          </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Feedback from the calendar</strong><small>Point to a confirmed or completed student name, then select Write feedback. On phones, tap the student name.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={bookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} /></section>}
+              if (booking.status === 'absent') actions = <button className="lesson-action lesson-action--wide lesson-action--restore" onClick={() => changeStatus(booking.id, 'confirmed')}><RotateCcw size={13} /> Restore booking</button>
+              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} actions={actions} />
+            }) : <EmptyState title={`No ${bookingStatusFilter === 'all' ? '' : `${bookingStatusFilter} `}bookings`} text="Choose another class status to see matching teacher bookings." />}
+          </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Separated calendar statuses</strong><small>Calendar colours distinguish ongoing, completed, absent and cancelled classes. Point to a confirmed, ongoing or completed student name to write feedback.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={filteredBookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} showInactiveBookings /></section>}
         </div>
       )}
 
@@ -1397,7 +1417,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             </section>
             <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
-          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch an upcoming class</h2></div></div>{bookings.filter((booking) => booking.status === 'confirmed').length ? bookings.filter((booking) => booking.status === 'confirmed').map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} />) : <EmptyState icon={Video} title="No confirmed classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
+          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).length ? bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} />) : <EmptyState icon={Video} title="No active classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
         </div>
       )}
 
@@ -1577,7 +1597,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       <div className="admin-student-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
-        <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
+        <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed', 'ongoing'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family remain separate.</p></section>
       </div>
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Student activity</span><h2>Recent lessons</h2></div></div>{learnerBookings.length ? learnerBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher />) : <EmptyState icon={CalendarDays} title="No lessons yet" text="Student bookings will appear here." />}</section>
@@ -2188,7 +2208,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       syncBookingNow(updatedBooking)
         .then(() => notifyBookingParticipants(updatedBooking, status === 'confirmed' ? 'confirmed' : 'cancelled'))
         .catch(() => {})
-    }
+    } else if (['ongoing', 'absent'].includes(status)) syncBookingNow(updatedBooking).catch(() => {})
     refresh()
   }
 
@@ -2268,7 +2288,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             {bookingStudent && bookingLearner ? <BookLessonPanel key={bookingLearner.id} account={bookingStudent} learner={bookingLearner} adminBooking onBooked={refresh} /> : <EmptyState icon={GraduationCap} title="Register a student first" text="An administrator needs a student profile before creating a booking." />}
           </div>
         ) : (
-          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Bookings are separated by teacher profile. Filter by teacher or status to find pending, confirmed, completed, cancelled and declined lessons quickly.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} /></div>
+          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Bookings are separated by teacher profile. Filter by teacher or status to find pending, confirmed, ongoing, completed, absent, cancelled and declined lessons quickly.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} /></div>
         )
       )}
 

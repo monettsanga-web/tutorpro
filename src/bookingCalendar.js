@@ -46,7 +46,7 @@ export function createBookingCalendar(booking, { teacherName = '', learnerName =
     `SUMMARY:${escapeCalendarText(title)}`,
     `DESCRIPTION:${escapeCalendarText(details)}`,
     `LOCATION:${escapeCalendarText('TutorPro English Private Online Classroom')}`,
-    `STATUS:${booking.status === 'confirmed' ? 'CONFIRMED' : 'TENTATIVE'}`,
+    `STATUS:${['confirmed', 'ongoing', 'completed'].includes(booking.status) ? 'CONFIRMED' : booking.status === 'cancelled' ? 'CANCELLED' : 'TENTATIVE'}`,
     'BEGIN:VALARM',
     'TRIGGER:-PT30M',
     'ACTION:DISPLAY',

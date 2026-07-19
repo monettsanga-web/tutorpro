@@ -112,7 +112,7 @@ export function createBooking(details) {
 
   const requestedEnd = startMinutes + (Math.ceil(Number(details.duration) / 30) * 30)
   const conflict = bookings.some((booking) => {
-    if (booking.date !== details.date || ['cancelled', 'declined'].includes(booking.status)) return false
+    if (booking.date !== details.date || ['cancelled', 'declined', 'absent'].includes(booking.status)) return false
     const sameTeacher = booking.teacherId === details.teacherId
     const bookedLearnerId = booking.learnerId || studentAccount.child?.id
     const sameLearner = booking.studentId === details.studentId && bookedLearnerId === learner.id
@@ -152,12 +152,12 @@ export function updateBooking(bookingId, changes) {
   const bookings = readBookings()
   const index = bookings.findIndex((booking) => booking.id === bookingId)
   if (index < 0) throw new Error('Booking not found.')
-  const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'declined']
+  const validStatuses = ['pending', 'confirmed', 'ongoing', 'completed', 'absent', 'cancelled', 'declined']
   if (changes.status && !validStatuses.includes(changes.status)) throw new Error('Invalid booking status.')
   if (typeof changes.slotComment === 'string' && changes.slotComment.trim().length > 500) throw new Error('Keep the booking comment under 500 characters.')
   if (typeof changes.slotComment === 'string') changes = { ...changes, slotComment: changes.slotComment.trim() }
   const nextStatus = changes.status || bookings[index].status
-  const classroomDetails = ['confirmed', 'completed'].includes(nextStatus)
+  const classroomDetails = ['confirmed', 'ongoing', 'completed'].includes(nextStatus)
     ? getStableClassroomCredentials(bookings[index])
     : {}
   bookings[index] = { ...bookings[index], ...changes, ...classroomDetails, updatedAt: new Date().toISOString() }
@@ -195,7 +195,7 @@ export function rateCompletedBooking(bookingId, studentId, rating, comment = '')
 export function saveTeacherFeedback(bookingId, teacherId, feedback) {
   const booking = readBookings().find((item) => item.id === bookingId)
   if (!booking || booking.teacherId !== teacherId) throw new Error('This lesson is not assigned to the teacher account.')
-  if (!['confirmed', 'completed'].includes(booking.status)) throw new Error('Confirm the lesson before adding post-class feedback.')
+  if (!['confirmed', 'ongoing', 'completed'].includes(booking.status)) throw new Error('Confirm or start the lesson before adding post-class feedback.')
   if (!feedback.summary?.trim()) throw new Error('Add a short class summary before saving feedback.')
   if (feedback.summary.trim().length > 1000) throw new Error('Keep the class summary under 1,000 characters.')
   const practiceWords = [...new Set((Array.isArray(feedback.practiceWords) ? feedback.practiceWords : [])
@@ -226,7 +226,7 @@ export function getBookingById(bookingId) {
 export function getClassroomAccess(bookingId, account, now = new Date()) {
   let booking = getBookingById(bookingId)
   if (!booking) return { allowed: false, reason: 'Classroom booking not found.' }
-  if (['confirmed', 'completed'].includes(booking.status)) {
+  if (['confirmed', 'ongoing', 'completed'].includes(booking.status)) {
     const stableCredentials = getStableClassroomCredentials(booking)
     if (booking.classroomId !== stableCredentials.classroomId || booking.classroomToken !== stableCredentials.classroomToken) {
       booking = updateBooking(booking.id, stableCredentials)
@@ -243,8 +243,8 @@ export function getClassroomAccess(bookingId, account, now = new Date()) {
     if (classroomLearner?.accessStatus === 'suspended') return { allowed: false, reason: 'This student profile is suspended and cannot enter the classroom.', booking }
   }
   if (account.role === 'teacher' && account.status !== 'approved') return { allowed: false, reason: 'This teacher account is not approved for live classes.', booking }
-  if (!['confirmed', 'completed'].includes(booking.status)) {
-    return { allowed: false, reason: 'The lesson must be confirmed before the classroom opens.', booking }
+  if (!['confirmed', 'ongoing', 'completed'].includes(booking.status)) {
+    return { allowed: false, reason: 'The lesson must be confirmed or ongoing before the classroom opens.', booking }
   }
 
   const startsAt = new Date(`${booking.date}T${booking.time}:00`)
@@ -293,7 +293,9 @@ export function getBookingStats() {
     total: bookings.length,
     pending: bookings.filter((booking) => booking.status === 'pending').length,
     confirmed: bookings.filter((booking) => booking.status === 'confirmed').length,
+    ongoing: bookings.filter((booking) => booking.status === 'ongoing').length,
     completed: bookings.filter((booking) => booking.status === 'completed').length,
+    absent: bookings.filter((booking) => booking.status === 'absent').length,
     cancelled: bookings.filter((booking) => ['cancelled', 'declined'].includes(booking.status)).length,
   }
 }
