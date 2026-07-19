@@ -2,7 +2,12 @@ import { supabase } from './supabaseClient.js'
 
 const MAX_SEEN_MESSAGES = 500
 const MAX_QUEUED_MESSAGES = 120
-const DURABLE_SIGNAL_TYPES = new Set(['join-request', 'offer', 'answer', 'ice', 'annotation-permission', 'screen-state'])
+const DURABLE_SIGNAL_TYPES = new Set([
+  'join-request', 'offer', 'answer', 'ice', 'annotation-permission', 'screen-state',
+  'mute-student', 'unmute-request', 'annotation-undo', 'annotation-redo',
+  'annotation-undo-clear', 'pointer-permission', 'object-select', 'presenter-url',
+  'classroom-file-storage',
+])
 
 function channelKey(roomId, token) {
   const safeRoom = String(roomId || '').replace(/[^a-z0-9-]/gi, '').slice(0, 48)

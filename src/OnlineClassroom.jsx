@@ -9,6 +9,7 @@ import {
   Download,
   Eraser,
   FileUp,
+  Globe,
   Languages,
   Lock,
   MessageCircle,
@@ -17,22 +18,30 @@ import {
   Maximize2,
   Minimize2,
   MonitorUp,
+  MousePointer2,
+  Move,
   MoreVertical,
   Paperclip,
   Pause,
   PenTool,
   PhoneOff,
   Play,
+  Pointer,
   Presentation,
   Radio,
+  Redo2,
   RefreshCw,
+  RotateCcw,
   Send,
   ShieldCheck,
   Trash2,
   Type,
+  Undo2,
   Unlock,
   Users,
   Video,
+  Volume2,
+  VolumeX,
   WifiOff,
   X,
 } from 'lucide-react'
@@ -41,8 +50,17 @@ import { getClassroomAccess } from './bookings.js'
 import { createClassroomTransport } from './classroomTransport.js'
 import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
+import {
+  CLASSROOM_FILE_ACCEPT,
+  getClassroomFileSizeLimit,
+  isClassroomFileAllowed,
+  isClassroomStorageAvailable,
+  uploadClassroomFile,
+  getClassroomFileUrl,
+} from './classroomStorage.js'
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024
+const MAX_INLINE_SIZE = 8 * 1024 * 1024
+const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
 const turnServer = import.meta.env.VITE_CLASSROOM_TURN_URL
   ? {
       urls: import.meta.env.VITE_CLASSROOM_TURN_URL,
@@ -64,14 +82,69 @@ function formatTime(time) {
   return new Date(`2026-01-01T${time}`).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })
 }
 
-function drawPath(context, path, width, height) {
+function hitTestAnnotation(path, point, width, height, threshold = 18) {
+  if (path.tool === 'text' && path.point) {
+    const dx = point.x - path.point.x
+    const dy = point.y - path.point.y
+    const textWidth = ((path.text?.length || 0) * (path.fontSize || 24) * 0.55) / width
+    const textHeight = ((path.fontSize || 24) * 1.2) / height
+    return Math.abs(dx) < textWidth / 2 + threshold / width && Math.abs(dy) < textHeight / 2 + threshold / height
+  }
+  if (path.points?.length) {
+    return path.points.some((p) => {
+      const dx = (point.x - p.x) * width
+      const dy = (point.y - p.y) * height
+      return Math.sqrt(dx * dx + dy * dy) < threshold + (path.width || 4) / 2
+    })
+  }
+  return false
+}
+
+function drawPath(context, path, width, height, options = {}) {
   if (!path) return
-  if (path.tool === 'text' && path.text && path.point) {
+  const { selected, isLivePreview } = options
+
+  if (path.tool === 'text' && (path.text || isLivePreview) && path.point) {
     context.save()
     context.fillStyle = path.color || '#ff4f87'
     context.font = `700 ${path.fontSize || 24}px Arial, sans-serif`
     context.textBaseline = 'top'
-    context.fillText(path.text, path.point.x * width, path.point.y * height, width * 0.7)
+    if (isLivePreview) context.globalAlpha = 0.7
+    context.fillText(path.text || '', path.point.x * width, path.point.y * height, width * 0.7)
+    if (selected) {
+      const metrics = context.measureText(path.text || '')
+      const textH = (path.fontSize || 24) * 1.2
+      context.strokeStyle = '#7048df'
+      context.lineWidth = 2
+      context.setLineDash([6, 4])
+      context.strokeRect(
+        path.point.x * width - 4,
+        path.point.y * height - 4,
+        metrics.width + 8,
+        textH + 8,
+      )
+      context.setLineDash([])
+    }
+    context.restore()
+    return
+  }
+  if (path.tool === 'pointer' && path.point) {
+    context.save()
+    context.beginPath()
+    context.arc(path.point.x * width, path.point.y * height, 8, 0, Math.PI * 2)
+    context.fillStyle = path.color || '#ff4f87'
+    context.globalAlpha = 0.8
+    context.fill()
+    context.strokeStyle = '#fff'
+    context.lineWidth = 2
+    context.stroke()
+    if (path.label) {
+      context.fillStyle = '#fff'
+      context.font = '600 10px Arial, sans-serif'
+      context.textAlign = 'center'
+      context.globalAlpha = 1
+      context.fillText(path.label, path.point.x * width, path.point.y * height + 20)
+    }
     context.restore()
     return
   }
@@ -91,6 +164,24 @@ function drawPath(context, path, width, height) {
     else context.lineTo(x, y)
   })
   context.stroke()
+  if (selected) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    path.points.forEach((p) => {
+      const x = p.x * width
+      const y = p.y * height
+      if (x < minX) minX = x
+      if (y < minY) minY = y
+      if (x > maxX) maxX = x
+      if (y > maxY) maxY = y
+    })
+    context.strokeStyle = '#7048df'
+    context.lineWidth = 2
+    context.setLineDash([6, 4])
+    context.globalCompositeOperation = 'source-over'
+    context.globalAlpha = 1
+    context.strokeRect(minX - 6, minY - 6, maxX - minX + 12, maxY - minY + 12)
+    context.setLineDash([])
+  }
   context.restore()
 }
 
@@ -100,7 +191,7 @@ function AccessDenied({ access, onExit }) {
       <section>
         <span><ShieldCheck size={34} /></span>
         <small>Private booked classroom</small>
-        <h1>The classroom isn’t open yet.</h1>
+        <h1>The classroom isn't open yet.</h1>
         <p>{access.reason}</p>
         {access.startsAt && <div><strong>{access.startsAt.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}</strong><span>{access.startsAt.toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}</span></div>}
         <button onClick={onExit}><ArrowLeft size={17} /> Return to dashboard</button>
@@ -136,10 +227,16 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const peerRef = useRef(null)
   const transportRef = useRef(null)
   const pathsRef = useRef([])
+  const undonePathsRef = useRef([])
+  const clearedPathsBackupRef = useRef(null)
   const currentPathRef = useRef(null)
   const pendingIceRef = useRef([])
   const offerStartedAtRef = useRef(0)
   const annotationPermissionRef = useRef(false)
+  const pointerPermissionRef = useRef(false)
+  const liveTextPathRef = useRef(null)
+  const selectedPathIdRef = useRef(null)
+  const dragOffsetRef = useRef(null)
   const [joined, setJoined] = useState(false)
   const [mediaReady, setMediaReady] = useState(false)
   const [mediaError, setMediaError] = useState('')
@@ -175,6 +272,18 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copied, setCopied] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [studentMuted, setStudentMuted] = useState(false)
+  const [unmuteRequested, setUnmuteRequested] = useState(false)
+  const [remoteMuted, setRemoteMuted] = useState(false)
+  const [studentPointerAllowed, setStudentPointerAllowed] = useState(false)
+  const [remotePointerPosition, setRemotePointerPosition] = useState(null)
+  const [selectedPathId, setSelectedPathId] = useState(null)
+  const [presenterUrl, setPresenterUrl] = useState('')
+  const [presenterUrlDraft, setPresenterUrlDraft] = useState('')
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+  const [canUndoClear, setCanUndoClear] = useState(false)
 
   const setVideoStream = (element, stream) => {
     if (element && element.srcObject !== stream) element.srcObject = stream || null
@@ -183,6 +292,21 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   useEffect(() => {
     annotationPermissionRef.current = studentAnnotationAllowed
   }, [studentAnnotationAllowed])
+
+  useEffect(() => {
+    pointerPermissionRef.current = studentPointerAllowed
+  }, [studentPointerAllowed])
+
+  useEffect(() => {
+    selectedPathIdRef.current = selectedPathId
+  }, [selectedPathId])
+
+  // Hide support widget while classroom is open
+  useEffect(() => {
+    if (!joined) return undefined
+    document.body.classList.add('classroom-active')
+    return () => document.body.classList.remove('classroom-active')
+  }, [joined])
 
   useEffect(() => {
     const updateFullscreenState = () => setStageFullscreen(document.fullscreenElement === stageRef.current)
@@ -218,13 +342,28 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
   }
 
+  const syncUndoState = () => {
+    setCanUndo(pathsRef.current.length > 0)
+    setCanRedo(undonePathsRef.current.length > 0)
+    setCanUndoClear(Boolean(clearedPathsBackupRef.current))
+  }
+
   const redrawAnnotations = () => {
     const canvas = annotationCanvasRef.current
     if (!canvas) return
     const context = canvas.getContext('2d')
     if (!context) return
     context.clearRect(0, 0, canvas.width, canvas.height)
-    pathsRef.current.forEach((path) => drawPath(context, path, canvas.width, canvas.height))
+    pathsRef.current.forEach((path) => {
+      const isSelected = path.id === selectedPathIdRef.current
+      drawPath(context, path, canvas.width, canvas.height, { selected: isSelected })
+    })
+    if (liveTextPathRef.current) {
+      drawPath(context, liveTextPathRef.current, canvas.width, canvas.height, { isLivePreview: true })
+    }
+    if (remotePointerPosition) {
+      drawPath(context, { tool: 'pointer', point: remotePointerPosition, color: '#4fc3f7', label: account.role === 'teacher' ? (learner?.name || 'Student') : (teacher?.fullName || 'Teacher') }, canvas.width, canvas.height)
+    }
   }
 
   useEffect(() => {
@@ -320,6 +459,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'join-request' && account.role === 'teacher' && !useTencentClassroom) {
         transportRef.current?.send({ type: 'annotation-permission', allowed: annotationPermissionRef.current })
+        transportRef.current?.send({ type: 'pointer-permission', allowed: pointerPermissionRef.current })
+        if (studentMuted) transportRef.current?.send({ type: 'mute-student', muted: true })
         await sendTeacherOffer(Boolean(message.reconnect))
         return
       }
@@ -365,6 +506,31 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         return
       }
+      if (message.type === 'pointer-permission') {
+        setStudentPointerAllowed(Boolean(message.allowed))
+        if (!message.allowed && account.role === 'student') {
+          setAnnotationTool('pen')
+        }
+        return
+      }
+      if (message.type === 'mute-student') {
+        if (account.role === 'student') {
+          const muted = Boolean(message.muted)
+          setRemoteMuted(muted)
+          if (muted) {
+            try {
+              if (trtcRef.current) await trtcRef.current.stopLocalAudio()
+              else cameraStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = false })
+              setMicOn(false)
+            } catch { /* Mute failed */ }
+          }
+        }
+        return
+      }
+      if (message.type === 'unmute-request') {
+        if (account.role === 'student') setUnmuteRequested(true)
+        return
+      }
       if (message.type === 'chat-message' && message.message) {
         setChatMessages((current) => current.some((item) => item.id === message.message.id) ? current : [...current, message.message])
         setSidebarTab('chat')
@@ -383,15 +549,57 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'annotation-path' && message.path) {
         pathsRef.current.push(message.path)
-        redrawAnnotations()
+        redrawAnnotations(); syncUndoState()
+        return
+      }
+      if (message.type === 'annotation-undo' && message.pathId) {
+        const index = pathsRef.current.findIndex((p) => p.id === message.pathId)
+        if (index >= 0) {
+          const [removed] = pathsRef.current.splice(index, 1)
+          undonePathsRef.current.push(removed)
+          redrawAnnotations(); syncUndoState()
+        }
+        return
+      }
+      if (message.type === 'annotation-redo' && message.path) {
+        const index = undonePathsRef.current.findIndex((p) => p.id === message.path.id)
+        if (index >= 0) undonePathsRef.current.splice(index, 1)
+        pathsRef.current.push(message.path)
+        redrawAnnotations(); syncUndoState()
         return
       }
       if (message.type === 'annotation-clear') {
+        clearedPathsBackupRef.current = message.backup || pathsRef.current.slice()
         pathsRef.current = []
-        redrawAnnotations()
+        undonePathsRef.current = []
+        currentPathRef.current = null
+        redrawAnnotations(); syncUndoState()
+        return
+      }
+      if (message.type === 'annotation-undo-clear' && message.backup) {
+        pathsRef.current = message.backup
+        clearedPathsBackupRef.current = null
+        redrawAnnotations(); syncUndoState()
+        return
+      }
+      if (message.type === 'object-select' && message.pathId !== undefined) {
+        setSelectedPathId(message.pathId || null)
+        redrawAnnotations(); syncUndoState()
+        return
+      }
+      if (message.type === 'pointer-move' && message.point) {
+        setRemotePointerPosition(message.point)
+        redrawAnnotations(); syncUndoState()
+        return
+      }
+      if (message.type === 'presenter-url' && message.url) {
+        setPresenterUrl(message.url)
         return
       }
       if (message.type === 'classroom-file' && message.file) {
+        setFiles((current) => current.some((file) => file.id === message.file.id) ? current : [...current, message.file])
+      }
+      if (message.type === 'classroom-file-storage' && message.file) {
         setFiles((current) => current.some((file) => file.id === message.file.id) ? current : [...current, message.file])
       }
     }
@@ -430,7 +638,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       pendingIceRef.current = []
       offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom])
+  }, [joined, access.allowed, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
 
   useEffect(() => {
     if (!joined || !access.allowed || !useTencentClassroom) return undefined
@@ -538,7 +746,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       const ratio = Math.min(window.devicePixelRatio || 1, 2)
       canvas.width = Math.max(1, Math.floor(bounds.width * ratio))
       canvas.height = Math.max(1, Math.floor(bounds.height * ratio))
-      redrawAnnotations()
+      redrawAnnotations(); syncUndoState()
     }
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null
     if (observer) observer.observe(stage)
@@ -548,7 +756,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       observer?.disconnect()
       if (!observer) window.removeEventListener('resize', resize)
     }
-  }, [joined])
+  }, [joined, remotePointerPosition])
 
   useEffect(() => () => {
     localStreamRef.current?.getTracks().forEach((track) => track.stop())
@@ -587,6 +795,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         else await trtcRef.current.stopLocalAudio()
       } else cameraStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = next })
       setMicOn(next)
+      if (next) setRemoteMuted(false)
     } catch {
       setMediaError('The microphone could not be changed in Tencent RTC.')
     }
@@ -630,7 +839,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
   const toggleScreenPause = () => {
     if (trtcRef.current) {
-      setMediaError('Pause the shared screen from your browser’s sharing control when using Tencent RTC.')
+      setMediaError('Pause the shared screen from your browser\'s sharing control when using Tencent RTC.')
       return
     }
     const track = screenStreamRef.current?.getVideoTracks()[0]
@@ -712,6 +921,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     transportRef.current?.send({ type: 'leave' })
     transportRef.current?.close()
     peerRef.current?.close()
+    document.body.classList.remove('classroom-active')
     onExit()
   }
 
@@ -721,14 +931,53 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     return { x: (event.clientX - bounds.left) / bounds.width, y: (event.clientY - bounds.top) / bounds.height }
   }
 
+  const canAnnotate = () => annotationMode && (account.role === 'teacher' || studentAnnotationAllowed)
+  const canUsePointer = () => account.role === 'teacher' || studentPointerAllowed
+
   const startDrawing = (event) => {
-    if (!annotationMode || (account.role === 'student' && !studentAnnotationAllowed)) return
     const point = pointerPosition(event)
+    // Pointer tool - just sends position
+    if (annotationTool === 'pointer') {
+      if (!canUsePointer()) return
+      transportRef.current?.send({ type: 'pointer-move', point })
+      return
+    }
+    if (!canAnnotate()) return
+    // Select tool
+    if (annotationTool === 'select') {
+      const canvas = annotationCanvasRef.current
+      let found = null
+      for (let i = pathsRef.current.length - 1; i >= 0; i--) {
+        if (hitTestAnnotation(pathsRef.current[i], point, canvas.width, canvas.height)) {
+          found = pathsRef.current[i].id
+          break
+        }
+      }
+      setSelectedPathId(found)
+      transportRef.current?.send({ type: 'object-select', pathId: found || '' })
+      redrawAnnotations(); syncUndoState()
+      return
+    }
+    // Move tool
+    if (annotationTool === 'move') {
+      if (!selectedPathId) return
+      const path = pathsRef.current.find((p) => p.id === selectedPathId)
+      if (!path) return
+      const refPoint = path.point || path.points?.[0]
+      if (refPoint) {
+        dragOffsetRef.current = { x: point.x - refPoint.x, y: point.y - refPoint.y }
+      }
+      event.currentTarget.setPointerCapture(event.pointerId)
+      return
+    }
+    // Text tool
     if (annotationTool === 'text') {
       setTextEditor(point)
       setTextDraft('')
+      liveTextPathRef.current = null
       return
     }
+    // Drawing tools (pen, highlighter, eraser)
     event.currentTarget.setPointerCapture(event.pointerId)
     currentPathRef.current = {
       id: crypto.randomUUID(),
@@ -740,28 +989,103 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const continueDrawing = (event) => {
-    if (!currentPathRef.current || !annotationMode || (account.role === 'student' && !studentAnnotationAllowed)) return
-    currentPathRef.current.points.push(pointerPosition(event))
-    redrawAnnotations()
+    const point = pointerPosition(event)
+    // Pointer tool
+    if (annotationTool === 'pointer') {
+      if (!canUsePointer()) return
+      transportRef.current?.send({ type: 'pointer-move', point })
+      return
+    }
+    // Move tool
+    if (annotationTool === 'move' && selectedPathId && dragOffsetRef.current) {
+      const path = pathsRef.current.find((p) => p.id === selectedPathId)
+      if (!path) return
+      const newX = point.x - dragOffsetRef.current.x
+      const newY = point.y - dragOffsetRef.current.y
+      if (path.tool === 'text' && path.point) {
+        path.point = { x: newX, y: newY }
+      } else if (path.points?.length) {
+        const refPoint = path.points[0]
+        const dx = newX - refPoint.x
+        const dy = newY - refPoint.y
+        path.points = path.points.map((p) => ({ x: p.x + dx, y: p.y + dy }))
+      }
+      redrawAnnotations(); syncUndoState()
+      return
+    }
+    if (!currentPathRef.current || !canAnnotate()) return
+    currentPathRef.current.points.push(point)
+    redrawAnnotations(); syncUndoState()
     const canvas = annotationCanvasRef.current
     const context = canvas?.getContext('2d')
     if (canvas && context) drawPath(context, currentPathRef.current, canvas.width, canvas.height)
   }
 
   const finishDrawing = () => {
+    // Move tool
+    if (annotationTool === 'move' && selectedPathId) {
+      const path = pathsRef.current.find((p) => p.id === selectedPathId)
+      if (path) {
+        transportRef.current?.send({ type: 'annotation-path', path })
+      }
+      dragOffsetRef.current = null
+      return
+    }
     const path = currentPathRef.current
     if (!path) return
     pathsRef.current.push(path)
     currentPathRef.current = null
-    redrawAnnotations()
+    redrawAnnotations(); syncUndoState()
     transportRef.current?.send({ type: 'annotation-path', path })
   }
 
+  const undoAnnotation = () => {
+    if (!pathsRef.current.length) return
+    const path = pathsRef.current.pop()
+    undonePathsRef.current.push(path)
+    redrawAnnotations(); syncUndoState()
+    transportRef.current?.send({ type: 'annotation-undo', pathId: path.id })
+  }
+
+  const redoAnnotation = () => {
+    if (!undonePathsRef.current.length) return
+    const path = undonePathsRef.current.pop()
+    pathsRef.current.push(path)
+    redrawAnnotations(); syncUndoState()
+    transportRef.current?.send({ type: 'annotation-redo', path })
+  }
+
   const clearAnnotations = () => {
+    const backup = pathsRef.current.slice()
+    clearedPathsBackupRef.current = backup
     pathsRef.current = []
+    undonePathsRef.current = []
     currentPathRef.current = null
-    redrawAnnotations()
-    transportRef.current?.send({ type: 'annotation-clear' })
+    redrawAnnotations(); syncUndoState()
+    transportRef.current?.send({ type: 'annotation-clear', backup })
+  }
+
+  const undoClear = () => {
+    if (!clearedPathsBackupRef.current) return
+    pathsRef.current = clearedPathsBackupRef.current
+    clearedPathsBackupRef.current = null
+    redrawAnnotations(); syncUndoState()
+    transportRef.current?.send({ type: 'annotation-undo-clear', backup: pathsRef.current.slice() })
+  }
+
+  const handleTextDraftChange = (text) => {
+    setTextDraft(text)
+    if (textEditor) {
+      liveTextPathRef.current = {
+        id: 'live-text',
+        tool: 'text',
+        text,
+        color: annotationColor,
+        fontSize: 24,
+        point: textEditor,
+      }
+      redrawAnnotations(); syncUndoState()
+    }
   }
 
   const commitTextAnnotation = () => {
@@ -769,14 +1093,29 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     if (!text || !textEditor) {
       setTextEditor(null)
       setTextDraft('')
+      liveTextPathRef.current = null
+      redrawAnnotations(); syncUndoState()
       return
     }
-    const path = { id: crypto.randomUUID(), tool: 'text', text: text.slice(0, 120), color: annotationColor, fontSize: 24, point: textEditor }
+    const path = { id: crypto.randomUUID(), tool: 'text', text: text.slice(0, 500), color: annotationColor, fontSize: 24, point: textEditor }
     pathsRef.current.push(path)
-    redrawAnnotations()
+    undonePathsRef.current = []
+    liveTextPathRef.current = null
+    redrawAnnotations(); syncUndoState()
     transportRef.current?.send({ type: 'annotation-path', path })
     setTextEditor(null)
     setTextDraft('')
+  }
+
+  const deleteSelectedObject = () => {
+    if (!selectedPathId) return
+    const index = pathsRef.current.findIndex((p) => p.id === selectedPathId)
+    if (index >= 0) {
+      pathsRef.current.splice(index, 1)
+      setSelectedPathId(null)
+      redrawAnnotations(); syncUndoState()
+      transportRef.current?.send({ type: 'annotation-undo', pathId: selectedPathId })
+    }
   }
 
   const toggleStudentAnnotationPermission = () => {
@@ -787,34 +1126,124 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     transportRef.current?.send({ type: 'annotation-permission', allowed })
   }
 
-  const uploadFile = (event) => {
+  const toggleStudentPointerPermission = () => {
+    if (account.role !== 'teacher') return
+    const allowed = !pointerPermissionRef.current
+    pointerPermissionRef.current = allowed
+    setStudentPointerAllowed(allowed)
+    transportRef.current?.send({ type: 'pointer-permission', allowed })
+  }
+
+  const toggleStudentMute = () => {
+    if (account.role !== 'teacher') return
+    const muted = !studentMuted
+    setStudentMuted(muted)
+    setUnmuteRequested(false)
+    transportRef.current?.send({ type: 'mute-student', muted })
+  }
+
+  const sendUnmuteRequest = () => {
+    transportRef.current?.send({ type: 'unmute-request' })
+    setUnmuteRequested(true)
+  }
+
+  const acceptUnmuteRequest = async () => {
+    setRemoteMuted(false)
+    setUnmuteRequested(false)
+    try {
+      if (trtcRef.current) await trtcRef.current.startLocalAudio()
+      else cameraStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = true })
+      setMicOn(true)
+    } catch { /* Unmute failed */ }
+  }
+
+  const openPresenterUrl = () => {
+    let url = presenterUrlDraft.trim()
+    if (!url) return
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+    try { new URL(url) } catch { setMediaError('Enter a valid URL to present.'); return }
+    setPresenterUrl(url)
+    transportRef.current?.send({ type: 'presenter-url', url })
+    window.open(url, '_blank', 'noopener')
+    setPresenterUrlDraft('')
+  }
+
+  const sharePresenterTab = async () => {
+    if (!presenterUrl) return
+    await toggleScreenShare()
+  }
+
+  const uploadFile = async (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
     setFileError('')
-    if (file.size > MAX_FILE_SIZE) {
-      setFileError('Lesson files must be under 8 MB for live sharing.')
+    if (!isClassroomFileAllowed(file)) {
+      setFileError('This file type is not supported. Use PDF, PPT, PPTX, DOC, DOCX, images, EPUB, EDB or TXT.')
       return
     }
-    const reader = new FileReader()
-    reader.onerror = () => setFileError('The selected file could not be read.')
-    reader.onload = () => {
-      const entry = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-        type: file.type || 'application/octet-stream',
-        dataUrl: reader.result,
-        sender: participantName,
-      }
-      setFiles((current) => [...current, entry])
-      transportRef.current?.send({ type: 'classroom-file', file: entry })
-      if (account.role === 'teacher') {
-        setPresentedFile(entry)
-        transportRef.current?.send({ type: 'presentation-file', file: entry })
-      }
+    const sizeLimit = isClassroomStorageAvailable() ? MAX_STORAGE_SIZE : MAX_INLINE_SIZE
+    if (file.size > sizeLimit) {
+      setFileError(`Lesson files must be under ${Math.round(sizeLimit / 1024 / 1024)} MB.`)
+      return
     }
-    reader.readAsDataURL(file)
+    setUploadingFile(true)
+    try {
+      if (isClassroomStorageAvailable() && file.size > MAX_INLINE_SIZE) {
+        const stored = await uploadClassroomFile(roomBooking.id, file)
+        const signedUrl = await getClassroomFileUrl(stored.storagePath)
+        const entry = {
+          id: stored.id,
+          name: stored.name,
+          size: stored.size,
+          type: stored.type,
+          storagePath: stored.storagePath,
+          dataUrl: signedUrl || '',
+          source: 'supabase',
+          sender: participantName,
+        }
+        setFiles((current) => [...current, entry])
+        transportRef.current?.send({ type: 'classroom-file-storage', file: { id: stored.id, name: stored.name, size: stored.size, type: stored.type, storagePath: stored.storagePath, source: 'supabase', sender: participantName } })
+        if (account.role === 'teacher') {
+          setPresentedFile(entry)
+          transportRef.current?.send({ type: 'presentation-file', file: entry })
+        }
+      } else {
+        const reader = new FileReader()
+        reader.onerror = () => { setFileError('The selected file could not be read.'); setUploadingFile(false) }
+        reader.onload = () => {
+          const entry = {
+            id: crypto.randomUUID(),
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/octet-stream',
+            dataUrl: reader.result,
+            sender: participantName,
+          }
+          setFiles((current) => [...current, entry])
+          transportRef.current?.send({ type: 'classroom-file', file: entry })
+          if (account.role === 'teacher') {
+            setPresentedFile(entry)
+            transportRef.current?.send({ type: 'presentation-file', file: entry })
+          }
+          setUploadingFile(false)
+        }
+        reader.readAsDataURL(file)
+      }
+    } catch (error) {
+      setFileError(error.message || 'File upload failed.')
+    } finally {
+      setUploadingFile(false)
+    }
+  }
+
+  const resolveFileUrl = async (file) => {
+    if (file.dataUrl) return file.dataUrl
+    if (file.storagePath && isClassroomStorageAvailable()) {
+      const url = await getClassroomFileUrl(file.storagePath)
+      if (url) return url
+    }
+    return ''
   }
 
   const presentFile = (file) => {
@@ -877,6 +1306,36 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     ? 'Both participants were found. TutorPro English is retrying the secure video handshake.'
     : 'Keep this classroom open while the other participant enters this exact booking.'
 
+  const isEdbFile = (file) => /\.edb$/i.test(file.name)
+  const isEpubFile = (file) => /\.epub$/i.test(file.name)
+
+  const renderPresentedFile = (file) => {
+    if (isEdbFile(file)) {
+      return (
+        <div className="classroom-file-presentation">
+          <div><Presentation size={54} /><strong>{file.name}</strong><span>ClassIn EDB files can be downloaded and opened in ClassIn.</span><a href={file.dataUrl || '#'} download={file.name}>Download EDB file</a></div>
+          <small><Paperclip size={13} /> {file.name}</small>
+        </div>
+      )
+    }
+    if (isEpubFile(file)) {
+      return (
+        <div className="classroom-file-presentation">
+          <div><Presentation size={54} /><strong>{file.name}</strong><span>EPUB books can be downloaded and opened in your e-reader.</span><a href={file.dataUrl || '#'} download={file.name}>Download EPUB</a></div>
+          <small><Paperclip size={13} /> {file.name}</small>
+        </div>
+      )
+    }
+    return (
+      <div className="classroom-file-presentation">
+        {file.type?.startsWith('image/') ? <img src={file.dataUrl} alt={file.name} /> :
+         file.type === 'application/pdf' ? <object data={file.dataUrl} type="application/pdf" aria-label={file.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{file.name}</strong><span>This browser cannot embed the PDF.</span><a href={file.dataUrl} download={file.name}>Open PDF</a></div></object> :
+         <div><Presentation size={54} /><strong>{file.name}</strong><span>Use the download button to open this lesson file.</span></div>}
+        <small><Paperclip size={13} /> {file.name}</small>
+      </div>
+    )
+  }
+
   if (!joined) {
     return (
       <main className="classroom-prejoin">
@@ -896,7 +1355,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <div className="prejoin-room-id"><span><ShieldCheck size={16} /></span><div><small>Unique classroom ID</small><strong>{roomBooking.classroomId}</strong></div><button onClick={copyRoomId}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div>
             {mediaError && <div className="classroom-error"><WifiOff size={17} /> {mediaError}</div>}
             {!mediaReady ? <button className="classroom-main-button" onClick={requestMedia}><Camera size={18} /> Enable camera & microphone</button> : <button className="classroom-main-button" onClick={joinClass}><Video size={18} /> Enter private classroom</button>}
-            <p className="prejoin-privacy"><ShieldCheck size={14} /> Only this booking’s teacher, student and administrator can access this room.</p>
+            <p className="prejoin-privacy"><ShieldCheck size={14} /> Only this booking's teacher, student and administrator can access this room.</p>
           </section>
         </div>
       </main>
@@ -930,7 +1389,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           </div>
 
           <div className="classroom-lesson-board" ref={stageRef}>
-            {screenSharing ? (useTencentClassroom ? <div className="tencent-screen-sharing-state"><MonitorUp size={44} /><strong>Your screen is live</strong><span>Tencent RTC is securely presenting it to the student.</span></div> : <video className={`classroom-presentation-video classroom-presentation-video--${screenFit}`} ref={sharedScreenVideoRef} autoPlay muted playsInline />) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presentedFile ? <div className="classroom-file-presentation">{presentedFile.type?.startsWith('image/') ? <img src={presentedFile.dataUrl} alt={presentedFile.name} /> : presentedFile.type === 'application/pdf' ? <object data={presentedFile.dataUrl} type="application/pdf" aria-label={presentedFile.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{presentedFile.name}</strong><span>This browser cannot embed the PDF.</span><a href={presentedFile.dataUrl} download={presentedFile.name}>Open PDF</a></div></object> : <div><Presentation size={54} /><strong>{presentedFile.name}</strong><span>Use the download button to open this lesson file.</span></div>}<small><Paperclip size={13} /> {presentedFile.name}</small></div> : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            {screenSharing ? (useTencentClassroom ? <div className="tencent-screen-sharing-state"><MonitorUp size={44} /><strong>Your screen is live</strong><span>Tencent RTC is securely presenting it to the student.</span></div> : <video className={`classroom-presentation-video classroom-presentation-video--${screenFit}`} ref={sharedScreenVideoRef} autoPlay muted playsInline />) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
             {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
             <canvas
               ref={annotationCanvasRef}
@@ -940,8 +1399,25 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               onPointerUp={finishDrawing}
               onPointerCancel={finishDrawing}
             />
-            {textEditor && <div className="annotation-text-editor" style={{ left: `${textEditor.x * 100}%`, top: `${textEditor.y * 100}%` }}><input autoFocus value={textDraft} onChange={(event) => setTextDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') commitTextAnnotation(); if (event.key === 'Escape') setTextEditor(null) }} placeholder="Type on the lesson…" maxLength="120" /><button onClick={commitTextAnnotation}><Check size={15} /></button><button onClick={() => setTextEditor(null)}><X size={15} /></button></div>}
-            {annotationMode && <div className="annotation-toolbar"><button className={annotationTool === 'pen' ? 'active' : ''} onClick={() => setAnnotationTool('pen')} title="Pen"><PenTool size={17} /></button><button className={annotationTool === 'highlighter' ? 'active' : ''} onClick={() => setAnnotationTool('highlighter')} title="Highlighter"><Circle size={17} /></button><button className={annotationTool === 'text' ? 'active' : ''} onClick={() => setAnnotationTool('text')} title="Text"><Type size={17} /></button><button className={annotationTool === 'eraser' ? 'active' : ''} onClick={() => setAnnotationTool('eraser')} title="Eraser"><Eraser size={17} /></button><label title="Ink colour"><input type="color" value={annotationColor} onChange={(event) => setAnnotationColor(event.target.value)} /></label><button onClick={clearAnnotations} title="Clear annotations"><Trash2 size={17} /></button><button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button></div>}
+            {textEditor && <div className="annotation-text-editor annotation-text-editor--live" style={{ left: `${textEditor.x * 100}%`, top: `${textEditor.y * 100}%` }}><input autoFocus value={textDraft} onChange={(event) => handleTextDraftChange(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); commitTextAnnotation() } if (event.key === 'Escape') { setTextEditor(null); setTextDraft(''); liveTextPathRef.current = null; redrawAnnotations() } }} onBlur={commitTextAnnotation} placeholder="Type on the lesson…" maxLength="500" /></div>}
+            {annotationMode && <div className="annotation-toolbar">
+              <button className={annotationTool === 'pointer' ? 'active' : ''} onClick={() => setAnnotationTool('pointer')} title="Pointer" disabled={!canUsePointer()}><Pointer size={17} /></button>
+              <button className={annotationTool === 'select' ? 'active' : ''} onClick={() => setAnnotationTool('select')} title="Select"><MousePointer2 size={17} /></button>
+              <button className={annotationTool === 'move' ? 'active' : ''} onClick={() => setAnnotationTool('move')} title="Move" disabled={!selectedPathId}><Move size={17} /></button>
+              <span className="annotation-toolbar__divider" />
+              <button className={annotationTool === 'pen' ? 'active' : ''} onClick={() => setAnnotationTool('pen')} title="Pen"><PenTool size={17} /></button>
+              <button className={annotationTool === 'highlighter' ? 'active' : ''} onClick={() => setAnnotationTool('highlighter')} title="Highlighter"><Circle size={17} /></button>
+              <button className={annotationTool === 'text' ? 'active' : ''} onClick={() => setAnnotationTool('text')} title="Text"><Type size={17} /></button>
+              <button className={annotationTool === 'eraser' ? 'active' : ''} onClick={() => setAnnotationTool('eraser')} title="Eraser"><Eraser size={17} /></button>
+              <label title="Ink colour"><input type="color" value={annotationColor} onChange={(event) => setAnnotationColor(event.target.value)} /></label>
+              <span className="annotation-toolbar__divider" />
+              <button onClick={undoAnnotation} title="Undo" disabled={!canUndo}><Undo2 size={17} /></button>
+              <button onClick={redoAnnotation} title="Redo" disabled={!canRedo}><Redo2 size={17} /></button>
+              <button onClick={clearAnnotations} title="Clear all"><Trash2 size={17} /></button>
+              {canUndoClear && <button onClick={undoClear} title="Undo clear"><RotateCcw size={17} /></button>}
+              {selectedPathId && <button onClick={deleteSelectedObject} title="Delete selected"><X size={17} /></button>}
+              <button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button>
+            </div>}
             {screenSharing && <div className="screen-share-controls" role="toolbar" aria-label="Teacher screen sharing controls"><span><i /> You are presenting</span><button onClick={toggleScreenPause} title={screenPaused ? 'Resume screen sharing' : 'Pause screen sharing'}>{screenPaused ? <Play size={16} /> : <Pause size={16} />}<b>{screenPaused ? 'Resume' : 'Pause'}</b></button><button onClick={toggleScreenFit} title="Change screen fit"><MonitorUp size={16} /><b>{screenFit === 'fit' ? 'Fill' : 'Fit'}</b></button><button onClick={toggleStageFullscreen} title={stageFullscreen ? 'Exit full screen' : 'Open lesson board full screen'}>{stageFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<b>{stageFullscreen ? 'Exit' : 'Full screen'}</b></button><button className="stop" onClick={stopScreenShare} title="Stop screen sharing"><X size={16} /><b>Stop</b></button></div>}
             <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
           </div>
@@ -954,21 +1430,38 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <div className="chat-translation-bar"><Languages size={15} /><span>Translate to</span><select value={chatLanguage} onChange={(event) => setChatLanguage(event.target.value)}>{chatLanguages.map((language) => <option value={language.code} key={language.code}>{language.label}</option>)}</select></div>
             <div className="classroom-chat-messages">{chatMessages.length ? chatMessages.map((message) => { const translationKey = `${message.id}:${chatLanguage}`; const translated = chatTranslations[translationKey]; const own = message.sender === participantName; return <div className={own ? 'chat-message own' : 'chat-message'} key={message.id}><div><strong>{message.sender}</strong><small>{new Date(message.createdAt).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}</small></div><p>{message.text}</p>{translated && <p className="chat-translation"><Languages size={12} /> {translated}</p>}{chatLanguage !== 'en' && !own && <button onClick={() => translateMessage(message)} disabled={translatingMessageId === message.id}>{translatingMessageId === message.id ? 'Translating…' : 'Translate'}</button>}</div> }) : <div className="chat-empty"><MessageCircle size={27} /><strong>Class chat is ready</strong><span>Messages are private to this booked classroom.</span></div>}</div>
             {chatError && <div className="classroom-file-error">{chatError}</div>}
+            {unmuteRequested && account.role === 'student' && <div className="classroom-unmute-request"><Volume2 size={16} /><span>The teacher is asking you to unmute.</span><button onClick={acceptUnmuteRequest}><Mic size={15} /> Unmute me</button></div>}
             <form className="classroom-chat-form" onSubmit={sendChatMessage}><input value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Write a message…" maxLength="500" /><button type="submit" disabled={!chatDraft.trim()}><Send size={17} /></button></form>
           </div> : <div className="classroom-files-panel">
-            <label className="classroom-file-upload"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, image, document or slides · max 8 MB</span><input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*" onChange={uploadFile} /></label>
+            <label className="classroom-file-upload"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
             {fileError && <div className="classroom-file-error">{fileError}</div>}
-            <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB</small></div>{account.role !== 'student' && <button onClick={() => presentFile(file)} title="Present on lesson board"><Presentation size={16} /></button>}<a href={file.dataUrl} download={file.name} title="Download"><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
+            {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> Uploading…</div>}
+            <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB{file.source === 'supabase' ? ' · Cloud' : ''}</small></div>{account.role !== 'student' && <button onClick={() => presentFile(file)} title="Present on lesson board"><Presentation size={16} /></button>}<a href={file.dataUrl || '#'} download={file.name} title="Download" onClick={async (e) => { if (!file.dataUrl && file.storagePath) { e.preventDefault(); const url = await resolveFileUrl(file); if (url) window.open(url, '_blank') } }}><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
           </div>}
-          <div className="classroom-people"><span><Users size={17} /> Participants</span><div><i className="online" /><strong>{participantName}</strong><small>{account.role}</small></div>{connectionStatus === 'connected' && <div><i className="online" /><strong>{account.role === 'teacher' ? learner?.name : teacher?.fullName}</strong><small>{account.role === 'teacher' ? 'student' : 'teacher'}</small></div>}{account.role === 'teacher' && <button className={studentAnnotationAllowed ? 'allowed' : ''} onClick={toggleStudentAnnotationPermission}>{studentAnnotationAllowed ? <Unlock size={15} /> : <Lock size={15} />}{studentAnnotationAllowed ? 'Student can annotate' : 'Allow student annotation'}</button>}{account.role === 'student' && <div className="student-annotation-state">{studentAnnotationAllowed ? <Unlock size={14} /> : <Lock size={14} />}<span>{studentAnnotationAllowed ? 'Teacher allowed annotation' : 'Annotation requires teacher permission'}</span></div>}</div>
+          <div className="classroom-people"><span><Users size={17} /> Participants</span><div><i className="online" /><strong>{participantName}</strong><small>{account.role}</small></div>{connectionStatus === 'connected' && <div><i className="online" /><strong>{account.role === 'teacher' ? learner?.name : teacher?.fullName}</strong><small>{account.role === 'teacher' ? 'student' : 'teacher'}</small></div>}{account.role === 'teacher' && <>
+            <button className={studentAnnotationAllowed ? 'allowed' : ''} onClick={toggleStudentAnnotationPermission}>{studentAnnotationAllowed ? <Unlock size={15} /> : <Lock size={15} />}{studentAnnotationAllowed ? 'Student can annotate' : 'Allow student annotation'}</button>
+            <button className={`classroom-people-pointer ${studentPointerAllowed ? 'allowed' : ''}`} onClick={toggleStudentPointerPermission}><Pointer size={15} />{studentPointerAllowed ? 'Student can use pointer' : 'Allow student pointer'}</button>
+            <button className={`classroom-people-mute ${studentMuted ? 'muted' : ''}`} onClick={toggleStudentMute}>{studentMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}{studentMuted ? 'Student is muted' : 'Mute student'}</button>
+            {studentMuted && !unmuteRequested && <button className="classroom-people-unmute-request" onClick={sendUnmuteRequest}><Volume2 size={15} /> Ask student to unmute</button>}
+          </>}{account.role === 'student' && <>
+            <div className="student-annotation-state">{studentAnnotationAllowed ? <Unlock size={14} /> : <Lock size={14} />}<span>{studentAnnotationAllowed ? 'Teacher allowed annotation' : 'Annotation requires teacher permission'}</span></div>
+            <div className="student-pointer-state">{studentPointerAllowed ? <Pointer size={14} /> : <MousePointer2 size={14} />}<span>{studentPointerAllowed ? 'You can use the pointer tool' : 'Pointer tool requires teacher permission'}</span></div>
+            {remoteMuted && <div className="student-muted-state"><VolumeX size={14} /><span>The teacher muted your microphone</span></div>}
+          </>}</div>
         </aside>}
       </div>
 
       <footer className="classroom-controls">
         <div><button className={micOn ? 'active' : 'off'} onClick={toggleMic}>{micOn ? <Mic size={20} /> : <MicOff size={20} />}<span>{micOn ? 'Mute' : 'Unmute'}</span></button><button className={cameraOn ? 'active' : 'off'} onClick={toggleCamera} disabled={screenSharing}>{cameraOn ? <Camera size={20} /> : <CameraOff size={20} />}<span>{cameraOn ? 'Camera' : 'Start video'}</span></button></div>
-        <div>{account.role !== 'student' && <button className={screenSharing ? 'active sharing' : ''} onClick={toggleScreenShare}><MonitorUp size={20} /><span>{screenSharing ? 'Stop share' : 'Share screen'}</span></button>}<button className={annotationMode ? 'active annotation' : ''} onClick={() => setAnnotationMode((active) => !active)} disabled={account.role === 'student' && !studentAnnotationAllowed} title={account.role === 'student' && !studentAnnotationAllowed ? 'The teacher must allow annotation first' : 'Annotate the lesson board'}><PenTool size={20} /><span>{account.role === 'student' && !studentAnnotationAllowed ? 'Permission needed' : 'Annotate'}</span></button>{account.role === 'teacher' && <button className={studentAnnotationAllowed ? 'active permission' : ''} onClick={toggleStudentAnnotationPermission}>{studentAnnotationAllowed ? <Unlock size={20} /> : <Lock size={20} />}<span>{studentAnnotationAllowed ? 'Revoke drawing' : 'Allow student'}</span></button>}<label className="control-file-button"><FileUp size={20} /><span>Share file</span><input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*" onChange={uploadFile} /></label><button onClick={() => setSidebarOpen((open) => !open)}><Users size={20} /><span>Chat & files</span></button></div>
-        <button className="leave-class-button" onClick={leaveClass}><PhoneOff size={21} /><span>Leave class</span></button>
+        <div>{account.role !== 'student' && <button className={screenSharing ? 'active sharing' : ''} onClick={toggleScreenShare}><MonitorUp size={20} /><span>{screenSharing ? 'Stop share' : 'Share screen'}</span></button>}{account.role !== 'student' && <button className="control-website-button" onClick={() => setPresenterUrlDraft(presenterUrl || 'https://')} title="Present a website"><Globe size={20} /><span>Website</span></button>}<button className={annotationMode ? 'active annotation' : ''} onClick={() => setAnnotationMode((active) => !active)} disabled={account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed} title={account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed ? 'The teacher must allow annotation or pointer first' : 'Annotate the lesson board'}><PenTool size={20} /><span>{account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed ? 'Permission needed' : 'Annotate'}</span></button><label className="control-file-button"><FileUp size={20} /><span>Share file</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label><button onClick={() => setSidebarOpen((open) => !open)}><Users size={20} /><span>Chat & files</span></button><button className="leave-class-button" onClick={leaveClass}><PhoneOff size={21} /><span>End class</span></button></div>
       </footer>
+
+      {presenterUrlDraft !== '' && account.role === 'teacher' && <div className="classroom-presenter-overlay">
+        <div className="classroom-presenter-dialog">
+          <header><Globe size={20} /><div><strong>Present a website</strong><small>Open a URL in a new tab, then share that tab through screen sharing.</small></div><button onClick={() => setPresenterUrlDraft('')}><X size={17} /></button></header>
+          <form onSubmit={(e) => { e.preventDefault(); openPresenterUrl() }}><input type="url" value={presenterUrlDraft} onChange={(e) => setPresenterUrlDraft(e.target.value)} placeholder="https://example.com" /><div><button type="submit">Open in new tab</button>{presenterUrl && <button type="button" onClick={sharePresenterTab} className="presenter-share-btn"><MonitorUp size={16} /> Share tab</button>}</div></form>
+        </div>
+      </div>}
     </main>
   )
 }

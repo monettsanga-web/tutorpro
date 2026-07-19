@@ -40,6 +40,8 @@ async function rejects(callback, message) {
 
 const recordedInterviewSql = await readFile(new URL('../supabase/teacher_interview_recordings.sql', import.meta.url), 'utf8')
 assert(recordedInterviewSql.includes("'teacher-interview-recordings'") && recordedInterviewSql.includes('Admins read private interview recordings') && recordedInterviewSql.includes('complete_teacher_interview_session'), 'Private recorded-interview storage and administrator access SQL is incomplete.')
+const classroomStorageSql = await readFile(new URL('../supabase/classroom_files_storage.sql', import.meta.url), 'utf8')
+assert(classroomStorageSql.includes('classroom-files') && classroomStorageSql.includes('52428800') && classroomStorageSql.includes('Classroom participants upload files') && classroomStorageSql.includes('Classroom participants read files'), 'Secure classroom file storage bucket and policies SQL is incomplete.')
 const bookingSyncSql = await readFile(new URL('../supabase/bookings_sync.sql', import.meta.url), 'utf8')
 assert(bookingSyncSql.includes('public.classroom_signals') && bookingSyncSql.includes('Classroom participants send signals') && bookingSyncSql.includes('prune_expired_classroom_signals') && bookingSyncSql.includes("'ongoing'") && bookingSyncSql.includes("'absent'"), 'Durable classroom signaling or separated booking statuses SQL is incomplete.')
 const trtcUserSigFunction = await readFile(new URL('../supabase/functions/trtc-usersig/index.ts', import.meta.url), 'utf8')
