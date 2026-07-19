@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Headphones, Languages, MessageCircle, RotateCcw, Send, ShieldCheck, X } from 'lucide-react'
+import { Download, FileUp, Headphones, Languages, MessageCircle, Paperclip, RotateCcw, Send, ShieldCheck, X } from 'lucide-react'
 import { getCurrentAccount } from './auth.js'
 import {
   clearSavedSupportThread,
   createSupportConversation,
+  downloadSupportAttachment,
   fetchSupportThread,
   readSavedSupportThread,
   sendParentSupportMessage,
+  uploadParentSupportAttachment,
 } from './supportChat.js'
+import { translateSupportText } from './supportTranslation.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 
 function accountEmail(account) {
@@ -27,9 +30,12 @@ export default function SupportChatWidget({ embedded = false }) {
     message: '',
   }))
   const [draft, setDraft] = useState('')
+  const [attachment, setAttachment] = useState(null)
+  const [translations, setTranslations] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const messagesRef = useRef(null)
+  const attachmentInputRef = useRef(null)
   const chinese = isChineseVisitor(locale)
 
   useEffect(() => {
@@ -85,6 +91,16 @@ export default function SupportChatWidget({ embedded = false }) {
     if (element) element.scrollTop = element.scrollHeight
   }, [thread?.messages?.length, open])
 
+  useEffect(() => {
+    if (!thread?.messages?.length || !locale.language || locale.language === 'en') return undefined
+    let active = true
+    thread.messages.filter((message) => message.sender === 'admin' && !translations[message.id]).forEach(async (message) => {
+      const translated = await translateSupportText(message.body, locale.language)
+      if (active && translated) setTranslations((current) => ({ ...current, [message.id]: translated }))
+    })
+    return () => { active = false }
+  }, [locale.language, thread?.messages, translations])
+
   if (account?.role === 'admin') return null
 
   const beginConversation = async (event) => {
@@ -115,12 +131,15 @@ export default function SupportChatWidget({ embedded = false }) {
   const sendMessage = async (event) => {
     event.preventDefault()
     const message = draft.trim()
-    if (!message || !credentials) return
+    if ((!message && !attachment) || !credentials) return
     setLoading(true)
     setError('')
     try {
-      await sendParentSupportMessage(credentials, message)
+      if (attachment) await uploadParentSupportAttachment(credentials, attachment, message)
+      else await sendParentSupportMessage(credentials, message)
       setDraft('')
+      setAttachment(null)
+      if (attachmentInputRef.current) attachmentInputRef.current.value = ''
       setThread(await fetchSupportThread(credentials))
     } catch (sendError) {
       setError(sendError.message)
@@ -129,12 +148,25 @@ export default function SupportChatWidget({ embedded = false }) {
     }
   }
 
+  const chooseAttachment = (event) => {
+    const file = event.target.files?.[0] || null
+    if (file && file.size > (3 * 1024 * 1024)) {
+      setError(chinese ? '附件大小不能超过 3 MB。' : 'Keep chat attachments under 3 MB.')
+      event.target.value = ''
+      return
+    }
+    setAttachment(file)
+    setError('')
+  }
+
   const startAgain = () => {
     clearSavedSupportThread()
     setCredentials(null)
     setThread(null)
     setError('')
     setDraft('')
+    setAttachment(null)
+    setTranslations({})
   }
 
   return (
@@ -155,9 +187,9 @@ export default function SupportChatWidget({ embedded = false }) {
           <p><ShieldCheck size={13} /> {chinese ? '此对话仅对您和 TutorPro 管理员可见。' : 'Private between you and the TutorPro administrator.'}</p>
         </form> : <div className="support-thread">
           <div className="support-thread-meta"><span className={`support-thread-status support-thread-status--${thread?.status || 'open'}`}>{thread?.status === 'closed' ? (chinese ? '已结束' : 'Closed') : (chinese ? '客服对话' : 'Support conversation')}</span><button onClick={startAgain}><RotateCcw size={13} /> {chinese ? '新对话' : 'New'}</button></div>
-          <div className="support-messages" ref={messagesRef}>{thread?.messages?.length ? thread.messages.map((message) => <div className={`support-message support-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? (chinese ? 'TutorPro 管理员' : 'TutorPro Admin') : (chinese ? '您' : 'You')}</small><p>{message.body}</p><time>{new Date(message.createdAt).toLocaleTimeString(locale.language || 'en', { hour: 'numeric', minute: '2-digit' })}</time></div>) : <div className="support-loading">{chinese ? '正在加载对话…' : 'Loading conversation…'}</div>}</div>
+          <div className="support-messages" ref={messagesRef}>{thread?.messages?.length ? thread.messages.map((message) => <div className={`support-message support-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? (chinese ? 'TutorPro 管理员' : 'TutorPro Admin') : (chinese ? '您' : 'You')}</small><p>{message.body}</p>{translations[message.id] && <p className="support-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleTimeString(locale.language || 'en', { hour: 'numeric', minute: '2-digit' })}</time></div>) : <div className="support-loading">{chinese ? '正在加载对话…' : 'Loading conversation…'}</div>}</div>
           {error && <div className="support-error">{error}</div>}
-          <form className="support-reply" onSubmit={sendMessage}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={thread?.status === 'closed' ? (chinese ? '发送消息将重新开启对话' : 'A new message will reopen this conversation') : (chinese ? '输入消息…' : 'Write a message…')} maxLength="1000" /><button type="submit" disabled={loading || !draft.trim()} aria-label="Send message"><Send size={17} /></button></form>
+          <form className="support-reply" onSubmit={sendMessage}>{attachment && <div className="support-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (attachmentInputRef.current) attachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-file-button" title={chinese ? '上传文件' : 'Upload file'}><FileUp size={17} /><input ref={attachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={thread?.status === 'closed' ? (chinese ? '发送消息将重新开启对话' : 'A new message will reopen this conversation') : (chinese ? '输入消息…' : 'Write a message…')} maxLength="1000" /><button type="submit" disabled={loading || (!draft.trim() && !attachment)} aria-label="Send message"><Send size={17} /></button></form>
         </div>}
       </section>}
     </div>

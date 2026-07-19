@@ -15,7 +15,8 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 
 ### Student / parent
 
-- Built-in Chinese/English parent support chat on both the website and Parent Dashboard, with private administrator replies
+- Built-in Chinese/English parent support chat on both the website and Parent Dashboard, with automatic IP-language translation
+- Private JPG/PNG/WebP/PDF/TXT chat attachments up to 3 MB for parents and administrators
 - Guest and registered-parent conversations with secure local thread access
 - Two-step family and learner registration
 - Sign up and log in with Gmail, Yahoo Mail, WeChat ID, WhatsApp number or another email provider

@@ -15,16 +15,20 @@ import {
   ClipboardCheck,
   Clock3,
   CloudUpload,
+  Download,
   Eye,
+  FileUp,
   Film,
   Flame,
   Gamepad2,
   GraduationCap,
   Home,
+  Languages,
   LayoutDashboard,
   LogOut,
   Menu,
   MessageSquareText,
+  Paperclip,
   Plus,
   RotateCcw,
   Save,
@@ -68,7 +72,8 @@ import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
-import { fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus } from './supportChat.js'
+import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
+import { translateSupportText } from './supportTranslation.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -1460,11 +1465,14 @@ export function SupportInbox({ onUnreadChange }) {
   const [selectedId, setSelectedId] = useState('')
   const [thread, setThread] = useState(null)
   const [draft, setDraft] = useState('')
+  const [attachment, setAttachment] = useState(null)
+  const [translations, setTranslations] = useState({})
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const messagesRef = useRef(null)
+  const supportAttachmentInputRef = useRef(null)
 
   const loadConversations = useCallback(async () => {
     try {
@@ -1512,26 +1520,55 @@ export function SupportInbox({ onUnreadChange }) {
     if (element) element.scrollTop = element.scrollHeight
   }, [thread?.messages?.length])
 
+  useEffect(() => {
+    if (!thread?.messages?.length) return undefined
+    let active = true
+    thread.messages.filter((message) => message.sender === 'parent' && !translations[message.id]).forEach(async (message) => {
+      const translated = await translateSupportText(message.body, 'en')
+      if (active && translated && translated.trim().toLowerCase() !== message.body.trim().toLowerCase()) {
+        setTranslations((current) => ({ ...current, [message.id]: translated }))
+      }
+    })
+    return () => { active = false }
+  }, [thread?.messages, translations])
+
   const selectConversation = (conversationId) => {
     setSelectedId(conversationId)
     setThread(null)
     setDraft('')
+    setAttachment(null)
+    setTranslations({})
+    if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = ''
   }
 
   const reply = async (event) => {
     event.preventDefault()
-    if (!selectedId || !draft.trim()) return
+    if (!selectedId || (!draft.trim() && !attachment)) return
     setSending(true)
     setError('')
     try {
-      await sendAdminSupportMessage(selectedId, draft.trim())
+      if (attachment) await uploadAdminSupportAttachment(selectedId, attachment, draft.trim())
+      else await sendAdminSupportMessage(selectedId, draft.trim())
       setDraft('')
+      setAttachment(null)
+      if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = ''
       await loadThread(selectedId)
     } catch (sendError) {
       setError(sendError.message)
     } finally {
       setSending(false)
     }
+  }
+
+  const chooseSupportAttachment = (event) => {
+    const file = event.target.files?.[0] || null
+    if (file && file.size > (3 * 1024 * 1024)) {
+      setError('Keep support attachments under 3 MB.')
+      event.target.value = ''
+      return
+    }
+    setAttachment(file)
+    setError('')
   }
 
   const toggleStatus = async () => {
@@ -1566,8 +1603,8 @@ export function SupportInbox({ onUnreadChange }) {
         <div className="support-admin-thread">
           {thread ? <>
             <header><div><span>{initials(thread.parentName)}</span><div><strong>{thread.parentName}</strong><small>{thread.email} · {/^zh/.test(thread.language) ? 'Chinese' : thread.language || 'English'}</small></div></div><button onClick={toggleStatus} disabled={sending}>{thread.status === 'closed' ? 'Reopen' : 'Close conversation'}</button></header>
-            <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p><time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
-            <form onSubmit={reply}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || !draft.trim()}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
+            <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p>{translations[message.id] && <p className="support-admin-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-admin-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
+            <form onSubmit={reply}>{attachment && <div className="support-admin-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-admin-file-button" title="Upload attachment"><FileUp size={18} /><input ref={supportAttachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseSupportAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || (!draft.trim() && !attachment)}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
           </> : <div className="support-thread-placeholder"><MessageSquareText size={36} /><h2>Select a conversation</h2><p>Parent details and private messages will appear here.</p></div>}
         </div>
       </section>

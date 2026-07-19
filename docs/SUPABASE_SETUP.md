@@ -52,7 +52,7 @@ If the project was created before booking synchronization was added, run the com
 
 ### Enable bilingual parent support chat
 
-Run [`supabase/support_chat.sql`](../supabase/support_chat.sql) once. It creates the private Chinese/English website chat, secure visitor conversation tokens, and the administrator support inbox. Parents can message before or after registration; only the conversation holder and authorized administrators can read the thread.
+Run [`supabase/support_chat.sql`](../supabase/support_chat.sql) once, and run it again after support-chat upgrades. It creates the private Chinese/English website chat, IP-language message translation, secure visitor conversation tokens, a private attachment bucket (JPG/PNG/WebP/PDF/TXT up to 3 MB), and the administrator support inbox. Parents can message before or after registration; only the conversation holder and authorized administrators can read the thread or download its files.
 
 ### Enable approved teachers on the homepage and booking screen
 

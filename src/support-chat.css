@@ -96,9 +96,18 @@ body.support-embedded-open .support-widget:not(.support-widget--embedded) { disp
 .support-message small { display: block; margin-bottom: 3px; color: #8d7c9b; font-size: 0.43rem; font-weight: 850; }
 .support-message--parent small { color: #d9c8fa; }
 .support-message p { margin: 0; overflow-wrap: anywhere; color: inherit; font-size: 0.62rem; line-height: 1.5; }
+.support-message .support-translation { display: flex; align-items: flex-start; gap: 4px; margin-top: 7px; border-top: 1px solid currentColor; padding-top: 6px; color: inherit; font-size: 0.55rem; font-style: italic; opacity: 0.82; }
+.support-attachment { display: grid; width: 100%; min-width: 180px; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; margin-top: 7px; border: 1px solid rgba(112,72,223,0.2); border-radius: 8px; padding: 7px; background: rgba(255,255,255,0.75); color: #594177; font-size: 0.51rem; text-align: left; }
+.support-message--parent .support-attachment { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.12); color: #fff; }
+.support-attachment span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .support-message time { position: absolute; right: 8px; bottom: 4px; color: currentColor; font-size: 0.39rem; opacity: 0.55; }
 .support-loading { display: grid; min-height: 260px; place-items: center; color: #8a7e94; font-size: 0.58rem; }
-.support-reply { display: grid; grid-template-columns: 1fr auto; gap: 6px; border-top: 1px solid #e2dce8; padding-top: 9px; }
+.support-reply { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; border-top: 1px solid #e2dce8; padding-top: 9px; }
+.support-selected-file { display: grid; grid-column: 1 / -1; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-radius: 8px; padding: 7px 8px; background: #eee8f7; color: #665578; font-size: 0.51rem; }
+.support-selected-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.support-selected-file button { display: grid !important; width: 25px !important; height: 25px !important; place-items: center; border-radius: 7px !important; background: #fff !important; color: #7b668d !important; }
+.support-file-button { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 11px; background: #ece6f5; color: #7048df; cursor: pointer; }
+.support-file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .support-reply textarea { min-height: 44px; max-height: 95px; padding: 9px 10px; resize: none; }
 .support-reply button { display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 11px; background: #ff4f87; color: #fff; }
 .support-reply button:disabled { cursor: not-allowed; filter: grayscale(0.6); opacity: 0.45; }
