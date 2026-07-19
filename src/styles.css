@@ -2779,16 +2779,25 @@ body {
 .teacher-ai-interview { display: flex; min-height: 500px; flex-direction: column; }
 .teacher-ai-interview--welcome,
 .teacher-ai-interview--complete { align-items: center; justify-content: center; padding: 15px 8px 25px; text-align: center; }
+.teacher-interviewer-portrait { position: relative; width: 145px; height: 177px; margin: 0 0 24px; border: 5px solid #fff; border-radius: 34px; background: linear-gradient(145deg, #7048df, #ff4f87); box-shadow: 0 20px 42px rgba(87,52,154,0.28); transform: rotate(-2deg); }
+.teacher-interviewer-portrait::before { position: absolute; z-index: -1; inset: -9px; border: 1px solid rgba(112,72,223,0.2); border-radius: 40px; content: ''; animation: interviewer-portrait-pulse 3s ease-in-out infinite; }
+.teacher-interviewer-portrait img { display: block; width: 100%; height: 100%; border-radius: 28px; object-fit: cover; object-position: center 20%; }
+.teacher-interviewer-portrait figcaption { position: absolute; right: -26px; bottom: -12px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e6dff0; border-radius: 20px; padding: 7px 10px; background: #fff; box-shadow: 0 8px 22px rgba(66,42,105,0.16); color: #59486f; font-size: 0.52rem; font-weight: 900; white-space: nowrap; transform: rotate(2deg); }
+.teacher-interviewer-portrait figcaption i,
+.teacher-interviewer-mini i { width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; background: #8bcf36; box-shadow: 0 0 0 2px rgba(139,207,54,0.25); }
+@keyframes interviewer-portrait-pulse { 50% { opacity: 0.45; transform: scale(1.035); } }
 .teacher-ai-avatar { display: grid; width: 78px; height: 78px; margin-bottom: 19px; place-items: center; border: 5px solid #fff; border-radius: 25px; background: linear-gradient(145deg, #7048df, #ff4f87); box-shadow: 0 17px 36px rgba(87,52,154,0.25); color: #fff; transform: rotate(-4deg); }
 .teacher-ai-avatar.complete { background: linear-gradient(145deg, #a8dd4b, #68a82d); }
 .teacher-ai-interview h2 { max-width: 680px; margin: 6px 0 11px; font-size: clamp(1.7rem,3vw,2.4rem); }
 .teacher-ai-interview--welcome > p,
 .teacher-ai-interview--complete > p { max-width: 690px; color: var(--muted); font-size: 0.72rem; line-height: 1.7; }
-.teacher-ai-interview--welcome > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin: 8px 0 22px; }
-.teacher-ai-interview--welcome > div span { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 7px 9px; background: #f0ebfb; color: #624796; font-size: 0.55rem; font-weight: 800; }
+.teacher-interview-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin: 8px 0 22px; }
+.teacher-interview-features span { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 7px 9px; background: #f0ebfb; color: #624796; font-size: 0.55rem; font-weight: 800; }
 .teacher-interview-back { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border: 0; background: transparent; color: #716782; font-size: 0.58rem; font-weight: 750; }
-.teacher-interview-top { display: grid; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; border-radius: 14px; padding: 11px; background: linear-gradient(120deg, #321568, #5c3499); color: #fff; }
-.teacher-interview-top > span { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: #ff4f87; }
+.teacher-interview-top { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; border-radius: 14px; padding: 10px 12px; background: linear-gradient(120deg, #321568, #5c3499); color: #fff; }
+.teacher-interviewer-mini { position: relative; display: block; width: 46px; height: 46px; border: 3px solid rgba(255,255,255,0.92); border-radius: 14px; background: #ff4f87; box-shadow: 0 6px 16px rgba(20,7,49,0.22); }
+.teacher-interviewer-mini img { display: block; width: 100%; height: 100%; border-radius: 11px; object-fit: cover; object-position: center 20%; }
+.teacher-interviewer-mini i { position: absolute; right: -3px; bottom: -3px; }
 .teacher-interview-top > div { display: flex; flex-direction: column; }
 .teacher-interview-top small { color: #d6c9e8; font-size: 0.48rem; }
 .teacher-interview-top strong { font-size: 0.68rem; }
@@ -3492,6 +3501,11 @@ body {
   .teacher-ai-interview { min-height: 0; }
   .teacher-ai-interview--welcome,
   .teacher-ai-interview--complete { padding-right: 0; padding-left: 0; }
+  .teacher-interviewer-portrait { width: 118px; height: 144px; margin-bottom: 21px; border-radius: 29px; }
+  .teacher-interviewer-portrait img { border-radius: 23px; }
+  .teacher-interviewer-portrait figcaption { right: -18px; padding: 6px 8px; font-size: 0.48rem; }
+  .teacher-interview-top { padding: 9px; }
+  .teacher-interviewer-mini { width: 42px; height: 42px; }
   .teacher-ai-interview form > div { align-items: stretch; flex-direction: column; }
   .teacher-ai-interview form > div .button { width: 100%; }
   .teacher-ai-interview form textarea { min-height: 210px; }

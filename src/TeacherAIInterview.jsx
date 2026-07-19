@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Send, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, Send, ShieldCheck, Sparkles } from 'lucide-react'
 import { supabase } from './supabaseClient.js'
+
+const interviewerPortrait = `${import.meta.env.BASE_URL}assets/tutorpro-ai-interviewer.webp`
 
 const microDemoPrompts = [
   "Imagine I'm a beginner student. Teach me the difference between 'much' and 'many' in under two minutes, as if this were a real lesson.",
@@ -147,11 +149,14 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
   if (!started) {
     return (
       <section className="teacher-ai-interview teacher-ai-interview--welcome">
-        <span className="teacher-ai-avatar"><Bot size={34} /></span>
+        <figure className="teacher-interviewer-portrait">
+          <img src={interviewerPortrait} alt="TutorPro English fictional AI hiring assistant" decoding="async" />
+          <figcaption><i aria-hidden="true" /> AI interviewer · Online</figcaption>
+        </figure>
         <span className="kicker">Required first-round interview</span>
-        <h2>TutorPro English Hiring Assistant</h2>
-        <p>I’m an AI assistant conducting the first-round screening. This is a short conversation of approximately 10–15 minutes covering your background, English communication, teaching approach, a micro-demo and availability. A real member of the TutorPro English team will review your responses afterward.</p>
-        <div><span><Clock3 size={17} /> 10–15 minutes</span><span><ShieldCheck size={17} /> Private hiring review</span><span><Sparkles size={17} /> One question at a time</span></div>
+        <h2>Meet your TutorPro English Hiring Assistant</h2>
+        <p>I’m a realistic digital interviewer conducting the first-round screening. I’m AI—not a human recruiter—and I’ll guide you through a 10–15 minute text conversation covering your background, English communication, teaching approach, a micro-demo and availability. A real member of the TutorPro English team will review your responses afterward.</p>
+        <div className="teacher-interview-features"><span><Clock3 size={17} /> 10–15 minutes</span><span><ShieldCheck size={17} /> Private hiring review</span><span><Sparkles size={17} /> One question at a time</span></div>
         <button type="button" className="button button--primary" onClick={begin}>Start AI interview <ArrowRight size={17} /></button>
         <button type="button" className="teacher-interview-back" onClick={onBack}><ArrowLeft size={16} /> Back to teaching profile</button>
       </section>
@@ -174,7 +179,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
 
   return (
     <section className="teacher-ai-interview teacher-ai-interview--question">
-      <div className="teacher-interview-top"><span><Bot size={21} /></span><div><small>TutorPro English Hiring Assistant</small><strong>{current.stage}</strong></div><em>{index + 1} / {questions.length}</em></div>
+      <div className="teacher-interview-top"><span className="teacher-interviewer-mini"><img src={interviewerPortrait} alt="" aria-hidden="true" /><i aria-hidden="true" /></span><div><small>TutorPro English Hiring Assistant · AI interviewer</small><strong>{current.stage}</strong></div><em>{index + 1} / {questions.length}</em></div>
       <div className="teacher-interview-progress"><span style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div>
       <div className="teacher-interview-question"><small>Question {index + 1}</small><h2>{current.question}</h2></div>
       <form onSubmit={answerQuestion}>
