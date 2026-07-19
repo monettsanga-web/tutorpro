@@ -26,6 +26,8 @@ import {
   Menu,
   MessageSquareText,
   Plus,
+  RotateCcw,
+  Save,
   ShieldCheck,
   Sparkles,
   Star,
@@ -125,6 +127,7 @@ function ScheduleCalendar({
   onPaint,
   selectedLessons = [],
   onSelect,
+  onBookingOpen,
   duration = 25,
   multiSelect = false,
 }) {
@@ -265,6 +268,7 @@ function ScheduleCalendar({
                   'schedule-cell',
                   isAvailable ? 'available' : 'unavailable',
                   bookingCell ? 'booked' : '',
+                  bookingCell && onBookingOpen ? 'manageable' : '',
                   bookingCell?.isStart ? 'booking-start' : '',
                   selectable ? 'selectable' : '',
                   isSelected ? 'selected' : '',
@@ -275,18 +279,22 @@ function ScheduleCalendar({
                     type="button"
                     className={classes}
                     key={`${dateKey}-${time}`}
-                    aria-label={`${date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${time}${isAvailable ? ', available' : ', unavailable'}`}
+                    aria-label={`${date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${time}${bookingCell ? `, booked for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : isAvailable ? ', available' : ', unavailable'}`}
                     aria-pressed={editable ? isAvailable : isSelected}
-                    disabled={!editable && !selectable && !isSelected}
+                    disabled={bookingCell ? !onBookingOpen : !editable && !selectable && !isSelected}
                     onPointerDown={(event) => { startPaint(event, slotKey, Boolean(bookingCell)); startBookingSelection(event, dateKey, time, selectable, selectedOwner) }}
                     onPointerEnter={() => { continuePaint(slotKey, Boolean(bookingCell)); continueBookingSelection(dateKey, time, selectable, selectedOwner) }}
                     onClick={(event) => {
+                      if (bookingCell && onBookingOpen) {
+                        onBookingOpen(bookingCell.booking)
+                        return
+                      }
                       if (editable && event.detail === 0 && !bookingCell) applyPaint(slotKey, !isAvailable)
                       if (!editable && !multiSelect && selectable) onSelect({ date: dateKey, time }, 'toggle')
                       if (!editable && multiSelect && event.detail === 0 && (selectable || selectedOwner)) onSelect(selectedOwner || { date: dateKey, time }, selectedOwner ? 'remove' : 'add')
                     }}
                   >
-                    {bookingCell?.isStart && <span><strong>{bookedLearner?.name || 'Booked lesson'}</strong><small>{bookingCell.booking.focus}</small></span>}
+                    {bookingCell?.isStart && <span><strong>{bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson'}</strong><small>{bookingCell.booking.slotComment || bookingCell.booking.focus}</small>{bookingCell.booking.slotComment && <em>Comment</em>}</span>}
                     {!editable && selectable && !bookingCell && <i>Available</i>}
                   </button>
                 )
@@ -363,7 +371,7 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
   )
 }
 
-function BookingCard({ booking, showStudent = false, showTeacher = false, actions, onEnterClassroom }) {
+function BookingCard({ booking, showStudent = false, showTeacher = false, actions, onEnterClassroom, onManageBooking }) {
   const student = getAccountById(booking.studentId)
   const teacher = getAccountById(booking.teacherId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
@@ -384,11 +392,118 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         <p className="lesson-card__details">{person && <strong className="booking-person-name">{showTeacher ? 'Teacher' : 'Student'}: {person}</strong>}<span>{formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time)}</strong></span></p>
         {booking.status === 'confirmed' && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> Enter private classroom <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
+        {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
+        {onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage booking</button>}
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
       </div>
       {actions && <div className="lesson-card__actions">{actions}</div>}
     </article>
+  )
+}
+
+export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
+  const student = getAccountById(booking.studentId)
+  const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
+  const learnerName = learner?.name || booking.learnerName || 'Student'
+  const teacher = getAccountById(booking.teacherId)
+  const [current, setCurrent] = useState(booking)
+  const [comment, setComment] = useState(booking.slotComment || '')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [previousStatus, setPreviousStatus] = useState('')
+  const [error, setError] = useState('')
+  const canComment = account.role === 'admin' || (account.role === 'teacher' && account.id === booking.teacherId)
+  const canCancel = account.role === 'admin'
+    || (account.role === 'teacher' && account.id === booking.teacherId)
+    || (account.role === 'student' && account.id === booking.studentId)
+  const cancellable = !['cancelled', 'declined', 'completed'].includes(current.status)
+
+  const changed = (updated) => {
+    setCurrent(updated)
+    onChanged?.(updated)
+  }
+
+  const saveComment = async () => {
+    const normalized = comment.trim()
+    if (normalized.length > 500) {
+      setError('Keep the booking comment under 500 characters.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      const updated = updateBooking(current.id, {
+        slotComment: normalized,
+        slotCommentAuthor: account.role,
+        slotCommentUpdatedAt: new Date().toISOString(),
+      })
+      changed(updated)
+      if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the comment in time.')
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 2200)
+    } catch (saveError) {
+      setError(saveError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const cancelBookingSlot = async () => {
+    const statusBeforeCancel = current.status
+    setSaving(true)
+    setError('')
+    try {
+      const updated = updateBooking(current.id, { status: 'cancelled' })
+      setPreviousStatus(statusBeforeCancel)
+      setConfirmCancel(false)
+      changed(updated)
+      if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the cancellation in time.')
+    } catch (cancelError) {
+      setError(cancelError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const undoCancellation = async () => {
+    if (!previousStatus) return
+    setSaving(true)
+    setError('')
+    try {
+      const updated = updateBooking(current.id, { status: previousStatus })
+      setPreviousStatus('')
+      changed(updated)
+      if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the restored booking in time.')
+    } catch (undoError) {
+      setError(undoError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="portal-dialog-backdrop booking-slot-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="portal-dialog booking-slot-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-slot-title">
+        <button className="portal-dialog__close" onClick={onClose} aria-label="Close booking details"><X size={19} /></button>
+        <div className="booking-slot-dialog__heading"><span><CalendarCheck2 size={25} /></span><div><small>Booked calendar slot</small><h2 id="booking-slot-title">{learnerName}</h2><p>{formatLessonDate(current.date, current.time, true)} at <strong>{formatTime(current.time)}</strong> · {current.duration} minutes</p></div><StatusBadge status={current.status} /></div>
+
+        <div className="booking-slot-facts"><div><span>Student</span><strong>{learnerName}</strong></div><div><span>Teacher</span><strong>{teacher?.fullName || current.teacherName || 'Teacher'}</strong></div><div><span>Lesson focus</span><strong>{current.focus}</strong></div></div>
+        {current.note && <div className="booking-parent-note"><MessageSquareText size={16} /><div><strong>Parent booking note</strong><span>{current.note}</span></div></div>}
+
+        <div className="booking-comment-editor">
+          <div><span>Comment beside {learnerName}’s booked slot</span>{saved && <em><Check size={13} /> Saved live</em>}</div>
+          {canComment ? <><textarea value={comment} onChange={(event) => { setComment(event.target.value); setSaved(false); setError('') }} maxLength="500" placeholder={`Write a reminder or lesson comment for ${learnerName}…`} /><div className="booking-comment-actions"><small>{comment.length}/500 · Visible to the parent, teacher and administrator</small><button onClick={saveComment} disabled={saving || comment.trim() === (current.slotComment || '').trim()}><Save size={15} /> {saving ? 'Saving…' : 'Save comment'}</button></div></> : <div className="booking-comment-readonly">{current.slotComment ? <><MessageSquareText size={16} /><span>{current.slotComment}</span></> : <span>No teacher comment has been added to this booking yet.</span>}</div>}
+        </div>
+
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        {previousStatus && <div className="booking-undo-banner"><div><strong>Booking cancelled</strong><span>The calendar slot has been released.</span></div><button onClick={undoCancellation} disabled={saving}><RotateCcw size={15} /> Undo cancellation</button></div>}
+        {confirmCancel && !previousStatus && <div className="booking-cancel-confirm"><div><strong>Cancel this booking?</strong><span>This releases the lesson slot. You can undo it while this window remains open.</span></div><button onClick={() => setConfirmCancel(false)} disabled={saving}>Keep booking</button><button className="danger" onClick={cancelBookingSlot} disabled={saving}>{saving ? 'Cancelling…' : 'Confirm cancellation'}</button></div>}
+
+        <div className="booking-slot-dialog__footer"><button className="portal-secondary-button" onClick={onClose}>Close</button>{canCancel && cancellable && !confirmCancel && !previousStatus && <button className="booking-cancel-button" onClick={() => setConfirmCancel(true)}><XCircle size={16} /> Cancel booking</button>}</div>
+      </section>
+    </div>
   )
 }
 
@@ -657,6 +772,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [mediaError, setMediaError] = useState('')
   const [ratingBooking, setRatingBooking] = useState(null)
   const [classroomBooking, setClassroomBooking] = useState(null)
+  const [managedBooking, setManagedBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
   const learners = (account.children?.length ? account.children : [account.child]).filter(Boolean)
   const hasLearnerProfile = learners.length > 0
@@ -850,7 +966,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <div className="student-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Coming up</span><h2>Next lesson</h2></div><button className="portal-text-button" onClick={() => setActive('lessons')}>All lessons <ChevronRight size={15} /></button></div>
-              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
+              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
             </section>
             <section className="portal-card learning-focus-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Personalised path</span><h2>Learning focus</h2></div><span className="portal-card__icon"><Sparkles size={21} /></span></div>
@@ -868,11 +984,11 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         <div className="portal-view">
           <div className="portal-page-heading"><div><span className="portal-kicker">Your schedule</span><h1>My lessons</h1><p>A 24-hour weekly calendar with every lesson placed in its 30-minute time slot.</p></div><button className="portal-primary-button" onClick={() => setActive('book')}><CalendarPlus size={17} /> Book a class</button></div>
           <section className="portal-card student-schedule-card">
-            <ScheduleCalendar weekOffset={lessonsWeek} onWeekOffset={setLessonsWeek} bookings={bookings} />
+            <ScheduleCalendar weekOffset={lessonsWeek} onWeekOffset={setLessonsWeek} bookings={bookings} onBookingOpen={setManagedBooking} />
           </section>
           <section className="portal-card lessons-list-card schedule-list-below">
             <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">All requests</span><h2>Lesson details</h2></div></div>
-            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
+            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
           </section>
         </div>
       )}
@@ -903,6 +1019,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           </div>
         </div>
       )}
+      {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); setBookingVersion((value) => value + 1) }} />}
       {ratingBooking && <RatingDialog booking={ratingBooking} studentId={account.id} onClose={() => setRatingBooking(null)} onSaved={() => { setRatingBooking(null); setBookingVersion((value) => value + 1) }} />}
       {showAddStudent && <AddStudentDialog account={account} onClose={() => setShowAddStudent(false)} onAdded={finishAddingStudent} />}
     </PortalShell>
@@ -946,6 +1063,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [nameError, setNameError] = useState('')
   const [feedbackBooking, setFeedbackBooking] = useState(null)
   const [classroomBooking, setClassroomBooking] = useState(null)
+  const [managedBooking, setManagedBooking] = useState(null)
   const [classroom, setClassroom] = useState(account.teacher.classroom || { platform: 'zoom', zoomLink: '', voovLink: '' })
   const [classroomSaved, setClassroomSaved] = useState(false)
   const [classroomError, setClassroomError] = useState('')
@@ -1144,7 +1262,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <div className="teacher-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Action centre</span><h2>Booking requests</h2></div><button className="portal-text-button" onClick={() => setActive('bookings')}>View all <ChevronRight size={15} /></button></div>
-              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
+              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onManageBooking={setManagedBooking} actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
               {!pending && <EmptyState icon={ClipboardCheck} title="You’re all caught up" text="New lesson requests will appear here for your review." />}
             </section>
             <section className="portal-card teacher-profile-snapshot">
@@ -1167,7 +1285,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               if (booking.status === 'pending') actions = <><button className="lesson-action lesson-action--wide lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}>Accept</button><button className="lesson-action lesson-action--wide lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}>Decline</button></>
               if (booking.status === 'confirmed') actions = <button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button>
               if (booking.status === 'completed') actions = <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
-              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} actions={actions} />
+              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} actions={actions} />
             }) : <EmptyState title="No bookings yet" text="Approved teachers will see student requests here." />}
           </section>
         </div>
@@ -1191,7 +1309,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             </section>
             <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
-          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch an upcoming class</h2></div></div>{bookings.filter((booking) => booking.status === 'confirmed').length ? bookings.filter((booking) => booking.status === 'confirmed').map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} />) : <EmptyState icon={Video} title="No confirmed classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
+          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch an upcoming class</h2></div></div>{bookings.filter((booking) => booking.status === 'confirmed').length ? bookings.filter((booking) => booking.status === 'confirmed').map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} />) : <EmptyState icon={Video} title="No confirmed classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
         </div>
       )}
 
@@ -1210,6 +1328,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               bookings={bookings}
               editable
               onPaint={paintAvailability}
+              onBookingOpen={setManagedBooking}
             />
           </section>
         </div>
@@ -1226,6 +1345,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           </div>
         </div>
       )}
+      {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); refresh() }} />}
       {feedbackBooking && <FeedbackDialog booking={feedbackBooking} teacherId={account.id} onClose={() => setFeedbackBooking(null)} onSaved={finishFeedback} />}
     </PortalShell>
   )
@@ -1461,6 +1581,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
+  const [managedBooking, setManagedBooking] = useState(null)
   const [studentToRemove, setStudentToRemove] = useState(null)
   const [teacherToRemove, setTeacherToRemove] = useState(null)
   const [cloudStatus, setCloudStatus] = useState(cloudSyncEnabled() ? 'connecting' : 'local')
@@ -1790,13 +1911,14 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             {bookingStudent && bookingLearner ? <BookLessonPanel key={bookingLearner.id} account={bookingStudent} learner={bookingLearner} adminBooking onBooked={refresh} /> : <EmptyState icon={GraduationCap} title="Register a student first" text="An administrator needs a student profile before creating a booking." />}
           </div>
         ) : (
-          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests or book an available teacher slot for a student.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
+          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Oversee lesson requests or book an available teacher slot for a student.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><section className="portal-card lessons-list-card">{bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} actions={<select className="booking-status-select" value={booking.status} onChange={(event) => setBookingStatus(booking.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="declined">Declined</option></select>} />) : <EmptyState title="No bookings yet" text="Student lesson requests will appear here automatically." />}</section></div>
         )
       )}
 
       {active === 'profile' && (
         <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro English Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
       )}
+      {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); refresh() }} />}
       {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}
       {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
       {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}

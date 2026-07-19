@@ -142,6 +142,8 @@ export function updateBooking(bookingId, changes) {
   if (index < 0) throw new Error('Booking not found.')
   const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'declined']
   if (changes.status && !validStatuses.includes(changes.status)) throw new Error('Invalid booking status.')
+  if (typeof changes.slotComment === 'string' && changes.slotComment.trim().length > 500) throw new Error('Keep the booking comment under 500 characters.')
+  if (typeof changes.slotComment === 'string') changes = { ...changes, slotComment: changes.slotComment.trim() }
   const classroomDetails = changes.status === 'confirmed' && !bookings[index].classroomId
     ? {
         classroomId: `TP-${bookings[index].date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
