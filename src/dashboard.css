@@ -4246,6 +4246,42 @@
 .admin-teacher-media .profile-video-placeholder,
 .admin-teacher-media .profile-intro-video { margin-top: 15px; }
 .admin-teacher-media > p { margin: 10px 0 0; color: var(--portal-muted); font-size: 0.58rem; }
+.admin-interview-review { margin-top: 18px; }
+.admin-interview-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.admin-interview-heading h2 { margin-bottom: 4px; font-size: 1.25rem; }
+.admin-interview-heading p { margin: 0; color: var(--portal-muted); font-size: 0.62rem; }
+.interview-recommendation { flex: 0 0 auto; border-radius: 20px; padding: 7px 10px; font-size: 0.56rem; font-weight: 900; text-transform: uppercase; }
+.interview-recommendation--strong { background: #e4f6c8; color: #4d7617; }
+.interview-recommendation--consider { background: #fff0c9; color: #916008; }
+.interview-recommendation--review { background: #ffe5ef; color: #a5345c; }
+.admin-interview-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 17px; }
+.admin-interview-metrics > div { display: flex; min-width: 0; flex-direction: column; border: 1px solid #e1d9ea; border-radius: 12px; padding: 12px; background: #faf8fd; }
+.admin-interview-metrics span { color: var(--portal-muted); font-size: 0.52rem; text-transform: uppercase; }
+.admin-interview-metrics strong { margin: 3px 0; color: #3e2c55; font-size: 0.73rem; }
+.admin-interview-metrics small { overflow: hidden; color: #75677f; font-size: 0.53rem; line-height: 1.45; }
+.admin-interview-evidence { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 12px; }
+.admin-interview-evidence > div { border-radius: 12px; padding: 12px; background: #f5f8fc; }
+.admin-interview-evidence > div:last-child { background: #fff5f7; }
+.admin-interview-evidence h3 { margin: 0 0 7px; font-size: 0.7rem; }
+.admin-interview-evidence ul { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.admin-interview-evidence li { display: flex; align-items: flex-start; gap: 5px; color: #5c6c7f; font-size: 0.56rem; line-height: 1.45; }
+.admin-interview-evidence li svg { flex: 0 0 auto; margin-top: 1px; color: #6ca52c; }
+.admin-interview-evidence > div:last-child li svg { color: #c84671; }
+.admin-interview-evidence p { margin: 0; color: var(--portal-muted); font-size: 0.57rem; }
+.admin-interview-next { margin-top: 12px; border-left: 4px solid #7048df; border-radius: 9px; padding: 10px 12px; background: #f1edfb; }
+.admin-interview-next strong { color: #523482; font-size: 0.61rem; }
+.admin-interview-next p { margin: 3px 0; color: #5e506d; font-size: 0.61rem; }
+.admin-interview-next small { color: #8b7d98; font-size: 0.48rem; }
+.admin-interview-transcript { margin-top: 13px; border: 1px solid #ded6e8; border-radius: 11px; overflow: hidden; }
+.admin-interview-transcript summary { cursor: pointer; padding: 11px 12px; background: #faf8fd; color: #5b417f; font-size: 0.6rem; font-weight: 850; }
+.admin-interview-transcript > div { display: grid; gap: 8px; max-height: 570px; overflow-y: auto; padding: 10px; }
+.admin-interview-transcript article { border-radius: 9px; padding: 10px; background: #f7f8fa; }
+.admin-interview-transcript article span { color: #ff4f87; font-size: 0.46rem; font-weight: 900; text-transform: uppercase; }
+.admin-interview-transcript article h4 { margin: 3px 0 6px; color: #38284c; font-size: 0.62rem; }
+.admin-interview-transcript article p { margin: 0; color: #665875; font-size: 0.59rem; line-height: 1.55; white-space: pre-wrap; }
+.admin-interview-empty { display: flex; min-height: 170px; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #94879f; text-align: center; }
+.admin-interview-empty strong { color: #5a4968; font-size: 0.68rem; }
+.admin-interview-empty span { max-width: 430px; font-size: 0.55rem; }
 .admin-teacher-detail-list { margin: 15px 0 0; }
 .admin-teacher-detail-list > div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--portal-line); padding: 9px 0; }
 .admin-teacher-detail-list dt { color: var(--portal-muted); font-size: 0.62rem; }
@@ -5714,6 +5750,9 @@
   .admin-goal-editor__heading,
   .admin-goal-editor__actions { align-items: stretch; flex-direction: column; }
   .admin-goal-editor__actions .portal-primary-button { width: 100%; }
+  .admin-interview-heading { align-items: flex-start; flex-direction: column; }
+  .admin-interview-metrics,
+  .admin-interview-evidence { grid-template-columns: 1fr; }
   .role-error-card > div { flex-direction: column; width: 100%; }
   .role-error-card button { justify-content: center; }
 

@@ -40,6 +40,9 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 
 ### Teacher
 
+- Required 14-question text-based AI first-round interview before application submission
+- Randomized live micro-demo, pedagogy scenarios, English screening and platform-fit questions
+- Private interview transcript and structured hiring recommendation for Administrator review
 - Teacher registration and professional profile application
 - Editable teacher display name, display photo and introduction-video uploads for the public teacher showcase
 - Public teacher discovery with experience, ratings and teacher selection
@@ -70,6 +73,7 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 - Teacher approval, rejection and suspension controls
 - Teacher and Student Open controls enter a safe administrator profile view immediately, even when Supabase refresh is slow
 - Dedicated administrator teacher profile with biography, credentials, availability, classroom and booking details
+- Private AI interview assessment, recommendation, concerns and complete applicant transcript
 - Teacher approval/rejection/suspension requires Supabase to return the updated row and reports RLS errors instead of showing a false success
 - Per-student profile suspension and restoration with clear learner-facing status messages
 - Safe removal of individual student profiles or final family registrations with typed confirmation

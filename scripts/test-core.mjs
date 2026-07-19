@@ -98,8 +98,17 @@ let teacher = await auth.registerTeacher({
   experience: 5,
   languages: 'English',
   credentials: [],
+  interview: {
+    completedAt: new Date().toISOString(),
+    overallRecommendation: 'Consider / Second Interview',
+    englishProficiency: { band: 'Good', justification: 'Clear written responses.' },
+    liveDemo: { band: 'Good', prompt: 'Teach much and many.', justification: 'Clear example.' },
+    strengths: ['Clear communication'], concerns: [], availability: 'Weekday evenings', suggestedNextStep: 'Human interview.', source: 'test',
+    transcript: Array.from({ length: 14 }, (_, index) => ({ stage: `Stage ${index + 1}`, question: `Question ${index + 1}`, answer: 'A complete interview answer for the test applicant.' })),
+  },
 })
 assert(auth.getAccounts('teacher').some((account) => account.id === teacher.id && account.status === 'pending'), 'New teacher registration did not appear as pending for the administrator.')
+assert(teacher.teacher.interview?.transcript?.length === 14, 'Required teacher interview was not stored with the application.')
 teacher = auth.updateAccount(teacher.id, { status: 'approved' })
 
 const future = new Date()

@@ -42,6 +42,11 @@ const teacher = await auth.registerTeacher({
   experience: 4,
   languages: 'English',
   credentials: [],
+  interview: {
+    completedAt: new Date().toISOString(),
+    overallRecommendation: 'Consider / Second Interview',
+    transcript: Array.from({ length: 14 }, (_, index) => ({ stage: `Stage ${index + 1}`, question: `Question ${index + 1}`, answer: 'A complete synchronized interview response.' })),
+  },
 })
 
 const adminTab = new Map()

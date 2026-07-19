@@ -50,6 +50,10 @@ The repair script finds the authorized administrator without displaying the emai
 
 If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
 
+### Enable AI teacher applicant evaluation
+
+The required interview flow works immediately with a structured fallback. Follow [`docs/TEACHER_AI_INTERVIEW.md`](TEACHER_AI_INTERVIEW.md) to deploy the optional private AI evaluator and configure an OpenAI-compatible model key. Internal summaries and transcripts are restricted to the Administrator Teacher Profile.
+
 ### Enable bilingual parent support chat
 
 Run [`supabase/support_chat.sql`](../supabase/support_chat.sql) once, and run it again after support-chat upgrades. It creates the private Chinese/English website chat, IP-language message translation, secure visitor conversation tokens, a private attachment bucket (JPG/PNG/WebP/PDF/TXT up to 3 MB), and the administrator support inbox. Parents can message before or after registration; only the conversation holder and authorized administrators can read the thread or download its files.

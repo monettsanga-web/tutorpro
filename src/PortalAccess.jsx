@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,6 +19,7 @@ import {
 import { loginAccount, registerTeacher } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 
+const TeacherAIInterview = lazy(() => import('./TeacherAIInterview.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 function validTeacherLogin(provider, value) {
   const login = value.trim()
@@ -76,7 +77,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
     if (validateCredentials()) setStep(2)
   }
 
-  const submitTeacher = async (event) => {
+  const continueToInterview = (event) => {
     event.preventDefault()
     const next = {}
     if (form.bio.trim().length < 30) next.bio = 'Write at least 30 characters about your teaching.'
@@ -85,15 +86,21 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
     if (!form.languages.trim()) next.languages = 'Add at least one language.'
     setErrors(next)
     if (Object.keys(next).length) return
+    setStep(3)
+    setError('')
+  }
 
+  const completeInterview = async (interview) => {
     setSubmitting(true)
+    setError('')
     try {
-      const account = await registerTeacher(form)
+      const account = await registerTeacher({ ...form, interview })
       setCreated(account)
       onAuthenticated(account)
       setView('success')
     } catch (submitError) {
       setError(submitError.message)
+      throw submitError
     } finally {
       setSubmitting(false)
     }
@@ -138,8 +145,8 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
 
           {!isAdmin && view === 'register' && (
             <>
-              <div className="auth-heading"><span className="auth-heading__icon"><BriefcaseBusiness size={22} /></span><div><span>Teacher application · {step} of 2</span><h2 id="role-access-title">{step === 1 ? 'Create your teacher account' : 'Build your teaching profile'}</h2><p>{step === 1 ? 'Your profile will be reviewed before bookings open.' : 'Help the administrator verify your experience.'}</p></div></div>
-              <div className="auth-progress"><span className="complete" /><span className={step === 2 ? 'complete' : ''} /></div>
+              <div className="auth-heading"><span className="auth-heading__icon"><BriefcaseBusiness size={22} /></span><div><span>Teacher application · {step} of 3</span><h2 id="role-access-title">{step === 1 ? 'Create your teacher account' : step === 2 ? 'Build your teaching profile' : 'Complete your AI interview'}</h2><p>{step === 1 ? 'Your profile will be reviewed before bookings open.' : step === 2 ? 'Help the administrator verify your experience.' : 'A required first-round screening before application submission.'}</p></div></div>
+              <div className="auth-progress auth-progress--three"><span className="complete" /><span className={step >= 2 ? 'complete' : ''} /><span className={step >= 3 ? 'complete' : ''} /></div>
               {step === 1 ? (
                 <form className="auth-form" onSubmit={nextTeacherStep} noValidate>
                   <label><span>Full name</span><div className={`input-wrap ${errors.fullName ? 'input-wrap--error' : ''}`}><UserRound size={18} /><input autoFocus name="fullName" autoComplete="name" value={form.fullName} onChange={update} placeholder="Your full name" /></div>{errors.fullName && <small className="field-error">{errors.fullName}</small>}</label>
@@ -151,14 +158,16 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
                   </div>
                   <button className="button button--primary button--full auth-submit" type="submit">Continue to teaching profile <ArrowRight size={17} /></button>
                 </form>
-              ) : (
-                <form className="auth-form teacher-profile-form" onSubmit={submitTeacher} noValidate>
+              ) : step === 2 ? (
+                <form className="auth-form teacher-profile-form" onSubmit={continueToInterview} noValidate>
                   <div className="auth-form__row"><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}><option>Both Curricula</option><option>Cambridge</option><option>Oxford</option></select></label><label><span>Years of experience</span><input className={errors.experience ? 'select-error' : ''} type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="e.g. 5" />{errors.experience && <small className="field-error">{errors.experience}</small>}</label></div>
                   <label><span>Short teaching bio</span><textarea className={errors.bio ? 'select-error' : ''} name="bio" value={form.bio} onChange={update} placeholder="Describe your approach, experience and the learners you support…" />{errors.bio && <small className="field-error">{errors.bio}</small>}</label>
                   <div className="auth-form__row"><label><span>Education</span><input className={errors.education ? 'select-error' : ''} name="education" value={form.education} onChange={update} placeholder="Degree or qualification" />{errors.education && <small className="field-error">{errors.education}</small>}</label><label><span>Languages</span><input className={errors.languages ? 'select-error' : ''} name="languages" value={form.languages} onChange={update} placeholder="English, Filipino…" />{errors.languages && <small className="field-error">{errors.languages}</small>}</label></div>
                   <label className="credential-upload"><input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFiles} /><span><Upload size={20} /></span><div><strong>{form.credentials.length ? `${form.credentials.length} file(s) selected` : 'Upload credentials'}</strong><small>Certificates, degree or ID · PDF/JPG/PNG</small></div></label>
-                  <div className="auth-form__actions"><button className="button button--outline" type="button" onClick={() => setStep(1)}><ArrowLeft size={16} /> Back</button><button className="button button--primary" type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit application'} {!submitting && <ArrowRight size={17} />}</button></div>
+                  <div className="auth-form__actions"><button className="button button--outline" type="button" onClick={() => setStep(1)}><ArrowLeft size={16} /> Back</button><button className="button button--primary" type="submit">Continue to AI interview <ArrowRight size={17} /></button></div>
                 </form>
+              ) : (
+                <Suspense fallback={<div className="teacher-interview-loading"><i /><strong>Preparing TutorPro English Hiring Assistant…</strong></div>}><TeacherAIInterview applicant={form} onBack={() => setStep(2)} onComplete={completeInterview} submitting={submitting} /></Suspense>
               )}
               <p className="auth-switch">Already registered? <button onClick={() => { setView('login'); setStep(1); setError('') }}>Teacher login</button></p>
             </>
@@ -169,7 +178,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
           )}
 
           {!isAdmin && view === 'success' && created && (
-            <div className="role-success"><span><CheckCircle2 size={36} /></span><span className="kicker">Application received</span><h2 id="role-access-title">Your teacher studio is ready.</h2><p>The administrator can now review your profile and credentials. You can open your dashboard while approval is pending.</p><div><FileCheck2 size={20} /><span><strong>Profile status</strong><small>Pending administrator review</small></span></div><button className="button button--primary button--full" onClick={() => onEnterPortal(created)}>Open teacher dashboard <ArrowRight size={17} /></button></div>
+            <div className="role-success"><span><CheckCircle2 size={36} /></span><span className="kicker">Application received</span><h2 id="role-access-title">Your teacher studio is ready.</h2><p>The administrator can now review your profile, credentials and completed AI interview. You can open your dashboard while approval is pending.</p><div><FileCheck2 size={20} /><span><strong>Profile and interview status</strong><small>Completed · Pending administrator review</small></span></div><button className="button button--primary button--full" onClick={() => onEnterPortal(created)}>Open teacher dashboard <ArrowRight size={17} /></button></div>
           )}
 
           {isAdmin && (
