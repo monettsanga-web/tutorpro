@@ -14,6 +14,7 @@ const vite = await createServer({ server: { middlewareMode: true }, appType: 'cu
 try {
   const { StudentDashboard, TeacherDashboard, AdminDashboard, AdminTeacherProfile, AdminStudentProfile, BookingSlotDialog } = await vite.ssrLoadModule('/src/Dashboards.jsx')
   const { default: PortalAccess } = await vite.ssrLoadModule('/src/PortalAccess.jsx')
+  const { default: PremiumMotion } = await vite.ssrLoadModule('/src/PremiumMotion.jsx')
   const { default: AuthProviderPicker } = await vite.ssrLoadModule('/src/AuthProviderPicker.jsx')
   const { default: LetterBubbleAdventure } = await vite.ssrLoadModule('/src/LetterBubbleAdventure.jsx')
   const callbacks = { onAccountChange() {}, onHome() {}, onLogout() {} }
@@ -35,6 +36,7 @@ try {
   const adminStudentHtml = renderToString(React.createElement(AdminStudentProfile, { account: incompleteStudent, learnerId: '', onBack() {}, onStatusChange() {}, onGoalChange() {}, onRemove() {}, processing: false, error: '' }))
   const adminLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'admin', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
   const teacherLoginHtml = renderToString(React.createElement(PortalAccess, { mode: 'teacher', onClose() {}, onAuthenticated() {}, onEnterPortal() {} }))
+  const premiumMotionHtml = renderToString(React.createElement(PremiumMotion))
   const letterGameHtml = renderToString(React.createElement(LetterBubbleAdventure, { onBack() {}, onEarn() {} }))
   const bookingDialogHtml = renderToString(React.createElement(BookingSlotDialog, {
     booking: { id: 'booking-test', studentId: 'student-test', learnerId: 'learner-test', learnerName: 'Alex', teacherId: 'teacher-test', teacherName: 'Teacher Test', date: '2027-06-01', time: '16:00', duration: 25, focus: 'Speaking', status: 'confirmed', note: 'Please practise reading.', slotComment: '' },
@@ -52,6 +54,7 @@ try {
   if (!adminStudentHtml.includes('Parent and login details') || !adminStudentHtml.includes('Incomplete student profile') || !adminStudentHtml.includes('Main Learning Goal') || !adminStudentHtml.includes('Only administrators can edit')) throw new Error('Administrator student profile controls failed to render.')
   if (!adminLoginHtml.includes('Administrator login') || adminLoginHtml.includes('Create the admin account')) throw new Error('Admin Portal did not default to login on a new device.')
   if (!teacherLoginHtml.includes('Teacher login')) throw new Error('Teacher Portal did not default to login.')
+  if (!premiumMotionHtml.includes('premium-scroll-progress') || !premiumMotionHtml.includes('premium-pointer-glow')) throw new Error('Premium motion layer failed to render.')
   if (!letterGameHtml.includes('Alphabet Bubble Adventure') || !letterGameHtml.includes('Find this letter') || !letterGameHtml.includes('letter-round-count') || !letterGameHtml.includes('of 26')) throw new Error('Interactive A–Z letter game failed to render.')
   if (!bookingDialogHtml.includes('booking-comment-editor') || !bookingDialogHtml.includes('Alex') || !bookingDialogHtml.includes('Save comment') || !bookingDialogHtml.includes('Cancel booking') || !bookingDialogHtml.includes('Parent booking note')) throw new Error('Responsive booking comment and cancellation controls failed to render.')
   if (!chineseProviderHtml.includes('中国家长注册提示') || !chineseProviderHtml.includes('其他邮箱 / Other email') || !chineseProviderHtml.includes('请不要使用 Gmail')) throw new Error('Chinese parent email guidance failed to render.')

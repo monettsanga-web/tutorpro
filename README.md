@@ -1,6 +1,15 @@
 # TutorPro English
 
-A responsive TutorPro English website with browser-language localisation, interactive English games, a self-contained curriculum carousel, role-based dashboards and lesson booking.
+A responsive TutorPro English platform with IP-aware localisation, premium UX motion, interactive English games, a self-contained curriculum carousel, role-based dashboards and lesson booking.
+
+## Premium experience
+
+- Smooth scroll-progress indicator and cinematic hero entrance sequence
+- Cursor-following ambient light on desktop with touch-safe mobile fallbacks
+- Subtle 3D card tilt, depth, glow and magnetic button interactions
+- Animated statistics, headings, curriculum materials and dashboard transitions
+- Premium portal hover states, sidebar motion and dialog entrances
+- Full `prefers-reduced-motion` accessibility support
 
 ## Included portals
 

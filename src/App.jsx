@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -244,6 +244,39 @@ function Hero({ onBook }) {
   )
 }
 
+function AnimatedStat({ value, label }) {
+  const elementRef = useRef(null)
+  const [displayValue, setDisplayValue] = useState(value)
+
+  useEffect(() => {
+    const numericValue = Number.parseInt(value, 10)
+    if (!Number.isFinite(numericValue) || !elementRef.current || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+    let frame = 0
+    let startedAt = 0
+    const suffix = value.replace(String(numericValue), '')
+    const run = (time) => {
+      if (!startedAt) startedAt = time
+      const progress = Math.min(1, (time - startedAt) / 1200)
+      const eased = 1 - ((1 - progress) ** 3)
+      setDisplayValue(`${Math.round(numericValue * eased)}${suffix}`)
+      if (progress < 1) frame = window.requestAnimationFrame(run)
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      setDisplayValue(`0${suffix}`)
+      frame = window.requestAnimationFrame(run)
+      observer.disconnect()
+    }, { threshold: 0.65 })
+    observer.observe(elementRef.current)
+    return () => {
+      observer.disconnect()
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [value])
+
+  return <div className="stat" ref={elementRef}><strong>{displayValue}</strong><span>{label}</span></div>
+}
+
 function Stats() {
   const items = [
     ['500+', 'active students'],
@@ -257,12 +290,7 @@ function Stats() {
       <div className="container stats__inner">
         <p>Trusted by growing learners</p>
         <div className="stats__items">
-          {items.map(([number, label]) => (
-            <div className="stat" key={label}>
-              <strong>{number}</strong>
-              <span>{label}</span>
-            </div>
-          ))}
+          {items.map(([number, label]) => <AnimatedStat value={number} label={label} key={label} />)}
         </div>
       </div>
     </section>
