@@ -62,6 +62,7 @@ import {
 import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
+import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
@@ -923,6 +924,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'book', label: 'Book a class', icon: CalendarPlus },
     { id: 'lessons', label: 'My lessons', icon: CalendarDays, badge: pendingCount },
     { id: 'games', label: 'English games', icon: Gamepad2 },
+    { id: 'support', label: 'Parent support', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -996,6 +998,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       )}
 
       {active === 'games' && <Suspense fallback={<div className="game-loading"><i /><strong>Launching 3D English Game Zone…</strong><span>Preparing the world for {learner.name}</span></div>}><StudentGames key={learner.id} learner={learner} onEarnStars={earnGameStars} /></Suspense>}
+
+      {active === 'support' && <div className="portal-view parent-support-view"><div className="portal-page-heading"><div><span className="portal-kicker">English & 中文 support</span><h1>Chat with TutorPro English</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div><span className="support-inbox-live"><i /> Private support</span></div><SupportChatWidget embedded /></div>}
 
       {active === 'profile' && (
         <div className="portal-view">

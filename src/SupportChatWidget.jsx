@@ -15,10 +15,10 @@ function accountEmail(account) {
   return candidate.includes('@') ? candidate : ''
 }
 
-export default function SupportChatWidget() {
+export default function SupportChatWidget({ embedded = false }) {
   const [account, setAccount] = useState(getCurrentAccount)
   const [locale, setLocale] = useState(currentVisitorLocale)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(embedded)
   const [credentials, setCredentials] = useState(readSavedSupportThread)
   const [thread, setThread] = useState(null)
   const [form, setForm] = useState(() => ({
@@ -51,6 +51,12 @@ export default function SupportChatWidget() {
       unsubscribeLocale()
     }
   }, [])
+
+  useEffect(() => {
+    if (!embedded) return undefined
+    document.body.classList.add('support-embedded-open')
+    return () => document.body.classList.remove('support-embedded-open')
+  }, [embedded])
 
   useEffect(() => {
     if (!open || !credentials) return undefined
@@ -132,11 +138,11 @@ export default function SupportChatWidget() {
   }
 
   return (
-    <div className={`support-widget ${open ? 'support-widget--open' : ''}`}>
-      {!open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
+    <div className={`support-widget ${embedded ? 'support-widget--embedded' : ''} ${open ? 'support-widget--open' : ''}`}>
+      {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
 
       {open && <section className="support-panel" role="dialog" aria-label={chinese ? '家长客服聊天' : 'Parent support chat'}>
-        <header><span><Headphones size={21} /></span><div><strong>{chinese ? 'TutorPro 中文家长客服' : 'TutorPro Parent Support'}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div><button onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button></header>
+        <header><span><Headphones size={21} /></span><div><strong>{chinese ? 'TutorPro 中文家长客服' : 'TutorPro Parent Support'}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div>{!embedded && <button onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>}</header>
 
         {!credentials ? <form className="support-start" onSubmit={beginConversation}>
           <div className="support-language-note"><Languages size={15} /><span>{chinese ? '您可以使用中文留言。管理员的回复会保存在这里。' : 'Write in English or Chinese. Replies stay in this private conversation.'}</span></div>

@@ -48,6 +48,7 @@ try {
   sessionStorage.setItem('tutorpro_visitor_country', 'CN')
   const chineseProviderHtml = renderToString(React.createElement(AuthProviderPicker, { value: 'email', onSelect() {} }))
   const chineseSupportHtml = renderToString(React.createElement(SupportChatWidget))
+  const embeddedSupportHtml = renderToString(React.createElement(SupportChatWidget, { embedded: true }))
   sessionStorage.removeItem('tutorpro_visitor_country')
 
   if (!studentHtml.includes('Finish this student registration')) throw new Error('Incomplete student recovery view failed to render.')
@@ -62,6 +63,7 @@ try {
   if (!bookingDialogHtml.includes('booking-comment-editor') || !bookingDialogHtml.includes('Alex') || !bookingDialogHtml.includes('Save comment') || !bookingDialogHtml.includes('Cancel booking') || !bookingDialogHtml.includes('Parent booking note')) throw new Error('Responsive booking comment and cancellation controls failed to render.')
   if (!chineseProviderHtml.includes('中国家长注册提示') || !chineseProviderHtml.includes('其他邮箱 / Other email') || !chineseProviderHtml.includes('请不要使用 Gmail')) throw new Error('Chinese parent email guidance failed to render.')
   if (!chineseSupportHtml.includes('联系管理员') || !chineseSupportHtml.includes('中文家长咨询')) throw new Error('Chinese parent support launcher failed to render.')
+  if (!embeddedSupportHtml.includes('support-widget--embedded') || !embeddedSupportHtml.includes('TutorPro 中文家长客服')) throw new Error('Embedded parent-dashboard support chat failed to render.')
   if (!supportInboxHtml.includes('Parent support inbox') || !supportInboxHtml.includes('Live inbox')) throw new Error('Administrator support inbox failed to render.')
   process.stdout.write('Student, Teacher and Admin dashboard rendering: PASS\n')
 } finally {

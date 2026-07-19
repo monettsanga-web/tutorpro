@@ -29,6 +29,23 @@
 .support-launcher small { color: #dff7a6; font-size: 0.51rem; }
 .support-launcher > i { position: absolute; top: 4px; right: 5px; width: 9px; height: 9px; border: 2px solid #321568; border-radius: 50%; background: #8ee36a; box-shadow: 0 0 0 4px rgba(142,227,106,0.13); }
 
+body.support-embedded-open .support-widget:not(.support-widget--embedded) { display: none; }
+
+.support-widget--embedded {
+  position: static;
+  width: 100%;
+  margin-top: 18px;
+}
+
+.support-widget--embedded .support-panel {
+  width: 100%;
+  height: min(720px, calc(100dvh - 205px));
+  min-height: 560px;
+  border-radius: 22px;
+  box-shadow: 0 20px 55px rgba(50,21,104,0.12);
+}
+.support-widget--embedded .support-panel > header { grid-template-columns: auto 1fr; }
+
 .support-panel {
   display: grid;
   width: min(390px, calc(100vw - 28px));
