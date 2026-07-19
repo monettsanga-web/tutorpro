@@ -25,6 +25,7 @@ import {
   Play,
   Presentation,
   Radio,
+  RefreshCw,
   Send,
   ShieldCheck,
   Trash2,
@@ -129,6 +130,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const pathsRef = useRef([])
   const currentPathRef = useRef(null)
   const pendingIceRef = useRef([])
+  const offerStartedAtRef = useRef(0)
   const annotationPermissionRef = useRef(false)
   const [joined, setJoined] = useState(false)
   const [mediaReady, setMediaReady] = useState(false)
@@ -144,6 +146,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [remoteScreenFit, setRemoteScreenFit] = useState('fit')
   const [presentedFile, setPresentedFile] = useState(null)
   const [connectionStatus, setConnectionStatus] = useState('waiting')
+  const [signalingStatus, setSignalingStatus] = useState('connecting')
+  const [reconnectKey, setReconnectKey] = useState(0)
   const [participantCount, setParticipantCount] = useState(1)
   const [annotationMode, setAnnotationMode] = useState(false)
   const [annotationTool, setAnnotationTool] = useState('pen')
@@ -250,8 +254,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       peer.onconnectionstatechange = () => {
         const status = peer.connectionState
         if (status === 'connected') setConnectionStatus('connected')
-        else if (['failed', 'disconnected', 'closed'].includes(status)) setConnectionStatus(status)
-        else setConnectionStatus('connecting')
+        else if (['failed', 'disconnected', 'closed'].includes(status)) {
+          setConnectionStatus(status)
+          if (status !== 'closed' && account.role !== 'teacher') transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
+        } else setConnectionStatus('connecting')
       }
       return peer
     }
@@ -264,27 +270,54 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
     }
 
+    const resetPeer = () => {
+      if (peerRef.current) peerRef.current.onconnectionstatechange = null
+      peerRef.current?.close()
+      peerRef.current = null
+      pendingIceRef.current = []
+      return ensurePeer()
+    }
+
+    const sendTeacherOffer = async (forceRestart = false) => {
+      let peer = ensurePeer()
+      const offerIsStale = offerStartedAtRef.current && Date.now() - offerStartedAtRef.current > 7000
+      if (forceRestart || peer.connectionState === 'failed' || peer.connectionState === 'closed' || (peer.signalingState !== 'stable' && offerIsStale)) {
+        peer = resetPeer()
+      }
+      if (peer.connectionState === 'connected' || peer.signalingState !== 'stable') return
+      try {
+        offerStartedAtRef.current = Date.now()
+        const offer = await peer.createOffer({ iceRestart: forceRestart })
+        await peer.setLocalDescription(offer)
+        transportRef.current?.send({ type: 'offer', description: peer.localDescription })
+      } catch {
+        setConnectionStatus('failed')
+      }
+    }
+
     const handleMessage = async (message) => {
       if (!active) return
       if (message.type === 'presence') {
-        setParticipantCount(Math.max(1, Number(message.count) || 1))
+        const count = Math.max(1, Number(message.count) || 1)
+        setParticipantCount(count)
+        if (count > 1) {
+          if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
+          else transportRef.current?.send({ type: 'join-request', role: account.role })
+        }
+        return
+      }
+      if (message.type === 'teacher-ready' && account.role !== 'teacher') {
+        transportRef.current?.send({ type: 'join-request', role: account.role })
         return
       }
       if (message.type === 'join-request' && account.role === 'teacher') {
         transportRef.current?.send({ type: 'annotation-permission', allowed: annotationPermissionRef.current })
-        const peer = ensurePeer()
-        if (peer.connectionState === 'connected' || peer.signalingState !== 'stable') return
-        try {
-          const offer = await peer.createOffer()
-          await peer.setLocalDescription(offer)
-          transportRef.current?.send({ type: 'offer', description: peer.localDescription })
-        } catch {
-          setConnectionStatus('failed')
-        }
+        await sendTeacherOffer(Boolean(message.reconnect))
         return
       }
       if (message.type === 'offer' && account.role !== 'teacher') {
-        const peer = ensurePeer()
+        let peer = ensurePeer()
+        if (peer.signalingState !== 'stable' || ['failed', 'closed'].includes(peer.connectionState)) peer = resetPeer()
         try {
           await peer.setRemoteDescription(message.description)
           await flushIce(peer)
@@ -298,8 +331,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'answer' && account.role === 'teacher') {
         const peer = ensurePeer()
+        if (peer.signalingState !== 'have-local-offer') return
         try {
           await peer.setRemoteDescription(message.description)
+          offerStartedAtRef.current = 0
           await flushIce(peer)
         } catch {
           setConnectionStatus('failed')
@@ -354,35 +389,39 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
 
     transportRef.current = createClassroomTransport({
+      bookingId: roomBooking.id,
       roomId: roomBooking.classroomId,
       token: roomBooking.classroomToken,
       participantId: participantIdRef.current,
       onMessage: handleMessage,
       onStatus: (status) => {
-        if (status === 'connected' || status === 'local') {
-          setConnectionStatus('waiting')
-          if (account.role !== 'teacher') transportRef.current?.send({ type: 'join-request', role: account.role })
+        setSignalingStatus(status)
+        if (status === 'connected' || status === 'local' || status === 'fallback') {
+          setConnectionStatus((current) => current === 'connected' ? current : 'waiting')
+          if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
+          else transportRef.current?.send({ type: 'join-request', role: account.role })
         } else setConnectionStatus(status)
       },
     })
     ensurePeer()
 
-    const joinReminder = account.role !== 'teacher'
-      ? window.setInterval(() => {
-          if (peerRef.current?.connectionState !== 'connected') transportRef.current?.send({ type: 'join-request', role: account.role })
-        }, 3000)
-      : null
+    const connectionReminder = window.setInterval(() => {
+      if (peerRef.current?.connectionState === 'connected') return
+      if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
+      else transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: ['failed', 'disconnected'].includes(peerRef.current?.connectionState) })
+    }, 2500)
 
     return () => {
       active = false
-      if (joinReminder) window.clearInterval(joinReminder)
+      window.clearInterval(connectionReminder)
       transportRef.current?.close()
       transportRef.current = null
       peerRef.current?.close()
       peerRef.current = null
       pendingIceRef.current = []
+      offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, account.role, roomBooking.classroomId, roomBooking.classroomToken])
+  }, [joined, access.allowed, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey])
 
   useEffect(() => {
     if (!joined) return undefined
@@ -420,6 +459,19 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     const stream = localStreamRef.current || await requestMedia()
     if (!stream) return
     setJoined(true)
+  }
+
+  const retryConnection = () => {
+    transportRef.current?.close()
+    peerRef.current?.close()
+    transportRef.current = null
+    peerRef.current = null
+    pendingIceRef.current = []
+    offerStartedAtRef.current = 0
+    setParticipantCount(1)
+    setSignalingStatus('connecting')
+    setConnectionStatus('connecting')
+    setReconnectKey((value) => value + 1)
   }
 
   const toggleMic = () => {
@@ -665,7 +717,19 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const formatElapsed = () => `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
-  const connectionLabel = connectionStatus === 'connected' ? 'Live peer connected' : connectionStatus === 'local' ? 'Local classroom ready' : connectionStatus === 'error' || connectionStatus === 'failed' ? 'Connection needs attention' : 'Waiting for participant'
+  const connectionLabel = connectionStatus === 'connected'
+    ? 'Live peer connected'
+    : signalingStatus === 'fallback'
+      ? 'Secure fallback · waiting for peer'
+      : connectionStatus === 'local'
+        ? 'Local classroom ready'
+        : ['error', 'failed', 'disconnected'].includes(connectionStatus)
+          ? 'Connection needs attention'
+          : 'Waiting for participant'
+  const showConnectionHelp = connectionStatus !== 'connected' && elapsed >= 6
+  const connectionHelpText = participantCount > 1
+    ? 'Both participants were found. TutorPro English is retrying the secure video handshake.'
+    : 'Keep this classroom open while the other participant enters this exact booking.'
 
   if (!joined) {
     return (
@@ -699,6 +763,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         <div className="classroom-session-state"><i className={connectionStatus === 'connected' ? 'live' : ''} /><span>{connectionLabel}</span><strong>{formatElapsed()}</strong></div>
         <div className="classroom-topbar__actions"><button onClick={copyRoomId}>{copied ? <Check size={15} /> : <Copy size={15} />} {copied ? 'Copied' : 'Room ID'}</button><button onClick={() => setSidebarOpen((open) => !open)}><Users size={16} /> {participantCount}<MoreVertical size={16} /></button></div>
       </header>
+
+      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{participantCount > 1 ? 'Reconnecting both participants' : 'Waiting for the same booked classroom'}</strong><small>{connectionHelpText} Room ID: {roomBooking.classroomId}</small></div><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry connection</button></div>}
 
       <div className="classroom-workspace">
         <section className="classroom-stage">

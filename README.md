@@ -63,7 +63,8 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 - Students can annotate only after the teacher grants permission; permission can be revoked live
 - Pen, highlighter, eraser, colour and text annotation tools synchronize between participants
 - Private classroom chat with per-message translation and classroom phrase fallback
-- Supabase realtime booking sync guarantees the teacher and student use the same booking-specific classroom ID and token
+- Deterministic booking credentials guarantee the teacher and student use the same classroom ID and hidden token across devices
+- Hybrid classroom signaling uses Realtime first, authenticated HTTPS polling as a fallback, and automatic offer/ICE retries
 - Profile, lesson and rating overview
 
 ### Administrator
@@ -127,13 +128,13 @@ npm run dev
 
 ## Online classroom signaling
 
-The classroom uses peer-to-peer WebRTC for video, audio and screen sharing. Same-browser tabs use `BroadcastChannel`, while separate devices use Supabase Realtime signaling by default. The included WebSocket service remains available as an optional dedicated signaling path:
+The classroom uses peer-to-peer WebRTC for video, audio and screen sharing. Same-browser tabs use `BroadcastChannel`. Separate devices use Supabase Realtime first and the secured `classroom_signals` table through ordinary HTTPS polling when WebSockets are blocked. Classroom credentials are deterministically repaired from the shared booking ID, preventing two devices from displaying the same room while silently using different tokens. The included WebSocket service remains available as an optional dedicated signaling path:
 
 ```bash
 npm run classroom:server
 ```
 
-Set `VITE_CLASSROOM_SIGNALING_URL` only when a hosted secure `wss://` service is available. Production deployments—especially cross-border China lessons—should also configure China-accessible TURN credentials. Camera, microphone and screen sharing require HTTPS or localhost. Every room is isolated by its booking-specific classroom ID and secret token.
+Run the latest `supabase/bookings_sync.sql` to enable the HTTPS signaling fallback. Set `VITE_CLASSROOM_SIGNALING_URL` only when a hosted secure `wss://` service is available. Production deployments—especially cross-border China lessons—should also configure China-accessible TURN credentials. Camera, microphone and screen sharing require HTTPS or localhost. Every room is isolated by its booking-specific classroom ID and secret token.
 
 ## Checks
 

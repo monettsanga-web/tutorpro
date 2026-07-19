@@ -24,6 +24,17 @@ function queueCloudBooking(booking) {
   })
 }
 
+export function getStableClassroomCredentials(booking) {
+  const bookingId = String(booking?.id || '')
+  const safeId = bookingId.replace(/[^a-z0-9]/gi, '')
+  const suffix = `${safeId}00000000`.slice(0, 8).toUpperCase()
+  const date = String(booking?.date || '').replace(/[^0-9]/g, '').slice(0, 8).padEnd(8, '0')
+  return {
+    classroomId: `TP-${date}-${suffix}`,
+    classroomToken: `TPROOM-${bookingId.toLowerCase()}-${date}`,
+  }
+}
+
 export function mergeCloudBookings(cloudBookings, options = {}) {
   if (!Array.isArray(cloudBookings)) return getBookings()
   const cloudIds = new Set(cloudBookings.map((booking) => booking.id))
@@ -112,10 +123,11 @@ export function createBooking(details) {
   })
   if (conflict) throw new Error('That time conflicts with an existing teacher or student lesson. Please choose another available slot.')
 
+  const bookingId = crypto.randomUUID()
+  const classroomCredentials = getStableClassroomCredentials({ id: bookingId, date: details.date })
   const booking = {
-    id: crypto.randomUUID(),
-    classroomId: `TP-${details.date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-    classroomToken: crypto.randomUUID(),
+    id: bookingId,
+    ...classroomCredentials,
     studentId: details.studentId,
     learnerId: learner.id,
     learnerName: learner.name,
@@ -144,13 +156,11 @@ export function updateBooking(bookingId, changes) {
   if (changes.status && !validStatuses.includes(changes.status)) throw new Error('Invalid booking status.')
   if (typeof changes.slotComment === 'string' && changes.slotComment.trim().length > 500) throw new Error('Keep the booking comment under 500 characters.')
   if (typeof changes.slotComment === 'string') changes = { ...changes, slotComment: changes.slotComment.trim() }
-  const classroomDetails = changes.status === 'confirmed' && !bookings[index].classroomId
-    ? {
-        classroomId: `TP-${bookings[index].date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-        classroomToken: crypto.randomUUID(),
-      }
+  const nextStatus = changes.status || bookings[index].status
+  const classroomDetails = ['confirmed', 'completed'].includes(nextStatus)
+    ? getStableClassroomCredentials(bookings[index])
     : {}
-  bookings[index] = { ...bookings[index], ...classroomDetails, ...changes, updatedAt: new Date().toISOString() }
+  bookings[index] = { ...bookings[index], ...changes, ...classroomDetails, updatedAt: new Date().toISOString() }
   writeBookings(bookings)
   queueCloudBooking(bookings[index])
   return bookings[index]
@@ -216,11 +226,11 @@ export function getBookingById(bookingId) {
 export function getClassroomAccess(bookingId, account, now = new Date()) {
   let booking = getBookingById(bookingId)
   if (!booking) return { allowed: false, reason: 'Classroom booking not found.' }
-  if (['confirmed', 'completed'].includes(booking.status) && (!booking.classroomId || !booking.classroomToken)) {
-    booking = updateBooking(booking.id, {
-      classroomId: `TP-${booking.date.replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-      classroomToken: crypto.randomUUID(),
-    })
+  if (['confirmed', 'completed'].includes(booking.status)) {
+    const stableCredentials = getStableClassroomCredentials(booking)
+    if (booking.classroomId !== stableCredentials.classroomId || booking.classroomToken !== stableCredentials.classroomToken) {
+      booking = updateBooking(booking.id, stableCredentials)
+    }
   }
   if (!account) return { allowed: false, reason: 'Log in to access this classroom.', booking }
   const authorized = account.role === 'admin'

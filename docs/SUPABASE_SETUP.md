@@ -48,7 +48,7 @@ The repair script finds the authorized administrator without displaying the emai
 
 ### Enable shared bookings and classroom IDs
 
-If the project was created before booking synchronization was added, run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor. This creates the secured realtime bookings table so the student and teacher receive the exact same booking, classroom ID and secret room token.
+Run the complete contents of [`supabase/bookings_sync.sql`](../supabase/bookings_sync.sql) in the SQL Editor, and run it again after classroom upgrades. It creates secured shared bookings plus a short-lived `classroom_signals` table. The student and teacher receive deterministic credentials for the exact same booked room; WebRTC offers, answers and ICE candidates can fall back to authenticated HTTPS polling when a school network or region blocks Realtime WebSockets.
 
 ### Enable private recorded teacher interviews and AI evaluation
 

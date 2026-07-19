@@ -259,6 +259,7 @@
 .prejoin-privacy { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 13px !important; color: #857696 !important; font-size: 0.55rem !important; }
 
 .online-classroom {
+  position: relative;
   display: grid;
   height: 100vh;
   min-height: 620px;
@@ -300,6 +301,17 @@
 
 .classroom-topbar__actions { gap: 7px; }
 .classroom-topbar__actions button { display: inline-flex; min-height: 37px; align-items: center; gap: 6px; border: 1px solid var(--classroom-line); border-radius: 9px; padding: 0 10px; background: rgba(255,255,255,0.05); color: #cbbfda; font-size: 0.58rem; font-weight: 750; }
+
+.classroom-connection-help { position: absolute; z-index: 45; top: 78px; left: 50%; display: grid; width: min(680px, calc(100% - 30px)); grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; border: 1px solid rgba(255,207,91,0.35); border-radius: 13px; padding: 10px 12px; background: rgba(42,25,69,0.96); box-shadow: 0 14px 34px rgba(0,0,0,0.38); color: #fff; transform: translateX(-50%); backdrop-filter: blur(12px); }
+.classroom-connection-help > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: rgba(255,193,64,0.13); color: #ffc451; }
+.classroom-connection-help > div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.classroom-connection-help strong { color: #fff; font-size: 0.64rem; }
+.classroom-connection-help small { overflow: hidden; color: #c4b8d1; font-size: 0.49rem; text-overflow: ellipsis; white-space: nowrap; }
+.classroom-connection-help button { display: inline-flex; min-height: 35px; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 8px; padding: 0 10px; background: #bce94e; color: #26320c; font-size: 0.53rem; font-weight: 900; white-space: nowrap; }
+.classroom-connection-help--failed,
+.classroom-connection-help--error { border-color: rgba(255,79,135,0.45); }
+.classroom-connection-help--failed > span,
+.classroom-connection-help--error > span { background: rgba(255,79,135,0.15); color: #ff77a3; }
 
 .classroom-workspace {
   display: grid;
@@ -821,6 +833,9 @@
   .classroom-session-state span { display: none; }
   .classroom-topbar__actions button:first-child { display: none; }
   .classroom-topbar__actions button { padding: 0 8px; }
+  .classroom-connection-help { top: 67px; grid-template-columns: auto 1fr; padding: 9px; }
+  .classroom-connection-help small { white-space: normal; }
+  .classroom-connection-help button { grid-column: 1 / -1; width: 100%; }
   .classroom-stage { grid-template-columns: 1fr; grid-template-rows: 108px 1fr; gap: 7px; padding: 7px; }
   .classroom-video-rail { flex-direction: row; overflow-x: auto; }
   .classroom-camera-tile { width: 145px; height: 102px; flex: 0 0 auto; }

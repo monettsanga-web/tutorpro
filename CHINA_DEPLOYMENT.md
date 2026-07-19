@@ -35,4 +35,4 @@ The website build no longer depends on Google Fonts, runtime Google Drive access
 
 ## Backend and live-classroom note
 
-The current shared database is Supabase. Availability can vary by province or network in mainland China. The static website can load from EdgeOne while Supabase login or realtime services remain slower. For a fully mainland-hosted production system, the next infrastructure phase is migrating profiles/bookings to Tencent Cloud or Alibaba Cloud and adding a China-accessible TURN/signaling service for live classrooms.
+The current shared database is Supabase. Availability can vary by province or network in mainland China. The classroom now falls back from Realtime WebSockets to authenticated HTTPS signaling, which helps when WebSockets are blocked, but peer-to-peer media still needs a China-accessible TURN relay on restrictive or symmetric-NAT networks. For a fully mainland-hosted production system, migrate profiles/bookings to Tencent Cloud or Alibaba Cloud and configure hosted TURN/signaling near the students.

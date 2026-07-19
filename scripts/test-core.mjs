@@ -40,6 +40,8 @@ async function rejects(callback, message) {
 
 const recordedInterviewSql = await readFile(new URL('../supabase/teacher_interview_recordings.sql', import.meta.url), 'utf8')
 assert(recordedInterviewSql.includes("'teacher-interview-recordings'") && recordedInterviewSql.includes('Admins read private interview recordings') && recordedInterviewSql.includes('complete_teacher_interview_session'), 'Private recorded-interview storage and administrator access SQL is incomplete.')
+const bookingSyncSql = await readFile(new URL('../supabase/bookings_sync.sql', import.meta.url), 'utf8')
+assert(bookingSyncSql.includes('public.classroom_signals') && bookingSyncSql.includes('Classroom participants send signals') && bookingSyncSql.includes('prune_expired_classroom_signals'), 'Durable cross-device classroom signaling SQL is incomplete.')
 const interviewerVoiceFiles = await readdir(new URL('../public/assets/interviewer-voice/', import.meta.url))
 assert(interviewerVoiceFiles.filter((file) => file.endsWith('.wav')).length === 16, 'The complete masculine AI interviewer voice library is missing.')
 
@@ -143,6 +145,8 @@ const booking = bookings.createBooking({
   focus: 'Speaking with confidence',
 })
 assert(booking.status === 'pending', 'Booking creation failed.')
+const stableClassroom = bookings.getStableClassroomCredentials(booking)
+assert(booking.classroomId === stableClassroom.classroomId && booking.classroomToken === stableClassroom.classroomToken, 'Booking classroom credentials are not deterministic across devices.')
 assert(booking.teacherName === teacher.fullName && booking.learnerName === learner.name, 'Booking participant names were not saved for cross-device display.')
 const calendarInvite = calendar.createBookingCalendar({ ...booking, status: 'confirmed' }, { teacherName: teacher.fullName, learnerName: learner.name })
 assert(calendarInvite.includes('BEGIN:VCALENDAR') && calendarInvite.includes('TRIGGER:-PT30M') && calendarInvite.includes('TRIGGER:-PT10M') && calendarInvite.includes('STATUS:CONFIRMED'), 'Phone calendar reminders were not generated correctly.')
@@ -172,8 +176,14 @@ assert(repairedLearner?.id === recoveryBooking.learnerId, 'A recoverable stale l
 
 const confirmedBooking = bookings.updateBooking(booking.id, { status: 'confirmed' })
 assert(confirmedBooking.classroomId && confirmedBooking.classroomToken, 'Unique classroom credentials were not generated.')
+const staleClassroomBookings = JSON.parse(storage.get('tutorpro_bookings_v1'))
+const staleClassroomBooking = staleClassroomBookings.find((item) => item.id === booking.id)
+staleClassroomBooking.classroomToken = 'different-hidden-token-on-another-device'
+storage.set('tutorpro_bookings_v1', JSON.stringify(staleClassroomBookings))
 const classTime = new Date(`${date}T${time}:00`)
 assert(bookings.getClassroomAccess(booking.id, family, classTime).allowed, 'The booked student could not access the classroom at class time.')
+const repairedClassroom = bookings.getBookings().find((item) => item.id === booking.id)
+assert(repairedClassroom.classroomId === stableClassroom.classroomId && repairedClassroom.classroomToken === stableClassroom.classroomToken, 'A stale hidden classroom token was not repaired consistently across devices.')
 assert(!bookings.getClassroomAccess(booking.id, { id: 'another-family', role: 'student' }, classTime).allowed, 'An unrelated student accessed a private classroom.')
 let managedBooking = bookings.updateBooking(booking.id, { slotComment: 'Practise the reading passage before class.', slotCommentAuthor: 'teacher' })
 assert(managedBooking.slotComment.includes('reading passage'), 'Booking-slot comments were not saved beside the learner.')
@@ -206,5 +216,19 @@ const loggedIn = await auth.loginAccount('family@example.com', 'Family123')
 assert(loggedIn.id === family.id, 'Login failed.')
 assert(bookings.getBookingStats().completed === 1, 'Booking statistics are incorrect.')
 assert(await translation.translateChatText('good job', 'tl') === 'magaling', 'Classroom chat translation fallback failed.')
+
+if (typeof BroadcastChannel !== 'undefined') {
+  globalThis.window = { BroadcastChannel }
+  const { createClassroomTransport } = await import('../src/classroomTransport.js')
+  let receivedLocalSignal = false
+  const firstTransport = createClassroomTransport({ bookingId: booking.id, roomId: stableClassroom.classroomId, token: stableClassroom.classroomToken, participantId: 'teacher-transport-test', onMessage() {}, onStatus() {} })
+  const secondTransport = createClassroomTransport({ bookingId: booking.id, roomId: stableClassroom.classroomId, token: stableClassroom.classroomToken, participantId: 'student-transport-test', onMessage(message) { if (message.type === 'join-request') receivedLocalSignal = true }, onStatus() {} })
+  firstTransport.send({ type: 'join-request' })
+  await new Promise((resolve) => setTimeout(resolve, 150))
+  firstTransport.close()
+  secondTransport.close()
+  delete globalThis.window
+  assert(receivedLocalSignal, 'Same-room classroom signaling failed between browser contexts.')
+}
 
 console.log('TutorPro English core flows: PASS')
