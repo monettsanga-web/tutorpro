@@ -34,6 +34,8 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 - Click-and-drag multi-booking for up to twelve non-overlapping lesson times
 - Bold 30-minute time labels, multi-selection count and shared notes
 - Booking history, calendar status tracking and cancellation
+- Bilingual booking emails to parent and teacher through a secure Supabase Edge Function
+- Downloadable iPhone/Android calendar events with 30-minute and 10-minute class reminders
 - Parent-visible learning goals with custom goal editing restricted to administrators
 
 ### Teacher

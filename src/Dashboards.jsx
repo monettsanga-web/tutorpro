@@ -64,6 +64,8 @@ import {
   updateTeacherProfile,
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
+import { downloadBookingCalendar } from './bookingCalendar.js'
+import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
@@ -401,7 +403,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         {booking.status === 'confirmed' && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> Enter private classroom <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
-        {onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage booking</button>}
+        <div className="booking-utility-actions">{onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}{booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}</div>
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
       </div>
@@ -468,6 +470,7 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
       setConfirmCancel(false)
       changed(updated)
       if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the cancellation in time.')
+      void notifyBookingParticipants(updated, 'cancelled')
     } catch (cancelError) {
       setError(cancelError.message)
     } finally {
@@ -484,6 +487,7 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
       setPreviousStatus('')
       changed(updated)
       if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the restored booking in time.')
+      void notifyBookingParticipants(updated, 'restored')
     } catch (undoError) {
       setError(undoError.message)
     } finally {
@@ -509,7 +513,7 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
         {previousStatus && <div className="booking-undo-banner"><div><strong>Booking cancelled</strong><span>The calendar slot has been released.</span></div><button onClick={undoCancellation} disabled={saving}><RotateCcw size={15} /> Undo cancellation</button></div>}
         {confirmCancel && !previousStatus && <div className="booking-cancel-confirm"><div><strong>Cancel this booking?</strong><span>This releases the lesson slot. You can undo it while this window remains open.</span></div><button onClick={() => setConfirmCancel(false)} disabled={saving}>Keep booking</button><button className="danger" onClick={cancelBookingSlot} disabled={saving}>{saving ? 'Cancelling…' : 'Confirm cancellation'}</button></div>}
 
-        <div className="booking-slot-dialog__footer"><button className="portal-secondary-button" onClick={onClose}>Close</button>{canCancel && cancellable && !confirmCancel && !previousStatus && <button className="booking-cancel-button" onClick={() => setConfirmCancel(true)}><XCircle size={16} /> Cancel booking</button>}</div>
+        <div className="booking-slot-dialog__footer"><button className="portal-secondary-button" onClick={onClose}>Close</button>{current.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(current, { teacherName: teacher?.fullName || current.teacherName, learnerName })}><CalendarPlus size={16} /> Add calendar reminder</button>}{canCancel && cancellable && !confirmCancel && !previousStatus && <button className="booking-cancel-button" onClick={() => setConfirmCancel(true)}><XCircle size={16} /> Cancel booking</button>}</div>
       </section>
     </div>
   )
@@ -568,6 +572,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
         let booking = createBooking({ ...form, ...selection, teacherId: selectedTeacherId, teacherName: selectedTeacher.fullName, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
         if (adminBooking) booking = updateBooking(booking.id, { status: 'confirmed' })
         if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The shared booking database did not respond in time.')
+        void notifyBookingParticipants(booking, adminBooking ? 'confirmed' : 'requested')
         createdCount += 1
       }
       setSuccessCount(createdCount)
@@ -910,7 +915,10 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   }
 
   const cancel = (bookingId) => {
-    updateBooking(bookingId, { status: 'cancelled' })
+    const updated = updateBooking(bookingId, { status: 'cancelled' })
+    syncBookingNow(updated)
+      .then(() => notifyBookingParticipants(updated, 'cancelled'))
+      .catch(() => {})
     setBookingVersion((value) => value + 1)
   }
 
@@ -1202,6 +1210,11 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     const previous = bookings.find((booking) => booking.id === bookingId)
     const booking = updateBooking(bookingId, { status })
     if (status === 'completed' && previous?.status !== 'completed') recordCompletedLesson(booking)
+    if (['confirmed', 'declined', 'cancelled'].includes(status)) {
+      syncBookingNow(booking)
+        .then(() => notifyBookingParticipants(booking, status === 'confirmed' ? 'confirmed' : 'cancelled'))
+        .catch(() => {})
+    }
     refresh()
   }
 
@@ -2017,6 +2030,11 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       if (teacher?.teacher) {
         updateTeacherProfile(teacher.id, { lessonsCompleted: (teacher.teacher.lessonsCompleted || 0) + 1 })
       }
+    }
+    if (['confirmed', 'cancelled', 'declined'].includes(status)) {
+      syncBookingNow(updatedBooking)
+        .then(() => notifyBookingParticipants(updatedBooking, status === 'confirmed' ? 'confirmed' : 'cancelled'))
+        .catch(() => {})
     }
     refresh()
   }

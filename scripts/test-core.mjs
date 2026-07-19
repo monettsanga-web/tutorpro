@@ -9,6 +9,7 @@ const auth = await import('../src/auth.js')
 const bookings = await import('../src/bookings.js')
 const schedule = await import('../src/schedule.js')
 const translation = await import('../src/chatTranslation.js')
+const calendar = await import('../src/bookingCalendar.js')
 
 storage.set('tutorpro_accounts_v2', JSON.stringify([{
   id: 'legacy-family',
@@ -127,6 +128,8 @@ const booking = bookings.createBooking({
 })
 assert(booking.status === 'pending', 'Booking creation failed.')
 assert(booking.teacherName === teacher.fullName && booking.learnerName === learner.name, 'Booking participant names were not saved for cross-device display.')
+const calendarInvite = calendar.createBookingCalendar({ ...booking, status: 'confirmed' }, { teacherName: teacher.fullName, learnerName: learner.name })
+assert(calendarInvite.includes('BEGIN:VCALENDAR') && calendarInvite.includes('TRIGGER:-PT30M') && calendarInvite.includes('TRIGGER:-PT10M') && calendarInvite.includes('STATUS:CONFIRMED'), 'Phone calendar reminders were not generated correctly.')
 const studentRoom = bookings.getBookings({ studentId: family.id }).find((item) => item.id === booking.id)
 const teacherRoom = bookings.getBookings({ teacherId: teacher.id }).find((item) => item.id === booking.id)
 assert(studentRoom.classroomId === teacherRoom.classroomId && studentRoom.classroomToken === teacherRoom.classroomToken, 'Teacher and student did not receive the same classroom credentials.')

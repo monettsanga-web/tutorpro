@@ -1134,7 +1134,10 @@
 .booking-slot-comment span { display: flex; flex-direction: column; }
 .booking-slot-comment strong { color: #321568; font-size: 0.52rem; text-transform: uppercase; }
 
-.manage-booking-button {
+.booking-utility-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+.manage-booking-button,
+.add-calendar-button {
   display: inline-flex;
   min-height: 30px;
   align-items: center;
@@ -1149,6 +1152,8 @@
   font-weight: 850;
 }
 .manage-booking-button:hover { border-color: #7048df; background: #f5f0ff; }
+.add-calendar-button { border-color: #cfe2ad; background: #f3fbdc; color: #4f7619; }
+.add-calendar-button:hover { border-color: #8fbd43; background: #e9f7c8; }
 
 .lesson-card__actions {
   display: flex;
@@ -5777,7 +5782,8 @@
   .booking-undo-banner button,
   .booking-cancel-confirm button,
   .booking-slot-dialog__footer button { width: 100%; justify-content: center; }
-  .manage-booking-button { width: 100%; justify-content: center; }
+  .manage-booking-button,
+  .add-calendar-button { width: 100%; justify-content: center; }
 
   .admin-booking-context label {
     width: 100%;

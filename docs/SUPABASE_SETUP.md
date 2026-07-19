@@ -62,6 +62,10 @@ For existing projects, run [`supabase/public_teachers.sql`](../supabase/public_t
 
 For existing projects, run [`supabase/teacher_profile_delete.sql`](../supabase/teacher_profile_delete.sql) once. It creates an administrator-only database function that removes the selected teacher’s Auth user, profile and assigned bookings without exposing a `service_role` key. Until this update is run, the Admin Dashboard safely deactivates and hides a deleted teacher so that login is still revoked.
 
+### Enable booking emails and phone-calendar reminders
+
+Follow [`docs/BOOKING_NOTIFICATIONS.md`](BOOKING_NOTIFICATIONS.md) to deploy the secure `booking-notification` Edge Function and configure a verified Resend sending domain. Booking emails include an `.ics` attachment with reminders 30 minutes and 10 minutes before class.
+
 ### Cross-device classroom connection
 
 The classroom now uses the booking’s secret room token with **Supabase Realtime Broadcast** for WebRTC signaling, so the teacher and student can connect from different devices without a separate signaling server. Supabase Realtime must remain enabled for the project. A separately hosted `wss://` signaling server can still be selected with `VITE_CLASSROOM_SIGNALING_URL`.
