@@ -41,8 +41,8 @@ A responsive TutorPro English platform with IP-aware localisation, premium UX mo
 ### Teacher
 
 - Required 14-question recorded AI first-round interview before application submission
-- Fictional English male AI interviewer reads each question with an `en-GB` voice
-- Applicant-controlled microphone recording with question review, countdown, playback, re-recording and transcript correction
+- Fictional English male AI interviewer with synchronized photorealistic speaking frames and a consistent prerecorded masculine native-English voice
+- Applicant-controlled microphone recording with question review, spoken prompt, countdown, playback, re-recording and transcript correction
 - Randomized live micro-demo, pedagogy scenarios, English screening and platform-fit questions
 - Private audio, interview transcript and structured hiring recommendation for Administrator review
 - Teacher registration and professional profile application

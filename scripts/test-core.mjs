@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 
 const storage = new Map()
 globalThis.localStorage = {
@@ -40,6 +40,8 @@ async function rejects(callback, message) {
 
 const recordedInterviewSql = await readFile(new URL('../supabase/teacher_interview_recordings.sql', import.meta.url), 'utf8')
 assert(recordedInterviewSql.includes("'teacher-interview-recordings'") && recordedInterviewSql.includes('Admins read private interview recordings') && recordedInterviewSql.includes('complete_teacher_interview_session'), 'Private recorded-interview storage and administrator access SQL is incomplete.')
+const interviewerVoiceFiles = await readdir(new URL('../public/assets/interviewer-voice/', import.meta.url))
+assert(interviewerVoiceFiles.filter((file) => file.endsWith('.wav')).length === 16, 'The complete masculine AI interviewer voice library is missing.')
 
 auth.initializePlatform()
 assert(!auth.getAccounts('teacher').some((account) => account.id === 'teacher-monett' || account.fullName === 'Monett Sanga'), 'The removed sample teacher profile was recreated.')

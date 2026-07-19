@@ -4,7 +4,20 @@ import { supabase } from './supabaseClient.js'
 import { uploadTeacherInterviewRecordings } from './teacherInterviewMedia.js'
 
 const interviewerPortrait = `${import.meta.env.BASE_URL}assets/tutorpro-live-male-interviewer.webp`
+const interviewerSpeakingPortraitOne = `${import.meta.env.BASE_URL}assets/tutorpro-live-male-interviewer-speaking-1.webp`
+const interviewerSpeakingPortraitTwo = `${import.meta.env.BASE_URL}assets/tutorpro-live-male-interviewer-speaking-2.webp`
 const MAX_ANSWER_SECONDS = 300
+const interviewerVoice = (fileName) => `${import.meta.env.BASE_URL}assets/interviewer-voice/${fileName}.wav`
+
+function TalkingInterviewerFace({ alt = '' }) {
+  return (
+    <>
+      <img className="teacher-talking-face teacher-talking-face--idle" src={interviewerPortrait} alt={alt} decoding="async" />
+      <img className="teacher-talking-face teacher-talking-face--one" src={interviewerSpeakingPortraitOne} alt="" aria-hidden="true" decoding="async" />
+      <img className="teacher-talking-face teacher-talking-face--two" src={interviewerSpeakingPortraitTwo} alt="" aria-hidden="true" decoding="async" />
+    </>
+  )
+}
 
 const microDemoPrompts = [
   "Imagine I'm a beginner student. Teach me the difference between 'much' and 'many' in under two minutes, as if this were a real lesson.",
@@ -13,21 +26,26 @@ const microDemoPrompts = [
 ]
 
 function buildQuestions(microDemoPrompt) {
+  const microDemoVoice = microDemoPrompt === microDemoPrompts[0]
+    ? 'q11-much-many'
+    : microDemoPrompt === microDemoPrompts[1]
+      ? 'q11-past-present'
+      : 'q11-have-went'
   return [
-    { stage: 'Introduction', question: 'Please introduce yourself and tell me briefly why you became an English teacher.' },
-    { stage: 'Background & credentials', question: 'Tell me about your teaching experience: how long have you taught, which ages and levels, and was it online, in person, or both?' },
-    { stage: 'Background & credentials', question: 'What teaching degree, bachelor’s degree, TEFL, TESOL, CELTA, or other relevant certifications do you currently hold?' },
-    { stage: 'Background & credentials', question: 'Which English skills, subjects, curricula, age groups, or exam areas do you specialize in?' },
-    { stage: 'English proficiency', question: "How would you explain the difference between 'a' and 'the' to a beginner student?" },
-    { stage: 'English proficiency', question: 'Describe a challenging teaching moment and explain what you did, what happened, and what you learned from it.' },
-    { stage: 'Teaching philosophy', question: 'How would you help a student who is too shy or nervous to speak English during class?' },
-    { stage: 'Teaching philosophy', question: 'How do you adjust your lesson for a complete beginner compared with an advanced student?' },
-    { stage: 'Teaching philosophy', question: 'How do you keep a student motivated over many lessons?' },
-    { stage: 'Teaching philosophy', question: 'When a student makes a mistake, how do you decide whether to correct it immediately or let the student finish?' },
-    { stage: 'Live micro-demo', question: microDemoPrompt },
-    { stage: 'Live micro-demo follow-up', question: 'Now imagine the student still looks confused. Explain the same teaching point in a different and simpler way.' },
-    { stage: 'Platform fit & logistics', question: 'What days and hours can you reliably teach, what is your timezone, and what internet, webcam, headset, and quiet teaching space do you have?' },
-    { stage: 'Platform fit & motivation', question: 'Why do you want to teach with TutorPro English, and which Primary or Secondary learners do you most enjoy teaching?' },
+    { stage: 'Introduction', question: 'Please introduce yourself and tell me briefly why you became an English teacher.', voice: interviewerVoice('q01-introduction') },
+    { stage: 'Background & credentials', question: 'Tell me about your teaching experience: how long have you taught, which ages and levels, and was it online, in person, or both?', voice: interviewerVoice('q02-experience') },
+    { stage: 'Background & credentials', question: 'What teaching degree, bachelor’s degree, TEFL, TESOL, CELTA, or other relevant certifications do you currently hold?', voice: interviewerVoice('q03-credentials') },
+    { stage: 'Background & credentials', question: 'Which English skills, subjects, curricula, age groups, or exam areas do you specialize in?', voice: interviewerVoice('q04-specialization') },
+    { stage: 'English proficiency', question: "How would you explain the difference between 'a' and 'the' to a beginner student?", voice: interviewerVoice('q05-articles') },
+    { stage: 'English proficiency', question: 'Describe a challenging teaching moment and explain what you did, what happened, and what you learned from it.', voice: interviewerVoice('q06-challenge') },
+    { stage: 'Teaching philosophy', question: 'How would you help a student who is too shy or nervous to speak English during class?', voice: interviewerVoice('q07-shy-student') },
+    { stage: 'Teaching philosophy', question: 'How do you adjust your lesson for a complete beginner compared with an advanced student?', voice: interviewerVoice('q08-levels') },
+    { stage: 'Teaching philosophy', question: 'How do you keep a student motivated over many lessons?', voice: interviewerVoice('q09-motivation') },
+    { stage: 'Teaching philosophy', question: 'When a student makes a mistake, how do you decide whether to correct it immediately or let the student finish?', voice: interviewerVoice('q10-correction') },
+    { stage: 'Live micro-demo', question: microDemoPrompt, voice: interviewerVoice(microDemoVoice) },
+    { stage: 'Live micro-demo follow-up', question: 'Now imagine the student still looks confused. Explain the same teaching point in a different and simpler way.', voice: interviewerVoice('q12-simpler') },
+    { stage: 'Platform fit & logistics', question: 'What days and hours can you reliably teach, what is your timezone, and what internet, webcam, headset, and quiet teaching space do you have?', voice: interviewerVoice('q13-logistics') },
+    { stage: 'Platform fit & motivation', question: 'Why do you want to teach with TutorPro English, and which Primary or Secondary learners do you most enjoy teaching?', voice: interviewerVoice('q14-tutorpro') },
   ]
 }
 
@@ -114,10 +132,10 @@ function chooseEnglishMaleVoice() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   const voices = window.speechSynthesis.getVoices()
   const english = voices.filter((voice) => /^en(?:-|_)/i.test(voice.lang))
-  const maleNames = /\b(?:daniel|george|guy|ryan|mark|david|james|oliver|thomas|arthur|alex|fred|ralph|aaron|lee)\b/i
+  const maleNames = /\b(?:male|daniel|george|guy|ryan|mark|david|james|oliver|thomas|arthur|alex|fred|ralph|aaron|lee|christopher|eric|roger|matthew|brian|joey|justin|liam|owen|stefan|steffan|william)\b/i
   return english.find((voice) => /^en-GB/i.test(voice.lang) && maleNames.test(voice.name))
-    || english.find((voice) => /^en-GB/i.test(voice.lang))
     || english.find((voice) => maleNames.test(voice.name))
+    || english.find((voice) => /^en-GB/i.test(voice.lang))
     || english[0]
     || null
 }
@@ -152,6 +170,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
   const recordingStartedAtRef = useRef(0)
   const recordingTimerRef = useRef(null)
   const speechTimerRef = useRef(null)
+  const voiceAudioRef = useRef(null)
   const recordingsRef = useRef([])
   const uploadResultRef = useRef(null)
   const recordedUrlRef = useRef('')
@@ -182,6 +201,8 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
       try { recognitionRef.current?.stop() } catch { /* Recognition may already be stopped. */ }
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop())
       window.speechSynthesis?.cancel()
+      voiceAudioRef.current?.pause()
+      voiceAudioRef.current = null
       if (recordedUrlRef.current) URL.revokeObjectURL(recordedUrlRef.current)
     }
   }, [])
@@ -191,7 +212,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
     setStarted(true)
   }
 
-  const speakQuestion = (question) => new Promise((resolve) => {
+  const speakWithBrowserVoice = (question) => new Promise((resolve) => {
     if (typeof window === 'undefined' || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
       resolve()
       return
@@ -201,7 +222,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
     const utterance = new SpeechSynthesisUtterance(question)
     utterance.lang = 'en-GB'
     utterance.rate = 0.92
-    utterance.pitch = 0.92
+    utterance.pitch = 0.9
     utterance.volume = 1
     utterance.voice = chooseEnglishMaleVoice()
     let completed = false
@@ -222,10 +243,53 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
     window.speechSynthesis.speak(utterance)
   })
 
+  const playRecordedMaleVoice = (question) => new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || typeof Audio === 'undefined' || !question.voice) {
+      reject(new Error('Recorded interviewer voice is unavailable.'))
+      return
+    }
+    window.clearTimeout(speechTimerRef.current)
+    window.speechSynthesis?.cancel()
+    if (voiceAudioRef.current) {
+      const previousAudio = voiceAudioRef.current
+      previousAudio.pause()
+      previousAudio.onended?.()
+    }
+    const audio = new Audio(question.voice)
+    voiceAudioRef.current = audio
+    audio.preload = 'auto'
+    let completed = false
+    const finish = (failed = false) => {
+      if (completed) return
+      completed = true
+      window.clearTimeout(speechTimerRef.current)
+      if (mountedRef.current) setSpeaking(false)
+      if (voiceAudioRef.current === audio) voiceAudioRef.current = null
+      if (failed) reject(new Error('Recorded interviewer voice could not play.'))
+      else resolve()
+    }
+    audio.onplay = () => { if (mountedRef.current) setSpeaking(true) }
+    audio.onended = () => finish(false)
+    audio.onerror = () => finish(true)
+    speechTimerRef.current = window.setTimeout(() => {
+      audio.pause()
+      finish(true)
+    }, 60000)
+    audio.play().catch(() => finish(true))
+  })
+
+  const speakQuestion = async (question) => {
+    try {
+      await playRecordedMaleVoice(question)
+    } catch {
+      await speakWithBrowserVoice(question.question)
+    }
+  }
+
   const replayQuestion = async () => {
     if (phase !== 'ready') return
     setError('')
-    await speakQuestion(current.question)
+    await speakQuestion(current)
   }
 
   const beginRecognition = () => {
@@ -281,7 +345,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
       })
       mediaStreamRef.current = stream
       setPhase('asking')
-      await speakQuestion(current.question)
+      await speakQuestion(current)
       if (!mountedRef.current) return
       setPhase('countdown')
       for (let value = 3; value > 0; value -= 1) {
@@ -432,12 +496,12 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
     return (
       <section className="teacher-ai-interview teacher-ai-interview--welcome">
         <figure className="teacher-interviewer-portrait teacher-interviewer-portrait--male">
-          <img src={interviewerPortrait} alt="TutorPro English fictional English male AI hiring assistant" decoding="async" />
+          <TalkingInterviewerFace alt="TutorPro English fictional English male AI hiring assistant" />
           <figcaption><i aria-hidden="true" /> English AI interviewer · Online</figcaption>
         </figure>
         <span className="kicker">Required recorded first-round interview</span>
         <h2>Meet your TutorPro English Hiring Assistant</h2>
-        <p>I’m a fictional English male AI interviewer—not a human recruiter. I’ll show and read each question in a natural British English voice. Take as long as you need to review each question, then press <strong>Start answer</strong> when you are ready. Your microphone records one answer at a time and you can listen, re-record and review the transcript before continuing.</p>
+        <p>I’m a fictional English male AI interviewer—not a human recruiter. My animated portrait speaks each question using a natural masculine British English voice. Take as long as you need to review each question, then press <strong>Start answer</strong> when you are ready. Your microphone records one answer at a time and you can listen, re-record and review the transcript before continuing.</p>
         <div className="teacher-interview-features"><span><Clock3 size={17} /> 15–25 minutes</span><span><Mic size={17} /> Microphone required</span><span><ShieldCheck size={17} /> Private hiring review</span><span><Sparkles size={17} /> Review before saving</span></div>
         <button type="button" className="button button--primary" onClick={begin}>Enter recorded interview <ArrowRight size={17} /></button>
         <button type="button" className="teacher-interview-back" onClick={onBack}><ArrowLeft size={16} /> Back to teaching profile</button>
@@ -462,16 +526,16 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
 
   return (
     <section className="teacher-ai-interview teacher-ai-interview--question">
-      <div className="teacher-interview-top"><span className={`teacher-interviewer-mini ${speaking ? 'is-speaking' : ''}`}><img src={interviewerPortrait} alt="" aria-hidden="true" /><i aria-hidden="true" /></span><div><small>TutorPro English Hiring Assistant · English male AI voice</small><strong>{current.stage}</strong></div><em>{index + 1} / {questions.length}</em></div>
+      <div className="teacher-interview-top"><span className={`teacher-interviewer-mini ${speaking ? 'is-speaking' : ''}`}><TalkingInterviewerFace /><i aria-hidden="true" /></span><div><small>TutorPro English Hiring Assistant · English male AI voice</small><strong>{current.stage}</strong></div><em>{index + 1} / {questions.length}</em></div>
       <div className="teacher-interview-progress"><span style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div>
 
       <div className={`teacher-live-question ${speaking ? 'is-speaking' : ''}`}>
-        <div className="teacher-live-question__portrait"><img src={interviewerPortrait} alt="Fictional English male AI interviewer" /><span><i /> {speaking ? 'Asking your question…' : 'Ready when you are'}</span></div>
+        <div className="teacher-live-question__portrait"><TalkingInterviewerFace alt="Fictional English male AI interviewer speaking" /><span><i /> {speaking ? 'Speaking live…' : 'Ready when you are'}</span></div>
         <div className="teacher-interview-question"><small>Question {index + 1} · Review before recording</small><h2>{current.question}</h2>{phase === 'ready' && <button type="button" onClick={replayQuestion} disabled={speaking}><Volume2 size={15} /> {speaking ? 'Speaking…' : 'Hear question'}</button>}</div>
       </div>
 
       <div className={`teacher-answer-recorder teacher-answer-recorder--${phase}`}>
-        {phase === 'ready' && <><div className="teacher-answer-recorder__intro"><span><Mic size={22} /></span><div><strong>Take your time to prepare</strong><p>Your recording starts only after you press the button, hear the question and see the 3-second countdown.</p></div></div><button type="button" className="button button--primary button--full" onClick={startRecording}><Mic size={17} /> Start answer</button></>}
+        {phase === 'ready' && <><div className="teacher-answer-recorder__intro"><span><Mic size={22} /></span><div><strong>Take your time to prepare</strong><p>Your recording starts only after you press the button, hear the question and see the 3-second countdown.</p></div></div><button type="button" className="button button--primary button--full" onClick={startRecording} disabled={speaking}><Mic size={17} /> {speaking ? 'Interviewer speaking…' : 'Start answer'}</button></>}
         {phase === 'asking' && <div className="teacher-recording-status"><AudioLines size={31} /><strong>Your interviewer is asking the question</strong><span>Recording has not started yet. Listen, then wait for the countdown.</span><div className="teacher-speaking-bars" aria-hidden="true">{Array.from({ length: 7 }, (_, bar) => <i key={bar} />)}</div></div>}
         {phase === 'countdown' && <div className="teacher-recording-status teacher-recording-countdown"><strong>{countdown}</strong><span>Get ready to answer…</span></div>}
         {phase === 'recording' && <><div className="teacher-recording-live"><span><i /> Recording</span><strong>{formatTime(elapsed)}</strong><em>Maximum 5:00</em></div><div className="teacher-recording-wave" aria-hidden="true">{Array.from({ length: 22 }, (_, bar) => <i key={bar} />)}</div><div className="teacher-live-transcript"><small>Live automatic transcript</small><p>{liveTranscript || 'Start speaking naturally. Your words will appear here when browser transcription is available.'}</p></div><button type="button" className="button teacher-stop-recording button--full" onClick={finishRecording}><Square size={15} fill="currentColor" /> Stop answer</button></>}

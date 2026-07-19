@@ -1,6 +1,6 @@
 # TutorPro English recorded AI teacher applicant interview
 
-Teacher applicants must complete a 14-question recorded interview before their application can be submitted. A fictional, AI-generated English male interviewer displays and reads one question at a time using an `en-GB` browser voice. Applicants can:
+Teacher applicants must complete a 14-question recorded interview before their application can be submitted. A fictional, AI-generated English male interviewer uses synchronized photorealistic speaking frames while reading one question at a time. All fixed questions and randomized micro-demo variants include a consistent prerecorded masculine native-English voice with British delivery. Applicants can:
 
 1. Review the complete question without a timer.
 2. Hear the interviewer read it aloud.
@@ -41,7 +41,7 @@ The bucket is private. Audio is never public and applicants cannot browse anothe
 
 Use a current version of Chrome, Edge or Safari and allow microphone access. Automatic speech-to-text support varies by browser and country. When it is unavailable, the applicant listens to the recording and types or corrects a short transcript before continuing. The original recording is never altered by transcript edits.
 
-The spoken voice is selected from the device’s English voices, preferring an English male `en-GB` voice. The exact installed voice can vary by operating system.
+The production question library contains 16 compact prerecorded male-voice clips: all 14 interview positions plus all three randomized micro-demo variants. This keeps the interviewer’s masculine voice consistent across devices. If a voice asset cannot play, the browser falls back to an installed English male `en-GB` voice.
 
 ## Optional AI evaluation setup
 

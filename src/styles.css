@@ -2782,6 +2782,14 @@ body {
 .teacher-interviewer-portrait { position: relative; width: 145px; height: 177px; margin: 0 0 24px; border: 5px solid #fff; border-radius: 34px; background: linear-gradient(145deg, #7048df, #ff4f87); box-shadow: 0 20px 42px rgba(87,52,154,0.28); transform: rotate(-2deg); }
 .teacher-interviewer-portrait::before { position: absolute; z-index: -1; inset: -9px; border: 1px solid rgba(112,72,223,0.2); border-radius: 40px; content: ''; animation: interviewer-portrait-pulse 3s ease-in-out infinite; }
 .teacher-interviewer-portrait img { display: block; width: 100%; height: 100%; border-radius: 28px; object-fit: cover; object-position: center 20%; }
+.teacher-talking-face { position: absolute; inset: 0; opacity: 0; }
+.teacher-talking-face--idle { opacity: 1; }
+.is-speaking .teacher-talking-face--idle { animation: teacher-mouth-idle 560ms steps(1,end) infinite; }
+.is-speaking .teacher-talking-face--one { animation: teacher-mouth-one 560ms steps(1,end) infinite; }
+.is-speaking .teacher-talking-face--two { animation: teacher-mouth-two 560ms steps(1,end) infinite; }
+@keyframes teacher-mouth-idle { 0%, 22%, 78%, 100% { opacity: 1; } 23%, 77% { opacity: 0; } }
+@keyframes teacher-mouth-one { 0%, 22%, 52%, 100% { opacity: 0; } 23%, 51% { opacity: 1; } }
+@keyframes teacher-mouth-two { 0%, 51%, 78%, 100% { opacity: 0; } 52%, 77% { opacity: 1; } }
 .teacher-interviewer-portrait figcaption { position: absolute; right: -26px; bottom: -12px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e6dff0; border-radius: 20px; padding: 7px 10px; background: #fff; box-shadow: 0 8px 22px rgba(66,42,105,0.16); color: #59486f; font-size: 0.52rem; font-weight: 900; white-space: nowrap; transform: rotate(2deg); }
 .teacher-interviewer-portrait figcaption i,
 .teacher-interviewer-mini i { width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; background: #8bcf36; box-shadow: 0 0 0 2px rgba(139,207,54,0.25); }
