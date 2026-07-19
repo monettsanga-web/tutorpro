@@ -1,0 +1,301 @@
+import { getAccountById, repairStudentForBooking, updateTeacherProfile } from './auth.js'
+import { deleteCloudBooking, syncCloudBooking } from './cloudBookings.js'
+import { lessonSlotKeys, timeToMinutes } from './schedule.js'
+
+const BOOKINGS_KEY = 'tutorpro_bookings_v1'
+
+function readBookings() {
+  try {
+    const bookings = JSON.parse(localStorage.getItem(BOOKINGS_KEY) || '[]')
+    return Array.isArray(bookings) ? bookings : []
+  } catch {
+    return []
+  }
+}
+
+function writeBookings(bookings) {
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings))
+  if (typeof window !== 'undefined') window.queueMicrotask(() => window.dispatchEvent(new Event('tutorpro:data-change')))
+}
+
+function queueCloudBooking(booking) {
+  syncCloudBooking(booking).catch(() => {
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('tutorpro:cloud-error'))
+  })
+}
+
+export function getStableClassroomCredentials(booking) {
+  const bookingId = String(booking?.id || '')
+  const safeId = bookingId.replace(/[^a-z0-9]/gi, '')
+  const suffix = `${safeId}00000000`.slice(0, 8).toUpperCase()
+  const date = String(booking?.date || '').replace(/[^0-9]/g, '').slice(0, 8).padEnd(8, '0')
+  return {
+    classroomId: `TP-${date}-${suffix}`,
+    classroomToken: `TPROOM-${bookingId.toLowerCase()}-${date}`,
+  }
+}
+
+export function mergeCloudBookings(cloudBookings, options = {}) {
+  if (!Array.isArray(cloudBookings)) return getBookings()
+  const cloudIds = new Set(cloudBookings.map((booking) => booking.id))
+  const bookings = options.reconcile
+    ? readBookings().filter((booking) => !booking.cloudBooking || cloudIds.has(booking.id))
+    : readBookings()
+  cloudBookings.forEach((cloudBooking) => {
+    const index = bookings.findIndex((booking) => booking.id === cloudBooking.id)
+    if (index < 0) bookings.push(cloudBooking)
+    else {
+      const localTime = new Date(bookings[index].updatedAt || bookings[index].createdAt || 0).getTime()
+      const cloudTime = new Date(cloudBooking.updatedAt || cloudBooking.createdAt || 0).getTime()
+      if (!Number.isFinite(localTime) || cloudTime >= localTime) bookings[index] = { ...bookings[index], ...cloudBooking }
+    }
+  })
+  writeBookings(bookings)
+  return getBookings()
+}
+
+export async function syncBookingNow(booking) {
+  return syncCloudBooking(booking)
+}
+
+export function getBookings(filters = {}) {
+  return readBookings()
+    .filter((booking) => !filters.studentId || booking.studentId === filters.studentId)
+    .filter((booking) => !filters.teacherId || booking.teacherId === filters.teacherId)
+    .filter((booking) => !filters.status || booking.status === filters.status)
+    .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+}
+
+export function createBooking(details) {
+  const bookings = readBookings()
+  const teacher = getAccountById(details.teacherId)
+  if (!teacher || teacher.role !== 'teacher' || teacher.status !== 'approved') {
+    throw new Error('This teacher is not currently available for bookings.')
+  }
+  let studentAccount = getAccountById(details.studentId)
+  let learners = studentAccount?.children?.length ? studentAccount.children : studentAccount?.child ? [studentAccount.child] : []
+  let learner = details.learnerId ? learners.find((item) => item.id === details.learnerId) : null
+  if (!learner && details.learnerName) {
+    learner = learners.find((item) => item.name?.trim().toLowerCase() === details.learnerName.trim().toLowerCase())
+  }
+  if (!learner && learners.length === 1) learner = learners[0]
+
+  const needsRepair = studentAccount && (studentAccount.role !== 'student' || !learner || studentAccount.status === 'approved')
+  if (needsRepair && details.learnerProfile) {
+    const repaired = repairStudentForBooking(details.studentId, details.learnerProfile)
+    studentAccount = repaired.account
+    learner = repaired.learner
+  }
+  if (!studentAccount || studentAccount.role !== 'student' || studentAccount.status !== 'active' || !learner) {
+    throw new Error(studentAccount?.status === 'suspended'
+      ? 'This family account is suspended. Contact the administrator before booking.'
+      : 'The student profile could not be verified. Log out, log in again, and retry the booking.')
+  }
+  if (learner.accessStatus === 'suspended') throw new Error(`${learner.name}’s student profile is suspended. Contact the TutorPro English administrator before booking.`)
+  if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')
+  if (!details.focus?.trim()) throw new Error('Choose a lesson focus before booking.')
+  const lessonDate = new Date(`${details.date}T${details.time}:00`)
+  if (!details.date || !details.time || Number.isNaN(lessonDate.getTime()) || lessonDate <= new Date()) {
+    throw new Error('Choose a future lesson date and time.')
+  }
+
+  const startMinutes = timeToMinutes(details.time)
+  if (startMinutes % 30 !== 0 || startMinutes < 0 || startMinutes >= 1440) {
+    throw new Error('Lessons must start on a 30-minute calendar slot.')
+  }
+
+  const requiredSlots = lessonSlotKeys(details.date, details.time, details.duration)
+  const availableSlots = new Set(teacher.teacher?.availabilitySlots || [])
+  if (!requiredSlots.every((slot) => availableSlots.has(slot))) {
+    throw new Error('This time is outside the teacher’s available schedule.')
+  }
+
+  const requestedEnd = startMinutes + (Math.ceil(Number(details.duration) / 30) * 30)
+  const conflict = bookings.some((booking) => {
+    if (booking.date !== details.date || ['cancelled', 'declined', 'absent'].includes(booking.status)) return false
+    const sameTeacher = booking.teacherId === details.teacherId
+    const bookedLearnerId = booking.learnerId || studentAccount.child?.id
+    const sameLearner = booking.studentId === details.studentId && bookedLearnerId === learner.id
+    if (!sameTeacher && !sameLearner) return false
+    const bookingStart = timeToMinutes(booking.time)
+    const bookingEnd = bookingStart + (Math.ceil(Number(booking.duration) / 30) * 30)
+    return startMinutes < bookingEnd && requestedEnd > bookingStart
+  })
+  if (conflict) throw new Error('That time conflicts with an existing teacher or student lesson. Please choose another available slot.')
+
+  const bookingId = crypto.randomUUID()
+  const classroomCredentials = getStableClassroomCredentials({ id: bookingId, date: details.date })
+  const booking = {
+    id: bookingId,
+    ...classroomCredentials,
+    studentId: details.studentId,
+    learnerId: learner.id,
+    learnerName: learner.name,
+    teacherId: details.teacherId,
+    teacherName: details.teacherName || teacher.fullName,
+    date: details.date,
+    time: details.time,
+    duration: Number(details.duration),
+    focus: details.focus,
+    note: details.note?.trim() || '',
+    teacherNote: '',
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  }
+  bookings.push(booking)
+  writeBookings(bookings)
+  queueCloudBooking(booking)
+  return booking
+}
+
+export function updateBooking(bookingId, changes) {
+  const bookings = readBookings()
+  const index = bookings.findIndex((booking) => booking.id === bookingId)
+  if (index < 0) throw new Error('Booking not found.')
+  const validStatuses = ['pending', 'confirmed', 'ongoing', 'completed', 'absent', 'cancelled', 'declined']
+  if (changes.status && !validStatuses.includes(changes.status)) throw new Error('Invalid booking status.')
+  if (typeof changes.slotComment === 'string' && changes.slotComment.trim().length > 500) throw new Error('Keep the booking comment under 500 characters.')
+  if (typeof changes.slotComment === 'string') changes = { ...changes, slotComment: changes.slotComment.trim() }
+  const nextStatus = changes.status || bookings[index].status
+  const classroomDetails = ['confirmed', 'ongoing', 'completed'].includes(nextStatus)
+    ? getStableClassroomCredentials(bookings[index])
+    : {}
+  bookings[index] = { ...bookings[index], ...changes, ...classroomDetails, updatedAt: new Date().toISOString() }
+  writeBookings(bookings)
+  queueCloudBooking(bookings[index])
+  return bookings[index]
+}
+
+export function cancelBooking(bookingId) {
+  return updateBooking(bookingId, { status: 'cancelled' })
+}
+
+export function rateCompletedBooking(bookingId, studentId, rating, comment = '') {
+  const booking = readBookings().find((item) => item.id === bookingId)
+  if (!booking || booking.studentId !== studentId) throw new Error('This lesson does not belong to the student account.')
+  if (booking.status !== 'completed') throw new Error('A lesson can be rated after it is completed.')
+  if (booking.studentRating) throw new Error('This lesson has already been rated.')
+  const score = Number(rating)
+  if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error('Choose a rating from one to five stars.')
+  if (comment.trim().length > 500) throw new Error('Keep the rating comment under 500 characters.')
+
+  const updated = updateBooking(bookingId, {
+    studentRating: { score, comment: comment.trim(), createdAt: new Date().toISOString() },
+  })
+  const teacherRatings = readBookings()
+    .filter((item) => item.teacherId === booking.teacherId && item.studentRating?.score)
+    .map((item) => item.studentRating.score)
+  if (teacherRatings.length) {
+    const average = Math.round((teacherRatings.reduce((sum, value) => sum + value, 0) / teacherRatings.length) * 10) / 10
+    updateTeacherProfile(booking.teacherId, { rating: average, ratingCount: teacherRatings.length })
+  }
+  return updated
+}
+
+export function saveTeacherFeedback(bookingId, teacherId, feedback) {
+  const booking = readBookings().find((item) => item.id === bookingId)
+  if (!booking || booking.teacherId !== teacherId) throw new Error('This lesson is not assigned to the teacher account.')
+  if (!['confirmed', 'ongoing', 'completed'].includes(booking.status)) throw new Error('Confirm or start the lesson before adding post-class feedback.')
+  if (!feedback.summary?.trim()) throw new Error('Add a short class summary before saving feedback.')
+  if (feedback.summary.trim().length > 1000) throw new Error('Keep the class summary under 1,000 characters.')
+  const practiceWords = [...new Set((Array.isArray(feedback.practiceWords) ? feedback.practiceWords : [])
+    .map((word) => String(word).trim())
+    .filter(Boolean))].slice(0, 12)
+  const grammarFocus = [...new Set((Array.isArray(feedback.grammarFocus) ? feedback.grammarFocus : [])
+    .map((focus) => String(focus).trim())
+    .filter(Boolean))].slice(0, 12)
+  if (practiceWords.some((word) => word.length > 40)) throw new Error('Keep each practice word or phrase under 40 characters.')
+  return updateBooking(bookingId, {
+    status: 'completed',
+    teacherFeedback: {
+      summary: feedback.summary.trim(),
+      strength: feedback.strength?.trim() || '',
+      nextStep: feedback.nextStep?.trim() || '',
+      homework: feedback.homework?.trim() || '',
+      practiceWords,
+      grammarFocus,
+      createdAt: new Date().toISOString(),
+    },
+  })
+}
+
+export function getBookingById(bookingId) {
+  return readBookings().find((booking) => booking.id === bookingId) || null
+}
+
+export function getClassroomAccess(bookingId, account, now = new Date()) {
+  let booking = getBookingById(bookingId)
+  if (!booking) return { allowed: false, reason: 'Classroom booking not found.' }
+  if (['confirmed', 'ongoing', 'completed'].includes(booking.status)) {
+    const stableCredentials = getStableClassroomCredentials(booking)
+    if (booking.classroomId !== stableCredentials.classroomId || booking.classroomToken !== stableCredentials.classroomToken) {
+      booking = updateBooking(booking.id, stableCredentials)
+    }
+  }
+  if (!account) return { allowed: false, reason: 'Log in to access this classroom.', booking }
+  const authorized = account.role === 'admin'
+    || (account.role === 'teacher' && booking.teacherId === account.id)
+    || (account.role === 'student' && booking.studentId === account.id)
+  if (!authorized) return { allowed: false, reason: 'This private classroom belongs to another booking.', booking }
+  if (account.role === 'student' && account.status !== 'active') return { allowed: false, reason: 'This student account is not active.', booking }
+  if (account.role === 'student') {
+    const classroomLearner = account.children?.find((learner) => learner.id === booking.learnerId) || account.child
+    if (classroomLearner?.accessStatus === 'suspended') return { allowed: false, reason: 'This student profile is suspended and cannot enter the classroom.', booking }
+  }
+  if (account.role === 'teacher' && account.status !== 'approved') return { allowed: false, reason: 'This teacher account is not approved for live classes.', booking }
+  if (!['confirmed', 'ongoing', 'completed'].includes(booking.status)) {
+    return { allowed: false, reason: 'The lesson must be confirmed or ongoing before the classroom opens.', booking }
+  }
+
+  const startsAt = new Date(`${booking.date}T${booking.time}:00`)
+  if (Number.isNaN(startsAt.getTime())) return { allowed: false, reason: 'The classroom schedule is invalid.', booking }
+  const earlyMinutes = account.role === 'teacher' ? 30 : 10
+  const opensAt = new Date(startsAt.getTime() - (earlyMinutes * 60 * 1000))
+  const closesAt = new Date(startsAt.getTime() + ((Number(booking.duration) + 60) * 60 * 1000))
+  if (account.role !== 'admin' && now < opensAt) {
+    return { allowed: false, reason: `This classroom opens ${earlyMinutes} minutes before the lesson.`, booking, startsAt, opensAt, closesAt }
+  }
+  if (account.role !== 'admin' && now > closesAt) {
+    return { allowed: false, reason: 'This classroom session has closed.', booking, startsAt, opensAt, closesAt }
+  }
+  return { allowed: true, booking, startsAt, opensAt, closesAt }
+}
+
+export function removeStudentBookingData(accountId, learnerId, includeLegacyPrimary = false) {
+  const bookings = readBookings()
+  const remaining = bookings.filter((booking) => {
+    if (booking.studentId !== accountId) return true
+    if (!learnerId) return false
+    if (!booking.learnerId) return !includeLegacyPrimary
+    return booking.learnerId !== learnerId
+  })
+  const removedBookings = bookings.filter((booking) => !remaining.some((item) => item.id === booking.id))
+  const removed = removedBookings.length
+  if (removed) {
+    writeBookings(remaining)
+    removedBookings.forEach((booking) => deleteCloudBooking(booking.id).catch(() => {}))
+  }
+  return removed
+}
+
+export function removeTeacherBookingData(accountId) {
+  const bookings = readBookings()
+  const removedBookings = bookings.filter((booking) => booking.teacherId === accountId)
+  if (!removedBookings.length) return 0
+  writeBookings(bookings.filter((booking) => booking.teacherId !== accountId))
+  removedBookings.forEach((booking) => deleteCloudBooking(booking.id).catch(() => {}))
+  return removedBookings.length
+}
+
+export function getBookingStats() {
+  const bookings = readBookings()
+  return {
+    total: bookings.length,
+    pending: bookings.filter((booking) => booking.status === 'pending').length,
+    confirmed: bookings.filter((booking) => booking.status === 'confirmed').length,
+    ongoing: bookings.filter((booking) => booking.status === 'ongoing').length,
+    completed: bookings.filter((booking) => booking.status === 'completed').length,
+    absent: bookings.filter((booking) => booking.status === 'absent').length,
+    cancelled: bookings.filter((booking) => ['cancelled', 'declined'].includes(booking.status)).length,
+  }
+}
