@@ -4007,6 +4007,11 @@
   line-height: 1.45;
 }
 
+.feedback-preview-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 5px; }
+.feedback-preview-tags b { color: #315e8e; font-size: 0.52rem; }
+.feedback-preview-tags i { border-radius: 12px; padding: 3px 6px; background: #fff; color: #4e6a86; font-size: 0.48rem; font-style: normal; font-weight: 750; }
+.feedback-preview-tags--grammar i { background: #eee7ff; color: #65449b; }
+
 .lesson-rating-preview {
   display: flex;
   align-items: center;
@@ -4133,6 +4138,22 @@
   grid-template-columns: 1fr 1fr;
   gap: 11px;
 }
+
+.feedback-dialog { width: min(900px, 100%); max-height: min(920px, calc(100dvh - 32px)); overflow-y: auto; }
+.feedback-practice-grid > fieldset { min-width: 0; margin: 0; border: 1px solid #ded6e9; border-radius: 13px; padding: 13px; background: #faf8fd; }
+.feedback-practice-grid legend { padding: 0 5px; color: #321568; font-size: 0.65rem; font-weight: 900; }
+.feedback-practice-grid fieldset > p { margin: 0 0 9px; color: var(--portal-muted); font-size: 0.53rem; line-height: 1.45; }
+.feedback-word-entry { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.feedback-word-entry button { display: inline-flex; min-height: 42px; align-items: center; gap: 4px; border: 0; border-radius: 9px; padding: 0 10px; background: #7048df; color: #fff; font-size: 0.57rem; font-weight: 850; }
+.feedback-word-entry button:disabled { cursor: not-allowed; opacity: 0.45; }
+.feedback-chip-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.feedback-chip-list > span { display: inline-flex; min-height: 28px; align-items: center; gap: 4px; border-radius: 15px; padding: 3px 5px 3px 9px; background: #e9f7ce; color: #4f7418; font-size: 0.54rem; font-weight: 800; }
+.feedback-chip-list > span button { display: grid; width: 20px; height: 20px; place-items: center; border: 0; border-radius: 50%; padding: 0; background: rgba(79,116,24,0.12); color: inherit; }
+.feedback-chip-list > small { color: #94899d; font-size: 0.52rem; }
+.feedback-grammar-focus > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.feedback-form .feedback-grammar-focus label { display: inline-flex; min-height: 31px; align-items: center; gap: 5px; border: 1px solid #ddd5e7; border-radius: 16px; padding: 4px 8px; background: #fff; color: #6d6078; cursor: pointer; font-size: 0.51rem; font-weight: 750; }
+.feedback-form .feedback-grammar-focus label.selected { border-color: #7048df; background: #eee8ff; color: #563395; }
+.feedback-grammar-focus input { width: 13px; min-height: 13px; margin: 0; accent-color: #7048df; box-shadow: none !important; }
 
 /* Administrator-managed teacher profile */
 .admin-profile-backbar {
@@ -5759,9 +5780,11 @@
   .admin-teacher-form__row,
   .admin-teacher-form__row--three,
   .feedback-form > div:not(.portal-dialog__actions),
-  .platform-choice {
+  .platform-choice,
+  .feedback-word-entry {
     grid-template-columns: 1fr;
   }
+  .feedback-word-entry button { min-height: 40px; justify-content: center; }
 
   .portal-dialog__actions,
   .admin-booking-context {

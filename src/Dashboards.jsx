@@ -89,6 +89,17 @@ const LEARNING_GOALS = [
   'Schoolwork and exam support',
   'Build an all-round foundation',
 ]
+const GRAMMAR_FOCUS_OPTIONS = [
+  'Sentence structure',
+  'Verb tenses',
+  'Subject–verb agreement',
+  'Articles (a, an, the)',
+  'Prepositions',
+  'Pronouns',
+  'Plural nouns',
+  'Question forms',
+  'Punctuation',
+]
 
 function withTimeout(promise, milliseconds, message) {
   return Promise.race([
@@ -404,7 +415,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
         <div className="booking-utility-actions">{onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}{booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}</div>
-        {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</div>}
+        {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}{booking.teacherFeedback.practiceWords?.length > 0 && <div className="feedback-preview-tags"><b>Words:</b>{booking.teacherFeedback.practiceWords.map((word) => <i key={word}>{word}</i>)}</div>}{booking.teacherFeedback.grammarFocus?.length > 0 && <div className="feedback-preview-tags feedback-preview-tags--grammar"><b>Grammar:</b>{booking.teacherFeedback.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
       </div>
       {actions && <div className="lesson-card__actions">{actions}</div>}
@@ -687,17 +698,52 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
   )
 }
 
-function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
+export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   const student = getAccountById(booking.studentId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
   const existing = booking.teacherFeedback || {}
-  const [form, setForm] = useState({ summary: existing.summary || '', strength: existing.strength || '', nextStep: existing.nextStep || '', homework: existing.homework || '' })
+  const [form, setForm] = useState({
+    summary: existing.summary || '',
+    strength: existing.strength || '',
+    nextStep: existing.nextStep || '',
+    homework: existing.homework || '',
+    practiceWords: Array.isArray(existing.practiceWords) ? existing.practiceWords : [],
+    grammarFocus: Array.isArray(existing.grammarFocus) ? existing.grammarFocus : [],
+  })
+  const [wordDraft, setWordDraft] = useState('')
   const [error, setError] = useState('')
+
+  const addPracticeWord = () => {
+    const word = wordDraft.trim().replace(/^,+|,+$/g, '')
+    if (!word) return
+    if (word.length > 40) {
+      setError('Keep each practice word or phrase under 40 characters.')
+      return
+    }
+    setForm((current) => current.practiceWords.some((item) => item.toLowerCase() === word.toLowerCase()) || current.practiceWords.length >= 12
+      ? current
+      : { ...current, practiceWords: [...current.practiceWords, word] })
+    setWordDraft('')
+    setError('')
+  }
+
+  const toggleGrammarFocus = (focus) => {
+    setForm((current) => ({
+      ...current,
+      grammarFocus: current.grammarFocus.includes(focus)
+        ? current.grammarFocus.filter((item) => item !== focus)
+        : [...current.grammarFocus, focus],
+    }))
+  }
 
   const submit = (event) => {
     event.preventDefault()
     try {
-      saveTeacherFeedback(booking.id, teacherId, form)
+      const pendingWord = wordDraft.trim()
+      const feedback = pendingWord && !form.practiceWords.some((item) => item.toLowerCase() === pendingWord.toLowerCase())
+        ? { ...form, practiceWords: [...form.practiceWords, pendingWord].slice(0, 12) }
+        : form
+      saveTeacherFeedback(booking.id, teacherId, feedback)
       onSaved(booking.status !== 'completed')
     } catch (feedbackError) {
       setError(feedbackError.message)
@@ -713,6 +759,10 @@ function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         <form className="feedback-form" onSubmit={submit}>
           <label><span>Class summary *</span><textarea autoFocus value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="What did you cover and how did the student participate?" /></label>
           <div><label><span>Strength shown</span><input value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="e.g. Clear spoken answers" /></label><label><span>Next learning step</span><input value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="e.g. Use richer vocabulary" /></label></div>
+          <div className="feedback-practice-grid">
+            <fieldset className="feedback-word-practice"><legend>Words or phrases to practise</legend><p>Add up to 12 vocabulary or pronunciation targets for the student.</p><div className="feedback-word-entry"><input value={wordDraft} onChange={(event) => setWordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); addPracticeWord() } }} placeholder="Type a word, then press Enter" maxLength="40" /><button type="button" onClick={addPracticeWord} disabled={!wordDraft.trim() || form.practiceWords.length >= 12}><Plus size={15} /> Add</button></div><div className="feedback-chip-list">{form.practiceWords.length ? form.practiceWords.map((word) => <span key={word}>{word}<button type="button" onClick={() => setForm((current) => ({ ...current, practiceWords: current.practiceWords.filter((item) => item !== word) }))} aria-label={`Remove ${word}`}><X size={12} /></button></span>) : <small>No practice words selected yet.</small>}</div></fieldset>
+            <fieldset className="feedback-grammar-focus"><legend>Grammar to practise</legend><p>Select every grammar area that needs more practice.</p><div>{GRAMMAR_FOCUS_OPTIONS.map((focus) => <label className={form.grammarFocus.includes(focus) ? 'selected' : ''} key={focus}><input type="checkbox" checked={form.grammarFocus.includes(focus)} onChange={() => toggleGrammarFocus(focus)} /><span>{focus}</span></label>)}</div></fieldset>
+          </div>
           <label><span>Optional homework</span><input value={form.homework} onChange={(event) => setForm((current) => ({ ...current, homework: event.target.value }))} placeholder="A short practice task for next class" /></label>
           <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button">Save feedback & complete class <Check size={16} /></button></div>
         </form>

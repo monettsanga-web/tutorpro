@@ -188,6 +188,13 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
   if (!['confirmed', 'completed'].includes(booking.status)) throw new Error('Confirm the lesson before adding post-class feedback.')
   if (!feedback.summary?.trim()) throw new Error('Add a short class summary before saving feedback.')
   if (feedback.summary.trim().length > 1000) throw new Error('Keep the class summary under 1,000 characters.')
+  const practiceWords = [...new Set((Array.isArray(feedback.practiceWords) ? feedback.practiceWords : [])
+    .map((word) => String(word).trim())
+    .filter(Boolean))].slice(0, 12)
+  const grammarFocus = [...new Set((Array.isArray(feedback.grammarFocus) ? feedback.grammarFocus : [])
+    .map((focus) => String(focus).trim())
+    .filter(Boolean))].slice(0, 12)
+  if (practiceWords.some((word) => word.length > 40)) throw new Error('Keep each practice word or phrase under 40 characters.')
   return updateBooking(bookingId, {
     status: 'completed',
     teacherFeedback: {
@@ -195,6 +202,8 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
       strength: feedback.strength?.trim() || '',
       nextStep: feedback.nextStep?.trim() || '',
       homework: feedback.homework?.trim() || '',
+      practiceWords,
+      grammarFocus,
       createdAt: new Date().toISOString(),
     },
   })
