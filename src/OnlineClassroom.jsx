@@ -50,6 +50,7 @@ import { getClassroomAccess } from './bookings.js'
 import { createClassroomTransport } from './classroomTransport.js'
 import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
+import { compressPDF } from './compressPDF.js'
 import {
   CLASSROOM_FILE_ACCEPT,
   getClassroomFileSizeLimit,
@@ -80,6 +81,19 @@ const rtcConfiguration = {
 
 function formatTime(time) {
   return new Date(`2026-01-01T${time}`).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })
+}
+
+function isPdfFile(file) {
+  return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('The selected file could not be read.'))
+    reader.onload = () => resolve(reader.result)
+    reader.readAsDataURL(file)
+  })
 }
 
 function hitTestAnnotation(path, point, width, height, threshold = 18) {
@@ -281,6 +295,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [presenterUrl, setPresenterUrl] = useState('')
   const [presenterUrlDraft, setPresenterUrlDraft] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const [canUndoClear, setCanUndoClear] = useState(false)
@@ -1174,21 +1189,42 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const uploadFile = async (event) => {
-    const file = event.target.files?.[0]
+    const selectedFile = event.target.files?.[0]
     event.target.value = ''
-    if (!file) return
+    if (!selectedFile) return
     setFileError('')
-    if (!isClassroomFileAllowed(file)) {
+    if (!isClassroomFileAllowed(selectedFile)) {
       setFileError('This file type is not supported. Use PDF, PPT, PPTX, DOC, DOCX, images, EPUB, EDB or TXT.')
       return
     }
+
     const sizeLimit = isClassroomStorageAvailable() ? MAX_STORAGE_SIZE : MAX_INLINE_SIZE
-    if (file.size > sizeLimit) {
-      setFileError(`Lesson files must be under ${Math.round(sizeLimit / 1024 / 1024)} MB.`)
-      return
-    }
+    const selectedPdf = isPdfFile(selectedFile)
+    let file = selectedFile
     setUploadingFile(true)
+
     try {
+      // A PDF over the delivery limit is rewritten before rejecting it. pdf-lib
+      // uses object streams only, so page and image quality are unchanged.
+      if (selectedPdf && file.size > sizeLimit) {
+        setUploadStatus('Compressing PDF…')
+        try {
+          file = await compressPDF(file)
+        } catch {
+          setFileError(`This PDF is over ${Math.round(sizeLimit / 1024 / 1024)} MB and could not be losslessly compressed. Try a smaller, unlocked PDF.`)
+          return
+        }
+      }
+
+      if (file.size > sizeLimit) {
+        const sizeMessage = `Lesson files must be under ${Math.round(sizeLimit / 1024 / 1024)} MB.`
+        setFileError(selectedPdf
+          ? `${sizeMessage} This PDF could not be losslessly compressed enough to upload.`
+          : sizeMessage)
+        return
+      }
+
+      setUploadStatus('Uploading…')
       if (isClassroomStorageAvailable() && file.size > MAX_INLINE_SIZE) {
         const stored = await uploadClassroomFile(roomBooking.id, file)
         const signedUrl = await getClassroomFileUrl(stored.storagePath)
@@ -1209,31 +1245,27 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           transportRef.current?.send({ type: 'presentation-file', file: entry })
         }
       } else {
-        const reader = new FileReader()
-        reader.onerror = () => { setFileError('The selected file could not be read.'); setUploadingFile(false) }
-        reader.onload = () => {
-          const entry = {
-            id: crypto.randomUUID(),
-            name: file.name,
-            size: file.size,
-            type: file.type || 'application/octet-stream',
-            dataUrl: reader.result,
-            sender: participantName,
-          }
-          setFiles((current) => [...current, entry])
-          transportRef.current?.send({ type: 'classroom-file', file: entry })
-          if (account.role === 'teacher') {
-            setPresentedFile(entry)
-            transportRef.current?.send({ type: 'presentation-file', file: entry })
-          }
-          setUploadingFile(false)
+        const dataUrl = await readFileAsDataUrl(file)
+        const entry = {
+          id: crypto.randomUUID(),
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+          dataUrl,
+          sender: participantName,
         }
-        reader.readAsDataURL(file)
+        setFiles((current) => [...current, entry])
+        transportRef.current?.send({ type: 'classroom-file', file: entry })
+        if (account.role === 'teacher') {
+          setPresentedFile(entry)
+          transportRef.current?.send({ type: 'presentation-file', file: entry })
+        }
       }
     } catch (error) {
       setFileError(error.message || 'File upload failed.')
     } finally {
       setUploadingFile(false)
+      setUploadStatus('')
     }
   }
 
@@ -1435,7 +1467,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           </div> : <div className="classroom-files-panel">
             <label className="classroom-file-upload"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
             {fileError && <div className="classroom-file-error">{fileError}</div>}
-            {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> Uploading…</div>}
+            {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> {uploadStatus || 'Uploading…'}</div>}
             <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB{file.source === 'supabase' ? ' · Cloud' : ''}</small></div>{account.role !== 'student' && <button onClick={() => presentFile(file)} title="Present on lesson board"><Presentation size={16} /></button>}<a href={file.dataUrl || '#'} download={file.name} title="Download" onClick={async (e) => { if (!file.dataUrl && file.storagePath) { e.preventDefault(); const url = await resolveFileUrl(file); if (url) window.open(url, '_blank') } }}><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
           </div>}
           <div className="classroom-people"><span><Users size={17} /> Participants</span><div><i className="online" /><strong>{participantName}</strong><small>{account.role}</small></div>{connectionStatus === 'connected' && <div><i className="online" /><strong>{account.role === 'teacher' ? learner?.name : teacher?.fullName}</strong><small>{account.role === 'teacher' ? 'student' : 'teacher'}</small></div>}{account.role === 'teacher' && <>

@@ -12,8 +12,9 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:sync && npm run test:render",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render",
     "test:core": "node scripts/test-core.mjs",
+    "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
     "test:render": "node scripts/test-dashboard-render.mjs",
     "classroom:server": "node server/classroom-signaling.mjs"
@@ -21,6 +22,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
     "lucide-react": "0.468.0",
+    "pdf-lib": "1.17.1",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-icons": "5.5.0",
