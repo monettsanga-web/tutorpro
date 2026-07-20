@@ -12,6 +12,7 @@ const bookings = await import('../src/bookings.js')
 const schedule = await import('../src/schedule.js')
 const translation = await import('../src/chatTranslation.js')
 const calendar = await import('../src/bookingCalendar.js')
+const websitePresenter = await import('../src/websitePresenter.js')
 
 storage.set('tutorpro_accounts_v2', JSON.stringify([{
   id: 'legacy-family',
@@ -225,6 +226,18 @@ const loggedIn = await auth.loginAccount('family@example.com', 'Family123')
 assert(loggedIn.id === family.id, 'Login failed.')
 assert(bookings.getBookingStats().completed === 1, 'Booking statistics are incorrect.')
 assert(await translation.translateChatText('good job', 'tl') === 'magaling', 'Classroom chat translation fallback failed.')
+
+assert(!websitePresenter.isAllowlistedTutorProUrl('https://google.com'), 'Google was incorrectly allowed as an embedded iframe.')
+assert(!websitePresenter.isAllowlistedTutorProUrl('https://khanacademy.org'), 'Arbitrary external websites were allowed as embedded iframe.')
+assert(websitePresenter.isAllowlistedTutorProUrl('/games/letter-bubble'), 'Same-origin TutorPro game route was rejected.')
+assert(websitePresenter.isAllowlistedTutorProUrl('/assets/online-english-lesson.jpg'), 'Same-origin TutorPro asset route was rejected.')
+
+const formattedValid = websitePresenter.validateAndFormatHttpsUrl('google.com')
+assert(formattedValid.valid && formattedValid.url === 'https://google.com/', 'Website Presenter HTTPS formatting failed for plain domain.')
+const formattedHttp = websitePresenter.validateAndFormatHttpsUrl('http://example.com/page')
+assert(formattedHttp.valid && formattedHttp.url === 'https://example.com/page', 'Website Presenter HTTP conversion to HTTPS failed.')
+const formattedInvalid = websitePresenter.validateAndFormatHttpsUrl('not a url')
+assert(!formattedInvalid.valid, 'Invalid URL string was accepted.')
 
 if (typeof BroadcastChannel !== 'undefined') {
   globalThis.window = { BroadcastChannel }

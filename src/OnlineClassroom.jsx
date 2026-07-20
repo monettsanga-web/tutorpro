@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Camera,
   CameraOff,
   Check,
+  CheckCircle2,
   Circle,
   Copy,
   Download,
   Eraser,
+  ExternalLink,
   FileUp,
   Globe,
   Languages,
@@ -34,6 +37,7 @@ import {
   RotateCcw,
   Send,
   ShieldCheck,
+  Smartphone,
   Trash2,
   Type,
   Undo2,
@@ -51,6 +55,7 @@ import { createClassroomTransport } from './classroomTransport.js'
 import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
+import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
 import {
   CLASSROOM_FILE_ACCEPT,
   getClassroomFileSizeLimit,
@@ -229,6 +234,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const localTencentViewRef = useRef(null)
   const remoteTencentViewRef = useRef(null)
   const remoteTencentScreenRef = useRef(null)
+  const remoteTencentScreenUserRef = useRef(null)
   const trtcRef = useRef(null)
   const trtcModuleRef = useRef(null)
   const sharedScreenVideoRef = useRef(null)
@@ -293,6 +299,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [remotePointerPosition, setRemotePointerPosition] = useState(null)
   const [selectedPathId, setSelectedPathId] = useState(null)
   const [presenterUrl, setPresenterUrl] = useState('')
+  const [presenterUrlInput, setPresenterUrlInput] = useState('')
   const [presenterUrlDraft, setPresenterUrlDraft] = useState('')
   const [embedError, setEmbedError] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -394,6 +401,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     setVideoStream(sharedScreenVideoRef.current, screenStreamRef.current)
     setVideoStream(remoteVideoRef.current, remoteStreamRef.current)
   }, [joined, screenSharing, remoteScreenSharing])
+
+  useEffect(() => {
+    if (useTencentClassroom && remoteScreenSharing && trtcRef.current && remoteTencentScreenUserRef.current && remoteTencentScreenRef.current) {
+      const { userId, streamType } = remoteTencentScreenUserRef.current
+      trtcRef.current.startRemoteVideo({
+        userId,
+        streamType,
+        view: remoteTencentScreenRef.current,
+      }).catch(() => {})
+    }
+  }, [useTencentClassroom, remoteScreenSharing])
 
   useEffect(() => {
     if (!joined || !access.allowed) return undefined
@@ -608,8 +626,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         redrawAnnotations(); syncUndoState()
         return
       }
-      if (message.type === 'presenter-url' && message.url) {
+      if (message.type === 'presenter-url' && message.url !== undefined) {
         setPresenterUrl(message.url)
+        setPresenterUrlInput(message.url)
         return
       }
       if (message.type === 'classroom-file' && message.file) {
@@ -695,7 +714,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         tencentClient.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
           if (disposed) return
           const isScreen = String(streamType).toLowerCase().includes('sub')
-          if (isScreen) setRemoteScreenSharing(true)
+          if (isScreen) {
+            remoteTencentScreenUserRef.current = { userId, streamType }
+            setRemoteScreenSharing(true)
+          }
           window.requestAnimationFrame(() => {
             const view = isScreen ? remoteTencentScreenRef.current : remoteTencentViewRef.current
             if (view) tencentClient.startRemoteVideo({ userId, streamType, view }).catch(() => {})
@@ -704,7 +726,16 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           setConnectionStatus('connected')
         })
         tencentClient.on(TRTC.EVENT.REMOTE_VIDEO_UNAVAILABLE, ({ streamType }) => {
-          if (String(streamType).toLowerCase().includes('sub')) setRemoteScreenSharing(false)
+          if (String(streamType).toLowerCase().includes('sub')) {
+            remoteTencentScreenUserRef.current = null
+            setRemoteScreenSharing(false)
+          }
+        })
+        tencentClient.on(TRTC.EVENT.SCREEN_SHARE_STOPPED, () => {
+          if (disposed) return
+          setScreenSharing(false)
+          setScreenPaused(false)
+          transportRef.current?.send({ type: 'screen-state', active: false, paused: false })
         })
         tencentClient.on(TRTC.EVENT.ERROR, (error) => {
           if (!disposed) {
@@ -1173,25 +1204,56 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     } catch { /* Unmute failed */ }
   }
 
-  const openPresenterUrl = () => {
-    let url = presenterUrlDraft.trim()
-    if (!url) return
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url
-    try { new URL(url) } catch { setMediaError('Enter a valid URL to present.'); return }
+  const openPresenterUrl = (targetUrlInput) => {
+    const inputToValidate = targetUrlInput || presenterUrlDraft
+    const result = validateAndFormatHttpsUrl(inputToValidate)
+    if (!result.valid) {
+      setEmbedError(result.error)
+      return
+    }
     setEmbedError('')
-    setPresenterUrl(url)
-    transportRef.current?.send({ type: 'presenter-url', url })
+    const finalUrl = result.url
+    setPresenterUrl(finalUrl)
+    setPresenterUrlInput(finalUrl)
+    transportRef.current?.send({ type: 'presenter-url', url: finalUrl })
     setPresenterUrlDraft('')
+    if (account.role === 'teacher') {
+      window.open(finalUrl, '_blank', 'noopener,noreferrer')
+    }
   }
 
   const stopWebsiteEmbed = () => {
     setPresenterUrl('')
+    setPresenterUrlInput('')
     transportRef.current?.send({ type: 'presenter-url', url: '' })
   }
 
-  const sharePresenterTab = async () => {
-    if (!presenterUrl) return
-    await toggleScreenShare()
+  const handleOpenWebsite = (urlToOpen) => {
+    const targetUrl = urlToOpen || presenterUrl
+    if (!targetUrl) return
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleStartTabShare = async () => {
+    if (!screenSharing) {
+      await toggleScreenShare()
+    }
+  }
+
+  const handleStopShare = async () => {
+    if (screenSharing) {
+      await stopScreenShare()
+    }
+  }
+
+  const handleReopenWebsite = (urlToOpen) => {
+    const targetUrl = urlToOpen || presenterUrl
+    if (!targetUrl) return
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleUpdatePresenterUrl = () => {
+    openPresenterUrl(presenterUrlInput)
   }
 
   const uploadFile = async (event) => {
@@ -1374,17 +1436,124 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     )
   }
 
+  const renderWebsitePresenterCard = () => {
+    if (!presenterUrl) return null
+    return (
+      <div className="classroom-website-presenter-card">
+        <header className="website-presenter-card__header">
+          <div className="website-presenter-card__title">
+            <span><Globe size={22} /></span>
+            <div>
+              <strong>Website Presenter</strong>
+              <small>Interactive HTTPS website tab streaming</small>
+            </div>
+          </div>
+          {account.role === 'teacher' && (
+            <button onClick={stopWebsiteEmbed} title="Stop presenting website" className="website-presenter-close-btn">
+              <X size={18} />
+            </button>
+          )}
+        </header>
+
+        <div className="website-presenter-url-bar">
+          <span>HTTPS URL:</span>
+          <input
+            type="url"
+            value={presenterUrlInput}
+            onChange={(e) => setPresenterUrlInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleUpdatePresenterUrl() }}
+            placeholder="https://example.com"
+            readOnly={account.role === 'student'}
+          />
+          {account.role === 'teacher' && (
+            <button onClick={handleUpdatePresenterUrl} className="website-url-update-btn">
+              Update URL
+            </button>
+          )}
+        </div>
+
+        <div className="website-presenter-card__instructions">
+          <h3>In-Class Instructions</h3>
+          <ol className="website-presenter-steps">
+            <li>
+              <CheckCircle2 size={16} />
+              <div>
+                <strong>Website opened</strong>
+                <span>The website opens in a separate browser tab for teacher control.</span>
+              </div>
+            </li>
+            <li>
+              <ArrowLeftRight size={16} />
+              <div>
+                <strong>Return to TutorPro</strong>
+                <span>Switch back to this classroom tab in your browser.</span>
+              </div>
+            </li>
+            <li>
+              <MonitorUp size={16} />
+              <div>
+                <strong>Click Share browser tab</strong>
+                <span>Click "Start Tab Share" below to begin streaming the tab.</span>
+              </div>
+            </li>
+            <li>
+              <ExternalLink size={16} />
+              <div>
+                <strong>Select the opened website tab</strong>
+                <span>Choose the opened website tab in your browser's share dialog.</span>
+              </div>
+            </li>
+          </ol>
+
+          <p className="website-presenter-notice">
+            <strong>Note:</strong> The teacher controls the original website tab while students see the live stream on the lesson board. Navigation must be performed directly on the original website tab.
+          </p>
+
+          <div className="website-presenter-mobile-note">
+            <Smartphone size={15} />
+            <span>
+              <strong>Mobile browser note:</strong> On mobile devices where supported, tap "Start Tab Share" and select "Browser Tab" or "Single Tab". If your browser only supports screen capture, choose "Screen".
+            </span>
+          </div>
+        </div>
+
+        {account.role === 'teacher' && (
+          <div className="website-presenter-controls">
+            <button onClick={() => handleOpenWebsite(presenterUrl)} className="website-ctrl-btn website-ctrl-btn--open">
+              <ExternalLink size={16} /> Open Website
+            </button>
+            {!screenSharing ? (
+              <button onClick={handleStartTabShare} className="website-ctrl-btn website-ctrl-btn--start">
+                <MonitorUp size={16} /> Start Tab Share
+              </button>
+            ) : (
+              <button onClick={handleStopShare} className="website-ctrl-btn website-ctrl-btn--stop">
+                <X size={16} /> Stop Share
+              </button>
+            )}
+            <button onClick={() => handleReopenWebsite(presenterUrl)} className="website-ctrl-btn website-ctrl-btn--reopen">
+              <RefreshCw size={16} /> Reopen Website
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const renderEmbeddedWebsite = () => {
     if (!presenterUrl) return null
+    if (!isAllowlistedTutorProUrl(presenterUrl)) {
+      return renderWebsitePresenterCard()
+    }
     const displayUrl = presenterUrl.replace(/^https?:\/\//, '')
     return (
       <div className="classroom-website-embed">
         <div className="website-embed-header">
           <Globe size={18} />
-          <span>{displayUrl}</span>
+          <span>TutorPro Resource: {displayUrl}</span>
           <button onClick={stopWebsiteEmbed} title="Stop presenting website"><X size={16} /></button>
         </div>
-        {embedError && <div className="website-embed-error"><WifiOff size={16} /> {embedError} <button onClick={() => { setEmbedError(''); window.open(presenterUrl, '_blank', 'noopener') }}>Open in new tab instead</button></div>}
+        {embedError && <div className="website-embed-error"><WifiOff size={16} /> {embedError}</div>}
         <iframe
           src={presenterUrl}
           className="website-embed-frame"
@@ -1392,7 +1561,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
           referrerPolicy="no-referrer-when-downgrade"
           onLoad={() => setEmbedError('')}
-          onError={() => setEmbedError('This website cannot be embedded directly (it blocks iframe embedding).')}
+          onError={() => setEmbedError('This resource cannot be embedded directly.')}
         />
       </div>
     )
@@ -1451,7 +1620,23 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           </div>
 
           <div className="classroom-lesson-board" ref={stageRef}>
-            {screenSharing ? (useTencentClassroom ? <div className="tencent-screen-sharing-state"><MonitorUp size={44} /><strong>Your screen is live</strong><span>Tencent RTC is securely presenting it to the student.</span></div> : <video className={`classroom-presentation-video classroom-presentation-video--${screenFit}`} ref={sharedScreenVideoRef} autoPlay muted playsInline />) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a screen, embed a website, or present an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            {screenSharing ? (
+              <div className="teacher-screen-sharing-active">
+                <MonitorUp size={44} />
+                <strong>Your browser tab is being shared</strong>
+                <span>Students see the live stream on their lesson board. The teacher controls the original website tab.</span>
+                {presenterUrl && (
+                  <div className="teacher-share-website-actions">
+                    <button onClick={() => handleOpenWebsite(presenterUrl)} className="teacher-share-btn">
+                      <ExternalLink size={15} /> Open Website Tab
+                    </button>
+                    <button onClick={() => handleReopenWebsite(presenterUrl)} className="teacher-share-btn">
+                      <RefreshCw size={15} /> Reopen Website Tab
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a browser tab, present a website, or share an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
             {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
             <canvas
               ref={annotationCanvasRef}
@@ -1520,8 +1705,34 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
       {presenterUrlDraft !== '' && account.role === 'teacher' && <div className="classroom-presenter-overlay">
         <div className="classroom-presenter-dialog">
-          <header><Globe size={20} /><div><strong>Embed a website</strong><small>Enter a URL to embed it directly in the lesson board. Both participants will see it instantly.</small></div><button onClick={() => setPresenterUrlDraft('')}><X size={17} /></button></header>
-          <form onSubmit={(e) => { e.preventDefault(); openPresenterUrl() }}><input type="url" value={presenterUrlDraft} onChange={(e) => setPresenterUrlDraft(e.target.value)} placeholder="https://example.com" /><div><button type="submit">Embed in lesson board</button>{presenterUrl && <button type="button" onClick={sharePresenterTab} className="presenter-share-btn"><MonitorUp size={16} /> Share via screen share instead</button>}</div></form>
+          <header>
+            <Globe size={20} />
+            <div>
+              <strong>Website Presenter</strong>
+              <small>Validate an HTTPS URL to open in a separate tab and stream to class.</small>
+            </div>
+            <button onClick={() => { setPresenterUrlDraft(''); setEmbedError('') }}><X size={17} /></button>
+          </header>
+          <form onSubmit={(e) => { e.preventDefault(); openPresenterUrl() }}>
+            <input
+              type="url"
+              value={presenterUrlDraft}
+              onChange={(e) => setPresenterUrlDraft(e.target.value)}
+              placeholder="https://example.com"
+              autoFocus
+            />
+            {embedError && <div className="website-presenter-error">{embedError}</div>}
+            <div>
+              <button type="submit">
+                <ExternalLink size={16} /> Open & Present Website
+              </button>
+              {presenterUrl && (
+                <button type="button" onClick={handleStartTabShare} className="presenter-share-btn">
+                  <MonitorUp size={16} /> Start Tab Share
+                </button>
+              )}
+            </div>
+          </form>
         </div>
       </div>}
     </main>
