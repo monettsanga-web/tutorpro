@@ -585,6 +585,84 @@ body.classroom-active .support-widget {
 .classroom-file-presentation > img,
 .classroom-file-presentation > iframe,
 .classroom-file-presentation > object { width: 100%; height: 100%; border: 0; object-fit: contain; background: #fff; }
+
+/* Website embed styles */
+.classroom-website-embed {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f4f1f8;
+  overflow: hidden;
+}
+
+.website-embed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(112, 72, 223, 0.08);
+  border-bottom: 1px solid rgba(112, 72, 223, 0.15);
+  color: #5a378f;
+  font-size: 0.58rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.website-embed-header span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.website-embed-header button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #7048df;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.website-embed-header button:hover {
+  background: rgba(112, 72, 223, 0.15);
+}
+
+.website-embed-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 79, 135, 0.1);
+  border-bottom: 1px solid rgba(255, 79, 135, 0.2);
+  color: #ff4f87;
+  font-size: 0.54rem;
+  flex-shrink: 0;
+}
+
+.website-embed-error button {
+  margin-left: auto;
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: #ff4f87;
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.website-embed-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #fff;
+}
 .pdf-fallback { display: flex; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: #655879; }
 .pdf-fallback strong { color: #332447; }
 .pdf-fallback span { font-size: 0.62rem; }
