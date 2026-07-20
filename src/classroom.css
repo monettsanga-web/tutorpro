@@ -917,6 +917,287 @@ body.classroom-active .support-widget {
 .classroom-controls button:disabled { cursor: not-allowed; opacity: 0.42; }
 .classroom-controls .leave-class-button { min-width: 82px; background: #d83e72; color: #fff; }
 
+/* Website Presenter Card & Controls */
+.classroom-website-presenter-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: radial-gradient(circle at 50% 30%, #20133a, #0c0617);
+  color: #fff;
+  overflow-y: auto;
+}
+
+.website-presenter-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+.website-presenter-card__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.website-presenter-card__title span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(112, 72, 223, 0.25);
+  color: #b79cf0;
+}
+
+.website-presenter-card__title strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.website-presenter-card__title small {
+  color: #b9adc7;
+  font-size: 0.58rem;
+}
+
+.website-presenter-close-btn {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbbfda;
+  cursor: pointer;
+}
+
+.website-presenter-url-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.website-presenter-url-bar span {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #bce94e;
+}
+
+.website-presenter-url-bar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.68rem;
+  font-family: monospace;
+  outline: none;
+}
+
+.website-url-update-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  background: #7048df;
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.website-presenter-card__instructions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.website-presenter-card__instructions h3 {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #dafa8d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.website-presenter-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.website-presenter-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.website-presenter-steps li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #bce94e;
+}
+
+.website-presenter-steps li strong {
+  display: block;
+  font-size: 0.65rem;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.website-presenter-steps li span {
+  font-size: 0.54rem;
+  color: #b9adc7;
+  line-height: 1.35;
+}
+
+.website-presenter-notice {
+  margin: 0;
+  border-left: 3px solid #ff4f87;
+  padding-left: 10px;
+  font-size: 0.58rem;
+  color: #d8cae5;
+  line-height: 1.45;
+}
+
+.website-presenter-mobile-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid rgba(79, 195, 247, 0.25);
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: rgba(79, 195, 247, 0.08);
+  color: #a8e5ff;
+  font-size: 0.54rem;
+  line-height: 1.4;
+}
+
+.website-presenter-mobile-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.website-presenter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.website-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.website-ctrl-btn--open {
+  background: #ff4f87;
+  color: #fff;
+}
+
+.website-ctrl-btn--start {
+  background: #bce94e;
+  color: #1a2e05;
+}
+
+.website-ctrl-btn--stop {
+  background: #a92e58;
+  color: #fff;
+}
+
+.website-ctrl-btn--reopen {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.teacher-screen-sharing-active {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  background: radial-gradient(circle, #2a184a, #100824 80%);
+  color: #bce94e;
+  text-align: center;
+}
+
+.teacher-screen-sharing-active strong {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.teacher-screen-sharing-active span {
+  max-width: 460px;
+  color: #b9adc7;
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+.teacher-share-website-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.teacher-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.website-presenter-error {
+  margin: 6px 0;
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(255, 79, 135, 0.15);
+  color: #ff8eb3;
+  font-size: 0.58rem;
+}
+
 /* Website presenter overlay */
 .classroom-presenter-overlay {
   position: fixed;

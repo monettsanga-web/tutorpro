@@ -19,6 +19,7 @@ try {
   const { default: PremiumMotion } = await vite.ssrLoadModule('/src/PremiumMotion.jsx')
   const { default: AuthProviderPicker } = await vite.ssrLoadModule('/src/AuthProviderPicker.jsx')
   const { default: LetterBubbleAdventure } = await vite.ssrLoadModule('/src/LetterBubbleAdventure.jsx')
+  const { default: OnlineClassroom } = await vite.ssrLoadModule('/src/OnlineClassroom.jsx')
   const callbacks = { onAccountChange() {}, onHome() {}, onLogout() {} }
 
   const incompleteStudent = {
@@ -84,6 +85,21 @@ try {
   if (!chineseSupportHtml.includes('联系管理员') || !chineseSupportHtml.includes('中文家长咨询')) throw new Error('Chinese parent support launcher failed to render.')
   if (!embeddedSupportHtml.includes('support-widget--embedded') || !embeddedSupportHtml.includes('TutorPro 中文家长客服') || !embeddedSupportHtml.includes('support-file-button') || !embeddedSupportHtml.includes('image/png')) throw new Error('Embedded parent-dashboard support chat and attachment control failed to render.')
   if (!supportInboxHtml.includes('Parent support inbox') || !supportInboxHtml.includes('Live inbox')) throw new Error('Administrator support inbox failed to render.')
+  const testAccounts = [
+    { id: 'teacher-test', role: 'teacher', status: 'approved', fullName: 'Teacher Test', email: 'teacher@example.com', teacher: {} },
+    { id: 'student-test', role: 'student', status: 'active', parentName: 'Parent', email: 'parent@example.com', children: [{ id: 'learner-test', name: 'Alex' }], child: { id: 'learner-test', name: 'Alex' } }
+  ]
+  shared.set('tutorpro_accounts_v2', JSON.stringify(testAccounts))
+  const now = new Date()
+  const activeDateStr = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
+  const activeTimeStr = [String(now.getHours()).padStart(2, '0'), String(now.getMinutes()).padStart(2, '0')].join(':')
+  const classroomBooking = { id: 'booking-classroom-test', studentId: 'student-test', learnerId: 'learner-test', learnerName: 'Alex', teacherId: 'teacher-test', teacherName: 'Teacher Test', date: activeDateStr, time: activeTimeStr, duration: 25, focus: 'Speaking', status: 'ongoing' }
+  shared.set('tutorpro_bookings_v1', JSON.stringify([recordedBooking, classroomBooking]))
+  const teacherClassroomHtml = renderToString(React.createElement(OnlineClassroom, { booking: classroomBooking, account: testAccounts[0], onExit() {} }))
+  const studentClassroomHtml = renderToString(React.createElement(OnlineClassroom, { booking: classroomBooking, account: testAccounts[1], onExit() {} }))
+
+  if (!teacherClassroomHtml.includes('TutorPro English Classroom')) throw new Error('Teacher classroom prejoin view failed to render.')
+  if (!studentClassroomHtml.includes('TutorPro English Classroom')) throw new Error('Student classroom prejoin view failed to render.')
   process.stdout.write('Student, Teacher and Admin dashboard rendering: PASS\n')
 } finally {
   await vite.close()
