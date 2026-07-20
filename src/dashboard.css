@@ -304,11 +304,12 @@
   padding: 34px;
 }
 
-/* Teacher portal: sticky horizontal top navigation on desktop and tablet.
-   The shared sidebar markup is reshaped into a top bar; below 900px the
-   existing hamburger drawer in the (max-width: 900px) block stays in charge. */
+/* Portal navigation: sticky horizontal top bar on desktop and tablet for the
+   student, teacher and administrator portals. The shared sidebar markup is
+   reshaped into a top bar; below 900px the existing hamburger drawer in the
+   (max-width: 900px) block stays in charge for every role. */
 @media (min-width: 901px) {
-  .portal--teacher .portal-sidebar {
+  .portal .portal-sidebar {
     position: sticky;
     top: 0;
     bottom: auto;
@@ -323,20 +324,20 @@
     box-shadow: 0 12px 32px rgba(12, 31, 64, 0.16);
   }
 
-  .portal--teacher .portal-brand {
+  .portal .portal-brand {
     min-height: 0;
     padding: 0;
     border-bottom: 0;
   }
 
-  .portal--teacher .portal-brand > img {
+  .portal .portal-brand > img {
     width: 46px;
     height: 46px;
     border-width: 2px;
     border-radius: 13px;
   }
 
-  .portal--teacher .portal-nav {
+  .portal .portal-nav {
     display: flex;
     flex: 1 1 auto;
     flex-wrap: wrap;
@@ -346,28 +347,28 @@
     margin-top: 0;
   }
 
-  .portal--teacher .portal-nav button,
-  .portal--teacher .portal-sidebar__foot > button {
+  .portal .portal-nav button,
+  .portal .portal-sidebar__foot > button {
     width: auto;
     min-height: 42px;
     white-space: nowrap;
   }
 
-  .portal--teacher .portal-nav button:hover,
-  .portal--teacher .portal-sidebar__foot > button:hover {
+  .portal .portal-nav button:hover,
+  .portal .portal-sidebar__foot > button:hover {
     transform: translateY(-1px);
   }
 
   /* Keep the pink/orange active pill from the shared sidebar styles. */
-  .portal--teacher .portal-nav button.active {
+  .portal .portal-nav button.active {
     box-shadow: 0 8px 18px rgba(244, 123, 32, 0.3);
   }
 
-  .portal--teacher .portal-nav button i {
+  .portal .portal-nav button i {
     margin-left: 8px;
   }
 
-  .portal--teacher .portal-sidebar__foot {
+  .portal .portal-sidebar__foot {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -377,39 +378,45 @@
     border-top: 0;
   }
 
-  /* Right cluster order: Website home, teacher profile, Log out. */
-  .portal--teacher .portal-sidebar__foot > button:nth-of-type(1) { order: 1; }
-  .portal--teacher .portal-mini-user { order: 2; }
-  .portal--teacher .portal-sidebar__foot > button:nth-of-type(2) { order: 3; }
+  /* Right cluster order: Website home, account profile, Log out. */
+  .portal .portal-sidebar__foot > button:nth-of-type(1) { order: 1; }
+  .portal .portal-mini-user { order: 2; }
+  .portal .portal-sidebar__foot > button:nth-of-type(2) { order: 3; }
 
-  .portal--teacher .portal-mini-user {
+  .portal .portal-mini-user {
     margin: 0 4px 0 6px;
   }
 
   /* Full-width content: the sidebar no longer reserves 262px on the left. */
-  .portal--teacher .portal-main {
+  .portal .portal-main {
     margin-left: 0;
   }
 
-  /* The teacher nav bar replaces the secondary topbar on desktop/tablet;
+  /* The top nav bar replaces the secondary topbar on desktop/tablet;
      the topbar (and its hamburger) returns under the mobile drawer styles. */
-  .portal--teacher .portal-topbar {
+  .portal .portal-topbar {
     display: none;
   }
 }
 
 @media (min-width: 901px) and (max-width: 1199px) {
-  .portal--teacher .portal-sidebar {
+  .portal .portal-sidebar {
     gap: 4px 12px;
     padding: 8px 16px;
   }
 
-  .portal--teacher .portal-brand small {
+  .portal .portal-nav button,
+  .portal .portal-sidebar__foot > button {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .portal .portal-brand small {
     display: none;
   }
 
   /* Keep the avatar visible while trimming profile text on smaller tablets. */
-  .portal--teacher .portal-mini-user > div {
+  .portal .portal-mini-user > div {
     display: none;
   }
 }
@@ -5574,6 +5581,12 @@
 
   .admin-booking-filterbar { grid-template-columns: 1fr; align-items: stretch; }
 
+  /* Let the learner tabs scroll sideways instead of squeezing the switcher. */
+  .family-student-switcher > div {
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
   .portal-menu {
     display: grid;
     width: 41px;
@@ -5742,6 +5755,20 @@
   .compact-duration,
   .booking-confirm-bar > .portal-primary-button {
     grid-column: auto;
+  }
+
+  .admin-booking-context {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-booking-context > button {
+    justify-content: center;
+  }
+
+  .admin-booking-context label {
+    width: 100%;
   }
 
   .teacher-name-editor {
