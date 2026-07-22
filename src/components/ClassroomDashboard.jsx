@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { CosCloudIcon } from './CosCloudIcon.jsx';
 import { WhiteboardSlides } from './WhiteboardSlides.jsx';
-import { Mic, Clock, MessageSquare, Monitor, Wifi, Send } from 'lucide-react';
+import { SafeSlidesErrorBoundary } from './WhiteboardSlides.jsx';
+import { Mic, Clock, MessageSquare, Monitor, Wifi, Send, Award, Video, VideoOff, Users, ArrowLeft, Shield } from 'lucide-react';
 
-export const ClassroomDashboard = () => {
+export const ClassroomDashboard = ({ onExit }) => {
   const [activeSharedFile, setActiveSharedFile] = useState(null);
   const [studentStars, setStudentStars] = useState(12);
   const [chatMessages, setChatMessages] = useState([
@@ -14,7 +15,7 @@ export const ClassroomDashboard = () => {
   const [isTeacher, setIsTeacher] = useState(true);
 
   const bookingId = 'BK-10492';
-  const supabaseUrl = 'https://your-supabase-project.supabase.co';
+  const supabaseUrl = 'https://losmkvvwzijipqrlelyt.supabase.co';
   const supabaseToken = 'mock-jwt-token';
 
   const handleShareDocument = (file) => {
@@ -74,71 +75,141 @@ export const ClassroomDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      width: '100vw',
+      background: '#090510',
+      color: '#fff',
+      overflow: 'hidden',
+      fontFamily: 'sans-serif',
+      boxSizing: 'border-box'
+    }}>
       
       {/* CLASSROOM TOP BAR */}
-      <header className="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between z-20 shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-blue-600 text-white px-2.5 py-1 rounded-lg font-bold text-sm tracking-wide">
-            🎓 TutorPro <span className="text-blue-100 font-medium">English</span>
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 20px',
+        background: '#130a25',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        zIndex: 20,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button 
+            onClick={onExit}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#b9adc7',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '0.72rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <ArrowLeft style={{ width: '13px', height: '13px' }} />
+            Exit Mode
+          </button>
+          <div style={{ height: '16px', width: '1px', background: 'rgba(255,255,255,0.15)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(188,233,78,0.1)', color: '#dafa8d', border: '1px solid rgba(188,233,78,0.2)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.7rem', fontWeight: '800' }}>
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#bce94e', borderRadius: '50%' }} />
+            TutorPro Google Classroom • Booking #{bookingId}
           </div>
-          <div className="h-4 w-px bg-slate-800"></div>
-          <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Class Active • Booking #{bookingId}
-          </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Simulation Toggle */}
           <button 
             onClick={() => setIsTeacher(!isTeacher)}
-            className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-2.5 py-1 rounded border border-slate-700"
+            style={{
+              fontSize: '0.7rem',
+              background: '#1c0e2d',
+              color: '#b9adc7',
+              fontWeight: 'bold',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              cursor: 'pointer'
+            }}
           >
-            Role: <span className={isTeacher ? 'text-blue-400' : 'text-amber-400'}>{isTeacher ? 'Teacher' : 'Student'}</span> (Toggle)
+            Active View: <span style={{ color: isTeacher ? '#3b82f6' : '#f59e0b' }}>{isTeacher ? 'Teacher' : 'Student'}</span> (Toggle)
           </button>
 
-          <div className="flex items-center gap-1.5 bg-slate-950/60 px-3 py-1 rounded-md border border-slate-800 text-xs font-semibold text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-blue-500" />
-            <span>Time Remaining:</span>
-            <span className="text-emerald-400 font-mono text-sm">24:59</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '6px 14px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+            <Clock style={{ width: '14px', height: '14px', color: '#bce94e' }} />
+            <span style={{ color: '#b9adc7' }}>Timer:</span>
+            <span style={{ color: '#10b981', fontFamily: 'monospace', fontSize: '0.8rem' }}>24:59</span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Wifi className="w-4 h-4 text-emerald-400" />
-            <span>Ping: <span className="text-emerald-400 font-mono">12ms</span></span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#b9adc7' }}>
+            <Wifi style={{ width: '15px', height: '15px', color: '#10b981' }} />
+            <span>Ping: <span style={{ color: '#10b981', fontFamily: 'monospace' }}>12ms</span></span>
           </div>
         </div>
       </header>
 
-      {/* MAIN LAYOUT */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* MAIN VIEWPORT LAYOUT */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        overflow: 'hidden',
+        boxSizing: 'border-box'
+      }}>
         
-        {/* LEFT WHITEBOARD AREA */}
-        <main className="flex-1 flex flex-col p-4 gap-3 overflow-hidden bg-slate-950">
-          <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
+        {/* LEFT WORKSPACE (Whiteboard Slides Presenter) */}
+        <main style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '16px',
+          gap: '12px',
+          overflow: 'hidden',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            flex: 1,
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            boxSizing: 'border-box'
+          }}>
             
-            {/* Whiteboard Workspace Content */}
-            <div className="flex-1 relative flex items-center justify-center bg-slate-950">
+            <div style={{ flex: 1, position: 'relative', display: 'flex', background: '#07030e' }}>
               {activeSharedFile ? (
-                <div className="w-full h-full flex flex-col">
-                  <WhiteboardSlides
-                    fileId={activeSharedFile.id}
-                    fileName={activeSharedFile.name}
-                    fileUrl={activeSharedFile.url}
-                    isTeacher={isTeacher}
-                  />
+                <div style={{ width: '100%', height: '100%' }}>
+                  <SafeSlidesErrorBoundary>
+                    <WhiteboardSlides
+                      fileId={activeSharedFile.id}
+                      fileName={activeSharedFile.name}
+                      fileUrl={activeSharedFile.url}
+                      isTeacher={isTeacher}
+                    />
+                  </SafeSlidesErrorBoundary>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center text-center p-8 max-w-md select-none">
-                  <div className="w-16 h-16 bg-blue-600/10 rounded-full flex items-center justify-center border border-blue-500/20 text-blue-400 mb-4 animate-pulse">
-                    <Monitor className="w-8 h-8" />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '32px', textAlign: 'center', boxSizing: 'border-box' }}>
+                  <div style={{ width: '64px', height: '64px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(188,233,78,0.2)', marginBottom: '16px' }}>
+                    <Monitor style={{ width: '28px', height: '28px' }} />
                   </div>
-                  <h2 className="text-lg font-bold text-white mb-2">Welcome to your TutorPro Classroom!</h2>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-6">
-                    Whiteboard is currently empty. Click the Cloud Icon below to browse files uploaded to your secure Tencent COS storage and share them with the student.
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff', margin: '0 0 8px 0' }}>Welcome to your Google Classroom!</h2>
+                  <p style={{ fontSize: '0.78rem', color: '#b9adc7', maxWidth: '380px', lineHeight: '1.4', margin: '0 0 24px 0' }}>
+                    whiteboard workspace is currently empty. Open the COS cloud files browser below to select courseware, slides, or workbook PDFs to present on screen!
                   </p>
                   
-                  <div className="flex flex-col items-center gap-2">
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%' }}>
                     <CosCloudIcon
                       bookingId={bookingId}
                       supabaseToken={supabaseToken}
@@ -146,118 +217,212 @@ export const ClassroomDashboard = () => {
                       onShareDocument={handleShareDocument}
                       isTeacher={isTeacher}
                     />
-                    <span className="text-[10px] text-slate-500">Tencent COS private integration</span>
+                    <span style={{ fontSize: '0.62rem', color: '#b9adc7' }}>Tencent COS Cloud integration</span>
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Whiteboard Footer Actions */}
             {activeSharedFile && (
-              <div className="px-4 py-2 border-t border-slate-800 bg-slate-900 flex justify-end shrink-0 z-30">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400 font-medium">Select another file:</span>
-                  <CosCloudIcon
-                    bookingId={bookingId}
-                    supabaseToken={supabaseToken}
-                    supabaseUrl={supabaseUrl}
-                    onShareDocument={handleShareDocument}
-                    isTeacher={isTeacher}
-                  />
-                </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 16px',
+                background: '#130a25',
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+                boxSizing: 'border-box',
+                zIndex: 30
+              }}>
+                <span style={{ fontSize: '0.68rem', color: '#b9adc7', fontWeight: 'bold' }}>Active Courseware: {activeSharedFile.name}</span>
+                <CosCloudIcon
+                  bookingId={bookingId}
+                  supabaseToken={supabaseToken}
+                  supabaseUrl={supabaseUrl}
+                  onShareDocument={handleShareDocument}
+                  isTeacher={isTeacher}
+                />
               </div>
             )}
 
           </div>
         </main>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="w-80 border-l border-slate-800 bg-slate-900/40 p-4 flex flex-col gap-4 overflow-hidden shrink-0">
+        {/* RIGHT SIDEBAR (Camera, star, chat panel) */}
+        <aside style={{
+          width: '320px',
+          borderLeft: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(19, 10, 37, 0.4)',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          overflow: 'hidden',
+          shrink: '0',
+          boxSizing: 'border-box'
+        }}>
           
-          <div className="flex flex-col gap-3">
-            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden aspect-[4/3] shadow-md">
-              <div className="absolute inset-0 bg-slate-950 flex items-center justify-center">
-                <div className="text-center">
-                  <span className="text-4xl block mb-2">🧑‍🏫</span>
-                  <p className="text-xs font-bold text-slate-300">Teacher Sarah (You)</p>
-                  <p className="text-[10px] text-blue-400 font-medium">TutorPro Certified Educator</p>
-                </div>
+          {/* CAMERA FEED WINDOWS */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* TEACHER CAMERA */}
+            <div style={{
+              position: 'relative',
+              background: '#07030e',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              aspectRatio: '4/3',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '6px' }}>🧑‍🏫</span>
+                <strong style={{ fontSize: '0.75rem', color: '#fff', display: 'block' }}>Teacher Sarah (You)</strong>
+                <span style={{ fontSize: '0.58rem', color: '#bce94e', fontWeight: 'bold' }}>TutorPro Educator</span>
               </div>
-              <div className="absolute bottom-2 left-2 bg-slate-950/80 px-2 py-0.5 rounded flex items-center gap-1.5 text-[10px] border border-slate-800">
-                <Mic className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-slate-300">Mic Active</span>
+              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.58rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Mic style={{ width: '10px', height: '10px', color: '#10b981' }} />
+                <span>Mic Active</span>
               </div>
             </div>
 
-            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden aspect-[4/3] shadow-md">
-              <div className="absolute inset-0 bg-slate-950 flex items-center justify-center">
-                <div className="text-center">
-                  <span className="text-4xl block mb-2">🧒</span>
-                  <p className="text-xs font-bold text-slate-300">Leo Chen</p>
-                  <p className="text-[10px] text-slate-400">Classroom Student</p>
-                </div>
+            {/* STUDENT CAMERA */}
+            <div style={{
+              position: 'relative',
+              background: '#07030e',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              aspectRatio: '4/3',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '6px' }}>🧒</span>
+                <strong style={{ fontSize: '0.75rem', color: '#fff', display: 'block' }}>Leo Chen</strong>
+                <span style={{ fontSize: '0.58rem', color: '#b9adc7' }}>Beijing Student</span>
               </div>
-              <div className="absolute bottom-2 left-2 bg-slate-950/80 px-2 py-0.5 rounded flex items-center gap-1.5 text-[10px] border border-slate-800">
-                <Mic className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-slate-300">Leo Chen</span>
+              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.58rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Mic style={{ width: '10px', height: '10px', color: '#10b981' }} />
+                <span>Leo Chen</span>
               </div>
-              <div className="absolute top-2 right-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', border: '1px solid rgba(188,233,78,0.2)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.58rem', fontWeight: 'bold' }}>
                 ⭐️ {studentStars} Stars
               </div>
             </div>
           </div>
 
+          {/* REWARDS MODULE */}
           {isTeacher && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-md flex items-center justify-between gap-2.5">
+            <div style={{
+              background: '#130a25',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              padding: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              boxSizing: 'border-box'
+            }}>
               <div>
-                <h4 className="text-xs font-bold text-white">Give Star Reward</h4>
-                <p className="text-[10px] text-slate-400">Acknowledge student answers</p>
+                <h4 style={{ fontSize: '0.72rem', fontWeight: 'bold', margin: '0 0 2px 0', color: '#fff' }}>Reward Leo Chen</h4>
+                <p style={{ fontSize: '0.58rem', color: '#b9adc7', margin: '0' }}>Award stars for good responses</p>
               </div>
               <button 
                 onClick={handleGiveStar}
-                className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-lg transition-transform active:scale-95"
+                style={{
+                  background: 'linear-gradient(to right, #dafa8d, #bce94e)',
+                  color: '#090510',
+                  fontWeight: '850',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '6px 12px',
+                  fontSize: '0.65rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  boxShadow: '0 4px 12px rgba(188,233,78,0.15)'
+                }}
               >
-                ⭐️ Award Star
+                ⭐️ Award
               </button>
             </div>
           )}
 
-          <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-md flex flex-col min-h-[150px] overflow-hidden">
-            <h4 className="text-xs font-bold text-slate-300 mb-2 border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
-              <MessageSquare className="w-4 h-4 text-blue-500" />
-              <span>Chat Log</span>
+          {/* CLASSROOM CHAT */}
+          <div style={{
+            flex: 1,
+            background: '#130a25',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '16px',
+            padding: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxSizing: 'border-box'
+          }}>
+            <h4 style={{ fontSize: '0.72rem', fontWeight: 'bold', margin: '0 0 10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <MessageSquare style={{ width: '13px', height: '13px', color: '#bce94e' }} />
+              <span>Chat & Logs</span>
             </h4>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 text-[11px]">
+            {/* Messages container */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
               {chatMessages.map((msg) => (
-                <div key={msg.id} className="bg-slate-950/60 p-2 rounded-lg border border-slate-800">
-                  <div className="flex justify-between text-[9px] text-slate-500 mb-0.5 font-semibold">
-                    <span className={
-                      msg.sender === 'Teacher' ? 'text-blue-400' : 
-                      msg.sender === 'Student' ? 'text-amber-400' : 'text-slate-400'
-                    }>
+                <div key={msg.id} style={{ background: 'rgba(0,0,0,0.18)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', fontWeight: 'bold', marginBottom: '3px' }}>
+                    <span style={{ color: msg.sender === 'Teacher' ? '#3b82f6' : msg.sender === 'Student' ? '#f59e0b' : '#b9adc7' }}>
                       {msg.sender}
                     </span>
-                    <span>{msg.timestamp}</span>
+                    <span style={{ color: '#b9adc7' }}>{msg.timestamp}</span>
                   </div>
-                  <p className="text-slate-300 leading-normal">{msg.text}</p>
+                  <p style={{ fontSize: '0.68rem', color: '#cbd5e1', margin: '0', lineHeight: '1.3' }}>{msg.text}</p>
                 </div>
               ))}
             </div>
 
-            <div className="mt-3 flex gap-1.5 pt-2 border-t border-slate-800">
+            {/* Input Form */}
+            <div style={{ display: 'flex', gap: '6px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <input 
                 type="text" 
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
                 placeholder="Type lesson notes..." 
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                style={{
+                  flex: 1,
+                  background: 'rgba(0,0,0,0.2)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  fontSize: '0.68rem',
+                  color: '#fff',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
               />
               <button 
                 onClick={handleSendChat}
-                className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                style={{
+                  background: 'rgba(188,233,78,0.1)',
+                  color: '#bce94e',
+                  border: '1px solid rgba(188,233,78,0.3)',
+                  borderRadius: '8px',
+                  padding: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send style={{ width: '12px', height: '12px' }} />
               </button>
             </div>
           </div>
@@ -269,3 +434,4 @@ export const ClassroomDashboard = () => {
     </div>
   );
 };
+export default ClassroomDashboard;
