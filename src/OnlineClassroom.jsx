@@ -55,6 +55,8 @@ import { createClassroomTransport } from './classroomTransport.js'
 import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
+import { CosCloudIcon } from './components/CosCloudIcon.jsx'
+import { WhiteboardSlides } from './components/WhiteboardSlides.jsx'
 import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
 import {
   CLASSROOM_FILE_ACCEPT,
@@ -1410,6 +1412,18 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const isEpubFile = (file) => /\.epub$/i.test(file.name)
 
   const renderPresentedFile = (file) => {
+    if (file.source === 'cos' || file.key?.includes('classrooms/')) {
+      return (
+        <div className="classroom-file-presentation" style={{ width: '100%', height: '100%', padding: '0' }}>
+          <WhiteboardSlides
+            fileId={file.id}
+            fileName={file.name}
+            fileUrl={file.dataUrl || file.url}
+            isTeacher={account.role === 'teacher'}
+          />
+        </div>
+      )
+    }
     if (isEdbFile(file)) {
       return (
         <div className="classroom-file-presentation">
@@ -1680,7 +1694,34 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             {unmuteRequested && account.role === 'student' && <div className="classroom-unmute-request"><Volume2 size={16} /><span>The teacher is asking you to unmute.</span><button onClick={acceptUnmuteRequest}><Mic size={15} /> Unmute me</button></div>}
             <form className="classroom-chat-form" onSubmit={sendChatMessage}><input value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Write a message…" maxLength="500" /><button type="submit" disabled={!chatDraft.trim()}><Send size={17} /></button></form>
           </div> : <div className="classroom-files-panel">
-            <label className="classroom-file-upload"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
+            <div className="flex gap-2 mb-3">
+              <label className="classroom-file-upload flex-1"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
+              <div className="flex flex-col justify-center">
+                <CosCloudIcon
+                  bookingId={roomBooking.id}
+                  supabaseToken={roomBooking.classroomToken || ''}
+                  supabaseUrl={import.meta.env.VITE_SUPABASE_URL || 'https://losmkvvwzijipqrlelyt.supabase.co'}
+                  onShareDocument={(file) => {
+                    const entry = {
+                      id: file.id,
+                      name: file.name,
+                      size: file.size,
+                      type: file.type || 'application/octet-stream',
+                      dataUrl: file.url,
+                      source: 'cos',
+                      sender: participantName,
+                    };
+                    setFiles((current) => [...current, entry]);
+                    transportRef.current?.send({ type: 'classroom-file', file: entry });
+                    if (account.role === 'teacher') {
+                      setPresentedFile(entry);
+                      transportRef.current?.send({ type: 'presentation-file', file: entry });
+                    }
+                  }}
+                  isTeacher={account.role === 'teacher'}
+                />
+              </div>
+            </div>
             {fileError && <div className="classroom-file-error">{fileError}</div>}
             {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> {uploadStatus || 'Uploading…'}</div>}
             <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB{file.source === 'supabase' ? ' · Cloud' : ''}</small></div>{account.role !== 'student' && <button onClick={() => presentFile(file)} title="Present on lesson board"><Presentation size={16} /></button>}<a href={file.dataUrl || '#'} download={file.name} title="Download" onClick={async (e) => { if (!file.dataUrl && file.storagePath) { e.preventDefault(); const url = await resolveFileUrl(file); if (url) window.open(url, '_blank') } }}><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
