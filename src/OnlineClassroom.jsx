@@ -57,6 +57,7 @@ import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
 import { CosCloudIcon } from './components/CosCloudIcon.jsx'
 import { WhiteboardSlides, SafeSlidesErrorBoundary } from './components/WhiteboardSlides.jsx'
+import { ClassroomDashboard } from './components/ClassroomDashboard.jsx'
 import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
 import {
   CLASSROOM_FILE_ACCEPT,
@@ -284,6 +285,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [textDraft, setTextDraft] = useState('')
   const [files, setFiles] = useState([])
   const [cosSlidePage, setCosSlidePage] = useState(1)
+  const [useGoogleClassroomMode, setUseGoogleClassroomMode] = useState(false)
   const [sidebarTab, setSidebarTab] = useState('chat')
   const [chatMessages, setChatMessages] = useState([])
   const [chatDraft, setChatDraft] = useState('')
@@ -1619,12 +1621,37 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     )
   }
 
+  if (useGoogleClassroomMode) {
+    return <ClassroomDashboard onExit={() => setUseGoogleClassroomMode(false)} />;
+  }
+
   return (
     <main className={`online-classroom ${sidebarOpen ? 'sidebar-open' : ''}`}>
       <header className="classroom-topbar">
         <div className="classroom-topbar__brand"><span><Presentation size={21} /></span><div><strong>TutorPro English Classroom</strong><small>{roomBooking.classroomId}</small></div></div>
         <div className="classroom-session-state"><i className={connectionStatus === 'connected' ? 'live' : ''} /><span>{connectionLabel}</span><strong>{formatElapsed()}</strong></div>
-        <div className="classroom-topbar__actions"><button onClick={copyRoomId}>{copied ? <Check size={15} /> : <Copy size={15} />} {copied ? 'Copied' : 'Room ID'}</button><button onClick={() => setSidebarOpen((open) => !open)}><Users size={16} /> {participantCount}<MoreVertical size={16} /></button></div>
+        <div className="classroom-topbar__actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setUseGoogleClassroomMode(true)}
+            style={{
+              background: '#bce94e',
+              color: '#090510',
+              fontWeight: '850',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '0.72rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            🎓 Google Classroom
+          </button>
+          <button onClick={copyRoomId}>{copied ? <Check size={15} /> : <Copy size={15} />} {copied ? 'Copied' : 'Room ID'}</button>
+          <button onClick={() => setSidebarOpen((open) => !open)}><Users size={16} /> {participantCount}<MoreVertical size={16} /></button>
+        </div>
       </header>
 
       {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{participantCount > 1 ? 'Reconnecting both participants' : 'Waiting for the same booked classroom'}</strong><small>{connectionHelpText} Room ID: {roomBooking.classroomId}</small></div><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry connection</button></div>}
