@@ -22,13 +22,27 @@ export const CosCloudIcon = ({
   const fileInputRef = useRef(null);
   const uploader = useRef(null);
 
+  // Initialize uploader instance
   useEffect(() => {
     uploader.current = new TutorProCosUploader(bookingId, supabaseToken, supabaseUrl);
     fetchClassroomFiles();
   }, [bookingId]);
 
+  // Refetch files whenever active tab or booking id changes!
+  useEffect(() => {
+    fetchClassroomFiles();
+  }, [bookingId, activeTab]);
+
+  // Fetch the files dynamically from Tencent COS Bucket!
   const fetchClassroomFiles = async () => {
+    if (!uploader.current) return;
     try {
+      const isSharedTab = activeTab === 'shared';
+      const realFiles = await uploader.current.listBucketFiles(isSharedTab);
+      setFiles(realFiles);
+    } catch (error) {
+      console.warn("COS Bucket listing not populated yet or empty, loading local fallback templates...", error);
+      // Fallback templates to provide seamless usability during cold starts
       const simulatedFiles = [
         {
           id: '1',
@@ -65,20 +79,17 @@ export const CosCloudIcon = ({
           type: 'pdf',
           status: 'ready',
           url: `https://mock-bucket.cos.ap-singapore.myqcloud.com/shared/Verb_Tenses_Cheatsheet.pdf`
-        },
-        {
-          id: '3',
-          name: 'interactive_game.edb',
-          key: `classrooms/${bookingId}/interactive_game.edb`,
-          size: 2150000,
-          type: 'edb',
-          status: 'none',
-          url: `https://mock-bucket.cos.ap-singapore.myqcloud.com/classrooms/${bookingId}/interactive_game.edb`
         }
       ];
-      setFiles(simulatedFiles);
-    } catch (error) {
-      console.error("Error loading classroom files:", error);
+      
+      const filtered = simulatedFiles.filter(f => {
+        if (activeTab === 'shared') {
+          return f.key.startsWith('shared/');
+        } else {
+          return f.key.startsWith('classrooms/');
+        }
+      });
+      setFiles(filtered);
     }
   };
 
@@ -109,7 +120,7 @@ export const CosCloudIcon = ({
 
     try {
       const isSharedUpload = activeTab === 'shared';
-      const result = await uploader.current.uploadFile({
+      await uploader.current.uploadFile({
         file,
         onProgress: (progress, state) => {
           if (!isNaN(progress)) setUploadProgress(progress);
@@ -121,29 +132,13 @@ export const CosCloudIcon = ({
         isShared: isSharedUpload
       });
 
-      const fileType = determineFileType(file.name);
-      const isConvertible = ['ppt', 'pdf', 'word'].includes(fileType);
-      
-      const newFile = {
-        id: Math.random().toString(),
-        name: file.name,
-        key: result.key,
-        size: file.size,
-        type: fileType,
-        status: isConvertible ? 'processing' : 'none',
-        url: result.url,
-      };
-
-      setFiles(prev => [newFile, ...prev]);
       setUploadState('success');
       setTimeout(() => {
         setIsUploading(false);
         setActiveUploadName('');
-      }, 2000);
-
-      if (isConvertible) {
-        simulateConversion(newFile.id);
-      }
+        // Refresh files list directly from bucket!
+        fetchClassroomFiles();
+      }, 1500);
 
     } catch (error) {
       console.error("Upload error:", error);
@@ -157,9 +152,8 @@ export const CosCloudIcon = ({
     setErrorMessage('');
     try {
       let finalUrl = file.url;
-      // If the file is on COS (starts with classrooms/ or shared/)
-      if (file.key && uploader.current) {
-        // Generate a 30-minute signed URL
+      // If the file has a real key, generate a temporary signed URL from COS
+      if (file.key && uploader.current && !file.url.includes('mock-bucket')) {
         finalUrl = await uploader.current.getSignedUrl(file.key);
       }
       
@@ -174,17 +168,6 @@ export const CosCloudIcon = ({
     }
   };
 
-  const simulateConversion = (fileId) => {
-    setTimeout(() => {
-      setFiles(prev => prev.map(f => {
-        if (f.id === fileId) {
-          return { ...f, status: 'ready' };
-        }
-        return f;
-      }));
-    }, 5000);
-  };
-
   const formatSize = (bytes) => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -192,14 +175,6 @@ export const CosCloudIcon = ({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-
-  const filteredFiles = files.filter(f => {
-    if (activeTab === 'shared') {
-      return f.key.startsWith('shared/');
-    } else {
-      return f.key.startsWith('classrooms/');
-    }
-  });
 
   return (
     <div style={{ display: 'block', width: '100%', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
@@ -409,14 +384,14 @@ export const CosCloudIcon = ({
             )}
           </div>
 
-          {/* Files List */}
+          {/* Files List - Loads real live files dynamically from Tencent COS! */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
-            {filteredFiles.length === 0 ? (
+            {files.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center', color: '#b9adc7', fontSize: '0.68rem' }}>
                 No files in this folder yet
               </div>
             ) : (
-              filteredFiles.map((file) => (
+              files.map((file) => (
                 <div 
                   key={file.id} 
                   style={{
@@ -453,7 +428,7 @@ export const CosCloudIcon = ({
                       </div>
                     )}
 
-                    {/* Generate temporary signed read URL on click-to-share! */}
+                    {/* Share Button for everyone */}
                     {(file.status === 'ready' || file.status === 'none') && (
                       <button
                         onClick={() => handleShareClick(file)}

@@ -114,13 +114,53 @@ export class TutorProCosUploader {
         Bucket: bucket,
         Region: region,
         Key: key,
-        Sign: true, // Crucial! Signs the URL with our short-lived STS tokens
-        Expires: 1800 // 30 minutes validity
+        Sign: true, // Signs URL with STS keys
+        Expires: 1800 // 30 minutes
       }, (err, data) => {
         if (err) {
           reject(err);
         } else {
           resolve(data.Url);
+        }
+      });
+    });
+  }
+
+  /**
+   * List files directly from the Tencent COS Bucket under private or shared prefix
+   */
+  async listBucketFiles(isShared = false) {
+    const { cos, bucket, region, prefix, sharedPrefix } = await this.getCosClient();
+    const targetPrefix = isShared ? sharedPrefix : prefix;
+
+    return new Promise((resolve, reject) => {
+      cos.getBucket({
+        Bucket: bucket,
+        Region: region,
+        Prefix: targetPrefix,
+      }, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          const contents = data.Contents || [];
+          const files = contents
+            .filter(item => item.Key !== targetPrefix) // skip folder placeholder
+            .map(item => {
+              const fullKey = item.Key;
+              const rawName = fullKey.substring(fullKey.lastIndexOf('/') + 1);
+              const cleanName = rawName.replace(/^\d+-/, ''); // clean timestamp prefix
+              
+              return {
+                id: fullKey,
+                name: cleanName,
+                key: fullKey,
+                size: Number(item.Size),
+                type: cleanName.split('.').pop()?.toLowerCase() || 'other',
+                status: 'ready',
+                url: `https://${bucket}.cos.${region}.myqcloud.com/${fullKey}`
+              };
+            });
+          resolve(files);
         }
       });
     });
