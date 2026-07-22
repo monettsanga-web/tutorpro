@@ -34,8 +34,11 @@ export const WhiteboardSlides = ({
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
 
-  // Check if this is a real PDF or simulated presentation
-  const isRealPdf = fileName?.toLowerCase().endsWith('.pdf') || fileUrl?.toLowerCase().includes('.pdf');
+  // File type detection
+  const lowerName = fileName?.toLowerCase() || '';
+  const isPdf = lowerName.endsWith('.pdf') || fileUrl?.toLowerCase().includes('.pdf');
+  const isImage = lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.gif');
+  const isOfficeDoc = lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt') || lowerName.endsWith('.docx') || lowerName.endsWith('.doc');
 
   useEffect(() => {
     redrawCanvas();
@@ -192,7 +195,7 @@ export const WhiteboardSlides = ({
               {fileName}
             </h2>
             <p style={{ fontSize: '0.6rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
-              {isRealPdf ? 'Live Controllable PDF Courseware' : 'Shared Screen Slide Deck'} (Secure Preview)
+              {isRealPdf ? 'Live PDF View' : isOfficeDoc ? 'Microsoft Web PowerPoint/Doc View' : isImage ? 'Shared Image View' : 'Shared Courseware View'} (Secure Preview)
             </p>
           </div>
         </div>
@@ -239,7 +242,7 @@ export const WhiteboardSlides = ({
             position: 'relative',
             borderRadius: '10px',
             overflow: 'hidden',
-            background: '#fff',
+            background: isImage ? 'transparent' : '#fff',
             width: `${zoomLevel}%`,
             aspectRatio: '4/3',
             maxWidth: '100%',
@@ -252,8 +255,8 @@ export const WhiteboardSlides = ({
             transition: 'width 0.2s ease-in-out'
           }}
         >
-          {isRealPdf ? (
-            /* REAL PDF VIEWER LAYER - Jumps page synchronously via #page=X hash */
+          {isRealPdf && (
+            /* PDF VIEWER */
             <iframe
               src={`${fileUrl}#page=${currentPage}&toolbar=0&navpanes=0`}
               style={{
@@ -264,9 +267,44 @@ export const WhiteboardSlides = ({
                 inset: 0,
                 zIndex: 1
               }}
-              title="Secure tutorpro PDF View"
+              title="PDF View"
             />
-          ) : (
+          )}
+
+          {isOfficeDoc && (
+            /* MICROSOFT WEB OFFICE VIEWER (Renders PPT, PPTX, DOC, DOCX flawlessly!) */
+            <iframe
+              src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1
+              }}
+              title="Office Doc View"
+            />
+          )}
+
+          {isImage && (
+            /* IMAGE VIEWER */
+            <img
+              src={fileUrl}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                position: 'absolute',
+                inset: 0,
+                margin: 'auto',
+                zIndex: 1
+              }}
+              alt="Shared View"
+            />
+          )}
+
+          {!isRealPdf && !isOfficeDoc && !isImage && (
             /* PPT/IMAGE DEMO BACKDROP LAYER */
             <div style={{ position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#130a25', boxSizing: 'border-box' }}>
               <div style={{ textAlign: 'center' }}>
