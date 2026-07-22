@@ -1,0 +1,255 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SubmissionStatus {
+  ASSIGNED
+  SUBMITTED
+  GRADED
+  LATE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum LiveSessionStatus {
+  WAITING
+  ONGOING
+  COMPLETED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  fullName      String
+  avatarUrl     String?
+  role          UserRole       @default(STUDENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Classroom Memberships
+  teachers      ClassMember[]  @relation("TeacherMember")
+  students      ClassMember[]  @relation("StudentMember")
+  
+  // Relations
+  createdClasses Class[]       @relation("CreatedClasses")
+  submissions    Submission[]  @relation("StudentSubmissions")
+  gradesGiven    Grade[]       @relation("TeacherGrades")
+  attendance     Attendance[]
+  chatMessages   ChatMessage[]
+}
+
+model Class {
+  id            String         @id @default(uuid())
+  name          String
+  section       String?
+  subject       String?
+  room          String?
+  inviteCode    String         @unique
+  ownerId       String
+  owner         User           @relation("CreatedClasses", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Google Classroom Style Modules
+  members       ClassMember[]
+  streamPosts   StreamPost[]
+  classwork     Classwork[]
+  liveSessions  LiveSession[]
+  files         ClassFile[]
+  attendanceLog AttendanceLog[]
+}
+
+model ClassMember {
+  id          String   @id @default(uuid())
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation("StudentMember", fields: [userId], references: [id], onDelete: Cascade)
+  role        UserRole @default(STUDENT)
+  joinedAt    DateTime @default(now())
+
+  @@unique([classId, userId])
+  UserUser    User?    @relation("TeacherMember", fields: [userId], references: [id])
+}
+
+model StreamPost {
+  id          String         @id @default(uuid())
+  classId     String
+  class       Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  authorId    String
+  authorName  String
+  authorAvatar String?
+  content     String         @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  // Comments
+  comments    PostComment[]
+  attachments ClassFile[]
+}
+
+model PostComment {
+  id          String     @id @default(uuid())
+  postId      String
+  post        StreamPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId    String
+  authorName  String
+  authorAvatar String?
+  content     String     @db.Text
+  createdAt   DateTime   @default(now())
+}
+
+model Classwork {
+  id          String           @id @default(uuid())
+  classId     String
+  class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  description String?          @db.Text
+  dueDate     DateTime?
+  points      Int              @default(100)
+  status      AssignmentStatus @default(PUBLISHED)
+  topic       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Attachments and submissions
+  attachments ClassFile[]
+  submissions Submission[]
+}
+
+model Submission {
+  id          String           @id @default(uuid())
+  classworkId String
+  classwork   Classwork        @relation(fields: [classworkId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User             @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  status      SubmissionStatus @default(ASSIGNED)
+  submittedAt DateTime?
+  grade       Grade?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Submitted files
+  attachments ClassFile[]
+
+  @@unique([classworkId, studentId])
+}
+
+model Grade {
+  id           String     @id @default(uuid())
+  submissionId String     @unique
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  score        Float
+  feedback     String?    @db.Text
+  gradedById   String
+  gradedBy     User       @relation("TeacherGrades", fields: [gradedById], references: [id])
+  gradedAt     DateTime   @default(now())
+}
+
+model ClassFile {
+  id           String      @id @default(uuid())
+  classId      String?
+  class        Class?      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  name         String
+  url          String
+  fileType     String
+  fileSize     Int
+  uploadedBy   String
+  isShared     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+
+  // Relations to Classroom streams or assignments
+  streamPostId String?
+  streamPost   StreamPost? @relation(fields: [streamPostId], references: [id])
+  classworkId  String?
+  classwork    Classwork?  @relation(fields: [classworkId], references: [id])
+  submissionId String?
+  submission   Submission? @relation(fields: [submissionId], references: [id])
+}
+
+model AttendanceLog {
+  id          String       @id @default(uuid())
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  date        DateTime     @default(now())
+  records     Attendance[]
+  createdAt   DateTime     @default(now())
+}
+
+model Attendance {
+  id           String        @id @default(uuid())
+  logId        String
+  log          AttendanceLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status       AttendanceStatus @default(PRESENT)
+  remarks      String?
+}
+
+model LiveSession {
+  id           String            @id @default(uuid())
+  classId      String
+  class        Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title        String
+  status       LiveSessionStatus @default(WAITING)
+  livekitRoom  String            @unique
+  isLocked     Boolean           @default(false)
+  startedAt    DateTime?
+  endedAt      DateTime?
+  
+  // Interactive features cached in PG/Redis
+  polls        Poll[]
+  whiteboard   Whiteboard?
+  messages     ChatMessage[]
+}
+
+model ChatMessage {
+  id            String      @id @default(uuid())
+  liveSessionId String
+  session       LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  text          String      @db.Text
+  createdAt     DateTime    @default(now())
+}
+
+model Poll {
+  id            String      @id @default(uuid())
+  liveSessionId String
+  session       LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  question      String
+  options       String[]    // JSON or Array list of options
+  results       Json        // Cache map of option selections
+  isClosed      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+}
+
+model Whiteboard {
+  id            String      @id @default(uuid())
+  liveSessionId String      @unique
+  session       LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  elements      Json        // Canvas vector state elements drawing path list cache
+  updatedAt     DateTime    @updatedAt
+}
