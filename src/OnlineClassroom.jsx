@@ -1674,20 +1674,43 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
           <div className="classroom-lesson-board" ref={stageRef}>
             {screenSharing ? (
-              <div className="teacher-screen-sharing-active">
-                <MonitorUp size={44} />
-                <strong>Your browser tab is being shared</strong>
-                <span>Students see the live stream on their lesson board. The teacher controls the original website tab.</span>
-                {presenterUrl && (
-                  <div className="teacher-share-website-actions">
-                    <button onClick={() => handleOpenWebsite(presenterUrl)} className="teacher-share-btn">
-                      <ExternalLink size={15} /> Open Website Tab
-                    </button>
-                    <button onClick={() => handleReopenWebsite(presenterUrl)} className="teacher-share-btn">
-                      <RefreshCw size={15} /> Reopen Website Tab
-                    </button>
-                  </div>
-                )}
+              <div className="teacher-screen-sharing-active" style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <video 
+                  ref={sharedScreenVideoRef} 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 1,
+                    background: '#090510'
+                  }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  zIndex: 2,
+                  background: 'rgba(19, 10, 37, 0.85)',
+                  backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(188, 233, 78, 0.3)',
+                  color: '#bce94e',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.65rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}>
+                  <MonitorUp className="w-3.5 h-3.5 animate-pulse" style={{ width: '14px', height: '14px' }} />
+                  <span>Sharing Screen (Active Preview)</span>
+                </div>
               </div>
             ) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a browser tab, present a website, or share an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
             {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
