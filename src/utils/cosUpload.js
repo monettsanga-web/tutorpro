@@ -9,21 +9,36 @@ export class TutorProCosUploader {
     this.uploadTask = null;
   }
 
-  // Initialize COS client with STS temporary credentials using Supabase functions client
+  // Initialize COS client with STS temporary credentials
   async getCosClient() {
     const { supabase } = await import('../supabaseClient.js');
     if (!supabase) {
       throw new Error('Supabase is not configured.');
     }
 
-    // Invoke the secure get-cos-credentials edge function
-    // This automatically attaches the current authenticated user's JWT token
+    // Read local tutorpro active session details
+    let sessionUserId = '';
+    try {
+      const storedSession = sessionStorage.getItem('tutorpro_session_v2') || localStorage.getItem('tutorpro_session_v2');
+      if (storedSession) {
+        const sessionObj = JSON.parse(storedSession);
+        sessionUserId = sessionObj?.id || '';
+      }
+    } catch (e) {
+      console.warn("Could not read local session details:", e);
+    }
+
+    // Call Supabase Edge Function to get temporary STS credentials
     const { data, error } = await supabase.functions.invoke('get-cos-credentials', {
-      body: { bookingId: this.bookingId },
+      body: { 
+        bookingId: this.bookingId,
+        classroomToken: this.supabaseToken,
+        userId: sessionUserId
+      },
     });
 
     if (error || !data) {
-      throw new Error(`Failed to fetch temporary credentials: ${error?.message || 'Invalid credentials'}`);
+      throw new Error(`Failed to fetch temporary credentials: ${error?.message || 'Access Denied'}`);
     }
 
     const cos = new COS({
@@ -54,7 +69,7 @@ export class TutorProCosUploader {
   async uploadFile({ file, onProgress, onTaskCreated, isShared = false }) {
     const { cos, bucket, region, prefix, sharedPrefix } = await this.getCosClient();
     
-    // Scopes path
+    // Choose destination path based on shared/private setting
     const targetPrefix = isShared ? sharedPrefix : prefix;
     const key = `${targetPrefix}${Date.now()}-${file.name}`;
 
