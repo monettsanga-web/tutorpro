@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, 
-  Sparkles, Award, Lock, Unlock, PenTool, Eraser, Download, FileImage
+  Sparkles, Award, Lock, Unlock, PenTool, Eraser, FileImage
 } from 'lucide-react';
 
 export const WhiteboardSlides = ({
@@ -189,7 +189,7 @@ export const WhiteboardSlides = ({
               {fileName}
             </h2>
             <p style={{ fontSize: '0.6rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
-              Shared Screen Courseware
+              Shared Screen Courseware (Secure Preview Only)
             </p>
           </div>
         </div>
@@ -216,24 +216,6 @@ export const WhiteboardSlides = ({
               <span>{syncToStudent ? 'Student Synced' : 'Sync Student'}</span>
             </button>
           )}
-
-          <a
-            href={fileUrl}
-            download
-            style={{
-              padding: '6px',
-              color: '#b9adc7',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '6px',
-              display: 'flex',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-            title="Download Original PPTX"
-          >
-            <Download style={{ width: '13px', height: '13px' }} />
-          </a>
         </div>
       </div>
 

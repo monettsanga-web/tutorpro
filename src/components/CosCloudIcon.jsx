@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Cloud, Upload, Play, AlertCircle, X, Download, FileText, RefreshCw, Users, Shield } from 'lucide-react';
+import { Cloud, Upload, Play, AlertCircle, X, FileText, RefreshCw, Users, Shield } from 'lucide-react';
 import { TutorProCosUploader } from '../utils/cosUpload.js';
 
 export const CosCloudIcon = ({
@@ -389,7 +389,7 @@ export const CosCloudIcon = ({
             )}
           </div>
 
-          {/* Files List */}
+          {/* Files List - Downloads removed to protect curriculum files */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
             {filteredFiles.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center', color: '#b9adc7', fontSize: '0.68rem' }}>
@@ -433,14 +433,15 @@ export const CosCloudIcon = ({
                       </div>
                     )}
 
-                    {file.status === 'ready' && isTeacher && (
+                    {/* Teachers can ONLY Share files. Downloading is completely blocked */}
+                    {(file.status === 'ready' || file.status === 'none') && isTeacher && (
                       <button
                         onClick={() => onShareDocument(file)}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '3px',
-                          padding: '4px 8px',
+                          padding: '4px 10px',
                           background: '#bce94e',
                           color: '#090510',
                           border: 'none',
@@ -455,27 +456,11 @@ export const CosCloudIcon = ({
                       </button>
                     )}
 
-                    {(file.status === 'none' || file.type === 'edb' || file.type === 'epub') && (
-                      <a
-                        href={file.url}
-                        download
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                          padding: '4px 8px',
-                          background: 'rgba(255,255,255,0.08)',
-                          color: '#fff',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '6px',
-                          fontSize: '0.62rem',
-                          textDecoration: 'none',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        <Download style={{ width: '9px', height: '9px' }} />
-                        Get
-                      </a>
+                    {/* Non-teacher view displays read-only status, NO download options */}
+                    {!isTeacher && (
+                      <span style={{ fontSize: '0.6rem', color: '#b9adc7', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '4px' }}>
+                        Secure File
+                      </span>
                     )}
                   </div>
                 </div>
