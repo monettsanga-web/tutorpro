@@ -1417,7 +1417,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const isEpubFile = (file) => /\.epub$/i.test(file.name)
 
   const renderPresentedFile = (file) => {
-    if (file.source === 'cos' || file.key?.includes('classrooms/')) {
+    if (file.source === 'cos' || (file.key || '').includes('classrooms/')) {
       return (
         <div className="classroom-file-presentation" style={{ width: '100%', height: '100%', padding: '0' }}>
           <WhiteboardSlides

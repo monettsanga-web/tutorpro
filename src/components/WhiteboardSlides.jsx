@@ -36,7 +36,7 @@ export const WhiteboardSlides = ({
 
   // File type detection
   const lowerName = fileName?.toLowerCase() || '';
-  const isPdf = lowerName.endsWith('.pdf') || fileUrl?.toLowerCase().includes('.pdf');
+  const isPdf = lowerName.endsWith('.pdf') || (fileUrl?.toLowerCase() || '').includes('.pdf');
   const isImage = lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.gif');
   const isOfficeDoc = lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt') || lowerName.endsWith('.docx') || lowerName.endsWith('.doc');
 
@@ -314,7 +314,7 @@ export const WhiteboardSlides = ({
                 </h1>
               </div>
 
-              <div style={{ marginTop: '16px', flex: '1', width: '100%', display: 'flex', alignItems: 'center', justifycontent: 'center', border: '2px dashed rgba(19,10,37,0.05)', borderRadius: '12px', padding: '16px', background: 'rgba(19,10,37,0.02)', boxSizing: 'border-box', justifyContent: 'center' }}>
+              <div style={{ marginTop: '16px', flex: '1', width: '100%', display: 'flex', alignItems: 'center', border: '2px dashed rgba(19,10,37,0.05)', borderRadius: '12px', padding: '16px', background: 'rgba(19,10,37,0.02)', boxSizing: 'border-box', justifyContent: 'center' }}>
                 {currentPage === 1 && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
                     <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #fee2e2' }}>

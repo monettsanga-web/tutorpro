@@ -90,20 +90,20 @@ serve(async (req) => {
     }
 
     const bucketScope = `qcs::cos:${region}:uid/${appId}:${bucket}`;
+    const bucketObjectsScope = `qcs::cos:${region}:uid/${appId}:${bucket}/*`;
     const privateScope = `qcs::cos:${region}:uid/${appId}:${bucket}/classrooms/${bookingId}/*`;
     const sharedScope = `qcs::cos:${region}:uid/${appId}:${bucket}/shared/*`;
 
-    // 100% Compliant Tencent CAM Policy supporting bucket-level GetBucket (listing) and object operations
     const policy = {
       version: "2.0",
       statement: [
-        // Statement 1: Bucket Level Actions (GetBucket listing)
+        // Statement 1: Bucket Level Actions (GetBucket listing with both formats)
         {
           effect: "allow",
           action: [
             "name/cos:GetBucket"
           ],
-          resource: [bucketScope]
+          resource: [bucketScope, bucketObjectsScope]
         },
         // Statement 2: Private Booking Folder (Full read/write)
         {
