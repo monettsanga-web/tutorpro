@@ -1,6 +1,55 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, FileImage, Shield } from 'lucide-react';
 
+// Inline defensive Error Boundary to catch any child-level rendering errors 
+// and print the exact JS exception on the whiteboard screen!
+export class SafeSlidesErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("WhiteboardSlides render crash caught:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ 
+          padding: '24px', 
+          color: '#fca5a5', 
+          background: 'rgba(30, 20, 50, 0.85)', 
+          borderRadius: '12px', 
+          border: '1px solid rgba(239, 68, 68, 0.2)', 
+          margin: '20px',
+          fontFamily: 'sans-serif',
+          boxSizing: 'border-box'
+        }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: '900', margin: '0 0 10px 0', color: '#ef4444' }}>⚠️ Whiteboard Render Exception</h3>
+          <p style={{ fontSize: '0.75rem', margin: '0 0 12px 0', fontWeight: 'bold' }}>{this.state.error?.toString()}</p>
+          <pre style={{ 
+            fontSize: '0.62rem', 
+            background: 'rgba(0,0,0,0.4)', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            overflowX: 'auto', 
+            margin: '0',
+            color: '#cbd5e1',
+            lineHeight: '1.4',
+            fontFamily: 'monospace'
+          }}>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export const WhiteboardSlides = ({
   fileId,
   fileName,

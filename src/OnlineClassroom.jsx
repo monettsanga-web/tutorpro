@@ -56,7 +56,7 @@ import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from '
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
 import { CosCloudIcon } from './components/CosCloudIcon.jsx'
-import { WhiteboardSlides } from './components/WhiteboardSlides.jsx'
+import { WhiteboardSlides, SafeSlidesErrorBoundary } from './components/WhiteboardSlides.jsx'
 import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
 import {
   CLASSROOM_FILE_ACCEPT,
@@ -1420,17 +1420,19 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     if (file.source === 'cos' || (file.key || '').includes('classrooms/')) {
       return (
         <div className="classroom-file-presentation" style={{ width: '100%', height: '100%', padding: '0' }}>
-          <WhiteboardSlides
-            fileId={file.id}
-            fileName={file.name}
-            fileUrl={file.dataUrl || file.url}
-            isTeacher={account.role === 'teacher'}
-            currentPage={cosSlidePage}
-            onPageChange={(newPage) => {
-              setCosSlidePage(newPage)
-              transportRef.current?.send({ type: 'slide-page', page: newPage })
-            }}
-          />
+          <SafeSlidesErrorBoundary>
+            <WhiteboardSlides
+              fileId={file.id}
+              fileName={file.name}
+              fileUrl={file.dataUrl || file.url}
+              isTeacher={account.role === 'teacher'}
+              currentPage={cosSlidePage}
+              onPageChange={(newPage) => {
+                setCosSlidePage(newPage)
+                transportRef.current?.send({ type: 'slide-page', page: newPage })
+              }}
+            />
+          </SafeSlidesErrorBoundary>
         </div>
       )
     }
