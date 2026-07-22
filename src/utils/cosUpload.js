@@ -105,7 +105,8 @@ export class TutorProCosUploader {
   }
 
   /**
-   * Generates a temporary, signed read URL for a private COS file
+   * Generates a temporary, signed read URL for a private COS file.
+   * Forces the browser to load it INLINE in an iframe instead of downloading it.
    */
   async getSignedUrl(key) {
     const { cos, bucket, region } = await this.getCosClient();
@@ -115,7 +116,12 @@ export class TutorProCosUploader {
         Region: region,
         Key: key,
         Sign: true, // Signs URL with STS keys
-        Expires: 1800 // 30 minutes
+        Expires: 1800, // 30 minutes
+        Query: {
+          // CRITICAL: Forces Tencent COS to return "inline" disposition instead of "attachment"!
+          // This stops the browser from downloading the file and makes it render on whiteboard.
+          'response-content-disposition': 'inline'
+        }
       }, (err, data) => {
         if (err) {
           reject(err);
@@ -182,6 +188,10 @@ export class TutorProCosUploader {
         Region: region,
         Key: key,
         Body: file,
+        Headers: {
+          // Explicitly set Content-Type during upload so browsers understand how to render it
+          'Content-Type': file.type || 'application/octet-stream'
+        },
         SliceSize: 1024 * 1024 * 5, // 5MB slices
         onTaskReady: (taskId) => {
           this.uploadTask = taskId;
