@@ -8,7 +8,7 @@ export const WhiteboardSlides = ({
   fileId,
   fileName,
   fileUrl,
-  totalSlides = 5,
+  totalSlides = 10,
   isTeacher,
   onPageChange,
 }) => {
@@ -16,7 +16,7 @@ export const WhiteboardSlides = ({
   const [zoomLevel, setZoomScale] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [syncToStudent, setSyncToStudent] = useState(true);
-  const [activeTool, setActiveTool] = useState('pen');
+  const [activeTool, setActiveTool] = useState('none');
   const [penColor, setPenColor] = useState('#EF4444');
   
   const [hotspots, setHotspots] = useState({
@@ -33,6 +33,9 @@ export const WhiteboardSlides = ({
   const [currentLine, setCurrentLine] = useState([]);
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
+
+  // Check if this is a real PDF or simulated presentation
+  const isRealPdf = fileName?.toLowerCase().endsWith('.pdf') || fileUrl?.toLowerCase().includes('.pdf');
 
   useEffect(() => {
     redrawCanvas();
@@ -189,7 +192,7 @@ export const WhiteboardSlides = ({
               {fileName}
             </h2>
             <p style={{ fontSize: '0.6rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
-              Shared Screen Courseware (Secure Preview Only)
+              {isRealPdf ? 'Live Controllable PDF Courseware' : 'Shared Screen Slide Deck'} (Secure Preview)
             </p>
           </div>
         </div>
@@ -205,7 +208,7 @@ export const WhiteboardSlides = ({
                 padding: '4px 10px',
                 background: syncToStudent ? 'rgba(188,233,78,0.15)' : 'rgba(255,255,255,0.05)',
                 color: syncToStudent ? '#bce94e' : '#b9adc7',
-                border: '1px solid rgba(188,233,78,0.2)',
+                border: '1px solid rgba(188, 233, 78, 0.2)',
                 borderRadius: '8px',
                 fontSize: '0.68rem',
                 fontWeight: 'bold',
@@ -228,7 +231,8 @@ export const WhiteboardSlides = ({
         justifyContent: 'center',
         background: '#090510',
         padding: '16px',
-        minHeight: '300px'
+        minHeight: '300px',
+        overflow: 'hidden'
       }}>
         <div 
           style={{ 
@@ -239,6 +243,7 @@ export const WhiteboardSlides = ({
             width: `${zoomLevel}%`,
             aspectRatio: '4/3',
             maxWidth: '100%',
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -247,66 +252,82 @@ export const WhiteboardSlides = ({
             transition: 'width 0.2s ease-in-out'
           }}
         >
-          {/* Simulated PPT Content Page */}
-          <div style={{ position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#130a25', boxSizing: 'border-box' }}>
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.65rem', fontWeight: '850', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(124,58,237,0.08)', padding: '2px 8px', borderRadius: '10px' }}>TutorPro Interactive Slide</span>
-              <h1 style={{ fontSize: '1.4rem', fontWeight: '900', margin: '8px 0 0 0', color: '#130a25', lineHeight: '1.2' }}>
-                {currentPage === 1 && "Unit 1: Let's Learn Phonics!"}
-                {currentPage === 2 && "Sound of Short 'A' /æ/"}
-                {currentPage === 3 && "Interactive Vocabulary: APPLE"}
-                {currentPage === 4 && "Phonics Sound Recognition Game"}
-                {currentPage === 5 && "Excellent Work! Summary Quiz"}
-              </h1>
-            </div>
+          {isRealPdf ? (
+            /* REAL PDF VIEWER LAYER - Jumps page synchronously via #page=X hash */
+            <iframe
+              src={`${fileUrl}#page=${currentPage}&toolbar=0&navpanes=0`}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1
+              }}
+              title="Secure tutorpro PDF View"
+            />
+          ) : (
+            /* PPT/IMAGE DEMO BACKDROP LAYER */
+            <div style={{ position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#130a25', boxSizing: 'border-box' }}>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: '850', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(124,58,237,0.08)', padding: '2px 8px', borderRadius: '10px' }}>TutorPro Interactive Slide</span>
+                <h1 style={{ fontSize: '1.4rem', fontWeight: '900', margin: '8px 0 0 0', color: '#130a25', lineHeight: '1.2' }}>
+                  {currentPage === 1 && "Unit 1: Let's Learn Phonics!"}
+                  {currentPage === 2 && "Sound of Short 'A' /æ/"}
+                  {currentPage === 3 && "Interactive Vocabulary: APPLE"}
+                  {currentPage === 4 && "Phonics Sound Recognition Game"}
+                  {currentPage === 5 && "Excellent Work! Summary Quiz"}
+                </h1>
+              </div>
 
-            <div style={{ marginTop: '16px', flex: '1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(19,10,37,0.05)', borderRadius: '12px', padding: '16px', background: 'rgba(19,10,37,0.02)', boxSizing: 'border-box' }}>
-              {currentPage === 1 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
-                  <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #fee2e2' }}>
-                    <span style={{ fontSize: '2.5rem', display: 'block' }}>🍎</span>
-                    <h3 style={{ fontWeight: 'bold', color: '#991b1b', fontSize: '0.75rem', margin: '4px 0 0 0' }}>A is for Apple</h3>
+              <div style={{ marginTop: '16px', flex: '1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(19,10,37,0.05)', borderRadius: '12px', padding: '16px', background: 'rgba(19,10,37,0.02)', boxSizing: 'border-box' }}>
+                {currentPage === 1 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
+                    <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #fee2e2' }}>
+                      <span style={{ fontSize: '2.5rem', display: 'block' }}>🍎</span>
+                      <h3 style={{ fontWeight: 'bold', color: '#991b1b', fontSize: '0.75rem', margin: '4px 0 0 0' }}>A is for Apple</h3>
+                    </div>
+                    <div style={{ background: '#eff6ff', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #dbeafe' }}>
+                      <span style={{ fontSize: '2.5rem', display: 'block' }}>🐝</span>
+                      <h3 style={{ fontWeight: 'bold', color: '#1e40af', fontSize: '0.75rem', margin: '4px 0 0 0' }}>B is for Bee</h3>
+                    </div>
                   </div>
-                  <div style={{ background: '#eff6ff', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #dbeafe' }}>
-                    <span style={{ fontSize: '2.5rem', display: 'block' }}>🐝</span>
-                    <h3 style={{ fontWeight: 'bold', color: '#1e40af', fontSize: '0.75rem', margin: '4px 0 0 0' }}>B is for Bee</h3>
+                )}
+                {currentPage === 2 && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: '4rem', fontWeight: '900', color: '#7c3aed', display: 'block' }}>Aa</span>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '10px' }}>
+                      <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Ant 🐜</span>
+                      <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Bat 🦇</span>
+                      <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Cat 🐱</span>
+                    </div>
                   </div>
-                </div>
-              )}
-              {currentPage === 2 && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: '4rem', fontWeight: '900', color: '#7c3aed', display: 'block' }}>Aa</span>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '10px' }}>
-                    <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Ant 🐜</span>
-                    <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Bat 🦇</span>
-                    <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Cat 🐱</span>
+                )}
+                {currentPage === 3 && (
+                  <div style={{ textAlign: 'center', maxWidth: '240px' }}>
+                    <div style={{ width: '80px', height: '80px', margin: '0 auto', background: '#fffbeb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fef3c7' }}>
+                      <span style={{ fontSize: '3rem' }}>🍎</span>
+                    </div>
+                    <p style={{ fontSize: '0.7rem', color: '#4b5563', marginTop: '10px', lineHeight: '1.4' }}>
+                      Say the word: <span style={{ fontWeight: 'bold', color: '#111827' }}>A-P-P-L-E</span>. Practice the mouth shape for /æ/.
+                    </p>
                   </div>
-                </div>
-              )}
-              {currentPage === 3 && (
-                <div style={{ textAlign: 'center', maxWidth: '240px' }}>
-                  <div style={{ width: '80px', height: '80px', margin: '0 auto', background: '#fffbeb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fef3c7' }}>
-                    <span style={{ fontSize: '3rem' }}>🍎</span>
+                )}
+                {currentPage > 3 && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: '2.5rem' }}>⭐️🏆⭐</span>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#374151', margin: '8px 0 0 0' }}>Interactive Review Slide</p>
+                    <p style={{ fontSize: '0.62rem', color: '#9ca3af', margin: '2px 0 0 0' }}>Use drawing tools to answer.</p>
                   </div>
-                  <p style={{ fontSize: '0.7rem', color: '#4b5563', marginTop: '10px', lineHeight: '1.4' }}>
-                    Say the word: <span style={{ fontWeight: 'bold', color: '#111827' }}>A-P-P-L-E</span>. Practice the mouth shape for /æ/.
-                  </p>
-                </div>
-              )}
-              {currentPage > 3 && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: '2.5rem' }}>⭐️🏆⭐</span>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#374151', margin: '8px 0 0 0' }}>Interactive Review Slide</p>
-                  <p style={{ fontSize: '0.62rem', color: '#9ca3af', margin: '2px 0 0 0' }}>Use drawing tools to answer.</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.6rem', color: '#9ca3af', marginTop: '12px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px' }}>
-              <span>TutorPro English • Courseware Deck</span>
-              <span>Slide {currentPage} of {totalSlides}</span>
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.6rem', color: '#9ca3af', marginTop: '12px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px' }}>
+                <span>TutorPro English • Courseware Deck</span>
+                <span>Slide {currentPage} of {totalSlides}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Canvas Draw Overlay */}
           <canvas
@@ -459,7 +480,7 @@ export const WhiteboardSlides = ({
           </button>
           
           <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: '#090510', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            Slide {currentPage} / {totalSlides}
+            Page {currentPage} / {totalSlides}
           </span>
 
           <button

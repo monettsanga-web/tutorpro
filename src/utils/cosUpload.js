@@ -16,7 +16,6 @@ export class TutorProCosUploader {
       throw new Error('Supabase is not configured.');
     }
 
-    // Read local tutorpro active session details
     let sessionUserId = '';
     try {
       const storedSession = sessionStorage.getItem('tutorpro_session_v2') || localStorage.getItem('tutorpro_session_v2');
@@ -28,17 +27,59 @@ export class TutorProCosUploader {
       console.warn("Could not read local session details:", e);
     }
 
-    // Call Supabase Edge Function to get temporary STS credentials
-    const { data, error } = await supabase.functions.invoke('get-cos-credentials', {
-      body: { 
-        bookingId: this.bookingId,
-        classroomToken: this.supabaseToken,
-        userId: sessionUserId
-      },
-    });
+    let data = null;
+    let errorObj = null;
 
-    if (error || !data) {
-      throw new Error(`Failed to fetch temporary credentials: ${error?.message || 'Access Denied'}`);
+    // Try 1: Invoke via Supabase SDK
+    try {
+      const result = await supabase.functions.invoke('get-cos-credentials', {
+        body: { 
+          bookingId: this.bookingId,
+          classroomToken: this.supabaseToken,
+          userId: sessionUserId
+        },
+      });
+      data = result.data;
+      errorObj = result.error;
+    } catch (e) {
+      console.warn("Supabase invoke failed, attempting direct fetch fallback...", e);
+    }
+
+    // Try 2: Direct Fetch Fallback (100% immune to older client SDK bugs)
+    if (!data) {
+      try {
+        const response = await fetch(`https://losmkvvwzijipqrlelyt.supabase.co/functions/v1/get-cos-credentials`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bookingId: this.bookingId,
+            classroomToken: this.supabaseToken,
+            userId: sessionUserId
+          })
+        });
+        if (response.ok) {
+          data = await response.json();
+          errorObj = null;
+        } else {
+          const errText = await response.text();
+          let parsedError = 'Direct fetch failed';
+          try {
+            const parsed = JSON.parse(errText);
+            parsedError = parsed.error || parsedError;
+          } catch {
+            parsedError = errText || parsedError;
+          }
+          errorObj = { message: parsedError };
+        }
+      } catch (e) {
+        errorObj = { message: e.message || 'Network fetch failed' };
+      }
+    }
+
+    if (errorObj || !data) {
+      throw new Error(`Failed to fetch credentials: ${errorObj?.message || 'Access Denied'}`);
     }
 
     const cos = new COS({
