@@ -11,7 +11,6 @@ export class TutorProCosUploader {
 
   // Initialize COS client with STS temporary credentials
   async getCosClient() {
-    // Call Supabase Edge Function to get temporary STS credentials
     const response = await fetch(`${this.supabaseUrl}/functions/v1/get-cos-credentials`, {
       method: 'POST',
       headers: {
@@ -40,15 +39,24 @@ export class TutorProCosUploader {
     });
 
     this.cosInstance = cos;
-    return { cos, bucket: data.bucket, region: data.region, prefix: data.prefix };
+    return { 
+      cos, 
+      bucket: data.bucket, 
+      region: data.region, 
+      prefix: data.prefix,
+      sharedPrefix: data.sharedPrefix || 'shared/'
+    };
   }
 
   /**
    * Resumable multipart upload with progress, pause, and cancel
    */
-  async uploadFile({ file, onProgress, onTaskCreated }) {
-    const { cos, bucket, region, prefix } = await this.getCosClient();
-    const key = `${prefix}${Date.now()}-${file.name}`;
+  async uploadFile({ file, onProgress, onTaskCreated, isShared = false }) {
+    const { cos, bucket, region, prefix, sharedPrefix } = await this.getCosClient();
+    
+    // Choose destination path based on shared/private setting
+    const targetPrefix = isShared ? sharedPrefix : prefix;
+    const key = `${targetPrefix}${Date.now()}-${file.name}`;
 
     return new Promise((resolve, reject) => {
       cos.uploadFile({

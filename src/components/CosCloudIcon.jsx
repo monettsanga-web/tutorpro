@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Cloud, Upload, Play, AlertCircle, X, Download, FileText, RefreshCw } from 'lucide-react';
+import { Cloud, Upload, Play, AlertCircle, X, Download, FileText, RefreshCw, Users, Shield } from 'lucide-react';
 import { TutorProCosUploader } from '../utils/cosUpload.js';
 
 export const CosCloudIcon = ({
@@ -10,6 +10,7 @@ export const CosCloudIcon = ({
   isTeacher,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('private'); // 'private' or 'shared'
   const [files, setFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -45,6 +46,24 @@ export const CosCloudIcon = ({
           type: 'pdf',
           status: 'ready',
           url: `https://mock-bucket.cos.ap-singapore.myqcloud.com/classrooms/${bookingId}/Phonics_Exercise_Book.pdf`
+        },
+        {
+          id: 'shared-1',
+          name: 'Global_English_Vocabulary_Warmup.pptx',
+          key: `shared/Global_English_Vocabulary_Warmup.pptx`,
+          size: 12450000,
+          type: 'ppt',
+          status: 'ready',
+          url: `https://mock-bucket.cos.ap-singapore.myqcloud.com/shared/Global_English_Vocabulary_Warmup.pptx`
+        },
+        {
+          id: 'shared-2',
+          name: 'Verb_Tenses_Cheatsheet.pdf',
+          key: `shared/Verb_Tenses_Cheatsheet.pdf`,
+          size: 3100000,
+          type: 'pdf',
+          status: 'ready',
+          url: `https://mock-bucket.cos.ap-singapore.myqcloud.com/shared/Verb_Tenses_Cheatsheet.pdf`
         },
         {
           id: '3',
@@ -87,6 +106,7 @@ export const CosCloudIcon = ({
     setUploadState('uploading');
 
     try {
+      const isSharedUpload = activeTab === 'shared';
       const result = await uploader.current.uploadFile({
         file,
         onProgress: (progress, state) => {
@@ -95,7 +115,8 @@ export const CosCloudIcon = ({
         },
         onTaskCreated: (controls) => {
           uploadControls.current = controls;
-        }
+        },
+        isShared: isSharedUpload
       });
 
       const fileType = determineFileType(file.name);
@@ -147,10 +168,19 @@ export const CosCloudIcon = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Filter files depending on Private vs Shared tab selection
+  const filteredFiles = files.filter(f => {
+    if (activeTab === 'shared') {
+      return f.key.startsWith('shared/');
+    } else {
+      return f.key.startsWith('classrooms/');
+    }
+  });
+
   return (
     <div style={{ display: 'block', width: '100%', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
       
-      {/* Cloud Toggle Button styled to perfectly match TutorPro's theme */}
+      {/* Cloud Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -193,10 +223,10 @@ export const CosCloudIcon = ({
           boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px', justifyContent: 'space-between' }}>
             <div>
               <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '0', color: '#fff' }}>Cloud Storage</h3>
-              <p style={{ fontSize: '0.62rem', color: '#b9adc7', margin: '2px 0 0 0' }}>Tencent COS private files</p>
+              <p style={{ fontSize: '0.62rem', color: '#b9adc7', margin: '2px 0 0 0' }}>Tencent COS folders</p>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
@@ -212,6 +242,54 @@ export const CosCloudIcon = ({
               }}
             >
               <X style={{ width: '14px', height: '14px' }} />
+            </button>
+          </div>
+
+          {/* TAB SELECTOR: Private vs Shared */}
+          <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '8px' }}>
+            <button
+              onClick={() => setActiveTab('private')}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                padding: '6px',
+                background: activeTab === 'private' ? 'rgba(188, 233, 78, 0.12)' : 'transparent',
+                color: activeTab === 'private' ? '#bce94e' : '#b9adc7',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              <Shield style={{ width: '11px', height: '11px' }} />
+              This Class
+            </button>
+            <button
+              onClick={() => setActiveTab('shared')}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                padding: '6px',
+                background: activeTab === 'shared' ? 'rgba(188, 233, 78, 0.12)' : 'transparent',
+                color: activeTab === 'shared' ? '#bce94e' : '#b9adc7',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              <Users style={{ width: '11px', height: '11px' }} />
+              Shared Library
             </button>
           </div>
 
@@ -288,7 +366,7 @@ export const CosCloudIcon = ({
                     }}
                   >
                     <Upload style={{ width: '13px', height: '13px' }} />
-                    Upload File to COS
+                    <span>Upload to {activeTab === 'shared' ? 'Shared Library' : 'This Class'}</span>
                   </button>
                 </div>
               )
@@ -297,12 +375,12 @@ export const CosCloudIcon = ({
 
           {/* Files List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
-            {files.length === 0 ? (
+            {filteredFiles.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center', color: '#b9adc7', fontSize: '0.68rem' }}>
-                No files in cloud storage yet
+                No files in this folder yet
               </div>
             ) : (
-              files.map((file) => (
+              filteredFiles.map((file) => (
                 <div 
                   key={file.id} 
                   style={{

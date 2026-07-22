@@ -35,7 +35,7 @@ serve(async (req) => {
       throw new Error("bookingId is required");
     }
 
-    // Verify booking permissions:
+    // Verify booking permissions
     const { data: booking, error: bookingError } = await supabaseClient
       .from("bookings")
       .select("id, teacher_id, student_id")
@@ -46,8 +46,10 @@ serve(async (req) => {
       throw new Error("Booking not found or inaccessible");
     }
 
-    const isAuthorized = booking.teacher_id === user.id || booking.student_id === user.id;
-    if (!isAuthorized) {
+    const isTeacher = booking.teacher_id === user.id;
+    const isStudent = booking.student_id === user.id;
+
+    if (!isTeacher && !isStudent) {
       throw new Error("You do not have permission to access this booking's classroom");
     }
 
@@ -61,14 +63,62 @@ serve(async (req) => {
       throw new Error("Tencent COS configuration missing on server");
     }
 
-    const resourceScope = `qcs::cos:${region}:uid/${appId}:${bucket}/classrooms/${bookingId}/*`;
+    // Scopes:
+    // 1. Booking-specific private folder
+    const privateScope = `qcs::cos:${region}:uid/${appId}:${bucket}/classrooms/${bookingId}/*`;
+    // 2. Globally shared folder accessible by all teachers (Write/Read for Teachers, Read-only for Students)
+    const sharedScope = `qcs::cos:${region}:uid/${appId}:${bucket}/shared/*`;
+
+    const policy = {
+      version: "2.0",
+      statement: [
+        // Statement 1: Private Booking Folder (Full read/write)
+        {
+          effect: "allow",
+          action: [
+            "name/cos:PutObject",
+            "name/cos:PostObject",
+            "name/cos:InitiateMultipartUpload",
+            "name/cos:ListMultipartUploads",
+            "name/cos:ListParts",
+            "name/cos:UploadPart",
+            "name/cos:CompleteMultipartUpload",
+            "name/cos:AbortMultipartUpload",
+            "name/cos:GetObject",
+            "name/cos:DeleteObject",
+            "name/cos:HeadObject"
+          ],
+          resource: [privateScope],
+        },
+        // Statement 2: Shared Folder (Full read/write for Teachers, Read-only for Students)
+        {
+          effect: "allow",
+          action: isTeacher ? [
+            "name/cos:PutObject",
+            "name/cos:PostObject",
+            "name/cos:InitiateMultipartUpload",
+            "name/cos:ListMultipartUploads",
+            "name/cos:ListParts",
+            "name/cos:UploadPart",
+            "name/cos:CompleteMultipartUpload",
+            "name/cos:AbortMultipartUpload",
+            "name/cos:GetObject",
+            "name/cos:DeleteObject",
+            "name/cos:HeadObject"
+          ] : [
+            "name/cos:GetObject",
+            "name/cos:HeadObject"
+          ],
+          resource: [sharedScope],
+        }
+      ],
+    };
 
     const stsCredentials = await getTencentSTS({
       secretId,
       secretKey,
       region,
-      bucket,
-      resourceScope,
+      policy,
       bookingId,
     });
 
@@ -78,6 +128,7 @@ serve(async (req) => {
         bucket,
         region,
         prefix: `classrooms/${bookingId}/`,
+        sharedPrefix: `shared/`,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -99,43 +150,18 @@ async function getTencentSTS({
   secretId,
   secretKey,
   region,
-  bucket,
-  resourceScope,
+  policy,
   bookingId,
 }: {
   secretId: string;
   secretKey: string;
   region: string;
-  bucket: string;
-  resourceScope: string;
+  policy: any;
   bookingId: string;
 }) {
   const endpoint = "sts.tencentcloudapi.com";
   const action = "GetFederationToken";
   const version = "2018-08-13";
-
-  const policy = {
-    version: "2.0",
-    statement: [
-      {
-        effect: "allow",
-        action: [
-          "name/cos:PutObject",
-          "name/cos:PostObject",
-          "name/cos:InitiateMultipartUpload",
-          "name/cos:ListMultipartUploads",
-          "name/cos:ListParts",
-          "name/cos:UploadPart",
-          "name/cos:CompleteMultipartUpload",
-          "name/cos:AbortMultipartUpload",
-          "name/cos:GetObject",
-          "name/cos:DeleteObject",
-          "name/cos:HeadObject"
-        ],
-        resource: [resourceScope],
-      },
-    ],
-  };
 
   const params: Record<string, any> = {
     Name: `tutorpro-classroom-${bookingId}`,
