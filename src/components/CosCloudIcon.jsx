@@ -27,7 +27,6 @@ export const CosCloudIcon = ({
 
   const fetchClassroomFiles = async () => {
     try {
-      // Simulate retrieving metadata from secure bucket/DB
       const simulatedFiles = [
         {
           id: '1',
@@ -149,57 +148,96 @@ export const CosCloudIcon = ({
   };
 
   return (
-    <div className="relative inline-block text-left z-30">
+    <div style={{ display: 'block', width: '100%', boxSizing: 'border-box', fontFamily: 'sans-serif' }}>
+      
+      {/* Cloud Toggle Button styled to perfectly match TutorPro's theme */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors border ${
-          isOpen 
-            ? 'bg-blue-600 text-white border-blue-600' 
-            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'
-        }`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '8px 14px',
+          background: isOpen ? 'rgba(188, 233, 78, 0.2)' : 'rgba(188, 233, 78, 0.1)',
+          color: '#bce94e',
+          border: '1px solid rgba(188, 233, 78, 0.3)',
+          borderRadius: '16px',
+          fontSize: '0.75rem',
+          fontWeight: '800',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          width: '100%',
+          justifyContent: 'center',
+          boxSizing: 'border-box',
+          marginBottom: '10px'
+        }}
         title="Tencent COS Cloud Files"
       >
-        <Cloud className="w-5 h-5" />
-        <span className="text-sm font-medium hidden sm:inline">Files</span>
+        <Cloud style={{ width: '15px', height: '15px' }} />
+        <span>Tencent COS Cloud Files</span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 max-h-[500px] flex flex-col bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden text-slate-800">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'rgba(30, 20, 50, 0.65)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '14px',
+          border: '1px solid rgba(188, 233, 78, 0.15)',
+          padding: '12px',
+          color: '#fff',
+          gap: '10px',
+          width: '100%',
+          boxSizing: 'border-box',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+        }}>
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px' }}>
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">Cloud Storage</h3>
-              <p className="text-xs text-slate-500">Tencent COS private files for this lesson</p>
+              <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '0', color: '#fff' }}>Cloud Storage</h3>
+              <p style={{ fontSize: '0.62rem', color: '#b9adc7', margin: '2px 0 0 0' }}>Tencent COS private files</p>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#b9adc7',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
             >
-              <X className="w-4 h-4" />
+              <X style={{ width: '14px', height: '14px' }} />
             </button>
           </div>
 
-          {/* Upload Status / Actions */}
-          <div className="p-4 border-b border-slate-100">
+          {/* Upload Action */}
+          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px' }}>
             {isUploading ? (
-              <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5 font-medium">
-                  <span className="truncate max-w-[200px]" title={activeUploadName}>{activeUploadName}</span>
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#fff', marginBottom: '4px' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{activeUploadName}</span>
                   <span>{uploadState === 'paused' ? 'Paused' : `${uploadProgress}%`}</span>
                 </div>
-                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-3">
+                <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '5px', borderRadius: '10px', overflow: 'hidden', marginBottom: '6px' }}>
                   <div 
-                    className={`h-full transition-all duration-300 ${
-                      uploadState === 'paused' ? 'bg-amber-500' : 'bg-blue-600'
-                    }`} 
-                    style={{ width: `${uploadProgress}%` }}
+                    style={{ 
+                      height: '100%', 
+                      background: uploadState === 'paused' ? '#f59e0b' : '#bce94e',
+                      width: `${uploadProgress}%`,
+                      transition: 'width 0.2s ease-in-out'
+                    }}
                   />
                 </div>
-                <div className="flex justify-end gap-2 text-xs font-semibold">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                   {uploadState === 'uploading' && (
                     <button 
                       onClick={() => uploadControls.current?.pause()}
-                      className="px-2.5 py-1 text-amber-600 bg-amber-50 rounded hover:bg-amber-100"
+                      style={{ padding: '2px 8px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: 'none', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', cursor: 'pointer' }}
                     >
                       Pause
                     </button>
@@ -207,14 +245,14 @@ export const CosCloudIcon = ({
                   {uploadState === 'paused' && (
                     <button 
                       onClick={() => uploadControls.current?.resume()}
-                      className="px-2.5 py-1 text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                      style={{ padding: '2px 8px', background: 'rgba(188, 233, 78, 0.2)', color: '#bce94e', border: 'none', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', cursor: 'pointer' }}
                     >
                       Resume
                     </button>
                   )}
                   <button 
                     onClick={() => uploadControls.current?.cancel()}
-                    className="px-2.5 py-1 text-rose-600 bg-rose-50 rounded hover:bg-rose-100"
+                    style={{ padding: '2px 8px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', border: 'none', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     Cancel
                   </button>
@@ -227,84 +265,122 @@ export const CosCloudIcon = ({
                     type="file" 
                     ref={fileInputRef} 
                     onChange={handleFileChange}
-                    className="hidden" 
+                    style={{ display: 'none' }}
                     accept=".ppt,.pptx,.pdf,.doc,.docx,.png,.jpg,.jpeg,.edb,.epub"
                   />
                   <button
                     onClick={handleUploadClick}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 shadow-sm transition-colors animate-pulse"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      width: '100%',
+                      padding: '8px',
+                      background: 'linear-gradient(to right, #dafa8d, #bce94e)',
+                      color: '#090510',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.72rem',
+                      fontWeight: '850',
+                      cursor: 'pointer',
+                      transition: 'transform 0.1s'
+                    }}
                   >
-                    <Upload className="w-4 h-4" />
+                    <Upload style={{ width: '13px', height: '13px' }} />
                     Upload File to COS
                   </button>
-                  <p className="text-[10px] text-center text-slate-400 mt-1.5">
-                    Supports PPT/X, PDF, DOC/X, EPUB, EDB, and images. Private to this booking.
-                  </p>
                 </div>
               )
             )}
           </div>
 
           {/* Files List */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[200px] max-h-[300px]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
             {files.length === 0 ? (
-              <div className="h-44 flex flex-col items-center justify-center text-slate-400">
-                <Cloud className="w-8 h-8 stroke-1.5 mb-2" />
-                <span className="text-xs">No files in cloud storage yet</span>
+              <div style={{ padding: '20px 0', textAlign: 'center', color: '#b9adc7', fontSize: '0.68rem' }}>
+                No files in cloud storage yet
               </div>
             ) : (
               files.map((file) => (
                 <div 
                   key={file.id} 
-                  className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '8px',
+                    gap: '8px',
+                    boxSizing: 'border-box'
+                  }}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                      <FileText className="w-4 h-4" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '0', flex: '1' }}>
+                    <div style={{ padding: '6px', background: 'rgba(188, 233, 78, 0.1)', color: '#bce94e', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
+                      <FileText style={{ width: '13px', height: '13px' }} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-slate-800 truncate" title={file.name}>
+                    <div style={{ minWidth: '0', flex: '1' }}>
+                      <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#fff', margin: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={file.name}>
                         {file.name}
                       </p>
-                      <p className="text-[10px] text-slate-400">
+                      <p style={{ fontSize: '0.58rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
                         {formatSize(file.size)} • {file.type.toUpperCase()}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 ml-2">
+                  <div style={{ display: 'flex', alignItems: 'center', shrink: '0' }}>
                     {file.status === 'processing' && (
-                      <div className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded font-medium shrink-0 animate-pulse">
-                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.58rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                        <RefreshCw style={{ width: '10px', height: '10px' }} className="animate-spin" />
                         Converting
-                      </div>
-                    )}
-
-                    {file.status === 'error' && (
-                      <div className="flex items-center gap-1 text-[10px] text-rose-600 bg-rose-50 px-2 py-1 rounded font-medium shrink-0">
-                        <AlertCircle className="w-3 h-3" />
-                        Error
                       </div>
                     )}
 
                     {file.status === 'ready' && isTeacher && (
                       <button
                         onClick={() => onShareDocument(file)}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded border border-emerald-100 transition-colors shrink-0"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          padding: '4px 8px',
+                          background: '#bce94e',
+                          color: '#090510',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '0.65rem',
+                          fontWeight: '850',
+                          cursor: 'pointer'
+                        }}
                       >
-                        <Play className="w-3 h-3 fill-emerald-700 text-emerald-700" />
+                        <Play style={{ width: '9px', height: '9px', fill: '#090510' }} />
                         Share
                       </button>
                     )}
 
-                    {file.status === 'none' && (
+                    {(file.status === 'none' || file.type === 'edb' || file.type === 'epub') && (
                       <a
                         href={file.url}
                         download
-                        className="flex items-center gap-1 px-2 py-1 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-semibold rounded border border-slate-200 transition-colors shrink-0"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          padding: '4px 8px',
+                          background: 'rgba(255,255,255,0.08)',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '6px',
+                          fontSize: '0.62rem',
+                          textDecoration: 'none',
+                          fontWeight: 'bold'
+                        }}
                       >
-                        <Download className="w-3 h-3" />
-                        Download
+                        <Download style={{ width: '9px', height: '9px' }} />
+                        Get
                       </a>
                     )}
                   </div>

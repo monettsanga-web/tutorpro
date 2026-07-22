@@ -104,7 +104,7 @@ export const WhiteboardSlides = ({
     const ctx = canvas?.getContext('2d');
     if (canvas && ctx && currentLine.length > 0) {
       ctx.beginPath();
-      ctx.strokeStyle = activeTool === 'eraser' ? '#FFFFFF' : penColor;
+      ctx.strokeStyle = activeTool === 'eraser' ? '#090510' : penColor;
       ctx.lineWidth = activeTool === 'eraser' ? 24 : 4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -125,7 +125,7 @@ export const WhiteboardSlides = ({
     if (currentLine.length > 1) {
       const newLine = {
         points: currentLine,
-        color: activeTool === 'eraser' ? '#FFFFFF' : penColor,
+        color: activeTool === 'eraser' ? '#090510' : penColor,
         width: activeTool === 'eraser' ? 24 : 4
       };
 
@@ -158,63 +158,118 @@ export const WhiteboardSlides = ({
   };
 
   return (
-    <div className="flex flex-col bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl h-full select-none text-slate-100">
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#0c071a',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: '12px',
+      overflow: 'hidden',
+      height: '100%',
+      width: '100%',
+      fontFamily: 'sans-serif',
+      color: '#fff',
+      boxSizing: 'border-box'
+    }}>
       {/* Slide Whiteboard Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-800 border-b border-slate-700">
-        <div className="flex items-center gap-2">
-          <div className="p-1 bg-blue-500/10 text-blue-400 rounded-lg">
-            <FileImage className="w-5 h-5" />
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 16px',
+        background: '#150f29',
+        borderBottom: '1px solid rgba(255,255,255,0.08)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ padding: '6px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', borderRadius: '6px', display: 'flex' }}>
+            <FileImage style={{ width: '16px', height: '16px' }} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-white truncate max-w-[240px]" title={fileName}>
+            <h2 style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '0', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={fileName}>
               {fileName}
             </h2>
-            <p className="text-[10px] text-slate-400">
-              Shared Screen Slide Deck
+            <p style={{ fontSize: '0.6rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
+              Shared Screen Courseware
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {isTeacher && (
             <button
               onClick={() => setSyncToStudent(!syncToStudent)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded border transition-colors ${
-                syncToStudent 
-                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
-                  : 'bg-slate-700 text-slate-300 border-slate-600'
-              }`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 10px',
+                background: syncToStudent ? 'rgba(188,233,78,0.15)' : 'rgba(255,255,255,0.05)',
+                color: syncToStudent ? '#bce94e' : '#b9adc7',
+                border: '1px solid rgba(188,233,78,0.2)',
+                borderRadius: '8px',
+                fontSize: '0.68rem',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
             >
-              {syncToStudent ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-              {syncToStudent ? 'Student Synced' : 'Sync Student'}
+              {syncToStudent ? <Lock style={{ width: '12px', height: '12px' }} /> : <Unlock style={{ width: '12px', height: '12px' }} />}
+              <span>{syncToStudent ? 'Student Synced' : 'Sync Student'}</span>
             </button>
           )}
 
           <a
             href={fileUrl}
             download
-            className="p-1.5 text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded transition-colors"
+            style={{
+              padding: '6px',
+              color: '#b9adc7',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '6px',
+              display: 'flex',
+              cursor: 'pointer',
+              textDecoration: 'none'
+            }}
             title="Download Original PPTX"
           >
-            <Download className="w-4 h-4" />
+            <Download style={{ width: '13px', height: '13px' }} />
           </a>
         </div>
       </div>
 
       {/* Main Whiteboard Screen */}
-      <div className="flex-1 relative flex items-center justify-center bg-slate-950 p-4 min-h-[350px]">
+      <div style={{
+        flex: '1',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#090510',
+        padding: '16px',
+        minHeight: '300px'
+      }}>
         <div 
-          className="relative rounded-lg shadow-lg border border-slate-800 overflow-hidden bg-white max-w-full aspect-[4/3] flex flex-col items-center justify-center"
           style={{ 
+            position: 'relative',
+            borderRadius: '10px',
+            overflow: 'hidden',
+            background: '#fff',
             width: `${zoomLevel}%`,
+            aspectRatio: '4/3',
+            maxWidth: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
             transition: 'width 0.2s ease-in-out'
           }}
         >
           {/* Simulated PPT Content Page */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-slate-800 select-none">
-            <div className="text-center">
-              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">TutorPro Interactive Slide</span>
-              <h1 className="text-2xl font-bold mt-1.5 text-slate-900">
+          <div style={{ position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#130a25', boxSizing: 'border-box' }}>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: '850', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(124,58,237,0.08)', padding: '2px 8px', borderRadius: '10px' }}>TutorPro Interactive Slide</span>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '900', margin: '8px 0 0 0', color: '#130a25', lineHeight: '1.2' }}>
                 {currentPage === 1 && "Unit 1: Let's Learn Phonics!"}
                 {currentPage === 2 && "Sound of Short 'A' /æ/"}
                 {currentPage === 3 && "Interactive Vocabulary: APPLE"}
@@ -223,49 +278,49 @@ export const WhiteboardSlides = ({
               </h1>
             </div>
 
-            <div className="mt-6 flex-1 w-full flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg p-4 bg-slate-50/50">
+            <div style={{ marginTop: '16px', flex: '1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(19,10,37,0.05)', borderRadius: '12px', padding: '16px', background: 'rgba(19,10,37,0.02)', boxSizing: 'border-box' }}>
               {currentPage === 1 && (
-                <div className="grid grid-cols-2 gap-4 w-full">
-                  <div className="bg-red-50 p-4 rounded-xl text-center border border-red-100">
-                    <span className="text-4xl">🍎</span>
-                    <h3 className="font-bold text-red-800 text-sm mt-1">A is for Apple</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
+                  <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #fee2e2' }}>
+                    <span style={{ fontSize: '2.5rem', display: 'block' }}>🍎</span>
+                    <h3 style={{ fontWeight: 'bold', color: '#991b1b', fontSize: '0.75rem', margin: '4px 0 0 0' }}>A is for Apple</h3>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
-                    <span className="text-4xl">🐝</span>
-                    <h3 className="font-bold text-blue-800 text-sm mt-1">B is for Bee</h3>
+                  <div style={{ background: '#eff6ff', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid #dbeafe' }}>
+                    <span style={{ fontSize: '2.5rem', display: 'block' }}>🐝</span>
+                    <h3 style={{ fontWeight: 'bold', color: '#1e40af', fontSize: '0.75rem', margin: '4px 0 0 0' }}>B is for Bee</h3>
                   </div>
                 </div>
               )}
               {currentPage === 2 && (
-                <div className="text-center">
-                  <span className="text-6xl animate-bounce inline-block font-extrabold text-blue-600">Aa</span>
-                  <div className="flex gap-3 justify-center mt-4">
-                    <span className="bg-white px-3 py-1.5 rounded-lg border shadow-sm text-sm font-semibold">Ant 🐜</span>
-                    <span className="bg-white px-3 py-1.5 rounded-lg border shadow-sm text-sm font-semibold">Bat 🦇</span>
-                    <span className="bg-white px-3 py-1.5 rounded-lg border shadow-sm text-sm font-semibold">Cat 🐱</span>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: '4rem', fontWeight: '900', color: '#7c3aed', display: 'block' }}>Aa</span>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '10px' }}>
+                    <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Ant 🐜</span>
+                    <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Bat 🦇</span>
+                    <span style={{ background: '#fff', px: '8px', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', fontSize: '0.7rem', fontWeight: 'bold' }}>Cat 🐱</span>
                   </div>
                 </div>
               )}
               {currentPage === 3 && (
-                <div className="text-center max-w-sm">
-                  <div className="w-32 h-32 mx-auto bg-amber-50 rounded-full flex items-center justify-center border border-amber-200">
-                    <span className="text-6xl">🍎</span>
+                <div style={{ textAlign: 'center', maxWidth: '240px' }}>
+                  <div style={{ width: '80px', height: '80px', margin: '0 auto', background: '#fffbeb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fef3c7' }}>
+                    <span style={{ fontSize: '3rem' }}>🍎</span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-4 leading-relaxed">
-                    Say the word: <span className="font-bold text-slate-900 text-base">A-P-P-L-E</span>. Practice the mouth shape for the /æ/ sound.
+                  <p style={{ fontSize: '0.7rem', color: '#4b5563', marginTop: '10px', lineHeight: '1.4' }}>
+                    Say the word: <span style={{ fontWeight: 'bold', color: '#111827' }}>A-P-P-L-E</span>. Practice the mouth shape for /æ/.
                   </p>
                 </div>
               )}
               {currentPage > 3 && (
-                <div className="text-center">
-                  <span className="text-5xl">⭐️🏆⭐</span>
-                  <p className="text-sm font-bold text-slate-700 mt-3">Interactive Review Slide</p>
-                  <p className="text-xs text-slate-400 mt-1">Use matching and drawing tools to answer.</p>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: '2.5rem' }}>⭐️🏆⭐</span>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#374151', margin: '8px 0 0 0' }}>Interactive Review Slide</p>
+                  <p style={{ fontSize: '0.62rem', color: '#9ca3af', margin: '2px 0 0 0' }}>Use drawing tools to answer.</p>
                 </div>
               )}
             </div>
 
-            <div className="w-full flex items-center justify-between text-[10px] text-slate-400 mt-4 border-t border-slate-100 pt-3">
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.6rem', color: '#9ca3af', marginTop: '12px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px' }}>
               <span>TutorPro English • Courseware Deck</span>
               <span>Slide {currentPage} of {totalSlides}</span>
             </div>
@@ -276,35 +331,43 @@ export const WhiteboardSlides = ({
             ref={canvasRef}
             width={800}
             height={600}
-            className="absolute inset-0 w-full h-full z-10 cursor-crosshair"
+            style={{ position: 'absolute', inset: '0', width: '100%', height: '100%', zIndex: '10', cursor: 'crosshair' }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           />
 
           {/* Simulated Hotspots Layer */}
-          <div className="absolute inset-0 w-full h-full pointer-events-none z-20">
+          <div style={{ position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', zIndex: '20' }}>
             {(hotspots[currentPage] || []).map(hotspot => (
               <div
                 key={hotspot.id}
-                className="absolute pointer-events-auto"
-                style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
+                style={{ position: 'absolute', left: `${hotspot.x}%`, top: `${hotspot.y}%`, pointerEvents: 'auto' }}
               >
                 <button
                   onClick={() => handleHotspotClick(hotspot.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-lg border text-xs font-bold transition-all transform hover:scale-105 active:scale-95 ${
-                    hotspot.triggered
-                      ? 'bg-emerald-600 text-white border-emerald-500 scale-105 animate-pulse'
-                      : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
-                  }`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 10px',
+                    background: hotspot.triggered ? '#10b981' : '#fff',
+                    color: hotspot.triggered ? '#fff' : '#1f2937',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    borderRadius: '20px',
+                    fontSize: '0.65rem',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
                 >
-                  {hotspot.type === 'star' && <Award className="w-4 h-4 text-amber-500" />}
-                  {hotspot.type === 'game' && <Sparkles className="w-4 h-4 text-indigo-500" />}
-                  {hotspot.type === 'answer' && <Award className="w-4 h-4 text-blue-500" />}
-                  {hotspot.label}
-                  {hotspot.triggered && hotspot.type === 'answer' && ' (REVEALED: /æ/ as in CAT)'}
-                  {hotspot.triggered && hotspot.type === 'star' && ' (+100 Stars Added!)'}
-                  {hotspot.triggered && hotspot.type === 'game' && ' (Game Active)'}
+                  {hotspot.type === 'star' && <Award style={{ width: '12px', height: '12px', color: hotspot.triggered ? '#fff' : '#f59e0b' }} />}
+                  {hotspot.type === 'game' && <Sparkles style={{ width: '12px', height: '12px', color: hotspot.triggered ? '#fff' : '#6366f1' }} />}
+                  {hotspot.type === 'answer' && <Award style={{ width: '12px', height: '12px', color: hotspot.triggered ? '#fff' : '#3b82f6' }} />}
+                  <span>{hotspot.label}</span>
+                  {hotspot.triggered && hotspot.type === 'answer' && ' (REVEALED!)'}
+                  {hotspot.triggered && hotspot.type === 'star' && ' (+10 Stars!)'}
                 </button>
               </div>
             ))}
@@ -313,45 +376,80 @@ export const WhiteboardSlides = ({
       </div>
 
       {/* Classroom Control Toolbar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-slate-800 border-t border-slate-700">
-        <div className="flex items-center gap-2">
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 16px',
+        background: '#150f29',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        flexWrap: 'wrap',
+        gap: '10px'
+      }}>
+        {/* Drawing Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={() => setActiveTool(activeTool === 'pen' ? 'none' : 'pen')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'pen' ? 'bg-red-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
+            style={{
+              padding: '6px',
+              borderRadius: '6px',
+              background: activeTool === 'pen' ? '#ef4444' : 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex'
+            }}
             title="Drawing Pen"
           >
-            <PenTool className="w-4 h-4" />
+            <PenTool style={{ width: '14px', height: '14px' }} />
           </button>
           
           <button
             onClick={() => setActiveTool(activeTool === 'eraser' ? 'none' : 'eraser')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'eraser' ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
+            style={{
+              padding: '6px',
+              borderRadius: '6px',
+              background: activeTool === 'eraser' ? '#6366f1' : 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex'
+            }}
             title="Eraser"
           >
-            <Eraser className="w-4 h-4" />
+            <Eraser style={{ width: '14px', height: '14px' }} />
           </button>
 
           <button
             onClick={handleClearAnnotations}
-            className="px-2.5 py-1 text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 rounded border border-slate-600 transition-colors"
+            style={{
+              padding: '4px 10px',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '6px',
+              fontSize: '0.65rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
           >
             Clear Page
           </button>
 
           {activeTool === 'pen' && (
-            <div className="flex items-center gap-1 ml-1 bg-slate-900 p-1 rounded-md border border-slate-700">
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
               {['#EF4444', '#10B981', '#3B82F6', '#F59E0B'].map(color => (
                 <button
                   key={color}
                   onClick={() => setPenColor(color)}
-                  className="w-4 h-4 rounded-full border border-slate-600 transition-transform hover:scale-110"
                   style={{ 
-                    backgroundColor: color,
-                    transform: penColor === color ? 'scale(1.2)' : 'none'
+                    width: '12px', 
+                    height: '12px', 
+                    borderRadius: '50%', 
+                    backgroundColor: color, 
+                    border: 'none',
+                    outline: penColor === color ? '1px solid #fff' : 'none',
+                    cursor: 'pointer'
                   }}
                 />
               ))}
@@ -359,45 +457,63 @@ export const WhiteboardSlides = ({
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Navigation Page Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={handlePrevPage}
             disabled={currentPage === 1}
-            className="p-1.5 bg-slate-700 text-slate-300 hover:text-white rounded disabled:opacity-40 disabled:hover:text-slate-300 transition-colors"
+            style={{
+              padding: '4px',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              opacity: currentPage === 1 ? '0.4' : '1',
+              display: 'flex'
+            }}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft style={{ width: '16px', height: '16px' }} />
           </button>
           
-          <span className="text-sm font-semibold text-white px-2.5 py-1 bg-slate-900 rounded-md border border-slate-700">
+          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: '#090510', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
             Slide {currentPage} / {totalSlides}
           </span>
 
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalSlides}
-            className="p-1.5 bg-slate-700 text-slate-300 hover:text-white rounded disabled:opacity-40 disabled:hover:text-slate-300 transition-colors"
+            style={{
+              padding: '4px',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              opacity: currentPage === totalSlides ? '0.4' : '1',
+              display: 'flex'
+            }}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight style={{ width: '16px', height: '16px' }} />
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* View Zoom */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button
             onClick={() => setZoomScale(Math.max(50, zoomLevel - 10))}
-            className="p-1.5 bg-slate-700 text-slate-300 hover:text-white rounded transition-colors"
-            title="Zoom Out"
+            style={{ padding: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex' }}
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut style={{ width: '13px', height: '13px' }} />
           </button>
-          <span className="text-xs font-semibold text-slate-300 min-w-[36px] text-center">
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', width: '32px', textAlign: 'center' }}>
             {zoomLevel}%
           </span>
           <button
             onClick={() => setZoomScale(Math.min(150, zoomLevel + 10))}
-            className="p-1.5 bg-slate-700 text-slate-300 hover:text-white rounded transition-colors"
-            title="Zoom In"
+            style={{ padding: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex' }}
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn style={{ width: '13px', height: '13px' }} />
           </button>
           
           <button
@@ -405,10 +521,10 @@ export const WhiteboardSlides = ({
               setIsFullscreen(!isFullscreen);
               setZoomScale(100);
             }}
-            className="p-1.5 bg-slate-700 text-slate-300 hover:text-white rounded transition-colors ml-1"
+            style={{ padding: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', marginLeft: '4px' }}
             title="Toggle Fit"
           >
-            <Maximize2 className="w-4 h-4" />
+            <Maximize2 style={{ width: '13px', height: '13px' }} />
           </button>
         </div>
       </div>
