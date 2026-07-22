@@ -45,7 +45,7 @@ export class TutorProCosUploader {
       console.warn("Supabase invoke failed, attempting direct fetch fallback...", e);
     }
 
-    // Try 2: Direct Fetch Fallback (100% immune to older client SDK bugs)
+    // Try 2: Direct Fetch Fallback
     if (!data) {
       try {
         const response = await fetch(`https://losmkvvwzijipqrlelyt.supabase.co/functions/v1/get-cos-credentials`, {
@@ -102,6 +102,28 @@ export class TutorProCosUploader {
       prefix: data.prefix,
       sharedPrefix: data.sharedPrefix || 'shared/'
     };
+  }
+
+  /**
+   * Generates a temporary, signed read URL for a private COS file
+   */
+  async getSignedUrl(key) {
+    const { cos, bucket, region } = await this.getCosClient();
+    return new Promise((resolve, reject) => {
+      cos.getObjectUrl({
+        Bucket: bucket,
+        Region: region,
+        Key: key,
+        Sign: true, // Crucial! Signs the URL with our short-lived STS tokens
+        Expires: 1800 // 30 minutes validity
+      }, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data.Url);
+        }
+      });
+    });
   }
 
   /**

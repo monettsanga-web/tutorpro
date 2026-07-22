@@ -152,6 +152,28 @@ export const CosCloudIcon = ({
     }
   };
 
+  // Generate a temporary signed read URL on click-to-share!
+  const handleShareClick = async (file) => {
+    setErrorMessage('');
+    try {
+      let finalUrl = file.url;
+      // If the file is on COS (starts with classrooms/ or shared/)
+      if (file.key && uploader.current) {
+        // Generate a 30-minute signed URL
+        finalUrl = await uploader.current.getSignedUrl(file.key);
+      }
+      
+      onShareDocument({
+        ...file,
+        url: finalUrl // pass the secure signed URL!
+      });
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error signing COS read URL:", error);
+      setErrorMessage("Failed to generate private access link");
+    }
+  };
+
   const simulateConversion = (fileId) => {
     setTimeout(() => {
       setFiles(prev => prev.map(f => {
@@ -295,7 +317,7 @@ export const CosCloudIcon = ({
             </button>
           </div>
 
-          {/* Upload Action - Both teachers and students can upload files during collaborative sessions */}
+          {/* Upload Action */}
           <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px' }}>
             {isUploading ? (
               <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -387,7 +409,7 @@ export const CosCloudIcon = ({
             )}
           </div>
 
-          {/* Files List - Downloads removed, but SHARE option opened publicly to everyone */}
+          {/* Files List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
             {filteredFiles.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center', color: '#b9adc7', fontSize: '0.68rem' }}>
@@ -431,10 +453,10 @@ export const CosCloudIcon = ({
                       </div>
                     )}
 
-                    {/* Both teachers and students can now publicly SHARE files onto the screen */}
+                    {/* Generate temporary signed read URL on click-to-share! */}
                     {(file.status === 'ready' || file.status === 'none') && (
                       <button
-                        onClick={() => onShareDocument(file)}
+                        onClick={() => handleShareClick(file)}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
