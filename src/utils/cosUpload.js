@@ -9,22 +9,22 @@ export class TutorProCosUploader {
     this.uploadTask = null;
   }
 
-  // Initialize COS client with STS temporary credentials
+  // Initialize COS client with STS temporary credentials using Supabase functions client
   async getCosClient() {
-    const response = await fetch(`${this.supabaseUrl}/functions/v1/get-cos-credentials`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.supabaseToken}`,
-      },
-      body: JSON.stringify({ bookingId: this.bookingId }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch temporary upload credentials');
+    const { supabase } = await import('../supabaseClient.js');
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
     }
 
-    const data = await response.json();
+    // Invoke the secure get-cos-credentials edge function
+    // This automatically attaches the current authenticated user's JWT token
+    const { data, error } = await supabase.functions.invoke('get-cos-credentials', {
+      body: { bookingId: this.bookingId },
+    });
+
+    if (error || !data) {
+      throw new Error(`Failed to fetch temporary credentials: ${error?.message || 'Invalid credentials'}`);
+    }
 
     const cos = new COS({
       getAuthorization: (options, callback) => {
@@ -54,7 +54,7 @@ export class TutorProCosUploader {
   async uploadFile({ file, onProgress, onTaskCreated, isShared = false }) {
     const { cos, bucket, region, prefix, sharedPrefix } = await this.getCosClient();
     
-    // Choose destination path based on shared/private setting
+    // Scopes path
     const targetPrefix = isShared ? sharedPrefix : prefix;
     const key = `${targetPrefix}${Date.now()}-${file.name}`;
 

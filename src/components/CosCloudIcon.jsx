@@ -16,6 +16,7 @@ export const CosCloudIcon = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadState, setUploadState] = useState('none');
   const [activeUploadName, setActiveUploadName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const uploadControls = useRef(null);
   
   const fileInputRef = useRef(null);
@@ -104,6 +105,7 @@ export const CosCloudIcon = ({
     setIsUploading(true);
     setUploadProgress(0);
     setUploadState('uploading');
+    setErrorMessage('');
 
     try {
       const isSharedUpload = activeTab === 'shared';
@@ -146,6 +148,7 @@ export const CosCloudIcon = ({
     } catch (error) {
       console.error("Upload error:", error);
       setUploadState('error');
+      setErrorMessage(error.message || 'Tencent COS upload failed');
     }
   };
 
@@ -168,7 +171,6 @@ export const CosCloudIcon = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Filter files depending on Private vs Shared tab selection
   const filteredFiles = files.filter(f => {
     if (activeTab === 'shared') {
       return f.key.startsWith('shared/');
@@ -223,7 +225,7 @@ export const CosCloudIcon = ({
           boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px', justifyContent: 'space-between' }}>
             <div>
               <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '0', color: '#fff' }}>Cloud Storage</h3>
               <p style={{ fontSize: '0.62rem', color: '#b9adc7', margin: '2px 0 0 0' }}>Tencent COS folders</p>
@@ -245,10 +247,10 @@ export const CosCloudIcon = ({
             </button>
           </div>
 
-          {/* TAB SELECTOR: Private vs Shared */}
+          {/* TAB SELECTOR */}
           <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '8px' }}>
             <button
-              onClick={() => setActiveTab('private')}
+              onClick={() => { setActiveTab('private'); setErrorMessage(''); }}
               style={{
                 flex: 1,
                 display: 'flex',
@@ -270,7 +272,7 @@ export const CosCloudIcon = ({
               This Class
             </button>
             <button
-              onClick={() => setActiveTab('shared')}
+              onClick={() => { setActiveTab('shared'); setErrorMessage(''); }}
               style={{
                 flex: 1,
                 display: 'flex',
@@ -305,12 +307,20 @@ export const CosCloudIcon = ({
                   <div 
                     style={{ 
                       height: '100%', 
-                      background: uploadState === 'paused' ? '#f59e0b' : '#bce94e',
+                      background: uploadState === 'paused' ? '#f59e0b' : uploadState === 'error' ? '#ef4444' : '#bce94e',
                       width: `${uploadProgress}%`,
                       transition: 'width 0.2s ease-in-out'
                     }}
                   />
                 </div>
+                
+                {errorMessage && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fca5a5', fontSize: '0.62rem', margin: '4px 0 6px 0', wordBreak: 'break-all' }}>
+                    <AlertCircle style={{ width: '12px', height: '12px', shrink: '0' }} />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                   {uploadState === 'uploading' && (
                     <button 
@@ -329,7 +339,13 @@ export const CosCloudIcon = ({
                     </button>
                   )}
                   <button 
-                    onClick={() => uploadControls.current?.cancel()}
+                    onClick={() => {
+                      if (uploadControls.current) {
+                        uploadControls.current.cancel();
+                      } else {
+                        setIsUploading(false);
+                      }
+                    }}
                     style={{ padding: '2px 8px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', border: 'none', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     Cancel
