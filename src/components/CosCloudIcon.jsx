@@ -295,7 +295,7 @@ export const CosCloudIcon = ({
             </button>
           </div>
 
-          {/* Upload Action */}
+          {/* Upload Action - Both teachers and students can upload files during collaborative sessions */}
           <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '8px' }}>
             {isUploading ? (
               <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -353,43 +353,41 @@ export const CosCloudIcon = ({
                 </div>
               </div>
             ) : (
-              isTeacher && (
-                <div>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                    accept=".ppt,.pptx,.pdf,.doc,.docx,.png,.jpg,.jpeg,.edb,.epub"
-                  />
-                  <button
-                    onClick={handleUploadClick}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      width: '100%',
-                      padding: '8px',
-                      background: 'linear-gradient(to right, #dafa8d, #bce94e)',
-                      color: '#090510',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '0.72rem',
-                      fontWeight: '850',
-                      cursor: 'pointer',
-                      transition: 'transform 0.1s'
-                    }}
-                  >
-                    <Upload style={{ width: '13px', height: '13px' }} />
-                    <span>Upload to {activeTab === 'shared' ? 'Shared Library' : 'This Class'}</span>
-                  </button>
-                </div>
-              )
+              <div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  accept=".ppt,.pptx,.pdf,.doc,.docx,.png,.jpg,.jpeg,.edb,.epub"
+                />
+                <button
+                  onClick={handleUploadClick}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    width: '100%',
+                    padding: '8px',
+                    background: 'linear-gradient(to right, #dafa8d, #bce94e)',
+                    color: '#090510',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.72rem',
+                    fontWeight: '850',
+                    cursor: 'pointer',
+                    transition: 'transform 0.1s'
+                  }}
+                >
+                  <Upload style={{ width: '13px', height: '13px' }} />
+                  <span>Upload to {activeTab === 'shared' ? 'Shared Library' : 'This Class'}</span>
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Files List - Downloads removed to protect curriculum files */}
+          {/* Files List - Downloads removed, but SHARE option opened publicly to everyone */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
             {filteredFiles.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center', color: '#b9adc7', fontSize: '0.68rem' }}>
@@ -433,8 +431,8 @@ export const CosCloudIcon = ({
                       </div>
                     )}
 
-                    {/* Teachers can ONLY Share files. Downloading is completely blocked */}
-                    {(file.status === 'ready' || file.status === 'none') && isTeacher && (
+                    {/* Both teachers and students can now publicly SHARE files onto the screen */}
+                    {(file.status === 'ready' || file.status === 'none') && (
                       <button
                         onClick={() => onShareDocument(file)}
                         style={{
@@ -454,13 +452,6 @@ export const CosCloudIcon = ({
                         <Play style={{ width: '9px', height: '9px', fill: '#090510' }} />
                         Share
                       </button>
-                    )}
-
-                    {/* Non-teacher view displays read-only status, NO download options */}
-                    {!isTeacher && (
-                      <span style={{ fontSize: '0.6rem', color: '#b9adc7', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '4px' }}>
-                        Secure File
-                      </span>
                     )}
                   </div>
                 </div>
