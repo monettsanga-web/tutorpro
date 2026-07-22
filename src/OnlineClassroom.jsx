@@ -283,6 +283,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [textEditor, setTextEditor] = useState(null)
   const [textDraft, setTextDraft] = useState('')
   const [files, setFiles] = useState([])
+  const [cosSlidePage, setCosSlidePage] = useState(1)
   const [sidebarTab, setSidebarTab] = useState('chat')
   const [chatMessages, setChatMessages] = useState([])
   const [chatDraft, setChatDraft] = useState('')
@@ -581,6 +582,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'presentation-file') {
         setPresentedFile(message.file || null)
+        return
+      }
+      if (message.type === 'slide-page') {
+        setCosSlidePage(Number(message.page) || 1)
         return
       }
       if (message.type === 'annotation-path' && message.path) {
@@ -1420,6 +1425,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             fileName={file.name}
             fileUrl={file.dataUrl || file.url}
             isTeacher={account.role === 'teacher'}
+            currentPage={cosSlidePage}
+            onPageChange={(newPage) => {
+              setCosSlidePage(newPage)
+              transportRef.current?.send({ type: 'slide-page', page: newPage })
+            }}
           />
         </div>
       )

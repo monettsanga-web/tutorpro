@@ -89,12 +89,23 @@ serve(async (req) => {
       throw new Error("Tencent COS configuration missing on server");
     }
 
+    const bucketScope = `qcs::cos:${region}:uid/${appId}:${bucket}`;
     const privateScope = `qcs::cos:${region}:uid/${appId}:${bucket}/classrooms/${bookingId}/*`;
     const sharedScope = `qcs::cos:${region}:uid/${appId}:${bucket}/shared/*`;
 
+    // 100% Compliant Tencent CAM Policy supporting bucket-level GetBucket (listing) and object operations
     const policy = {
       version: "2.0",
       statement: [
+        // Statement 1: Bucket Level Actions (GetBucket listing)
+        {
+          effect: "allow",
+          action: [
+            "name/cos:GetBucket"
+          ],
+          resource: [bucketScope]
+        },
+        // Statement 2: Private Booking Folder (Full read/write)
         {
           effect: "allow",
           action: [
@@ -110,8 +121,9 @@ serve(async (req) => {
             "name/cos:DeleteObject",
             "name/cos:HeadObject"
           ],
-          resource: [privateScope],
+          resource: [privateScope]
         },
+        // Statement 3: Shared Folder (Full read/write for Teachers, Read-only for Students)
         {
           effect: "allow",
           action: isTeacher ? [
@@ -130,12 +142,12 @@ serve(async (req) => {
             "name/cos:GetObject",
             "name/cos:HeadObject"
           ],
-          resource: [sharedScope],
+          resource: [sharedScope]
         }
-      ],
+      ]
     };
 
-    // Use international endpoint: sts.intl.tencentcloudapi.com
+    // Instantiate official Tencent Cloud STS client via SDK
     const StsClient = tencentcloud.sts.v20180813.Client;
     const client = new StsClient({
       credential: {
@@ -158,7 +170,6 @@ serve(async (req) => {
       DurationSeconds: 1800,
     };
 
-    // Invoke GetFederationToken officially via SDK
     const result = await client.GetFederationToken(params);
 
     const stsCredentials = {
