@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   AudioLines,
+  Award,
   Ban,
   Bell,
   BookOpen,
@@ -74,7 +75,7 @@ import OnlineClassroom from './OnlineClassroom.jsx'
 import { isTencentClassroomConfigured } from './tencentClassroom.js'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
-import { deleteProfileMediaOwner, saveProfileMedia } from './media.js'
+import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
@@ -549,8 +550,12 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
 }
 
 function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking = false }) {
-  const teachers = getApprovedTeachers()
+  let teachers = getApprovedTeachers()
   const learner = learnerProp || account.child
+
+  if (!adminBooking && learner?.assignedTeacherId) {
+    teachers = teachers.filter((t) => t.id === learner.assignedTeacherId)
+  }
   const [form, setForm] = useState({ teacherId: account.preferredTeacherId || '', duration: '25', focus: learner.goal, note: '' })
   const [selectedLessons, setSelectedLessons] = useState([])
   const [weekOffset, setWeekOffset] = useState(0)
@@ -1082,6 +1087,20 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'support' && <div className="portal-view parent-support-view"><div className="portal-page-heading"><div><span className="portal-kicker">English & 中文 support</span><h1>Chat with TutorPro English</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div><span className="support-inbox-live"><i /> Private support</span></div><SupportChatWidget embedded /></div>}
 
+      {active === 'support' && (
+        <div className="portal-view parent-support-view">
+          <div className="portal-page-heading">
+            <div>
+              <span className="portal-kicker">TutorPro Helpdesk</span>
+              <h1>Contact Administration</h1>
+              <p>Chat with TutorPro Customer Service about bookings, payouts, rates, or general inquiries in real-time.</p>
+            </div>
+            <span className="support-inbox-live"><i /> Secure Chat</span>
+          </div>
+          <SupportChatWidget embedded />
+        </div>
+      )}
+
       {active === 'profile' && (
         <div className="portal-view">
           <section className="student-profile-hero">
@@ -1350,6 +1369,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'bookings', label: 'Bookings', icon: ClipboardCheck, badge: pending },
     { id: 'classroom', label: 'Classroom', icon: Video },
     { id: 'schedule', label: 'Availability', icon: CalendarDays },
+    { id: 'support', label: 'Support & Chat', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -1445,6 +1465,20 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
         </div>
       )}
 
+      {active === 'support' && (
+        <div className="portal-view parent-support-view">
+          <div className="portal-page-heading">
+            <div>
+              <span className="portal-kicker">TutorPro Helpdesk</span>
+              <h1>Contact Administration</h1>
+              <p>Chat with TutorPro Customer Service about bookings, payouts, rates, or general inquiries in real-time.</p>
+            </div>
+            <span className="support-inbox-live"><i /> Secure Chat</span>
+          </div>
+          <SupportChatWidget embedded />
+        </div>
+      )}
+
       {active === 'profile' && (
         <div className="portal-view">
           <section className="teacher-profile-hero"><div className="teacher-profile-photo-wrap"><ProfilePhoto accountId={account.id} name={account.fullName} refreshKey={mediaVersion} className="teacher-profile-photo" /><label title="Upload display photo"><Camera size={16} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherMedia(event, 'avatar')} /></label></div><div><StatusBadge status={account.status} /><h1>{account.fullName}</h1><p>{account.teacher.specialization} · {account.teacher.experience} years experience</p></div><div className="teacher-profile-hero__score"><Star size={21} /><strong>{account.teacher.rating || 'New'}</strong><span>{account.teacher.ratingCount ? `${account.teacher.ratingCount} class ratings` : 'rating'}</span></div></section>
@@ -1507,14 +1541,40 @@ function AdminInterviewRecordings({ interview }) {
   )
 }
 
-export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove, processing, error }) {
+export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove, processing, error, onOpenChat }) {
   const profile = teacher.teacher || {}
   const credentials = Array.isArray(profile.credentials) ? profile.credentials : []
   const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
   const teacherBookings = getBookings({ teacherId: teacher.id })
-  const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed').length
+  const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed' || booking.status === 'absent').length
+  const totalSlots = teacherBookings
+    .filter((booking) => booking.status === 'completed' || booking.status === 'absent')
+    .reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
   const interview = profile.interview || null
   const recommendationClass = interview?.overallRecommendation?.startsWith('Strong') ? 'strong' : interview?.overallRecommendation?.startsWith('Consider') ? 'consider' : 'review'
+
+  const [pesoRate, setPesoRate] = useState(profile.pesoRate || 350)
+  const [savingRate, setSavingRate] = useState(false)
+
+  const handleSavePesoRate = async () => {
+    setSavingRate(true)
+    try {
+      const updated = updateAccount(teacher.id, {
+        teacher: {
+          ...profile,
+          pesoRate: Number(pesoRate)
+        }
+      })
+      if (cloudSyncEnabled()) {
+        await updateCloudProfile(updated)
+      }
+      alert("Teacher's Peso Rate successfully saved!")
+    } catch (err) {
+      alert("Failed to save peso rate: " + err.message)
+    } finally {
+      setSavingRate(false)
+    }
+  }
 
   return (
     <div className="portal-view admin-teacher-profile-view">
@@ -1523,7 +1583,54 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
       <section className="admin-teacher-profile-hero">
         <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="admin-teacher-profile-photo" />
         <div><StatusBadge status={teacher.status || 'pending'} /><h1>{teacher.fullName || 'New Teacher'}</h1><p>{profile.specialization || 'Specialization not provided'} · {Number(profile.experience) || 0} years experience</p><div className="profile-tags"><span><Star size={13} /> {profile.rating || 'New'} rating</span><span><Video size={13} /> {profile.lessonsCompleted || completedLessons} lessons</span></div></div>
-        <div className="admin-teacher-profile-actions">
+        <div className="admin-teacher-profile-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          
+          {/* NATIVE INTER-WEBSITE CHAT BUTTON */}
+          <button
+            type="button"
+            onClick={() => onOpenChat?.(teacher.email || teacher.loginId, teacher.fullName)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: '#bce94e',
+              color: '#090510',
+              fontWeight: '850',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '0.72rem',
+              cursor: 'pointer'
+            }}
+          >
+            <MessageSquareText size={15} /> 💬 Chat on Website
+          </button>
+
+          <button 
+            type="button" 
+            onClick={async () => {
+              const bodyText = prompt(`Send a direct email message to ${teacher.fullName} (${teacher.email || teacher.loginId}):`);
+              if (!bodyText?.trim()) return;
+              try {
+                const { supabase } = await import('./supabaseClient.js');
+                const { data, error: invokeError } = await supabase.functions.invoke('mass-announcement', {
+                  body: {
+                    subject: "Message from TutorPro Administration",
+                    body: bodyText.trim(),
+                    recipientEmail: teacher.email || teacher.loginId
+                  }
+                });
+                if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send email');
+                alert(`Message successfully emailed to ${teacher.fullName}!`);
+              } catch(err) {
+                alert("Failed to send message: " + err.message);
+              }
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer' }}
+          >
+            <Send size={15} /> Send Email
+          </button>
+
           {teacher.status !== 'approved' && <button className="approve" onClick={() => onStatusChange(teacher.id, 'approved')} disabled={processing}><UserCheck size={16} /> {processing ? 'Saving…' : 'Approve teacher'}</button>}
           {teacher.status === 'approved' && <button className="suspend" onClick={() => onStatusChange(teacher.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend</button>}
           {teacher.status !== 'rejected' && !teacher.systemProfile && <button className="reject" onClick={() => onStatusChange(teacher.id, 'rejected')} disabled={processing}><XCircle size={16} /> Reject</button>}
@@ -1533,8 +1640,46 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
       <div className="admin-teacher-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Professional profile</span><h2>About the teacher</h2><p className="teacher-bio">{profile.bio || 'The teacher has not added a biography yet.'}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{profile.education || 'Not provided'}</strong></div><div><span>Languages</span><strong>{profile.languages || 'Not provided'}</strong></div><div><span>Curriculum</span><strong>{profile.specialization || 'Not provided'}</strong></div></div></section>
         <section className="portal-card admin-teacher-media"><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2><IntroVideo accountId={teacher.id} compact /><p>Visible to parents on the public teacher profile.</p></section>
-        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed lessons</dt><dd>{completedLessons}</dd></div></dl></section>
-        <section className="portal-card"><span className="portal-kicker">Verification</span><h2>Submitted credentials</h2>{credentials.length ? <ul className="admin-credential-list">{credentials.map((credential) => <li key={credential}><ShieldCheck size={15} /> {credential}</li>)}</ul> : <EmptyState icon={ShieldCheck} title="No credentials submitted" text="The teacher has not uploaded credential names yet." />}</section>
+        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed/Absent lessons</dt><dd>{completedLessons} classes</dd></div><div><dt style={{ color: '#10b981', fontWeight: 'bold' }}>Estimated Earnings</dt><dd style={{ color: '#10b981', fontWeight: 'black' }}>₱{(totalSlots * (profile.pesoRate || 350)).toLocaleString()}</dd></div></dl>
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>Configure Peso Rate (PHP per completed/absent class)</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '0 10px', borderRadius: '8px', color: '#b9adc7', fontSize: '0.8rem' }}>₱</span>
+              <input 
+                type="number" 
+                value={pesoRate}
+                onChange={(e) => setPesoRate(e.target.value)}
+                style={{
+                  flex: 1,
+                  background: 'rgba(0,0,0,0.2)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  outline: 'none'
+                }}
+              />
+              <button
+                onClick={handleSavePesoRate}
+                disabled={savingRate}
+                style={{
+                  background: '#bce94e',
+                  color: '#090510',
+                  fontWeight: '850',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  fontSize: '0.72rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {savingRate ? 'Saving...' : 'Save Rate'}
+              </button>
+            </div>
+          </div>
+        </section>
+        <section className="portal-card"><span className="portal-kicker">Verification</span><h2>Submitted credentials</h2>{credentials.length ? <ul className="admin-credential-list">{credentials.map((credential, index) => <li key={credential} style={{ display: 'block', margin: '4px 0' }}><button type="button" onClick={async () => { try { const record = await getProfileMedia(teacher.id, `credential-${index}`); if (record?.blob) { const objectUrl = URL.createObjectURL(record.blob); window.open(objectUrl, '_blank'); } else { alert("This credential file binary has not been uploaded yet or is empty."); } } catch(err) { alert("Error opening file: " + err.message); } }} style={{ background: 'transparent', border: 'none', color: '#bce94e', cursor: 'pointer', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', padding: '0', fontWeight: 'bold' }}><ShieldCheck size={15} /> {credential} (Click to View File)</button></li>)}</ul> : <EmptyState icon={ShieldCheck} title="No credentials submitted" text="The teacher has not uploaded credential names yet." />}</section>
       </div>
       <section className="portal-card admin-interview-review"><div className="admin-interview-heading"><div><span className="portal-kicker">Required first-round screening</span><h2>AI teacher interview</h2><p>Internal evaluation and full applicant transcript. Never shown to the applicant.</p></div>{interview ? <span className={`interview-recommendation interview-recommendation--${recommendationClass}`}>{interview.overallRecommendation}</span> : <span className="interview-recommendation interview-recommendation--review">Not completed</span>}</div>{interview ? <><div className="admin-interview-metrics"><div><span>English proficiency</span><strong>{interview.englishProficiency?.band || 'Needs review'}</strong><small>{interview.englishProficiency?.justification}</small></div><div><span>Live micro-demo</span><strong>{interview.liveDemo?.band || 'Needs review'}</strong><small>{interview.liveDemo?.justification}</small></div><div><span>Availability</span><strong>Applicant statement</strong><small>{interview.availability || 'Not stated'}</small></div></div><div className="admin-interview-evidence"><div><h3>Strengths</h3>{interview.strengths?.length ? <ul>{interview.strengths.map((item) => <li key={item}><CheckCircle2 size={14} /> {item}</li>)}</ul> : <p>No strengths were extracted automatically.</p>}</div><div><h3>Concerns / gaps</h3>{interview.concerns?.length ? <ul>{interview.concerns.map((item) => <li key={item}><XCircle size={14} /> {item}</li>)}</ul> : <p>No specific concerns were flagged.</p>}</div></div><div className="admin-interview-next"><strong>Suggested next step</strong><p>{interview.suggestedNextStep}</p><small>Evaluation source: {interview.source === 'ai-evaluator' ? 'AI evaluator' : 'Structured fallback — human review required'} · Completed {interview.completedAt ? new Date(interview.completedAt).toLocaleString('en') : 'recently'}</small></div><AdminInterviewRecordings interview={interview} /><details className="admin-interview-transcript"><summary>Open complete interview transcript ({interview.transcript?.length || 0} responses)</summary><div>{interview.transcript?.map((item, index) => <article key={`${item.stage}-${index}`}><span>{item.stage}</span><h4>{item.question}</h4><p>{item.answer}</p></article>)}</div></details></> : <div className="admin-interview-empty"><Bot size={27} /><strong>No interview record</strong><span>Teacher accounts created directly by an administrator may not include an applicant interview.</span></div>}</section>
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Teacher activity</span><h2>Recent bookings</h2></div></div>{teacherBookings.length ? teacherBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent />) : <EmptyState icon={CalendarDays} title="No bookings yet" text="Teacher bookings will appear here." />}</section>
@@ -1542,7 +1687,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
   )
 }
 
-export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onGoalChange, onRemove, processing, error }) {
+export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onGoalChange, onRemove, processing, error, teachers = [], onOpenChat }) {
   const learners = (account.children?.length ? account.children : account.child ? [account.child] : []).filter(Boolean)
   const learner = learners.find((item) => item.id === learnerId) || learners[0] || {
     id: `incomplete-${account.id}`,
@@ -1565,6 +1710,27 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const [goalDraft, setGoalDraft] = useState(learner.goal || '')
   const [goalError, setGoalError] = useState('')
   const [goalSaved, setGoalSaved] = useState(false)
+
+  const [assignedTeacherId, setAssignedTeacherId] = useState(learner.assignedTeacherId || '')
+
+  const handleSaveAssignedTeacher = async (teacherId) => {
+    const selectedTeacher = teachers.find(t => t.id === teacherId);
+    const teacherName = selectedTeacher ? selectedTeacher.fullName : '';
+    try {
+      const updated = updateStudentProfile(account.id, { 
+        assignedTeacherId: teacherId,
+        assignedTeacherName: teacherName
+      }, learner.id);
+      
+      if (cloudSyncEnabled()) {
+        await updateCloudProfile(updated)
+      }
+      setAssignedTeacherId(teacherId);
+      alert(`Successfully assigned ${teacherName || 'None'} to ${learner.name}!`);
+    } catch (err) {
+      alert("Failed to assign teacher: " + err.message);
+    }
+  }
 
   const saveGoal = async () => {
     const goal = goalDraft.trim()
@@ -1590,7 +1756,27 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       <section className="admin-student-profile-hero">
         <ProfilePhoto accountId={`${account.id}-${learner.id}`} name={learner.name} className="admin-student-profile-photo" />
         <div><StatusBadge status={effectiveStatus} /><h1>{learner.name}</h1><p>{learner.year} · {learner.curriculum} English</p><div className="profile-tags"><span><Star size={13} /> {learner.level || 'Building foundations'}</span><span><Flame size={13} /> {learner.streak || 0} day streak</span></div></div>
-        <div className="admin-teacher-profile-actions">
+        <div className="admin-teacher-profile-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* WEBPAGE CHAT TRIGGER */}
+          <button
+            type="button"
+            onClick={() => onOpenChat?.(account.email || account.loginId, account.parentName)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: '#bce94e',
+              color: '#090510',
+              fontWeight: '850',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '0.72rem',
+              cursor: 'pointer'
+            }}
+          >
+            <MessageSquareText size={15} /> 💬 Chat on Website
+          </button>
           {!isIncomplete && effectiveStatus === 'active' && <button className="suspend" onClick={() => onStatusChange(account.id, learner.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend profile</button>}
           {!isIncomplete && effectiveStatus === 'suspended' && <button className="approve" onClick={() => onStatusChange(account.id, learner.id, 'active')} disabled={processing}><UserCheck size={16} /> Restore profile</button>}
           <button className="reject" onClick={() => onRemove({ account, learner })} disabled={processing}><Trash2 size={16} /> Remove registration</button>
@@ -1601,7 +1787,30 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
         <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed', 'ongoing'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
-        <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family remain separate.</p></section>
+        <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family separate.</p></section>
+        <section className="portal-card"><span className="portal-kicker">Academic Management</span><h2>Assign Specific Teacher</h2><p style={{ fontSize: '0.75rem', color: '#b9adc7', marginBottom: '12px' }}>Assign a specific teacher. Once assigned, this student will ONLY be allowed to see and book lessons with this teacher.</p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <select
+              value={assignedTeacherId}
+              onChange={(e) => handleSaveAssignedTeacher(e.target.value)}
+              style={{
+                flex: 1,
+                background: 'rgba(0,0,0,0.2)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: '#fff',
+                fontSize: '0.8rem',
+                outline: 'none'
+              }}
+            >
+              <option value="">-- No Specific Teacher Assigned --</option>
+              {teachers.map(t => (
+                <option key={t.id} value={t.id}>{t.fullName}</option>
+              ))}
+            </select>
+          </div>
+        </section>
       </div>
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Student activity</span><h2>Recent lessons</h2></div></div>{learnerBookings.length ? learnerBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher />) : <EmptyState icon={CalendarDays} title="No lessons yet" text="Student bookings will appear here." />}</section>
     </div>
@@ -1694,13 +1903,28 @@ export function SupportInbox({ onUnreadChange }) {
     if (!selectedId || (!draft.trim() && !attachment)) return
     setSending(true)
     setError('')
+    const messageText = draft.trim()
     try {
-      if (attachment) await uploadAdminSupportAttachment(selectedId, attachment, draft.trim())
-      else await sendAdminSupportMessage(selectedId, draft.trim())
+      if (attachment) await uploadAdminSupportAttachment(selectedId, attachment, messageText)
+      else await sendAdminSupportMessage(selectedId, messageText)
       setDraft('')
       setAttachment(null)
       if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = ''
       await loadThread(selectedId)
+
+      // Trigger the bilingual secure email notification via Supabase Edge Function!
+      if (cloudSyncEnabled() && supabase) {
+        try {
+          await supabase.functions.invoke('support-notification', {
+            body: {
+              conversationId: selectedId,
+              messageBody: messageText || "Shared a support file attachment."
+            }
+          });
+        } catch (notiError) {
+          console.warn("Support email notification failed to send:", notiError);
+        }
+      }
     } catch (sendError) {
       setError(sendError.message)
     } finally {
@@ -1921,6 +2145,125 @@ export function AdminTeacherBookingGroups({ bookings, teachers, onStatusChange, 
         {!visibleBookings.length && <section className="portal-card"><EmptyState icon={CalendarCheck2} title={`No ${statusFilter === 'all' ? '' : `${statusFilter} `}bookings found`} text="Choose another teacher or booking status to see matching lessons." /></section>}
       </div>
     </>
+  )
+}
+
+
+export function AdminAnnouncementsPanel() {
+  const [target, setTarget] = useState('ALL') // ALL, TEACHER, STUDENT
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [sending, setSending] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  const handleSendAnnouncement = async (e) => {
+    e.preventDefault()
+    if (!subject.trim() || !body.trim()) {
+      setError("Please fill out both the subject and the announcement body!")
+      return
+    }
+    setSending(true)
+    setError('')
+    setMessage('')
+    try {
+      const { supabase } = await import('./supabaseClient.js')
+      const { data, error: invokeError } = await supabase.functions.invoke('mass-announcement', {
+        body: {
+          subject: subject.trim(),
+          body: body.trim(),
+          targetRole: target
+        }
+      })
+      if (invokeError || data?.error) {
+        throw new Error(invokeError?.message || data?.error || 'Failed to send bulk announcement')
+      }
+      setMessage(`🎉 Successfully sent announcement to ${data.recipients} active registered emails!`)
+      setSubject('')
+      setBody('')
+    } catch (err) {
+      setError(err.message || 'Announcement broadcast failed')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="portal-view">
+      <div className="portal-page-heading">
+        <div>
+          <span className="portal-kicker">Global Broadcaster</span>
+          <h1>Registered Users Announcement</h1>
+          <p>Send secure, automated email announcements to parents, students, or teachers globally via Resend.</p>
+        </div>
+      </div>
+      
+      <section className="portal-card" style={{ maxWidth: '640px', background: '#130a25', border: '1px solid rgba(188,233,78,0.15)', borderRadius: '16px', padding: '24px' }}>
+        <form onSubmit={handleSendAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7' }}>Target Audience</span>
+            <select 
+              value={target} 
+              onChange={(e) => setTarget(e.target.value)}
+              style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: '#fff', outline: 'none' }}
+            >
+              <option value="ALL">All Registered Emails (Teachers & Parents)</option>
+              <option value="TEACHER">Teachers Only</option>
+              <option value="STUDENT">Students/Parents Only</option>
+            </select>
+          </label>
+
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7' }}>Email Subject</span>
+            <input 
+              type="text" 
+              value={subject} 
+              onChange={(e) => setSubject(e.target.value)} 
+              placeholder="e.g. TutorPro English Holiday Schedule Update"
+              style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: '#fff', outline: 'none' }}
+            />
+          </label>
+
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7' }}>Announcement Body (HTML or Plain Text)</span>
+            <textarea 
+              value={body} 
+              onChange={(e) => setBody(e.target.value)} 
+              placeholder="Write your email announcement details here..."
+              style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', color: '#fff', minHeight: '180px', outline: 'none', resize: 'vertical' }}
+            />
+          </label>
+
+          {error && <div style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>⚠️ {error}</div>}
+          {message && <div style={{ color: '#bce94e', fontSize: '0.75rem', fontWeight: 'bold' }}>{message}</div>}
+
+          <button 
+            type="submit" 
+            disabled={sending}
+            style={{
+              background: sending ? 'rgba(255,255,255,0.05)' : '#bce94e',
+              color: sending ? '#b9adc7' : '#090510',
+              fontWeight: '850',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '12px',
+              cursor: sending ? 'not-allowed' : 'pointer',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              marginTop: '8px'
+            }}
+          >
+            {sending ? <RefreshCw className="animate-spin w-4 h-4" /> : <Bell style={{ width: '15px', height: '15px' }} />}
+            <span>{sending ? 'Broadcasting Emails...' : 'Send Mass Announcement Email'}</span>
+          </button>
+
+        </form>
+      </section>
+    </div>
   )
 }
 
@@ -2220,6 +2563,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
     { id: 'students', label: 'Students', icon: GraduationCap },
     { id: 'support', label: 'Parent support', icon: MessageSquareText, badge: supportUnread },
+    { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
@@ -2236,7 +2580,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     return (
       <PortalShell account={account} role="admin" active="teachers" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
         <RoleErrorBoundary onBack={exitManagedDashboard}>
-          <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} onRemove={setTeacherToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} />
+          <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} onRemove={setTeacherToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} onOpenChat={launchSupportChat} />
         </RoleErrorBoundary>
         {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
       </PortalShell>
@@ -2247,7 +2591,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     return (
       <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
         <RoleErrorBoundary onBack={exitManagedDashboard}>
-          <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} />
+          <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} teachers={teachers} onOpenChat={launchSupportChat} />
         </RoleErrorBoundary>
         {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
       </PortalShell>
@@ -2282,7 +2626,9 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
-      {active === 'support' && <SupportInbox onUnreadChange={setSupportUnread} />}
+      {active === 'support' && <SupportInbox onUnreadChange={setSupportUnread} initialConversationId={initialSupportId} />}
+
+      {active === 'announcements' && <AdminAnnouncementsPanel />}
 
       {active === 'bookings' && (
         adminBooking ? (
@@ -2293,6 +2639,20 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         ) : (
           <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Bookings are separated by teacher profile. Filter by teacher or status to find pending, confirmed, ongoing, completed, absent, cancelled and declined lessons quickly.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} /></div>
         )
+      )}
+
+      {active === 'support' && (
+        <div className="portal-view parent-support-view">
+          <div className="portal-page-heading">
+            <div>
+              <span className="portal-kicker">TutorPro Helpdesk</span>
+              <h1>Contact Administration</h1>
+              <p>Chat with TutorPro Customer Service about bookings, payouts, rates, or general inquiries in real-time.</p>
+            </div>
+            <span className="support-inbox-live"><i /> Secure Chat</span>
+          </div>
+          <SupportChatWidget embedded />
+        </div>
       )}
 
       {active === 'profile' && (
