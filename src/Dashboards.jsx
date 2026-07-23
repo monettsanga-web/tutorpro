@@ -3147,7 +3147,6 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   }
 
   const openManagedTeacher = (teacherId) => {
-    alert(`DEBUG: Opening teacher profile (ID: ${teacherId}). Self-healing is active! If you see this, your browser cache is successfully updated!`);
     setAdminActionError('')
     let teacher = getAccountById(teacherId)
     if (!teacher) {
