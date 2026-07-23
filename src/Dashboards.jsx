@@ -1450,6 +1450,10 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [introVideoUrl, setIntroVideoUrl] = useState(account.teacher.introVideoUrl || '')
   const [introVideoSaved, setIntroVideoSaved] = useState(false)
   const [savingIntroVideo, setSavingIntroVideo] = useState(false)
+  const [payoutMethod, setPayoutMethod] = useState(account.teacher.payoutMethod || 'GCash')
+  const [payoutDetails, setPayoutDetails] = useState(account.teacher.payoutDetails || '')
+  const [payoutSaved, setPayoutSaved] = useState(false)
+  const [savingPayout, setSavingPayout] = useState(false)
   const bookings = getBookings({ teacherId: account.id })
   
   // Teacher earnings calculation with new business rules (Trial payouts: ₱40 normal / ₱100 if enrolled, Regular: pesoRate)
@@ -1600,6 +1604,27 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       alert("Failed to save introduction video URL: " + err.message)
     } finally {
       setSavingIntroVideo(false)
+    }
+  }
+
+  const savePayoutPreferences = async () => {
+    setSavingPayout(true)
+    setPayoutSaved(false)
+    try {
+      const updated = updateTeacherProfile(account.id, { 
+        payoutMethod, 
+        payoutDetails: payoutDetails.trim() 
+      })
+      if (cloudSyncEnabled()) {
+        await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the payout update.')
+      }
+      setAccount(updated)
+      onAccountChange(updated)
+      setPayoutSaved(true)
+    } catch (err) {
+      alert("Failed to save payout preferences: " + err.message)
+    } finally {
+      setSavingPayout(false)
     }
   }
 
@@ -1904,6 +1929,82 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                 {sampleClassSaved && (
                   <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}>
                     <Check size={14} /> Saved and synced to public showcase!
+                  </span>
+                )}
+              </div>
+            </section>
+
+            {/* PHILIPPINE PAYOUT PREFERENCES */}
+            <section className="portal-card teacher-payout-preferences">
+              <div className="portal-card__heading portal-card__heading--small">
+                <div><span className="portal-kicker">Salary Payout Settings</span><h2>Philippine Payout Preferences</h2></div>
+                <span className="portal-card__icon"><Coins size={21} /></span>
+              </div>
+              <div style={{ marginTop: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
+                  Select your preferred payout channel (Philippines local wallets & bank transfers)
+                </label>
+                <select
+                  value={payoutMethod}
+                  onChange={(e) => {
+                    setPayoutMethod(e.target.value)
+                    setPayoutSaved(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    marginBottom: '10px'
+                  }}
+                >
+                  <option value="GCash">GCash Wallet (Philippines)</option>
+                  <option value="Maya">Maya Wallet (Philippines)</option>
+                  <option value="BDO">BDO Unibank (Bank Transfer)</option>
+                  <option value="BPI">BPI (Bank Transfer)</option>
+                  <option value="PayPal">PayPal Business Account</option>
+                </select>
+
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
+                  Mobile Phone Number or Bank Account Number
+                </label>
+                <input 
+                  type="text"
+                  placeholder="e.g. 0917-123-4567 or 1234-5678-90"
+                  value={payoutDetails}
+                  onChange={(e) => {
+                    setPayoutDetails(e.target.value)
+                    setPayoutSaved(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    marginBottom: '12px'
+                  }}
+                />
+
+                <button 
+                  type="button"
+                  className="portal-primary-button" 
+                  onClick={savePayoutPreferences}
+                  disabled={savingPayout}
+                  style={{ width: '100%' }}
+                >
+                  {savingPayout ? 'Saving Payouts...' : 'Save Philippine Payout Details'}
+                </button>
+                {payoutSaved && (
+                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}>
+                    <Check size={14} /> Salary preferences saved successfully!
                   </span>
                 )}
               </div>
@@ -2840,7 +2941,28 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   const openManagedTeacher = (teacherId) => {
     setAdminActionError('')
-    const teacher = getAccountById(teacherId)
+    let teacher = getAccountById(teacherId)
+    if (!teacher) {
+      const fallbackTeacher = teachers.find(t => t.id === teacherId)
+      if (fallbackTeacher) teacher = fallbackTeacher
+    }
+    if (!teacher) {
+      const bookingForName = bookings.find(b => b.teacherId === teacherId)
+      teacher = {
+        id: teacherId,
+        role: 'teacher',
+        status: 'approved',
+        fullName: bookingForName?.teacherName || 'TutorPro English Teacher',
+        teacher: {
+          specialization: 'Both Curricula',
+          bio: 'Teacher profile setup is loaded from sync. Configure their local rates below.',
+          education: 'Verified ESL Instructor',
+          experience: 5,
+          languages: 'English',
+          pesoRate: 350
+        }
+      }
+    }
     if (!teacher || teacher.role !== 'teacher') {
       setAdminActionError('Teacher profile could not be loaded from this browser. Refresh the registrations list and try again.')
       return
@@ -2864,12 +2986,38 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   const openManagedStudent = (studentId, learnerId) => {
     setAdminActionError('')
-    const student = getAccountById(studentId)
+    let student = getAccountById(studentId)
+    if (!student) {
+      const fallbackStudent = students.find(s => s.id === studentId)
+      if (fallbackStudent) student = fallbackStudent
+    }
+    if (!student) {
+      const bookingForName = bookings.find(b => b.studentId === studentId)
+      student = {
+        id: studentId,
+        role: 'student',
+        status: 'active',
+        parentName: bookingForName?.learnerName || 'TutorPro Parent',
+        fullName: bookingForName?.learnerName || 'TutorPro Student',
+        children: [{
+          id: learnerId || crypto.randomUUID(),
+          name: bookingForName?.learnerName || 'Student',
+          goal: 'Speaking with confidence',
+          frequency: '1–2 weekly',
+          accessStatus: 'active',
+          progress: 18,
+          streak: 0,
+          lessonsCompleted: 0,
+          achievements: []
+        }]
+      }
+      student.child = student.children[0]
+    }
     if (!student || student.role !== 'student') {
       setAdminActionError('Student profile could not be loaded from this browser. Refresh the registrations list and try again.')
       return
     }
-    setManagedLearnerId(learnerId)
+    setManagedLearnerId(learnerId || student.child?.id || '')
     setManagedAccount(student)
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
