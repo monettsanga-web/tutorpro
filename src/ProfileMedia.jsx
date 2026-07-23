@@ -13,7 +13,8 @@ function useProfileMediaUrl(accountId, kind, refreshKey) {
     getProfileMedia(accountId, kind)
       .then((record) => {
         if (!active) return
-        objectUrl = record?.blob ? URL.createObjectURL(record.blob) : ''
+        const isBlob = record?.blob && (record.blob instanceof Blob || (typeof File !== 'undefined' && record.blob instanceof File))
+        objectUrl = isBlob ? URL.createObjectURL(record.blob) : ''
         setUrl(objectUrl)
         setLoading(false)
       })
