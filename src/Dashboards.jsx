@@ -488,28 +488,6 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
         <div className="booking-utility-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
           {onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}
-          
-          {/* Unified Inter-Website Chat Buttons inside Booking Card */}
-          {onOpenChat && showTeacher && teacher && (
-            <button 
-              type="button" 
-              className="manage-booking-button chat-direct-button" 
-              onClick={() => onOpenChat(teacher.id, teacher.fullName)}
-              style={{ background: 'rgba(188, 233, 78, 0.08)', color: '#bce94e', border: '1px solid rgba(188, 233, 78, 0.25)', fontWeight: '800' }}
-            >
-              <MessageSquareText size={14} /> 💬 Chat with Teacher
-            </button>
-          )}
-          {onOpenChat && showStudent && student && (
-            <button 
-              type="button" 
-              className="manage-booking-button chat-direct-button" 
-              onClick={() => onOpenChat(student.id, student.parentName || student.fullName)}
-              style={{ background: 'rgba(188, 233, 78, 0.08)', color: '#bce94e', border: '1px solid rgba(188, 233, 78, 0.25)', fontWeight: '800' }}
-            >
-              <MessageSquareText size={14} /> 💬 Chat with Parent
-            </button>
-          )}
 
           {booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}
         </div>
@@ -2902,7 +2880,7 @@ export function AdminAnnouncementsPanel() {
               marginTop: '8px'
             }}
           >
-            {sending ? <RefreshCw className="animate-spin w-4 h-4" /> : <Bell style={{ width: '15px', height: '15px' }} />}
+            {sending ? <RefreshCcw className="animate-spin w-4 h-4" /> : <Bell style={{ width: '15px', height: '15px' }} />}
             <span>{sending ? 'Broadcasting Emails...' : 'Send Mass Announcement Email'}</span>
           </button>
 
@@ -2959,6 +2937,9 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [processingAccountId, setProcessingAccountId] = useState('')
   const [supportUnread, setSupportUnread] = useState(0)
   const [initialSupportId, setInitialSupportId] = useState('')
+  const [adminBookingView, setAdminBookingView] = useState('list') // list, calendar
+  const [selectedCalendarTeacherId, setSelectedCalendarTeacherId] = useState('')
+  const [adminCalendarWeek, setAdminCalendarWeek] = useState(0)
 
   // Global high-fidelity exception interceptor to print the exact crash file and stack trace in an alert
   useEffect(() => {
@@ -3041,6 +3022,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       window.clearInterval(interval)
     }
   }, [])
+
+  useEffect(() => {
+    if (teachers.length && !selectedCalendarTeacherId) {
+      setSelectedCalendarTeacherId(teachers[0].id)
+    }
+  }, [teachers, selectedCalendarTeacherId])
 
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
@@ -3470,7 +3457,108 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             {bookingStudent && bookingLearner ? <BookLessonPanel key={bookingLearner.id} account={bookingStudent} learner={bookingLearner} adminBooking onBooked={refresh} /> : <EmptyState icon={GraduationCap} title="Register a student first" text="An administrator needs a student profile before creating a booking." />}
           </div>
         ) : (
-          <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Platform calendar</span><h1>All bookings</h1><p>Bookings are separated by teacher profile. Filter by teacher or status to find pending, confirmed, ongoing, completed, absent, cancelled and declined lessons quickly.</p></div><button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}><CalendarPlus size={17} /> Book for a student</button></div><AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} /></div>
+          <div className="portal-view">
+            <div className="portal-page-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span className="portal-kicker">Platform calendar</span>
+                <h1>All bookings</h1>
+                <p>Filter by list, or view any teacher's live schedule calendar with interactive status details.</p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="portal-primary-button" onClick={() => setAdminBooking(true)} disabled={!students.length}>
+                  <CalendarPlus size={17} /> Book for student
+                </button>
+              </div>
+            </div>
+
+            {/* View Switcher Toggle */}
+            <div className="portal-card" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '10px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setAdminBookingView('list')}
+                  style={{
+                    background: adminBookingView === 'list' ? '#7048df' : 'transparent',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 16px',
+                    fontSize: '0.78rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  List View 📋
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setAdminBookingView('calendar');
+                    if (teachers.length && !selectedCalendarTeacherId) {
+                      setSelectedCalendarTeacherId(teachers[0].id);
+                    }
+                  }}
+                  style={{
+                    background: adminBookingView === 'calendar' ? '#7048df' : 'transparent',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 16px',
+                    fontSize: '0.78rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Schedule Calendar 📅
+                </button>
+              </div>
+
+              {adminBookingView === 'calendar' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#b9adc7', fontWeight: 'bold' }}>Select Teacher:</span>
+                  <select
+                    value={selectedCalendarTeacherId}
+                    onChange={(e) => setSelectedCalendarTeacherId(e.target.value)}
+                    style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      color: '#fff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>{t.fullName}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {adminBookingView === 'list' ? (
+              <AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} />
+            ) : (
+              <section className="portal-card booking-calendar-card teacher-booking-calendar">
+                <div className="drag-instruction teacher-feedback-instruction" style={{ marginBottom: '15px' }}>
+                  <span><CalendarCheck2 size={18} /></span>
+                  <div>
+                    <strong>Viewing Schedule for {teachers.find(t => t.id === selectedCalendarTeacherId)?.fullName || 'Selected Teacher'}</strong>
+                    <small>Yellow highlights display trials. Confirm, complete, or cancel bookings directly from the calendar slots.</small>
+                  </div>
+                </div>
+                <ScheduleCalendar 
+                  weekOffset={adminCalendarWeek} 
+                  onWeekOffset={setAdminCalendarWeek} 
+                  bookings={bookings.filter(b => b.teacherId === selectedCalendarTeacherId)} 
+                  onBookingOpen={setManagedBooking} 
+                  showInactiveBookings 
+                />
+              </section>
+            )}
+          </div>
         )
       )}
 
