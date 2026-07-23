@@ -2958,6 +2958,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminActionError, setAdminActionError] = useState('')
   const [processingAccountId, setProcessingAccountId] = useState('')
   const [supportUnread, setSupportUnread] = useState(0)
+  const [initialSupportId, setInitialSupportId] = useState('')
 
   // Global high-fidelity exception interceptor to print the exact crash file and stack trace in an alert
   useEffect(() => {
@@ -3089,6 +3090,59 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       setAdminActionError(`${statusError.message} The status was not changed. Confirm this administrator exists in Supabase admin_members.`)
     } finally {
       setProcessingAccountId('')
+    }
+  }
+
+  const launchSupportChat = async (email, fullName) => {
+    setAdminActionError('')
+    try {
+      if (cloudSyncEnabled()) {
+        const { supabase } = await import('./supabaseClient.js')
+        if (supabase) {
+          // Fetch existing support conversations
+          const { data: convs, error: fetchErr } = await supabase.from('support_conversations').select('*')
+          if (fetchErr) throw fetchErr
+          
+          let found = convs?.find(c => c.parent_email?.toLowerCase() === email?.toLowerCase() || c.parent_name?.toLowerCase() === fullName?.toLowerCase());
+          if (!found) {
+            const { data, error: createErr } = await supabase.rpc('create_support_conversation', {
+              parent_name: fullName,
+              parent_email: email,
+              visitor_language: 'en',
+              first_message: `Admin initiated chat with ${fullName}.`,
+            });
+            if (createErr) throw createErr;
+            setInitialSupportId(data.conversationId);
+          } else {
+            setInitialSupportId(found.id);
+          }
+        }
+      } else {
+        // Local mode chat fallback
+        const localConvs = JSON.parse(localStorage.getItem('tutorpro_local_support_threads_v1') || '[]')
+        let found = localConvs.find(c => c.email?.toLowerCase() === email?.toLowerCase())
+        if (!found) {
+          const newConv = {
+            id: 'local-conv-' + crypto.randomUUID(),
+            parentName: fullName,
+            email: email,
+            messages: [{ id: crypto.randomUUID(), sender: 'admin', body: `Admin initiated chat with ${fullName}.`, createdAt: new Date().toISOString() }],
+            status: 'open',
+            createdAt: new Date().toISOString()
+          }
+          localConvs.push(newConv)
+          localStorage.setItem('tutorpro_local_support_threads_v1', JSON.stringify(localConvs))
+          setInitialSupportId(newConv.id)
+        } else {
+          setInitialSupportId(found.id)
+        }
+      }
+      
+      setActive('support');
+      setManagedAccount(null);
+      setManagedLearnerId('');
+    } catch (e) {
+      setAdminActionError(`Could not initiate chat: ${e.message}`);
     }
   }
 
