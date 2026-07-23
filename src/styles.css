@@ -4173,6 +4173,24 @@ body {
 
 }
 
+/* Stunning Novakid-style public teacher cards dark overrides with high contrast */
+.novakid-style-card {
+  background: #110925 !important;
+  border: 1px solid rgba(188, 233, 78, 0.25) !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45) !important;
+}
+.public-teacher-photo-large {
+  width: 120px !important;
+  height: 120px !important;
+  border-radius: 50% !important;
+  border: 4px solid #bce94e !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+.public-teacher-photo-large > strong {
+  font-size: 2.5rem !important;
+  font-weight: 900 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

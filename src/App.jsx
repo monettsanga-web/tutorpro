@@ -551,7 +551,7 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
   badges.push("Kids Specialist")
 
   return (
-    <article className="public-teacher-card novakid-style-card">
+    <article className="public-teacher-card novakid-style-card" style={{ background: '#110925', border: '1px solid rgba(188, 233, 78, 0.25)', boxShadow: '0 15px 40px rgba(0, 0, 0, 0.45)', borderRadius: '22px', padding: '24px', transition: 'transform 220ms ease, box-shadow 220ms ease' }}>
       {/* Media Viewport */}
       <div className="public-teacher-card__media-viewport" style={{ position: 'relative', height: '220px', borderRadius: '12px', overflow: 'hidden', background: '#090510', marginBottom: '16px' }}>
         {activeMedia === 'photo' && (
@@ -878,6 +878,20 @@ export default function App() {
   const [preferredTeacher, setPreferredTeacher] = useState(null)
   const [teacherVersion, setTeacherVersion] = useState(0)
   const [showPublicTeachers, setShowPublicTeachers] = useState(false)
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#teachers') {
+        setShowPublicTeachers(true)
+      } else if (window.location.hash === '') {
+        setShowPublicTeachers(false)
+      }
+    }
+    window.addEventListener('hashchange', handleHashChange)
+    handleHashChange() // Check initial hash
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
   const [currentAccount, setCurrentAccount] = useState(() => {
     initializePlatform()
     return getCurrentAccount()
