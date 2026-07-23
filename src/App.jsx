@@ -879,6 +879,22 @@ export default function App() {
   const [teacherVersion, setTeacherVersion] = useState(0)
   const [showPublicTeachers, setShowPublicTeachers] = useState(false)
 
+  // Root-level global window exception interceptor to print exact line and crash source
+  useEffect(() => {
+    const handleGlobalError = (event) => {
+      alert(`CRITICAL EXCEPTION:\nMessage: ${event.message}\nFile: ${event.filename}\nLine: ${event.lineno}:${event.colno}\nStack: ${event.error?.stack || 'No Stack'}`);
+    };
+    const handleGlobalRejection = (e) => {
+      alert(`CRITICAL PROMISE REJECTION:\nReason: ${e.reason?.message || e.reason?.stack || e.reason}`);
+    };
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleGlobalRejection);
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+      window.removeEventListener('unhandledrejection', handleGlobalRejection);
+    };
+  }, []);
+
   useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash === '#teachers') {
