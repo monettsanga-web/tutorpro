@@ -123,7 +123,7 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount }) {
+function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro English user'
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
@@ -140,7 +140,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
         <Logo />
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
           <a href="#programmes" onClick={closeMenu}>Programmes</a>
-          <a href="#teachers" onClick={closeMenu}>Teachers</a>
+          <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Teachers</a>
           <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
           <div className="nav__mobile-actions">
@@ -652,12 +652,36 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
   )
 }
 
-function TeacherShowcase({ onChooseTeacher }) {
+function TeacherShowcase({ onChooseTeacher, onBack }) {
   const teachers = getApprovedTeachers()
 
   return (
     <section className="section public-teachers" id="teachers" style={{ background: 'linear-gradient(180deg, #110925 0%, #090510 100%)', padding: '80px 0' }}>
       <div className="container">
+        {onBack && (
+          <button 
+            onClick={onBack} 
+            style={{ 
+              background: 'rgba(188, 233, 78, 0.08)', 
+              color: '#bce94e', 
+              border: '1px solid rgba(188, 233, 78, 0.25)', 
+              padding: '8px 16px', 
+              borderRadius: '20px', 
+              cursor: 'pointer', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              fontWeight: '900', 
+              fontSize: '0.8rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              marginBottom: '32px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <ChevronLeft size={16} /> Return to Homepage
+          </button>
+        )}
         <div className="section-heading section-heading--split" style={{ marginBottom: '50px' }}>
           <div>
             <span className="kicker" style={{ color: '#bce94e', fontWeight: '900', letterSpacing: '0.1em' }}>Meet our star team of teachers</span>
@@ -802,7 +826,7 @@ function FinalCTA({ onBook }) {
   )
 }
 
-function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount }) {
+function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -817,7 +841,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <h3>Explore</h3>
               <a href="#why">Why TutorPro English</a>
               <a href="#programmes">Programmes</a>
-              <a href="#teachers">Teachers</a>
+              <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>
               <a href="#journey">How it works</a>
               <a href="#pricing">Pricing</a>
             </div>
@@ -853,6 +877,7 @@ export default function App() {
   const [selectedPlan, setSelectedPlan] = useState('')
   const [preferredTeacher, setPreferredTeacher] = useState(null)
   const [teacherVersion, setTeacherVersion] = useState(0)
+  const [showPublicTeachers, setShowPublicTeachers] = useState(false)
   const [currentAccount, setCurrentAccount] = useState(() => {
     initializePlatform()
     return getCurrentAccount()
@@ -992,19 +1017,25 @@ export default function App() {
         onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
+        onOpenTeachers={() => setShowPublicTeachers(true)}
       />
-      <main>
-        <Hero onBook={openRegistration} />
-        <Stats />
-        <CurriculumCarousel onBook={openRegistration} />
-        <WhyTutorPro />
-        <Programmes />
-        <HowItWorks onBook={openRegistration} />
-        <TeacherShowcase onChooseTeacher={chooseTeacher} />
-        <Pricing onBook={openRegistration} />
-        <FAQ onBook={openRegistration} />
-        <FinalCTA onBook={openRegistration} />
-      </main>
+      {showPublicTeachers ? (
+        <main>
+          <TeacherShowcase onChooseTeacher={chooseTeacher} onBack={() => { setShowPublicTeachers(false); window.scrollTo(0, 0); }} />
+        </main>
+      ) : (
+        <main>
+          <Hero onBook={openRegistration} />
+          <Stats />
+          <CurriculumCarousel onBook={openRegistration} />
+          <WhyTutorPro />
+          <Programmes />
+          <HowItWorks onBook={openRegistration} />
+          <Pricing onBook={openRegistration} />
+          <FAQ onBook={openRegistration} />
+          <FinalCTA onBook={openRegistration} />
+        </main>
+      )}
       <Footer
         onRegister={openRegistration}
         onLogin={openLogin}
@@ -1012,6 +1043,7 @@ export default function App() {
         onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
+        onOpenTeachers={() => setShowPublicTeachers(true)}
       />
       {authOpen && (
         <AuthModal

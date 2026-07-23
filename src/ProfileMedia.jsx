@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Play } from 'lucide-react'
 import { getProfileMedia } from './media.js'
+import { getAccountById } from './auth.js'
 
 function useProfileMediaUrl(accountId, kind, refreshKey) {
   const [url, setUrl] = useState('')
@@ -39,21 +40,6 @@ export function ProfilePhoto({ accountId, name, refreshKey = 0, className = '' }
     <span className={`profile-media-photo ${className} ${url ? 'has-photo' : ''} ${loading ? 'loading' : ''}`}>
       {url ? <img src={url} alt={`${name} profile`} /> : <strong>{initial}</strong>}
     </span>
-  )
-}
-
-export function IntroVideo({ accountId, refreshKey = 0, className = '', compact = false }) {
-  const { url, loading } = useProfileMediaUrl(accountId, 'intro-video', refreshKey)
-
-  if (url) {
-    return <video className={`profile-intro-video ${className}`} src={url} controls preload="metadata" playsInline />
-  }
-
-  return (
-    <div className={`profile-video-placeholder ${className} ${loading ? 'loading' : ''}`}>
-      <span><Play size={compact ? 17 : 24} fill="currentColor" /></span>
-      <div><strong>{loading ? 'Loading introduction…' : 'Introduction coming soon'}</strong>{!compact && <small>The teacher has not uploaded a video yet.</small>}</div>
-    </div>
   )
 }
 
@@ -110,8 +96,8 @@ export function SampleClassPlayer({ url, className = '' }) {
     return (
       <div className={`profile-video-placeholder ${className}`} style={{ height: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.15)', color: '#b9adc7', gap: '8px' }}>
         <span><Play size={24} style={{ opacity: 0.5 }} /></span>
-        <strong>Sample Class Coming Soon!</strong>
-        <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>Our trial recording is being prepared.</span>
+        <strong>Video Coming Soon!</strong>
+        <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>A video recording is being prepared.</span>
       </div>
     )
   }
@@ -136,7 +122,7 @@ export function SampleClassPlayer({ url, className = '' }) {
     <div className={`video-iframe-container ${className}`} style={{ position: 'relative', width: '100%', height: '220px', borderRadius: '12px', overflow: 'hidden', background: '#000', border: '1px solid rgba(255,255,255,0.1)' }}>
       <iframe
         src={embedUrl}
-        title="Sample Lesson Recording"
+        title="Video Player"
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
@@ -149,6 +135,28 @@ export function SampleClassPlayer({ url, className = '' }) {
           border: 'none',
         }}
       />
+    </div>
+  )
+}
+
+export function IntroVideo({ accountId, refreshKey = 0, className = '', compact = false }) {
+  const teacher = getAccountById(accountId)
+  const pastedIntroUrl = teacher?.teacher?.introVideoUrl || ''
+
+  if (pastedIntroUrl) {
+    return <SampleClassPlayer url={pastedIntroUrl} className={className} />
+  }
+
+  const { url, loading } = useProfileMediaUrl(accountId, 'intro-video', refreshKey)
+
+  if (url) {
+    return <video className={`profile-intro-video ${className}`} src={url} controls preload="metadata" playsInline style={{ width: '100%', height: '220px', borderRadius: '12px', objectFit: 'cover' }} />
+  }
+
+  return (
+    <div className={`profile-video-placeholder ${className} ${loading ? 'loading' : ''}`}>
+      <span><Play size={compact ? 17 : 24} fill="currentColor" /></span>
+      <div><strong>{loading ? 'Loading introduction…' : 'Introduction coming soon'}</strong>{!compact && <small>The teacher has not uploaded a video yet.</small>}</div>
     </div>
   )
 }

@@ -1447,6 +1447,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [sampleClassUrl, setSampleClassUrl] = useState(account.teacher.sampleClassUrl || '')
   const [sampleClassSaved, setSampleClassSaved] = useState(false)
   const [savingSampleClass, setSavingSampleClass] = useState(false)
+  const [introVideoUrl, setIntroVideoUrl] = useState(account.teacher.introVideoUrl || '')
+  const [introVideoSaved, setIntroVideoSaved] = useState(false)
+  const [savingIntroVideo, setSavingIntroVideo] = useState(false)
   const bookings = getBookings({ teacherId: account.id })
   
   // Teacher earnings calculation with new business rules (Trial payouts: ₱40 normal / ₱100 if enrolled, Regular: pesoRate)
@@ -1579,6 +1582,24 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       alert("Failed to save sample class URL: " + err.message)
     } finally {
       setSavingSampleClass(false)
+    }
+  }
+
+  const saveIntroVideoUrl = async () => {
+    setSavingIntroVideo(true)
+    setIntroVideoSaved(false)
+    try {
+      const updated = updateTeacherProfile(account.id, { introVideoUrl: introVideoUrl.trim() })
+      if (cloudSyncEnabled()) {
+        await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the profile update in time.')
+      }
+      setAccount(updated)
+      onAccountChange(updated)
+      setIntroVideoSaved(true)
+    } catch (err) {
+      alert("Failed to save introduction video URL: " + err.message)
+    } finally {
+      setSavingIntroVideo(false)
     }
   }
 
@@ -1787,7 +1808,59 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <section className="portal-card teacher-name-editor"><div><span className="portal-kicker">Public teacher name</span><h2>Edit display name</h2><p>This name appears to parents, students, bookings and the Admin Dashboard.</p></div><label><span>Teacher display name</span><input value={teacherName} onChange={(event) => { setTeacherName(event.target.value); setNameSaved(false); setNameError('') }} maxLength="80" /></label><button className="portal-primary-button" onClick={saveTeacherName}>Save name <Check size={16} /></button>{nameSaved && <span className="saved-label"><Check size={14} /> Saved</span>}{nameError && <div className="portal-error" role="alert">{nameError}</div>}</section>
           <div className="teacher-public-profile-grid">
             <section className="portal-card teacher-profile-detail"><span className="portal-kicker">Professional profile</span><h2>About my teaching</h2><p className="teacher-bio">{account.teacher.bio}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{account.teacher.education}</strong></div><div><span>Languages</span><strong>{account.teacher.languages}</strong></div><div><span>Credentials</span><strong>{account.teacher.credentials?.length || 0} submitted</strong></div></div></section>
-            <section className="portal-card teacher-video-manager"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2></div><span className="portal-card__icon"><Film size={21} /></span></div><IntroVideo accountId={account.id} refreshKey={mediaVersion} /><label className="media-upload-button"><Upload size={16} /> Upload introduction video<input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => uploadTeacherMedia(event, 'intro-video')} /></label><p>MP4 or WebM, up to 50 MB. Parents and visitors can watch this before choosing a teacher.</p></section>
+            <section className="portal-card teacher-video-manager">
+              <div className="portal-card__heading portal-card__heading--small">
+                <div><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2></div>
+                <span className="portal-card__icon"><Film size={21} /></span>
+              </div>
+              <IntroVideo accountId={account.id} refreshKey={mediaVersion} />
+              
+              <div style={{ marginTop: '14px', padding: '12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase' }}>Option A: Paste Video Link</span>
+                <input 
+                  type="text"
+                  placeholder="Paste YouTube, Shorts, Drive or Vimeo link..."
+                  value={introVideoUrl}
+                  onChange={(e) => {
+                    setIntroVideoUrl(e.target.value)
+                    setIntroVideoSaved(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    color: '#fff',
+                    fontSize: '0.78rem',
+                    outline: 'none',
+                    marginBottom: '8px'
+                  }}
+                />
+                <button 
+                  type="button"
+                  className="portal-primary-button" 
+                  onClick={saveIntroVideoUrl}
+                  disabled={savingIntroVideo}
+                  style={{ width: '100%', padding: '8px 12px', fontSize: '0.75rem' }}
+                >
+                  {savingIntroVideo ? 'Saving Intro Link...' : 'Save Intro Link'}
+                </button>
+                {introVideoSaved && (
+                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.72rem' }}>
+                    <Check size={12} /> Introduction link saved!
+                  </span>
+                )}
+              </div>
+
+              <div style={{ marginTop: '14px', textAlign: 'center', color: '#b9adc7', fontSize: '0.7rem', fontWeight: 'bold' }}>— OR —</div>
+
+              <div style={{ marginTop: '14px' }}>
+                <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase' }}>Option B: Upload raw video file</span>
+                <label className="media-upload-button" style={{ margin: 0 }}><Upload size={16} /> Upload introduction video<input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => uploadTeacherMedia(event, 'intro-video')} /></label>
+                <p style={{ marginTop: '6px', fontSize: '0.65rem', color: '#b9adc7' }}>MP4 or WebM, up to 50 MB.</p>
+              </div>
+            </section>
             
             {/* PASTING SAMPLE CLASS LINK FORM */}
             <section className="portal-card teacher-sample-class">
