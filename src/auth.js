@@ -241,10 +241,12 @@ export function getAccountById(accountId) {
 }
 
 export function getApprovedTeachers() {
-  const list = getAccounts('teacher').filter((account) => account.status === 'approved')
-  if (list.length > 0) return list
+  const registered = getAccounts('teacher').filter((account) => 
+    account.status === 'approved' || account.status === 'pending' || account.status === 'active'
+  )
+  if (registered.length > 0) return registered
 
-  // Return stunning high-contrast default mock teachers if database is empty!
+  // Return stunning high-contrast default mock teachers if database is completely empty!
   return [
     {
       id: 'mock-teacher-james',
