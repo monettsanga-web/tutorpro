@@ -84,10 +84,12 @@ export function profileRowToAccount(row) {
   const data = row.profile_data && typeof row.profile_data === 'object' && !Array.isArray(row.profile_data)
     ? row.profile_data
     : {}
+  const rawRole = (row.role || data.role || 'student').toLowerCase()
+  const role = ['student', 'teacher', 'admin'].includes(rawRole) ? rawRole : 'student'
   return {
     ...data,
     id: row.id,
-    role: ['student', 'teacher', 'admin'].includes(row.role) ? row.role : (data.role || 'student'),
+    role: role,
     status: row.status || data.status || 'active',
     email: row.email || data.email || '',
     loginId: row.login_id || data.loginId || row.email || '',
