@@ -11,8 +11,9 @@ export default class ErrorBoundary extends Component {
     return { error }
   }
 
-  componentDidCatch() {
+  componentDidCatch(error, errorInfo) {
     // The user-facing recovery screen intentionally avoids exposing account data or stack traces.
+    alert(`FATAL REACT COMPONENT CRASH DETECTED!\n\nMessage: ${error?.message}\n\nStack Trace:\n${error?.stack}`);
   }
 
   render() {
