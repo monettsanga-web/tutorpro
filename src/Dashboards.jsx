@@ -2219,7 +2219,91 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
         </section>
         <section className="portal-card"><span className="portal-kicker">Verification</span><h2>Submitted credentials</h2>{credentials.length ? <ul className="admin-credential-list">{credentials.map((credential, index) => <li key={credential} style={{ display: 'block', margin: '4px 0' }}><button type="button" onClick={async () => { try { const record = await getProfileMedia(teacher.id, `credential-${index}`); if (record?.blob) { const objectUrl = URL.createObjectURL(record.blob); window.open(objectUrl, '_blank'); } else { alert("This credential file binary has not been uploaded yet or is empty."); } } catch(err) { alert("Error opening file: " + err.message); } }} style={{ background: 'transparent', border: 'none', color: '#bce94e', cursor: 'pointer', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', padding: '0', fontWeight: 'bold' }}><ShieldCheck size={15} /> {credential} (Click to View File)</button></li>)}</ul> : <EmptyState icon={ShieldCheck} title="No credentials submitted" text="The teacher has not uploaded credential names yet." />}</section>
       </div>
-      <section className="portal-card admin-interview-review"><div className="admin-interview-heading"><div><span className="portal-kicker">Required first-round screening</span><h2>AI teacher interview</h2><p>Internal evaluation and full applicant transcript. Never shown to the applicant.</p></div>{interview ? <span className={`interview-recommendation interview-recommendation--${recommendationClass}`}>{interview.overallRecommendation}</span> : <span className="interview-recommendation interview-recommendation--review">Not completed</span>}</div>{interview ? <><div className="admin-interview-metrics"><div><span>English proficiency</span><strong>{interview.englishProficiency?.band || 'Needs review'}</strong><small>{interview.englishProficiency?.justification}</small></div><div><span>Live micro-demo</span><strong>{interview.liveDemo?.band || 'Needs review'}</strong><small>{interview.liveDemo?.justification}</small></div><div><span>Availability</span><strong>Applicant statement</strong><small>{interview.availability || 'Not stated'}</small></div></div><div className="admin-interview-evidence"><div><h3>Strengths</h3>{interview.strengths?.length ? <ul>{interview.strengths.map((item) => <li key={item}><CheckCircle2 size={14} /> {item}</li>)}</ul> : <p>No strengths were extracted automatically.</p>}</div><div><h3>Concerns / gaps</h3>{interview.concerns?.length ? <ul>{interview.concerns.map((item) => <li key={item}><XCircle size={14} /> {item}</li>)}</ul> : <p>No specific concerns were flagged.</p>}</div></div><div className="admin-interview-next"><strong>Suggested next step</strong><p>{interview.suggestedNextStep}</p><small>Evaluation source: {interview.source === 'ai-evaluator' ? 'AI evaluator' : 'Structured fallback — human review required'} · Completed {interview.completedAt ? new Date(interview.completedAt).toLocaleString('en') : 'recently'}</small></div><AdminInterviewRecordings interview={interview} /><details className="admin-interview-transcript"><summary>Open complete interview transcript ({interview.transcript?.length || 0} responses)</summary><div>{interview.transcript?.map((item, index) => <article key={`${item.stage}-${index}`}><span>{item.stage}</span><h4>{item.question}</h4><p>{item.answer}</p></article>)}</div></details></> : <div className="admin-interview-empty"><Bot size={27} /><strong>No interview record</strong><span>Teacher accounts created directly by an administrator may not include an applicant interview.</span></div>}</section>
+      <section className="portal-card admin-interview-review">
+        <div className="admin-interview-heading">
+          <div>
+            <span className="portal-kicker">Required first-round screening</span>
+            <h2>AI teacher interview</h2>
+            <p>Internal evaluation and full applicant transcript. Never shown to the applicant.</p>
+          </div>
+          {interview ? (
+            <span className={`interview-recommendation interview-recommendation--${recommendationClass}`}>{interview.overallRecommendation}</span>
+          ) : (
+            <span className="interview-recommendation interview-recommendation--review">Not completed</span>
+          )}
+        </div>
+        {interview ? (
+          <>
+            <div className="admin-interview-metrics">
+              <div>
+                <span>English proficiency</span>
+                <strong>{interview.englishProficiency?.band || 'Needs review'}</strong>
+                <small>{interview.englishProficiency?.justification}</small>
+              </div>
+              <div>
+                <span>Live micro-demo</span>
+                <strong>{interview.liveDemo?.band || 'Needs review'}</strong>
+                <small>{interview.liveDemo?.justification}</small>
+              </div>
+              <div>
+                <span>Availability</span>
+                <strong>Applicant statement</strong>
+                <small>{interview.availability || 'Not stated'}</small>
+              </div>
+            </div>
+            <div className="admin-interview-evidence">
+              <div>
+                <h3>Strengths</h3>
+                {Array.isArray(interview.strengths) && interview.strengths.length ? (
+                  <ul>
+                    {interview.strengths.map((item) => (
+                      <li key={item}><CheckCircle2 size={14} /> {item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No strengths were extracted automatically.</p>
+                )}
+              </div>
+              <div>
+                <h3>Concerns / gaps</h3>
+                {Array.isArray(interview.concerns) && interview.concerns.length ? (
+                  <ul>
+                    {interview.concerns.map((item) => (
+                      <li key={item}><XCircle size={14} /> {item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No specific concerns were flagged.</p>
+                )}
+              </div>
+            </div>
+            <div className="admin-interview-next">
+              <strong>Suggested next step</strong>
+              <p>{interview.suggestedNextStep}</p>
+              <small>Evaluation source: {interview.source === 'ai-evaluator' ? 'AI evaluator' : 'Structured fallback — human review required'} · Completed {interview.completedAt ? new Date(interview.completedAt).toLocaleString('en') : 'recently'}</small>
+            </div>
+            <AdminInterviewRecordings interview={interview} />
+            <details className="admin-interview-transcript">
+              <summary>Open complete interview transcript ({Array.isArray(interview.transcript) ? interview.transcript.length : 0} responses)</summary>
+              <div>
+                {Array.isArray(interview.transcript) && interview.transcript.map((item, index) => (
+                  <article key={`${item.stage}-${index}`}>
+                    <span>{item.stage}</span>
+                    <h4>{item.question}</h4>
+                    <p>{item.answer}</p>
+                  </article>
+                ))}
+              </div>
+            </details>
+          </>
+        ) : (
+          <div className="admin-interview-empty">
+            <Bot size={27} />
+            <strong>No interview record</strong>
+            <span>Teacher accounts created directly by an administrator may not include an applicant interview.</span>
+          </div>
+        )}
+      </section>
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Teacher activity</span><h2>Recent bookings</h2></div></div>{teacherBookings.length ? teacherBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent />) : <EmptyState icon={CalendarDays} title="No bookings yet" text="Teacher bookings will appear here." />}</section>
     </div>
   )
