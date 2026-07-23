@@ -140,14 +140,13 @@ export function SampleClassPlayer({ url, className = '' }) {
 }
 
 export function IntroVideo({ accountId, refreshKey = 0, className = '', compact = false }) {
+  const { url, loading } = useProfileMediaUrl(accountId, 'intro-video', refreshKey)
   const teacher = getAccountById(accountId)
   const pastedIntroUrl = teacher?.teacher?.introVideoUrl || ''
 
   if (pastedIntroUrl) {
     return <SampleClassPlayer url={pastedIntroUrl} className={className} />
   }
-
-  const { url, loading } = useProfileMediaUrl(accountId, 'intro-video', refreshKey)
 
   if (url) {
     return <video className={`profile-intro-video ${className}`} src={url} controls preload="metadata" playsInline style={{ width: '100%', height: '220px', borderRadius: '12px', objectFit: 'cover' }} />
