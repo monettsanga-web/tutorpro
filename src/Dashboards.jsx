@@ -2930,6 +2930,22 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [processingAccountId, setProcessingAccountId] = useState('')
   const [supportUnread, setSupportUnread] = useState(0)
 
+  // Global high-fidelity exception interceptor to print the exact crash file and stack trace in an alert
+  useEffect(() => {
+    const handleError = (event) => {
+      alert(`CRITICAL RUNTIME ERROR CAUGHT:\nMessage: ${event.message}\nFile: ${event.filename}\nLine: ${event.lineno}:${event.colno}\nError: ${event.error?.stack || 'No stack'}`);
+    };
+    const handleRejection = (e) => {
+      alert(`UNHANDLED PROMISE REJECTION:\nReason: ${e.reason?.message || e.reason}`);
+    };
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
+
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
     window.addEventListener('storage', synchronize)
