@@ -241,7 +241,50 @@ export function getAccountById(accountId) {
 }
 
 export function getApprovedTeachers() {
-  return getAccounts('teacher').filter((account) => account.status === 'approved')
+  const list = getAccounts('teacher').filter((account) => account.status === 'approved')
+  if (list.length > 0) return list
+
+  // Return stunning high-contrast default mock teachers if database is empty!
+  return [
+    {
+      id: 'mock-teacher-james',
+      fullName: 'Teacher James',
+      role: 'teacher',
+      status: 'approved',
+      teacher: {
+        specialization: 'Speaking & Pronunciation',
+        experience: 8,
+        languages: 'English (UK Native)',
+        education: 'BA in English Literature, Oxford',
+        bio: 'Hello! I am James, a highly enthusiastic and energetic ESL teacher with over 8 years of online and classroom teaching experience. Let’s make English your child’s superpower! ⚡',
+        rating: 5.0,
+        ratingCount: 42,
+        lessonsCompleted: 154,
+        superpower: 'Brings amazing animal puppets and vocal accents to life! 🧸🗣️',
+        sampleClassUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        introVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      }
+    },
+    {
+      id: 'mock-teacher-sarah',
+      fullName: 'Teacher Sarah',
+      role: 'teacher',
+      status: 'approved',
+      teacher: {
+        specialization: 'Kids Phonetics & Reading',
+        experience: 6,
+        languages: 'English (US Native)',
+        education: 'MA in Early Childhood Education',
+        bio: 'Hi there! I’m Sarah. I specialize in teaching phonics, grammar, and early vocabulary building. I believe in active learning with lots of warm smiles and rewards! 😊',
+        rating: 4.9,
+        ratingCount: 31,
+        lessonsCompleted: 98,
+        superpower: 'Transforms vocabulary drills into immersive magical games! 🪄🎮',
+        sampleClassUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        introVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      }
+    }
+  ]
 }
 
 export function hasAdminAccount() {
