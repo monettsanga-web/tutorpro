@@ -1615,11 +1615,19 @@
   line-height: 1.05;
 }
 
-.schedule-cell > span strong,
+.schedule-cell > span strong {
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.82rem; /* much bigger, as requested! */
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .schedule-cell > span small {
   overflow: hidden;
   color: inherit;
-  font-size: 0.5rem;
+  font-size: 0.65rem; /* proportionally bigger */
   text-overflow: ellipsis;
   white-space: nowrap;
 }

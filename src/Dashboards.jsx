@@ -2609,7 +2609,7 @@ export function SupportInbox({ onUnreadChange }) {
 
   return (
     <div className="portal-view support-inbox-view">
-      <div className="portal-page-heading"><div><span className="portal-kicker">Bilingual parent care</span><h1>Parent support inbox</h1><p>Reply to Chinese and international parents directly from TutorPro English.</p></div><span className="support-inbox-live"><i /> Live inbox</span></div>
+      <div className="portal-page-heading"><div><span className="portal-kicker">Parents & Teachers Care</span><h1>Parents/Teachers support inbox</h1><p>Reply to parents and teachers directly from TutorPro English.</p></div><span className="support-inbox-live"><i /> Live inbox</span></div>
       {error && <div className="portal-error" role="alert">{error}</div>}
       <section className="support-inbox">
         <aside className="support-conversation-list">
@@ -3389,7 +3389,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
     { id: 'students', label: 'Students', icon: GraduationCap },
-    { id: 'support', label: 'Parent support', icon: MessageSquareText, badge: supportUnread },
+    { id: 'support', label: 'Parents/Teachers support', icon: MessageSquareText, badge: supportUnread },
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },

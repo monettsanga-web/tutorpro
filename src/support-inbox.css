@@ -1,56 +1,56 @@
 /* Administrator bilingual parent support inbox */
 .support-inbox-view { min-height: calc(100dvh - 150px); }
-.support-inbox-live { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 7px 10px; background: #eaf8d3; color: #52761d; font-size: 0.57rem; font-weight: 850; }
-.support-inbox-live i { width: 8px; height: 8px; border-radius: 50%; background: #72c743; box-shadow: 0 0 0 5px rgba(114,199,67,0.13); }
-.support-inbox { display: grid; min-height: 620px; grid-template-columns: 320px 1fr; overflow: hidden; border: 1px solid var(--portal-line); border-radius: 20px; background: #fff; box-shadow: 0 18px 45px rgba(50,21,104,0.08); }
+.support-inbox-live { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 7px 10px; background: #eaf8d3; color: #52761d; font-size: 0.72rem; font-weight: 850; }
+.support-inbox-live i { width: 10px; height: 8px; border-radius: 50%; background: #72c743; box-shadow: 0 0 0 5px rgba(114,199,67,0.13); }
+.support-inbox { display: grid; min-height: 650px; grid-template-columns: 320px 1fr; overflow: hidden; border: 1px solid var(--portal-line); border-radius: 20px; background: #fff; box-shadow: 0 18px 45px rgba(50,21,104,0.08); }
 .support-conversation-list { display: grid; min-width: 0; grid-template-rows: auto 1fr; border-right: 1px solid var(--portal-line); background: #fbfafc; }
 .support-conversation-list > label { display: flex; align-items: center; gap: 7px; margin: 12px; border: 1px solid #ddd6e7; border-radius: 10px; padding: 0 9px; background: #fff; color: #8a7d95; }
-.support-conversation-list input { width: 100%; min-width: 0; min-height: 40px; border: 0; outline: 0; background: transparent; color: #392d48; font: inherit; font-size: 0.62rem; }
+.support-conversation-list input { width: 100%; min-width: 0; min-height: 44px; border: 0; outline: 0; background: transparent; color: #392d48; font: inherit; font-size: 0.85rem; }
 .support-conversation-list > div { min-height: 0; overflow-y: auto; padding: 0 8px 10px; }
-.support-conversation-list > div > button { position: relative; display: grid; width: 100%; min-height: 75px; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; border: 0; border-bottom: 1px solid #eeeaf2; border-radius: 11px; padding: 9px; background: transparent; text-align: left; transition: background 160ms ease, transform 160ms ease; }
+.support-conversation-list > div > button { position: relative; display: grid; width: 100%; min-height: 85px; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; border: 0; border-bottom: 1px solid #eeeaf2; border-radius: 11px; padding: 9px; background: transparent; text-align: left; transition: background 160ms ease, transform 160ms ease; }
 .support-conversation-list > div > button:hover,
 .support-conversation-list > div > button.active { background: #f0eaff; transform: translateX(2px); }
-.support-conversation-list > div > button > span { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: #7048df; color: #fff; font-size: 0.66rem; font-weight: 900; }
+.support-conversation-list > div > button > span { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 13px; background: #7048df; color: #fff; font-size: 0.85rem; font-weight: 900; }
 .support-conversation-list button > div { display: grid; min-width: 0; }
-.support-conversation-list button strong { overflow: hidden; color: #332543; font-size: 0.64rem; text-overflow: ellipsis; white-space: nowrap; }
-.support-conversation-list button small { overflow: hidden; color: #84778e; font-size: 0.52rem; text-overflow: ellipsis; white-space: nowrap; }
-.support-conversation-list button time { color: #a196aa; font-size: 0.43rem; }
-.support-conversation-list button > i { display: grid; min-width: 21px; height: 21px; place-items: center; border-radius: 9px; background: #ff4f87; color: #fff; font-size: 0.45rem; font-style: normal; font-weight: 900; }
-.support-inbox-empty { display: flex; min-height: 250px; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 22px; color: #908599; font-size: 0.58rem; text-align: center; }
-.support-inbox-empty strong { color: #51435f; font-size: 0.67rem; }
+.support-conversation-list button strong { overflow: hidden; color: #332543; font-size: 0.88rem; text-overflow: ellipsis; white-space: nowrap; }
+.support-conversation-list button small { overflow: hidden; color: #84778e; font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+.support-conversation-list button time { color: #a196aa; font-size: 0.65rem; }
+.support-conversation-list button > i { display: grid; min-width: 21px; height: 21px; place-items: center; border-radius: 9px; background: #ff4f87; color: #fff; font-size: 0.65rem; font-style: normal; font-weight: 900; }
+.support-inbox-empty { display: flex; min-height: 250px; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 22px; color: #908599; font-size: 0.82rem; text-align: center; }
+.support-inbox-empty strong { color: #51435f; font-size: 0.9rem; }
 
 .support-admin-thread { display: grid; min-width: 0; min-height: 0; grid-template-rows: auto 1fr auto; background: linear-gradient(180deg, #fff, #faf8fc); }
-.support-admin-thread > header { display: flex; min-height: 75px; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--portal-line); padding: 11px 14px; }
+.support-admin-thread > header { display: flex; min-height: 85px; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--portal-line); padding: 11px 14px; }
 .support-admin-thread > header > div { display: flex; min-width: 0; align-items: center; gap: 9px; }
-.support-admin-thread > header > div > span { display: grid; width: 44px; height: 44px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: #ff4f87; color: #fff; font-size: 0.68rem; font-weight: 900; }
+.support-admin-thread > header > div > span { display: grid; width: 48px; height: 44px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: #ff4f87; color: #fff; font-size: 0.88rem; font-weight: 900; }
 .support-admin-thread > header > div > div { display: flex; min-width: 0; flex-direction: column; }
-.support-admin-thread > header strong { color: #352748; font-size: 0.7rem; }
-.support-admin-thread > header small { overflow: hidden; color: var(--portal-muted); font-size: 0.52rem; text-overflow: ellipsis; white-space: nowrap; }
-.support-admin-thread > header > button { min-height: 34px; border: 1px solid #ddd4e6; border-radius: 8px; padding: 0 9px; background: #fff; color: #665675; font-size: 0.54rem; font-weight: 800; }
+.support-admin-thread > header strong { color: #352748; font-size: 0.95rem; }
+.support-admin-thread > header small { overflow: hidden; color: var(--portal-muted); font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
+.support-admin-thread > header > button { min-height: 38px; border: 1px solid #ddd4e6; border-radius: 8px; padding: 0 12px; background: #fff; color: #665675; font-size: 0.72rem; font-weight: 800; }
 .support-admin-messages { min-height: 0; overflow-y: auto; padding: 18px; }
-.support-admin-message { position: relative; width: fit-content; max-width: 72%; margin: 9px 0; border-radius: 5px 14px 14px; padding: 10px 11px 19px; background: #f0ebf7; color: #463650; }
+.support-admin-message { position: relative; width: fit-content; max-width: 72%; margin: 12px 0; border-radius: 5px 14px 14px; padding: 12px 14px 22px; background: #f0ebf7; color: #463650; }
 .support-admin-message--admin { margin-left: auto; border-radius: 14px 5px 14px 14px; background: #7048df; color: #fff; }
-.support-admin-message small { display: block; margin-bottom: 3px; color: #84728f; font-size: 0.44rem; font-weight: 850; }
+.support-admin-message small { display: block; margin-bottom: 4px; color: #84728f; font-size: 0.68rem; font-weight: 850; }
 .support-admin-message--admin small { color: #d9caf5; }
-.support-admin-message p { margin: 0; overflow-wrap: anywhere; color: inherit; font-size: 0.64rem; line-height: 1.55; }
-.support-admin-translation { display: flex; align-items: flex-start; gap: 4px; margin-top: 7px !important; border-top: 1px solid currentColor; padding-top: 6px; font-size: 0.56rem !important; font-style: italic; opacity: 0.82; }
-.support-admin-attachment { display: grid; width: 100%; min-width: 190px; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; margin-top: 7px; border: 1px solid rgba(112,72,223,0.2); border-radius: 8px; padding: 7px; background: rgba(255,255,255,0.72); color: #5c4774; font-size: 0.51rem; text-align: left; }
+.support-admin-message p { margin: 0; overflow-wrap: anywhere; color: inherit; font-size: 0.92rem; line-height: 1.55; }
+.support-admin-translation { display: flex; align-items: flex-start; gap: 4px; margin-top: 7px !important; border-top: 1px solid currentColor; padding-top: 6px; font-size: 0.8rem !important; font-style: italic; opacity: 0.82; }
+.support-admin-attachment { display: grid; width: 100%; min-width: 190px; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; margin-top: 7px; border: 1px solid rgba(112,72,223,0.2); border-radius: 8px; padding: 7px; background: rgba(255,255,255,0.72); color: #5c4774; font-size: 0.7rem; text-align: left; }
 .support-admin-message--admin .support-admin-attachment { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.12); color: #fff; }
 .support-admin-attachment span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.support-admin-message time { position: absolute; right: 9px; bottom: 5px; font-size: 0.4rem; opacity: 0.58; }
+.support-admin-message time { position: absolute; right: 9px; bottom: 5px; font-size: 0.6rem; opacity: 0.58; }
 .support-admin-thread > form { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; border-top: 1px solid var(--portal-line); padding: 12px; }
-.support-admin-selected-file { display: grid; grid-column: 1 / -1; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-radius: 8px; padding: 7px 8px; background: #eee8f7; color: #665578; font-size: 0.52rem; }
+.support-admin-selected-file { display: grid; grid-column: 1 / -1; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; border-radius: 8px; padding: 7px 8px; background: #eee8f7; color: #665578; font-size: 0.72rem; }
 .support-admin-selected-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .support-admin-selected-file button { display: grid !important; min-width: 25px !important; width: 25px !important; height: 25px; place-items: center; border-radius: 7px !important; padding: 0 !important; background: #fff !important; color: #745f87 !important; }
 .support-admin-file-button { display: grid; width: 54px; min-height: 54px; place-items: center; border-radius: 10px; background: #eee8f7; color: #7048df; cursor: pointer; }
 .support-admin-file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.support-admin-thread textarea { min-height: 54px; max-height: 120px; border: 1px solid #dcd4e6; border-radius: 10px; outline: 0; padding: 9px 10px; color: #3c2e4c; font: inherit; font-size: 0.64rem; resize: vertical; }
+.support-admin-thread textarea { min-height: 54px; max-height: 120px; border: 1px solid #dcd4e6; border-radius: 10px; outline: 0; padding: 10px 12px; color: #3c2e4c; font: inherit; font-size: 0.92rem; resize: vertical; }
 .support-admin-thread textarea:focus { border-color: #7048df; box-shadow: 0 0 0 3px rgba(112,72,223,0.1); }
-.support-admin-thread form button { display: inline-flex; min-width: 112px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; padding: 0 12px; background: linear-gradient(115deg, #e73876, #ff6095); color: #fff; font-size: 0.6rem; font-weight: 850; }
+.support-admin-thread form button { display: inline-flex; min-width: 112px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; padding: 0 12px; background: linear-gradient(115deg, #e73876, #ff6095); color: #fff; font-size: 0.8rem; font-weight: 850; }
 .support-admin-thread form button:disabled { cursor: not-allowed; filter: grayscale(0.5); opacity: 0.45; }
 .support-thread-placeholder { display: flex; min-height: 500px; flex-direction: column; align-items: center; justify-content: center; color: #a094aa; text-align: center; }
-.support-thread-placeholder h2 { margin: 10px 0 4px; font-size: 1.2rem; }
-.support-thread-placeholder p { color: var(--portal-muted); font-size: 0.64rem; }
+.support-thread-placeholder h2 { margin: 10px 0 4px; font-size: 1.4rem; }
+.support-thread-placeholder p { color: var(--portal-muted); font-size: 0.85rem; }
 
 @media (max-width: 900px) {
   .support-inbox { min-height: 700px; grid-template-columns: 260px 1fr; }
