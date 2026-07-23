@@ -2912,6 +2912,35 @@ export function AdminAnnouncementsPanel() {
   )
 }
 
+export class AdminRenderErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '40px', background: '#090510', border: '2px solid #ff4d4d', borderRadius: '12px', color: '#fff', margin: '20px', fontFamily: 'monospace' }}>
+          <h2 style={{ fontSize: '1.5rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Admin Portal Render Exception</h2>
+          <p style={{ color: '#b9adc7', fontSize: '0.9rem', marginBottom: '15px' }}>
+            A rendering error occurred inside the Admin Dashboard workspace. Stack trace:
+          </p>
+          <pre style={{ background: 'rgba(0,0,0,0.5)', padding: '16px', borderRadius: '8px', fontSize: '0.85rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)', whiteSpace: 'pre-wrap' }}>
+            {this.state.error?.stack || this.state.error?.message}
+          </pre>
+          <button onClick={() => this.setState({ error: null })} style={{ background: '#bce94e', color: '#090510', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Try Again</button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export function AdminDashboard({ account, onHome, onLogout }) {
   const [active, setActive] = useState('overview')
   const [version, setVersion] = useState(0)
@@ -3325,23 +3354,27 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   if (managedRole === 'teacher') {
     return (
-      <PortalShell account={account} role="admin" active="teachers" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
-        <RoleErrorBoundary onBack={exitManagedDashboard}>
-          <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} onRemove={setTeacherToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} onOpenChat={launchSupportChat} />
-        </RoleErrorBoundary>
-        {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
-      </PortalShell>
+      <AdminRenderErrorBoundary>
+        <PortalShell account={account} role="admin" active="teachers" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
+          <RoleErrorBoundary onBack={exitManagedDashboard}>
+            <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} onRemove={setTeacherToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} onOpenChat={launchSupportChat} />
+          </RoleErrorBoundary>
+          {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
+        </PortalShell>
+      </AdminRenderErrorBoundary>
     )
   }
 
   if (managedRole === 'student') {
     return (
-      <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
-        <RoleErrorBoundary onBack={exitManagedDashboard}>
-          <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} teachers={teachers} onOpenChat={launchSupportChat} />
-        </RoleErrorBoundary>
-        {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
-      </PortalShell>
+      <AdminRenderErrorBoundary>
+        <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
+          <RoleErrorBoundary onBack={exitManagedDashboard}>
+            <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} teachers={teachers} onOpenChat={launchSupportChat} />
+          </RoleErrorBoundary>
+          {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
+        </PortalShell>
+      </AdminRenderErrorBoundary>
     )
   }
 
