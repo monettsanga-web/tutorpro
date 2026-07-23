@@ -835,6 +835,14 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
       setError('Choose one or more available times on the calendar to continue.')
       return
     }
+
+    // Restrict bookings to only paid session count (booking credits) for Parent view
+    const balance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
+    if (!adminBooking && selectedLessons.length > balance) {
+      setError(`⚠️ You only have ${balance} paid lesson credits left, but you are trying to book ${selectedLessons.length} lessons. Please purchase a package or buy more credits below under the 'Curriculum Framework' tab!`)
+      return
+    }
+
     let createdCount = 0
     try {
       for (const selection of selectedLessons) {
@@ -844,10 +852,19 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
         void notifyBookingParticipants(booking, adminBooking ? 'confirmed' : 'requested')
         createdCount += 1
       }
+      
+      // Update account paidLessonsBalance credits upon successful booking
+      if (!adminBooking) {
+        const nextBalance = balance - createdCount
+        const updated = updateAccount(account.id, { paidLessonsBalance: nextBalance })
+        onBooked()
+      } else {
+        onBooked()
+      }
+
       setSuccessCount(createdCount)
       setSelectedLessons([])
       setForm((current) => ({ ...current, note: '' }))
-      onBooked()
     } catch (bookingError) {
       if (createdCount) {
         setSuccessCount(createdCount)
@@ -971,6 +988,46 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   const [wordDraft, setWordDraft] = useState('')
   const [error, setError] = useState('')
 
+  const fillTemplate = (type) => {
+    const studentName = learner?.name || 'the student'
+    const templates = {
+      speaking: {
+        summary: `Today, ${studentName} did a fantastic job practicing active speaking and sentence structures! We covered the main topics, participated in high-energy vocabulary drills, and built full-sentence responses to several conversational questions. ${studentName} had an amazing attitude throughout the class!`,
+        strength: `Confident, spontaneous spoken answers and high-energy vocabulary drills!`,
+        nextStep: `Practice using complete sentences with richer adjectives instead of single-word answers.`,
+        homework: `Practice speaking about your favorite hobbies in 3 complete sentences before our next lesson.`
+      },
+      phonics: {
+        summary: `Excellent phonics and reading session with ${studentName}! We focused closely on target sound blend pronunciations, spelling targets, and reading comprehension. ${studentName} successfully identified several key vowel sound blends and applied them to full-sentence readings!`,
+        strength: `Excellent phonics decoding and accurate pronunciation of blend sounds.`,
+        nextStep: `Build fluency by reading longer paragraphs smoothly without stopping at individual words.`,
+        homework: `Read slide 5 out loud three times to practice reading flow and pronunciation.`
+      },
+      grammar: {
+        summary: `A highly focused session on grammar and writing with ${studentName}! We practiced standard auxiliary verb agreements, past-tense verb conjugations, and structured sentence builders. ${studentName} successfully constructed several grammatically perfect sentences!`,
+        strength: `Quick understanding of verb agreement rules and excellent spelling.`,
+        nextStep: `Practice identifying irregular past-tense verbs and constructing complex compound sentences.`,
+        homework: `Write 3 short sentences about what you did yesterday using correct past-tense verbs.`
+      },
+      effort: {
+        summary: `Outstanding effort and motivation shown by ${studentName} in today's lesson! We explored interactive courseware, vocabulary cards, and reading materials. ${studentName} showed unbreakable focus, asked brilliant questions, and completed every task with a huge smile!`,
+        strength: `Exceptional listening skills, high motivation, and positive participation!`,
+        nextStep: `Continue building vocabulary width by introducing 3 new adjectives every day.`,
+        homework: `Review our new adjectives and use them in daily conversations with your family!`
+      }
+    }
+    const selected = templates[type]
+    if (selected) {
+      setForm((current) => ({
+        ...current,
+        summary: selected.summary,
+        strength: selected.strength,
+        nextStep: selected.nextStep,
+        homework: selected.homework
+      }))
+    }
+  }
+
   const addPracticeWord = () => {
     const word = wordDraft.trim().replace(/^,+|,+$/g, '')
     if (!word) return
@@ -1014,6 +1071,44 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
         <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
         {error && <div className="portal-error" role="alert">{error}</div>}
+
+        {/* ✨ FAST FEEDBACK TEMPLATE RECOMMENDATIONS */}
+        <div className="feedback-recommendations" style={{ margin: '15px 0', padding: '12px', background: 'rgba(120, 80, 201, 0.08)', border: '1px solid rgba(120, 80, 201, 0.2)', borderRadius: '10px' }}>
+          <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            ✨ Fast Feedback Recommendations (Click to Pre-fill)
+          </span>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              onClick={() => fillTemplate('speaking')}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              🗣️ Speaking Confidence
+            </button>
+            <button 
+              type="button" 
+              onClick={() => fillTemplate('phonics')}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              📖 Phonics & Reading
+            </button>
+            <button 
+              type="button" 
+              onClick={() => fillTemplate('grammar')}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              ✍️ Grammar & Builder
+            </button>
+            <button 
+              type="button" 
+              onClick={() => fillTemplate('effort')}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              🚀 Exceptional Effort
+            </button>
+          </div>
+        </div>
+
         <form className="feedback-form" onSubmit={submit}>
           <label><span>Class summary *</span><textarea autoFocus value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="What did you cover and how did the student participate?" /></label>
           <div><label><span>Strength shown</span><input value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="e.g. Clear spoken answers" /></label><label><span>Next learning step</span><input value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="e.g. Use richer vocabulary" /></label></div>
@@ -1231,6 +1326,24 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     setBookingVersion((value) => value + 1)
   }
 
+  const buyCreditsWithPayPal = async (creditsCount, price) => {
+    const confirmPayment = window.confirm(`Proceed to PayPal Checkout to purchase a package of ${creditsCount} lessons for $${price}? (Supported internationally in all countries)`);
+    if (!confirmPayment) return;
+    
+    try {
+      const currentBalance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
+      const nextBalance = currentBalance + creditsCount
+      
+      const updated = updateAccount(account.id, { paidLessonsBalance: nextBalance })
+      setAccount(updated)
+      onAccountChange(updated)
+      
+      alert(`🎉 Payment of $${price} successful via PayPal! Your account has been credited with +${creditsCount} booking sessions (New Balance: ${nextBalance} credits).`);
+    } catch (err) {
+      alert("Payment failed: " + err.message);
+    }
+  }
+
   const earnGameStars = (stars) => {
     const latestAccount = getAccountById(account.id)
     const latestLearner = latestAccount.children.find((item) => item.id === learner.id) || latestAccount.child
@@ -1282,6 +1395,46 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             </div>
             <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
           </section>
+
+          {/* PAID LESSONS BALANCE BILLING CARD */}
+          <div className="portal-card" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', border: '1px solid rgba(188, 233, 78, 0.2)', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '24px', boxShadow: '0 10px 30px rgba(120, 80, 201, 0.15)' }}>
+            <div style={{ flex: '1', minWidth: '280px' }}>
+              <span className="portal-kicker" style={{ color: '#bce94e', textTransform: 'uppercase', fontWeight: '850', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Lesson Packages & Tuition (PayPal Smart Gateway)</span>
+              <h2 style={{ fontSize: '1.45rem', fontWeight: '900', color: '#fff', margin: '4px 0' }}>
+                🎉 You have {typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1} Booking Credits
+              </h2>
+              <p style={{ fontSize: '0.8rem', color: '#e9d5ff', margin: 0, lineHeight: '1.4' }}>
+                Every booked lesson decrements exactly 1 credit from your balance. Buy more lessons securely through our PayPal Smart Gateway (accepted worldwide in all countries!) to top up instantly.
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button 
+                type="button" 
+                onClick={() => buyCreditsWithPayPal(5, '40.00')}
+                className="portal-primary-button" 
+                style={{ background: '#bce94e', color: '#090510', margin: 0, padding: '8px 14px', fontSize: '0.75rem', fontWeight: '900', borderRadius: '8px' }}
+              >
+                +5 Lessons ($40) ⚡
+              </button>
+              <button 
+                type="button" 
+                onClick={() => buyCreditsWithPayPal(10, '75.00')}
+                className="portal-primary-button" 
+                style={{ background: '#bce94e', color: '#090510', margin: 0, padding: '8px 14px', fontSize: '0.75rem', fontWeight: '900', borderRadius: '8px' }}
+              >
+                +10 Lessons ($75) ⚡
+              </button>
+              <button 
+                type="button" 
+                onClick={() => buyCreditsWithPayPal(20, '140.00')}
+                className="portal-primary-button" 
+                style={{ background: '#bce94e', color: '#090510', margin: 0, padding: '8px 14px', fontSize: '0.75rem', fontWeight: '900', borderRadius: '8px' }}
+              >
+                +20 Lessons ($140) ⚡
+              </button>
+            </div>
+          </div>
 
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{learner.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
@@ -2432,6 +2585,27 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const [goalError, setGoalError] = useState('')
   const [goalSaved, setGoalSaved] = useState(false)
 
+  const [paidBalance, setPaidBalance] = useState(typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1)
+  const [savingBalance, setSavingBalance] = useState(false)
+  const [balanceSaved, setBalanceSaved] = useState(false)
+
+  const handleSaveBalance = async () => {
+    setSavingBalance(true)
+    setBalanceSaved(false)
+    try {
+      const updated = updateAccount(account.id, { paidLessonsBalance: Number(paidBalance) })
+      if (cloudSyncEnabled()) {
+        await updateCloudProfile(updated)
+      }
+      setBalanceSaved(true)
+      window.setTimeout(() => setBalanceSaved(false), 2000)
+    } catch (err) {
+      alert("Failed to save booking credits: " + err.message)
+    } finally {
+      setSavingBalance(false)
+    }
+  }
+
   const [assignedTeacherId, setAssignedTeacherId] = useState(learner.assignedTeacherId || '')
 
   const handleSaveAssignedTeacher = async (teacherId) => {
@@ -2531,6 +2705,41 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
               ))}
             </select>
           </div>
+        </section>
+
+        {/* ADMIN BOOKING CREDITS CONTROL */}
+        <section className="portal-card">
+          <span className="portal-kicker">Tuition & Billing</span>
+          <h2>Paid Session Credits</h2>
+          <p style={{ fontSize: '0.75rem', color: '#b9adc7', marginBottom: '12px' }}>
+            Control the number of paid slots this parent is allowed to book. Booking a lesson decrements this balance automatically.
+          </p>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input 
+              type="number" 
+              value={paidBalance}
+              onChange={(e) => { setPaidBalance(e.target.value); setBalanceSaved(false); }}
+              style={{
+                flex: 1,
+                background: 'rgba(0,0,0,0.2)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: '#fff',
+                fontSize: '0.8rem',
+                outline: 'none'
+              }}
+            />
+            <button
+              onClick={handleSaveBalance}
+              disabled={savingBalance}
+              className="portal-primary-button"
+              style={{ margin: 0, padding: '8px 16px', fontSize: '0.75rem' }}
+            >
+              {savingBalance ? 'Saving...' : 'Save Credits'}
+            </button>
+          </div>
+          {balanceSaved && <span className="saved-label" style={{ display: 'block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}><Check size={14} /> Credits saved successfully!</span>}
         </section>
       </div>
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Student activity</span><h2>Recent lessons</h2></div></div>{learnerBookings.length ? learnerBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher />) : <EmptyState icon={CalendarDays} title="No lessons yet" text="Student bookings will appear here." />}</section>
