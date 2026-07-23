@@ -2963,7 +2963,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         }
       }
     }
-    if (!teacher || teacher.role !== 'teacher') {
+    if (!teacher || teacher.role?.toLowerCase() !== 'teacher') {
       setAdminActionError('Teacher profile could not be loaded from this browser. Refresh the registrations list and try again.')
       return
     }
@@ -2976,7 +2976,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         .then((profiles) => {
           if (profiles.length) mergeCloudAccounts(profiles, { reconcile: true })
           const refreshed = getAccountById(teacherId)
-          if (refreshed?.role === 'teacher') setManagedAccount(refreshed)
+          if (refreshed?.role?.toLowerCase() === 'teacher') setManagedAccount(refreshed)
         })
         .catch(() => {
           // The already-open local profile remains available to the administrator.
@@ -3013,7 +3013,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       }
       student.child = student.children[0]
     }
-    if (!student || student.role !== 'student') {
+    if (!student || student.role?.toLowerCase() !== 'student') {
       setAdminActionError('Student profile could not be loaded from this browser. Refresh the registrations list and try again.')
       return
     }
@@ -3026,7 +3026,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         .then((profiles) => {
           if (profiles.length) mergeCloudAccounts(profiles, { reconcile: true })
           const refreshed = getAccountById(studentId)
-          if (refreshed?.role === 'student') setManagedAccount(refreshed)
+          if (refreshed?.role?.toLowerCase() === 'student') setManagedAccount(refreshed)
         })
         .catch(() => {
           // The already-open local profile remains available to the administrator.
@@ -3160,7 +3160,9 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
 
-  if (managedAccount?.role === 'teacher') {
+  const managedRole = managedAccount?.role?.toLowerCase()
+
+  if (managedRole === 'teacher') {
     return (
       <PortalShell account={account} role="admin" active="teachers" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
         <RoleErrorBoundary onBack={exitManagedDashboard}>
@@ -3171,7 +3173,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     )
   }
 
-  if (managedAccount?.role === 'student') {
+  if (managedRole === 'student') {
     return (
       <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
         <RoleErrorBoundary onBack={exitManagedDashboard}>
