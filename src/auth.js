@@ -146,7 +146,7 @@ function queueCloudProfileUpdate(account) {
 function publicAccount(account) {
   if (!account) return null
   const { passwordHash: _passwordHash, salt: _salt, ...safeAccount } = account
-  const rawRole = account.role || 'student'
+  const rawRole = (account.role || 'student').toLowerCase()
   const role = rawRole === 'parent' ? 'student' : rawRole
   if (role === 'student') {
     const children = normalizeLearners(account)
