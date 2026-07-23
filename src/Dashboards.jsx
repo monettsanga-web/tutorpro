@@ -2978,7 +2978,7 @@ export function AdminAnnouncementsPanel() {
               marginTop: '8px'
             }}
           >
-            {sending ? <RefreshCcw className="animate-spin w-4 h-4" /> : <Bell style={{ width: '15px', height: '15px' }} />}
+            {sending ? <RotateCcw className="animate-spin w-4 h-4" /> : <Bell style={{ width: '15px', height: '15px' }} />}
             <span>{sending ? 'Broadcasting Emails...' : 'Send Mass Announcement Email'}</span>
           </button>
 
