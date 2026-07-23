@@ -2076,9 +2076,9 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
   const profile = teacher.teacher || {}
   const credentials = Array.isArray(profile.credentials) ? profile.credentials : []
   const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
-  const teacherBookings = getBookings({ teacherId: teacher.id })
+  const teacherBookings = getBookings({ teacherId: teacher?.id })
   const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed' || booking.status === 'absent').length
-  const rate = Number(profile.pesoRate || 350)
+  const rate = Number.isFinite(Number(profile.pesoRate)) ? Number(profile.pesoRate) : 350
   const regularCompletedBookings = teacherBookings.filter((booking) => !booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
   const regularSlotsCount = regularCompletedBookings.reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
   
@@ -2086,7 +2086,8 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
   const trialEnrolledCount = trialCompletedBookings.filter(b => b.trialEnrolled).length
   const trialNotEnrolledCount = trialCompletedBookings.filter(b => !b.trialEnrolled).length
 
-  const estimatedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
+  const computedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
+  const estimatedEarnings = Number.isFinite(computedEarnings) ? computedEarnings : 0
   const interview = profile.interview || null
   const recommendationClass = interview?.overallRecommendation?.startsWith('Strong') ? 'strong' : interview?.overallRecommendation?.startsWith('Consider') ? 'consider' : 'review'
 
@@ -2969,7 +2970,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
     setManagedLearnerId('')
     setManagedAccount(teacher)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) }
 
     if (cloudSyncEnabled()) {
       withTimeout(fetchCloudProfiles(), 8000, 'Cloud refresh timed out.')
@@ -3019,7 +3020,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
     setManagedLearnerId(learnerId || student.child?.id || '')
     setManagedAccount(student)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) }
 
     if (cloudSyncEnabled()) {
       withTimeout(fetchCloudProfiles(), 8000, 'Cloud refresh timed out.')
