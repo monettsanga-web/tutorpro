@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   AudioLines,
