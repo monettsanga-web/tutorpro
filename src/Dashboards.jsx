@@ -3039,6 +3039,37 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [selectedCalendarTeacherId, setSelectedCalendarTeacherId] = useState('')
   const [adminCalendarWeek, setAdminCalendarWeek] = useState(0)
 
+  const teachers = getAccounts('teacher')
+  const students = getAccounts('student')
+  const studentProfiles = students.flatMap((student) => {
+    const learners = student.children?.length ? student.children : student.child ? [student.child] : []
+    if (learners.length) return learners.map((learner) => ({ account: student, learner }))
+    return [{
+      account: student,
+      learner: {
+        id: `incomplete-${student.id}`,
+        name: 'Incomplete student profile',
+        year: 'Not provided',
+        curriculum: 'Not provided',
+        goal: 'Profile setup required',
+        accessStatus: 'incomplete',
+        incomplete: true,
+      },
+    }]
+  })
+  const bookings = getBookings()
+  const bookingStats = getBookingStats()
+  const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
+  const bookingProfile = studentProfiles.find((profile) => profile.learner.id === bookingStudentId) || studentProfiles[0] || null
+  const bookingStudent = bookingProfile?.account || null
+  const bookingLearner = bookingProfile?.learner || null
+
+  useEffect(() => {
+    if (teachers.length && !selectedCalendarTeacherId) {
+      setSelectedCalendarTeacherId(teachers[0].id)
+    }
+  }, [teachers, selectedCalendarTeacherId])
+
   // Global high-fidelity exception interceptor to print the exact crash file and stack trace in an alert
   useEffect(() => {
     const handleError = (event) => {
@@ -3120,38 +3151,6 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       window.clearInterval(interval)
     }
   }, [])
-
-  useEffect(() => {
-    if (teachers.length && !selectedCalendarTeacherId) {
-      setSelectedCalendarTeacherId(teachers[0].id)
-    }
-  }, [teachers, selectedCalendarTeacherId])
-
-  const teachers = getAccounts('teacher')
-  const students = getAccounts('student')
-  const studentProfiles = students.flatMap((student) => {
-    const learners = student.children?.length ? student.children : student.child ? [student.child] : []
-    if (learners.length) return learners.map((learner) => ({ account: student, learner }))
-    return [{
-      account: student,
-      learner: {
-        id: `incomplete-${student.id}`,
-        name: 'Incomplete student profile',
-        year: 'Not provided',
-        curriculum: 'Not provided',
-        goal: 'Profile setup required',
-        accessStatus: 'incomplete',
-        incomplete: true,
-      },
-    }]
-  })
-  const bookings = getBookings()
-  const bookingStats = getBookingStats()
-  const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
-  const bookingProfile = studentProfiles.find((profile) => profile.learner.id === bookingStudentId) || studentProfiles[0] || null
-  const bookingStudent = bookingProfile?.account || null
-  const bookingLearner = bookingProfile?.learner || null
-  void version
 
   const refresh = () => setVersion((value) => value + 1)
   const setStatus = async (accountId, status) => {
