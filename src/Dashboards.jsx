@@ -2073,108 +2073,116 @@ function AdminInterviewRecordings({ interview }) {
 }
 
 export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove, processing, error, onOpenChat }) {
-  const profile = teacher.teacher || {}
-  const credentials = Array.isArray(profile.credentials) ? profile.credentials : []
-  const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
-  const teacherBookings = getBookings({ teacherId: teacher?.id })
-  const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed' || booking.status === 'absent').length
-  const rate = Number.isFinite(Number(profile.pesoRate)) ? Number(profile.pesoRate) : 350
-  const regularCompletedBookings = teacherBookings.filter((booking) => !booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
-  const regularSlotsCount = regularCompletedBookings.reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
-  
-  const trialCompletedBookings = teacherBookings.filter((booking) => booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
-  const trialEnrolledCount = trialCompletedBookings.filter(b => b.trialEnrolled).length
-  const trialNotEnrolledCount = trialCompletedBookings.filter(b => !b.trialEnrolled).length
-
-  const computedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
-  const estimatedEarnings = Number.isFinite(computedEarnings) ? computedEarnings : 0
-  const interview = profile.interview || null
-  const recommendationClass = interview?.overallRecommendation?.startsWith('Strong') ? 'strong' : interview?.overallRecommendation?.startsWith('Consider') ? 'consider' : 'review'
-
-  const [pesoRate, setPesoRate] = useState(profile.pesoRate || 350)
+  const [pesoRate, setPesoRate] = useState(350)
   const [savingRate, setSavingRate] = useState(false)
 
-  const handleSavePesoRate = async () => {
-    setSavingRate(true)
-    try {
-      const updated = updateAccount(teacher.id, {
-        teacher: {
-          ...profile,
-          pesoRate: Number(pesoRate)
-        }
-      })
-      if (cloudSyncEnabled()) {
-        await updateCloudProfile(updated)
-      }
-      alert("Teacher's Peso Rate successfully saved!")
-    } catch (err) {
-      alert("Failed to save peso rate: " + err.message)
-    } finally {
-      setSavingRate(false)
+  const profile = teacher?.teacher || {}
+
+  useEffect(() => {
+    if (profile?.pesoRate) {
+      setPesoRate(profile.pesoRate)
     }
-  }
+  }, [teacher])
 
-  return (
-    <div className="portal-view admin-teacher-profile-view">
-      <div className="admin-profile-backbar"><button onClick={onBack}><ChevronLeft size={17} /> Back to teachers</button><span><ShieldCheck size={15} /> Administrator profile view</span></div>
-      {error && <div className="portal-error" role="alert">{error}</div>}
-      <section className="admin-teacher-profile-hero">
-        <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="admin-teacher-profile-photo" />
-        <div><StatusBadge status={teacher.status || 'pending'} /><h1>{teacher.fullName || 'New Teacher'}</h1><p>{profile.specialization || 'Specialization not provided'} · {Number(profile.experience) || 0} years experience</p><div className="profile-tags"><span><Star size={13} /> {profile.rating || 'New'} rating</span><span><Video size={13} /> {profile.lessonsCompleted || completedLessons} lessons</span></div></div>
-        <div className="admin-teacher-profile-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          
-          {/* NATIVE INTER-WEBSITE CHAT BUTTON */}
-          <button
-            type="button"
-            onClick={() => onOpenChat?.(teacher.email || teacher.loginId, teacher.fullName)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: '#bce94e',
-              color: '#090510',
-              fontWeight: '850',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '6px 12px',
-              fontSize: '0.72rem',
-              cursor: 'pointer'
-            }}
-          >
-            <MessageSquareText size={15} /> 💬 Chat on Website
-          </button>
+  try {
+    const credentials = Array.isArray(profile.credentials) ? profile.credentials : []
+    const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
+    const teacherBookings = getBookings({ teacherId: teacher?.id }) || []
+    const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed' || booking.status === 'absent').length
+    const rate = Number.isFinite(Number(profile.pesoRate)) ? Number(profile.pesoRate) : 350
+    const regularCompletedBookings = teacherBookings.filter((booking) => !booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
+    const regularSlotsCount = regularCompletedBookings.reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
+    
+    const trialCompletedBookings = teacherBookings.filter((booking) => booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
+    const trialEnrolledCount = trialCompletedBookings.filter(b => b.trialEnrolled).length
+    const trialNotEnrolledCount = trialCompletedBookings.filter(b => !b.trialEnrolled).length
 
-          <button 
-            type="button" 
-            onClick={async () => {
-              const bodyText = prompt(`Send a direct email message to ${teacher.fullName} (${teacher.email || teacher.loginId}):`);
-              if (!bodyText?.trim()) return;
-              try {
-                const { supabase } = await import('./supabaseClient.js');
-                const { data, error: invokeError } = await supabase.functions.invoke('mass-announcement', {
-                  body: {
-                    subject: "Message from TutorPro Administration",
-                    body: bodyText.trim(),
-                    recipientEmail: teacher.email || teacher.loginId
-                  }
-                });
-                if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send email');
-                alert(`Message successfully emailed to ${teacher.fullName}!`);
-              } catch(err) {
-                alert("Failed to send message: " + err.message);
-              }
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer' }}
-          >
-            <Send size={15} /> Send Email
-          </button>
+    const computedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
+    const estimatedEarnings = Number.isFinite(computedEarnings) ? computedEarnings : 0
+    const interview = profile.interview || null
+    const recommendationClass = interview?.overallRecommendation?.startsWith('Strong') ? 'strong' : interview?.overallRecommendation?.startsWith('Consider') ? 'consider' : 'review'
 
-          {teacher.status !== 'approved' && <button className="approve" onClick={() => onStatusChange(teacher.id, 'approved')} disabled={processing}><UserCheck size={16} /> {processing ? 'Saving…' : 'Approve teacher'}</button>}
-          {teacher.status === 'approved' && <button className="suspend" onClick={() => onStatusChange(teacher.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend</button>}
-          {teacher.status !== 'rejected' && !teacher.systemProfile && <button className="reject" onClick={() => onStatusChange(teacher.id, 'rejected')} disabled={processing}><XCircle size={16} /> Reject</button>}
-          {!teacher.systemProfile && onRemove && <button className="delete" onClick={() => onRemove(teacher)} disabled={processing}><Trash2 size={16} /> Delete profile</button>}
-        </div>
-      </section>
+    const handleSavePesoRate = async () => {
+      setSavingRate(true)
+      try {
+        const updated = updateAccount(teacher.id, {
+          teacher: {
+            ...profile,
+            pesoRate: Number(pesoRate)
+          }
+        })
+        if (cloudSyncEnabled()) {
+          await updateCloudProfile(updated)
+        }
+        alert("Teacher's Peso Rate successfully saved!")
+      } catch (err) {
+        alert("Failed to save peso rate: " + err.message)
+      } finally {
+        setSavingRate(false)
+      }
+    }
+
+    return (
+      <div className="portal-view admin-teacher-profile-view">
+        <div className="admin-profile-backbar"><button onClick={onBack}><ChevronLeft size={17} /> Back to teachers</button><span><ShieldCheck size={15} /> Administrator profile view</span></div>
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        <section className="admin-teacher-profile-hero">
+          <ProfilePhoto accountId={teacher?.id} name={teacher?.fullName} className="admin-teacher-profile-photo" />
+          <div><StatusBadge status={teacher?.status || 'pending'} /><h1>{teacher?.fullName || 'New Teacher'}</h1><p>{profile.specialization || 'Specialization not provided'} · {Number(profile.experience) || 0} years experience</p><div className="profile-tags"><span><Star size={13} /> {profile.rating || 'New'} rating</span><span><Video size={13} /> {profile.lessonsCompleted || completedLessons} lessons</span></div></div>
+          <div className="admin-teacher-profile-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            
+            {/* NATIVE INTER-WEBSITE CHAT BUTTON */}
+            <button
+              type="button"
+              onClick={() => onOpenChat?.(teacher?.email || teacher?.loginId, teacher?.fullName)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#bce94e',
+                color: '#090510',
+                fontWeight: '850',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                fontSize: '0.72rem',
+                cursor: 'pointer'
+              }}
+            >
+              <MessageSquareText size={15} /> 💬 Chat on Website
+            </button>
+
+            <button 
+              type="button" 
+              onClick={async () => {
+                const bodyText = prompt(`Send a direct email message to ${teacher?.fullName} (${teacher?.email || teacher?.loginId}):`);
+                if (!bodyText?.trim()) return;
+                try {
+                  const { supabase } = await import('./supabaseClient.js');
+                  const { data, error: invokeError } = await supabase.functions.invoke('mass-announcement', {
+                    body: {
+                      subject: "Message from TutorPro Administration",
+                      body: bodyText.trim(),
+                      recipientEmail: teacher?.email || teacher?.loginId
+                    }
+                  });
+                  if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send email');
+                  alert(`Message successfully emailed to ${teacher?.fullName}!`);
+                } catch(err) {
+                  alert("Failed to send message: " + err.message);
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer' }}
+            >
+              <Send size={15} /> Send Email
+            </button>
+
+            {teacher?.status !== 'approved' && <button className="approve" onClick={() => onStatusChange(teacher?.id, 'approved')} disabled={processing}><UserCheck size={16} /> {processing ? 'Saving…' : 'Approve teacher'}</button>}
+            {teacher?.status === 'approved' && <button className="suspend" onClick={() => onStatusChange(teacher?.id, 'suspended')} disabled={processing}><Ban size={16} /> Suspend</button>}
+            {teacher?.status !== 'rejected' && !teacher?.systemProfile && <button className="reject" onClick={() => onStatusChange(teacher?.id, 'rejected')} disabled={processing}><XCircle size={16} /> Reject</button>}
+            {!teacher?.systemProfile && onRemove && <button className="delete" onClick={() => onRemove(teacher)} disabled={processing}><Trash2 size={16} /> Delete profile</button>}
+          </div>
+        </section>
       <div className="admin-teacher-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Professional profile</span><h2>About the teacher</h2><p className="teacher-bio">{profile.bio || 'The teacher has not added a biography yet.'}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{profile.education || 'Not provided'}</strong></div><div><span>Languages</span><strong>{profile.languages || 'Not provided'}</strong></div><div><span>Curriculum</span><strong>{profile.specialization || 'Not provided'}</strong></div></div></section>
         <section className="portal-card admin-teacher-media"><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2><IntroVideo accountId={teacher.id} compact /><p>Visible to parents on the public teacher profile.</p></section>
@@ -2307,6 +2315,21 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Teacher activity</span><h2>Recent bookings</h2></div></div>{teacherBookings.length ? teacherBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent />) : <EmptyState icon={CalendarDays} title="No bookings yet" text="Teacher bookings will appear here." />}</section>
     </div>
   )
+  } catch (renderError) {
+    console.error("Render error inside AdminTeacherProfile: ", renderError)
+    return (
+      <div className="role-error-card" style={{ padding: '30px', background: '#110925', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', margin: '20px' }}>
+        <h2 style={{ fontSize: '1.5rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Layout Evaluation Exception</h2>
+        <p style={{ color: '#b9adc7', fontSize: '0.9rem', marginBottom: '15px' }}>
+          TutorPro English was unable to compile the teacher profile layout. Detail description:
+        </p>
+        <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', fontSize: '0.8rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap' }}>
+          {renderError.stack || renderError.message}
+        </pre>
+        <button onClick={onBack} className="portal-primary-button" style={{ marginTop: '15px' }}>Return to Admin</button>
+      </div>
+    )
+  }
 }
 
 export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onGoalChange, onRemove, processing, error, teachers = [], onOpenChat }) {
