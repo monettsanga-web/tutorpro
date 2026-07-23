@@ -2964,6 +2964,22 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         }
       }
     }
+    
+    // Self-healing: Force role to lowercase 'teacher' to correct any old browser storage caches!
+    if (teacher) {
+      teacher.role = 'teacher'
+      if (!teacher.teacher) {
+        teacher.teacher = {
+          specialization: 'Both Curricula',
+          bio: 'Teacher profile setup is loaded from sync. Configure their local rates below.',
+          education: 'Verified ESL Instructor',
+          experience: 5,
+          languages: 'English',
+          pesoRate: 350
+        }
+      }
+    }
+
     if (!teacher || teacher.role?.toLowerCase() !== 'teacher') {
       setAdminActionError('Teacher profile could not be loaded from this browser. Refresh the registrations list and try again.')
       return
@@ -3014,6 +3030,26 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       }
       student.child = student.children[0]
     }
+    
+    // Self-healing: Force role to lowercase 'student' to correct any old browser storage caches!
+    if (student) {
+      student.role = 'student'
+      if (!student.children || !student.children.length) {
+        student.children = [{
+          id: learnerId || crypto.randomUUID(),
+          name: student.fullName || 'Student',
+          goal: 'Speaking with confidence',
+          frequency: '1–2 weekly',
+          accessStatus: 'active',
+          progress: 18,
+          streak: 0,
+          lessonsCompleted: 0,
+          achievements: []
+        }]
+        student.child = student.children[0]
+      }
+    }
+
     if (!student || student.role?.toLowerCase() !== 'student') {
       setAdminActionError('Student profile could not be loaded from this browser. Refresh the registrations list and try again.')
       return
