@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   Clock3,
   CloudUpload,
+  Coins,
   Download,
   Eye,
   FileUp,
@@ -310,6 +311,7 @@ export function ScheduleCalendar({
                   'schedule-cell',
                   isAvailable ? 'available' : 'unavailable',
                   bookingCell ? 'booked' : '',
+                  bookingCell && bookingCell.booking.isTrialClass ? 'booking-status-trial' : '',
                   bookingCell ? `booking-status-${bookingCell.booking.status}` : '',
                   bookingCell && onBookingOpen ? 'manageable' : '',
                   bookingCell?.isStart ? 'booking-start' : '',
@@ -411,7 +413,7 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
   )
 }
 
-function BookingCard({ booking, showStudent = false, showTeacher = false, actions, onEnterClassroom, onManageBooking }) {
+function BookingCard({ booking, showStudent = false, showTeacher = false, actions, onEnterClassroom, onManageBooking, onOpenChat }) {
   const student = getAccountById(booking.studentId)
   const teacher = getAccountById(booking.teacherId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
@@ -421,24 +423,248 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   const meetingLink = classroom.platform === 'voov' ? classroom.voovLink : classroom.zoomLink
 
   return (
-    <article className="lesson-card">
+    <article 
+      className={`lesson-card ${booking.isTrialClass ? 'lesson-card--trial' : ''}`}
+      style={booking.isTrialClass ? {
+        borderLeft: '5px solid #ff9e2c',
+        paddingLeft: '14px',
+        background: 'rgba(255, 158, 44, 0.04)',
+        borderRadius: '8px',
+        marginBottom: '10px'
+      } : undefined}
+    >
       <div className="lesson-card__date">
         <strong>{new Date(`${booking.date}T00:00`).getDate()}</strong>
         <span>{new Date(`${booking.date}T00:00`).toLocaleDateString('en', { month: 'short' })}</span>
       </div>
       <div className="lesson-card__main">
-        <div className="lesson-card__top"><StatusBadge status={booking.status} /><span>{booking.duration} min</span></div>
+        <div className="lesson-card__top" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+          <StatusBadge status={booking.status} />
+          <span>{booking.duration} min</span>
+          
+          {/* Trial class badges */}
+          {booking.isTrialClass && (
+            <span style={{ background: '#ff9e2c', color: '#090510', fontSize: '0.62rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              🎁 Free Trial Class
+            </span>
+          )}
+          {booking.isTrialClass && booking.trialEnrolled && (
+            <span style={{ background: '#bce94e', color: '#090510', fontSize: '0.62rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              🏆 Enrolled (₱100)
+            </span>
+          )}
+          {booking.isTrialClass && !booking.trialEnrolled && (
+            <span style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.62rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+              Trial (₱40)
+            </span>
+          )}
+        </div>
         <h3>{booking.focus}</h3>
-        <p className="lesson-card__details">{person && <strong className="booking-person-name">{showTeacher ? 'Teacher' : 'Student'}: {person}</strong>}<span>{formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time)}</strong></span></p>
+        <p className="lesson-card__details" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', margin: '8px 0' }}>
+          {person && (
+            <strong 
+              className="booking-person-name"
+              style={{
+                fontSize: '1.25rem', // Make it BIGGER as requested!
+                fontWeight: '900',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                background: booking.isTrialClass ? '#ffebd0' : '#effbd5',
+                color: '#321568',
+                display: 'inline-flex',
+                alignItems: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+              }}
+            >
+              {showTeacher ? '👨‍🏫 Teacher' : '👶 Student'}: {person}
+            </strong>
+          )}
+          <span style={{ fontSize: '0.8rem', color: 'var(--portal-muted)' }}>
+            {formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time" style={{ color: '#fff' }}>{formatTime(booking.time)}</strong>
+          </span>
+        </p>
         {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
-        <div className="booking-utility-actions">{onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}{booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}</div>
+        <div className="booking-utility-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+          {onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}
+          
+          {/* Unified Inter-Website Chat Buttons inside Booking Card */}
+          {onOpenChat && showTeacher && teacher && (
+            <button 
+              type="button" 
+              className="manage-booking-button chat-direct-button" 
+              onClick={() => onOpenChat(teacher.id, teacher.fullName)}
+              style={{ background: 'rgba(188, 233, 78, 0.08)', color: '#bce94e', border: '1px solid rgba(188, 233, 78, 0.25)', fontWeight: '800' }}
+            >
+              <MessageSquareText size={14} /> 💬 Chat with Teacher
+            </button>
+          )}
+          {onOpenChat && showStudent && student && (
+            <button 
+              type="button" 
+              className="manage-booking-button chat-direct-button" 
+              onClick={() => onOpenChat(student.id, student.parentName || student.fullName)}
+              style={{ background: 'rgba(188, 233, 78, 0.08)', color: '#bce94e', border: '1px solid rgba(188, 233, 78, 0.25)', fontWeight: '800' }}
+            >
+              <MessageSquareText size={14} /> 💬 Chat with Parent
+            </button>
+          )}
+
+          {booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}
+        </div>
         {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}{booking.teacherFeedback.practiceWords?.length > 0 && <div className="feedback-preview-tags"><b>Words:</b>{booking.teacherFeedback.practiceWords.map((word) => <i key={word}>{word}</i>)}</div>}{booking.teacherFeedback.grammarFocus?.length > 0 && <div className="feedback-preview-tags feedback-preview-tags--grammar"><b>Grammar:</b>{booking.teacherFeedback.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
       </div>
       {actions && <div className="lesson-card__actions">{actions}</div>}
     </article>
+  )
+}
+
+export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, targetUserName, onClose }) {
+  const [messages, setMessages] = useState([])
+  const [text, setText] = useState('')
+  const messagesEndRef = useRef(null)
+
+  const getChatKey = () => {
+    return [currentUserId, targetUserId].sort().join('--')
+  }
+
+  const loadMessages = () => {
+    try {
+      const chats = JSON.parse(localStorage.getItem('tutorpro_direct_messages_v1') || '{}')
+      const chatKey = getChatKey()
+      setMessages(chats[chatKey] || [])
+    } catch {
+      setMessages([])
+    }
+  }
+
+  const sendMessage = (e) => {
+    e.preventDefault()
+    if (!text.trim()) return
+
+    const newMessage = {
+      id: crypto.randomUUID(),
+      senderId: currentUserId,
+      senderRole: currentUserRole,
+      body: text.trim(),
+      createdAt: new Date().toISOString()
+    }
+
+    try {
+      const chats = JSON.parse(localStorage.getItem('tutorpro_direct_messages_v1') || '{}')
+      const chatKey = getChatKey()
+      const thread = chats[chatKey] || []
+      const updated = [...thread, newMessage]
+      chats[chatKey] = updated
+      localStorage.setItem('tutorpro_direct_messages_v1', JSON.stringify(chats))
+      setMessages(updated)
+      setText('')
+      window.dispatchEvent(new Event('tutorpro:data-change'))
+    } catch (err) {
+      alert("Failed to send message: " + err.message)
+    }
+  }
+
+  useEffect(() => {
+    loadMessages()
+    const handleDataChange = () => loadMessages()
+    window.addEventListener('storage', handleDataChange)
+    window.addEventListener('tutorpro:data-change', handleDataChange)
+    const interval = setInterval(loadMessages, 3000)
+    return () => {
+      window.removeEventListener('storage', handleDataChange)
+      window.removeEventListener('tutorpro:data-change', handleDataChange)
+      clearInterval(interval)
+    }
+  }, [currentUserId, targetUserId])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  return (
+    <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()} style={{ zIndex: 9999 }}>
+      <section className="portal-dialog direct-chat-dialog" role="dialog" aria-modal="true" style={{ width: '450px', maxWidth: '90vw', height: '550px', display: 'flex', flexDirection: 'column' }}>
+        <header className="portal-dialog__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+          <div>
+            <span className="portal-kicker" style={{ textTransform: 'uppercase', color: '#bce94e', fontWeight: '800', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Direct Messaging</span>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>💬 Chat with {targetUserName}</h3>
+          </div>
+          <button className="portal-dialog__close" onClick={onClose} style={{ border: 'none', background: 'transparent', color: '#b9adc7', cursor: 'pointer' }}><X size={20} /></button>
+        </header>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {messages.length ? messages.map((msg) => {
+            const isMe = msg.senderId === currentUserId
+            return (
+              <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '75%',
+                  background: isMe ? '#7850c9' : 'rgba(255,255,255,0.06)',
+                  color: '#fff',
+                  padding: '10px 14px',
+                  borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                  border: isMe ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                }}>
+                  <p style={{ margin: 0, fontSize: '0.84rem', lineHeight: '1.4' }}>{msg.body}</p>
+                  <small style={{ display: 'block', textAlign: 'right', fontSize: '0.62rem', color: isMe ? 'rgba(255,255,255,0.7)' : '#b9adc7', marginTop: '4px' }}>
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </small>
+                </div>
+              </div>
+            )
+          }) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#b9adc7', textAlign: 'center', padding: '20px' }}>
+              <span style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</span>
+              <strong>No messages yet</strong>
+              <span style={{ fontSize: '0.72rem', opacity: 0.7, marginTop: '4px' }}>Say hello and start the conversation! Your chats are secure.</span>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <form onSubmit={sendMessage} style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            style={{
+              flex: 1,
+              background: 'rgba(0,0,0,0.2)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              color: '#fff',
+              fontSize: '0.85rem',
+              outline: 'none'
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!text.trim()}
+            style={{
+              background: '#bce94e',
+              color: '#090510',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontWeight: '900',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.8rem'
+            }}
+          >
+            Send <Send size={14} />
+          </button>
+        </form>
+      </section>
+    </div>
   )
 }
 
@@ -538,6 +764,37 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
           <div><span>Comment beside {learnerName}’s booked slot</span>{saved && <em><Check size={13} /> Saved live</em>}</div>
           {canComment ? <><textarea value={comment} onChange={(event) => { setComment(event.target.value); setSaved(false); setError('') }} maxLength="500" placeholder={`Write a reminder or lesson comment for ${learnerName}…`} /><div className="booking-comment-actions"><small>{comment.length}/500 · Visible to the parent, teacher and administrator</small><button onClick={saveComment} disabled={saving || comment.trim() === (current.slotComment || '').trim()}><Save size={15} /> {saving ? 'Saving…' : 'Save comment'}</button></div></> : <div className="booking-comment-readonly">{current.slotComment ? <><MessageSquareText size={16} /><span>{current.slotComment}</span></> : <span>No teacher comment has been added to this booking yet.</span>}</div>}
         </div>
+
+        {/* Trial Class Enrollment Settings for Admin */}
+        {account.role === 'admin' && current.isTrialClass && (
+          <div className="booking-trial-enrollment-editor" style={{ marginTop: '15px', padding: '12px', background: 'rgba(188, 233, 78, 0.08)', borderRadius: '8px', border: '1px solid rgba(188, 233, 78, 0.25)', marginBottom: '15px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+              <input 
+                type="checkbox" 
+                checked={Boolean(current.trialEnrolled)} 
+                onChange={async (e) => {
+                  const val = e.target.checked
+                  setSaving(true)
+                  try {
+                    const updated = updateBooking(current.id, { trialEnrolled: val })
+                    changed(updated)
+                    if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'Could not sync booking.')
+                  } catch (err) {
+                    setError(err.message)
+                  } finally {
+                    setSaving(false)
+                  }
+                }} 
+                disabled={saving}
+                style={{ width: '18px', height: '18px', accentColor: '#bce94e', cursor: 'pointer' }}
+              />
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.88rem', color: '#bce94e' }}>🎁 Successful Trial Class Enrolled</strong>
+                <span style={{ fontSize: '0.74rem', color: '#b9adc7' }}>Marking this trial class as enrolled will upgrade the teacher's payout from ₱40 to ₱100!</span>
+              </div>
+            </label>
+          </div>
+        )}
 
         {error && <div className="portal-error" role="alert">{error}</div>}
         {previousStatus && <div className="booking-undo-banner"><div><strong>Booking cancelled</strong><span>The calendar slot has been released.</span></div><button onClick={undoCancellation} disabled={saving}><RotateCcw size={15} /> Undo cancellation</button></div>}
@@ -860,6 +1117,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [managedBooking, setManagedBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [directChatUser, setDirectChatUser] = useState(null)
   const learners = (account.children?.length ? account.children : [account.child]).filter(Boolean)
   const hasLearnerProfile = learners.length > 0
   const learner = learners.find((item) => item.id === activeLearnerId) || learners[0] || {
@@ -1056,7 +1314,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <div className="student-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Coming up</span><h2>Next lesson</h2></div><button className="portal-text-button" onClick={() => setActive('lessons')}>All lessons <ChevronRight size={15} /></button></div>
-              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
+              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
             </section>
             <section className="portal-card learning-focus-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Personalised path</span><h2>Learning focus</h2></div><span className="portal-card__icon"><Sparkles size={21} /></span></div>
@@ -1078,7 +1336,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           </section>
           <section className="portal-card lessons-list-card schedule-list-below">
             <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">All requests</span><h2>Lesson details</h2></div></div>
-            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
+            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
           </section>
         </div>
       )}
@@ -1128,6 +1386,15 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); setBookingVersion((value) => value + 1) }} />}
       {ratingBooking && <RatingDialog booking={ratingBooking} studentId={account.id} onClose={() => setRatingBooking(null)} onSaved={() => { setRatingBooking(null); setBookingVersion((value) => value + 1) }} />}
       {showAddStudent && <AddStudentDialog account={account} onClose={() => setShowAddStudent(false)} onAdded={finishAddingStudent} />}
+      {directChatUser && (
+        <DirectChatModal 
+          currentUserId={account.id} 
+          currentUserRole={account.role} 
+          targetUserId={directChatUser.id} 
+          targetUserName={directChatUser.name} 
+          onClose={() => setDirectChatUser(null)} 
+        />
+      )}
     </PortalShell>
   )
 }
@@ -1176,7 +1443,22 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [classroom, setClassroom] = useState(account.teacher.classroom || { platform: 'zoom', zoomLink: '', voovLink: '' })
   const [classroomSaved, setClassroomSaved] = useState(false)
   const [classroomError, setClassroomError] = useState('')
+  const [directChatUser, setDirectChatUser] = useState(null)
+  const [sampleClassUrl, setSampleClassUrl] = useState(account.teacher.sampleClassUrl || '')
+  const [sampleClassSaved, setSampleClassSaved] = useState(false)
+  const [savingSampleClass, setSavingSampleClass] = useState(false)
   const bookings = getBookings({ teacherId: account.id })
+  
+  // Teacher earnings calculation with new business rules (Trial payouts: ₱40 normal / ₱100 if enrolled, Regular: pesoRate)
+  const rate = Number(account.teacher.pesoRate || 350)
+  const regularCompletedBookings = bookings.filter((booking) => !booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
+  const regularSlotsCount = regularCompletedBookings.reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
+  
+  const trialCompletedBookings = bookings.filter((booking) => booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
+  const trialEnrolledCount = trialCompletedBookings.filter(b => b.trialEnrolled).length
+  const trialNotEnrolledCount = trialCompletedBookings.filter(b => !b.trialEnrolled).length
+  const estimatedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
+
   const tencentClassroomReady = isTencentClassroomConfigured()
   const pending = bookings.filter((booking) => booking.status === 'pending').length
   const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
@@ -1282,6 +1564,24 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     }
   }
 
+  const saveSampleClassUrl = async () => {
+    setSavingSampleClass(true)
+    setSampleClassSaved(false)
+    try {
+      const updated = updateTeacherProfile(account.id, { sampleClassUrl: sampleClassUrl.trim() })
+      if (cloudSyncEnabled()) {
+        await withTimeout(updateCloudProfile(updated), 8000, 'Supabase did not confirm the profile update in time.')
+      }
+      setAccount(updated)
+      onAccountChange(updated)
+      setSampleClassSaved(true)
+    } catch (err) {
+      alert("Failed to save sample class URL: " + err.message)
+    } finally {
+      setSavingSampleClass(false)
+    }
+  }
+
   const recordCompletedLesson = (booking) => {
     const student = getAccountById(booking.studentId)
     const lessonLearner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
@@ -1382,15 +1682,16 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'overview' && (
         <div className="portal-view">
           <div className="portal-page-heading"><div><span className="portal-kicker">Teacher studio</span><h1>Good day, {account.fullName.split(' ')[0]}.</h1><p>Keep every learner, booking and teaching hour in view.</p></div><button className="portal-primary-button" onClick={() => setActive('schedule')}><CalendarDays size={17} /> Update availability</button></div>
-          <div className="portal-stat-grid portal-stat-grid--three">
+          <div className="portal-stat-grid portal-stat-grid--four" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             <article><span className="stat-icon stat-icon--orange"><ClipboardCheck size={21} /></span><div><small>Pending requests</small><strong>{pending}</strong><em>Needs attention</em></div></article>
             <article><span className="stat-icon stat-icon--blue"><Video size={21} /></span><div><small>Lessons completed</small><strong>{account.teacher.lessonsCompleted || 0}</strong><em>All time</em></div></article>
             <article><span className="stat-icon stat-icon--gold"><Star size={21} /></span><div><small>Teacher rating</small><strong>{account.teacher.rating ? `${account.teacher.rating}.0` : 'New'}</strong><em>Student feedback</em></div></article>
+            <article style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.04)' }}><span className="stat-icon stat-icon--green"><Coins size={21} style={{ color: '#10b981' }} /></span><div><small style={{ color: '#10b981' }}>Estimated Earnings</small><strong style={{ color: '#10b981' }}>₱{estimatedEarnings.toLocaleString()}</strong><em style={{ fontSize: '0.65rem' }}>{trialCompletedBookings.length} trials · {regularCompletedBookings.length} regular classes</em></div></article>
           </div>
           <div className="teacher-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Action centre</span><h2>Booking requests</h2></div><button className="portal-text-button" onClick={() => setActive('bookings')}>View all <ChevronRight size={15} /></button></div>
-              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onManageBooking={setManagedBooking} actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
+              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
               {!pending && <EmptyState icon={ClipboardCheck} title="You’re all caught up" text="New lesson requests will appear here for your review." />}
             </section>
             <section className="portal-card teacher-profile-snapshot">
@@ -1416,7 +1717,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               if (booking.status === 'ongoing') actions = <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
               if (booking.status === 'completed') actions = <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
               if (booking.status === 'absent') actions = <button className="lesson-action lesson-action--wide lesson-action--restore" onClick={() => changeStatus(booking.id, 'confirmed')}><RotateCcw size={13} /> Restore booking</button>
-              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} actions={actions} />
+              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={actions} />
             }) : <EmptyState title={`No ${bookingStatusFilter === 'all' ? '' : `${bookingStatusFilter} `}bookings`} text="Choose another class status to see matching teacher bookings." />}
           </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Separated calendar statuses</strong><small>Calendar colours distinguish ongoing, completed, absent and cancelled classes. Point to a confirmed, ongoing or completed student name to write feedback.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={filteredBookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} showInactiveBookings /></section>}
         </div>
@@ -1440,7 +1741,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             </section>
             <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
-          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).length ? bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} />) : <EmptyState icon={Video} title="No active classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
+          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).length ? bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} />) : <EmptyState icon={Video} title="No active classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
         </div>
       )}
 
@@ -1487,11 +1788,67 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <div className="teacher-public-profile-grid">
             <section className="portal-card teacher-profile-detail"><span className="portal-kicker">Professional profile</span><h2>About my teaching</h2><p className="teacher-bio">{account.teacher.bio}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{account.teacher.education}</strong></div><div><span>Languages</span><strong>{account.teacher.languages}</strong></div><div><span>Credentials</span><strong>{account.teacher.credentials?.length || 0} submitted</strong></div></div></section>
             <section className="portal-card teacher-video-manager"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2></div><span className="portal-card__icon"><Film size={21} /></span></div><IntroVideo accountId={account.id} refreshKey={mediaVersion} /><label className="media-upload-button"><Upload size={16} /> Upload introduction video<input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => uploadTeacherMedia(event, 'intro-video')} /></label><p>MP4 or WebM, up to 50 MB. Parents and visitors can watch this before choosing a teacher.</p></section>
+            
+            {/* PASTING SAMPLE CLASS LINK FORM */}
+            <section className="portal-card teacher-sample-class">
+              <div className="portal-card__heading portal-card__heading--small">
+                <div><span className="portal-kicker">Sample Lesson Recording</span><h2>Sample class video link</h2></div>
+                <span className="portal-card__icon"><Video size={21} /></span>
+              </div>
+              <div style={{ marginTop: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
+                  Paste link to your sample class (YouTube, YouTube Shorts, Vimeo, Bilibili, Google Drive video, or Raw Mp4 url)
+                </label>
+                <input 
+                  type="text"
+                  placeholder="e.g. https://www.youtube.com/watch?v=... or https://youtube.com/shorts/..."
+                  value={sampleClassUrl}
+                  onChange={(e) => {
+                    setSampleClassUrl(e.target.value)
+                    setSampleClassSaved(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    marginBottom: '10px'
+                  }}
+                />
+                <button 
+                  type="button"
+                  className="portal-primary-button" 
+                  onClick={saveSampleClassUrl}
+                  disabled={savingSampleClass}
+                  style={{ width: '100%' }}
+                >
+                  {savingSampleClass ? 'Saving & Syncing...' : 'Save Sample Class Link'}
+                </button>
+                {sampleClassSaved && (
+                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}>
+                    <Check size={14} /> Saved and synced to public showcase!
+                  </span>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       )}
       {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); refresh() }} />}
       {feedbackBooking && <FeedbackDialog booking={feedbackBooking} teacherId={account.id} onClose={() => setFeedbackBooking(null)} onSaved={finishFeedback} />}
+      {directChatUser && (
+        <DirectChatModal 
+          currentUserId={account.id} 
+          currentUserRole={account.role} 
+          targetUserId={directChatUser.id} 
+          targetUserName={directChatUser.name} 
+          onClose={() => setDirectChatUser(null)} 
+        />
+      )}
     </PortalShell>
   )
 }
@@ -1547,9 +1904,15 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
   const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
   const teacherBookings = getBookings({ teacherId: teacher.id })
   const completedLessons = teacherBookings.filter((booking) => booking.status === 'completed' || booking.status === 'absent').length
-  const totalSlots = teacherBookings
-    .filter((booking) => booking.status === 'completed' || booking.status === 'absent')
-    .reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
+  const rate = Number(profile.pesoRate || 350)
+  const regularCompletedBookings = teacherBookings.filter((booking) => !booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
+  const regularSlotsCount = regularCompletedBookings.reduce((acc, b) => acc + (b.duration || 25) / 25, 0)
+  
+  const trialCompletedBookings = teacherBookings.filter((booking) => booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
+  const trialEnrolledCount = trialCompletedBookings.filter(b => b.trialEnrolled).length
+  const trialNotEnrolledCount = trialCompletedBookings.filter(b => !b.trialEnrolled).length
+
+  const estimatedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
   const interview = profile.interview || null
   const recommendationClass = interview?.overallRecommendation?.startsWith('Strong') ? 'strong' : interview?.overallRecommendation?.startsWith('Consider') ? 'consider' : 'review'
 
@@ -1640,7 +2003,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
       <div className="admin-teacher-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Professional profile</span><h2>About the teacher</h2><p className="teacher-bio">{profile.bio || 'The teacher has not added a biography yet.'}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{profile.education || 'Not provided'}</strong></div><div><span>Languages</span><strong>{profile.languages || 'Not provided'}</strong></div><div><span>Curriculum</span><strong>{profile.specialization || 'Not provided'}</strong></div></div></section>
         <section className="portal-card admin-teacher-media"><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2><IntroVideo accountId={teacher.id} compact /><p>Visible to parents on the public teacher profile.</p></section>
-        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed/Absent lessons</dt><dd>{completedLessons} classes</dd></div><div><dt style={{ color: '#10b981', fontWeight: 'bold' }}>Estimated Earnings</dt><dd style={{ color: '#10b981', fontWeight: 'black' }}>₱{(totalSlots * (profile.pesoRate || 350)).toLocaleString()}</dd></div></dl>
+        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed/Absent lessons</dt><dd>{completedLessons} classes</dd></div><div style={{ background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '6px', gridColumn: '1/-1' }}><dt style={{ fontSize: '0.72rem', color: '#b9adc7' }}>Earnings Breakdown</dt><dd style={{ fontSize: '0.72rem', color: '#fff', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '4px' }}><span>Regular: {regularSlotsCount} slots × ₱{rate} = ₱{(regularSlotsCount * rate).toLocaleString()}</span><span>Trial Enrolled: {trialEnrolledCount} × ₱100 = ₱{(trialEnrolledCount * 100).toLocaleString()}</span><span>Trial Not Enrolled: {trialNotEnrolledCount} × ₱40 = ₱{(trialNotEnrolledCount * 40).toLocaleString()}</span></dd></div><div><dt style={{ color: '#10b981', fontWeight: 'bold' }}>Estimated Earnings</dt><dd style={{ color: '#10b981', fontWeight: 'black', fontSize: '1.2rem' }}>₱{estimatedEarnings.toLocaleString()}</dd></div></dl>
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>Configure Peso Rate (PHP per completed/absent class)</label>
             <div style={{ display: 'flex', gap: '8px' }}>

@@ -123,6 +123,15 @@ export function createBooking(details) {
   })
   if (conflict) throw new Error('That time conflicts with an existing teacher or student lesson. Please choose another available slot.')
 
+  // Only 1 free trial class per student
+  const studentHasActiveTrial = bookings.some((b) => 
+    b.studentId === details.studentId && 
+    b.learnerId === learner.id && 
+    b.isTrialClass && 
+    !['cancelled', 'declined'].includes(b.status)
+  )
+  const isTrialClass = !studentHasActiveTrial
+
   const bookingId = crypto.randomUUID()
   const classroomCredentials = getStableClassroomCredentials({ id: bookingId, date: details.date })
   const booking = {
@@ -140,6 +149,8 @@ export function createBooking(details) {
     note: details.note?.trim() || '',
     teacherNote: '',
     status: 'pending',
+    isTrialClass: isTrialClass,
+    trialEnrolled: false,
     createdAt: new Date().toISOString(),
   }
   bookings.push(booking)
