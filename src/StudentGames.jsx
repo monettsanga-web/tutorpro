@@ -38,11 +38,11 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Easy',
     time: '3 min',
-    thumbnail: 'assets/thumbnail_house_parts.jpg', // Generated Kiddie Thumbnail!
+    thumbnail: 'assets/thumbnail_house_parts.jpg',
     vocabulary: [
-      { word: 'door', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300&auto=format&fit=crop&q=80', definition: 'A hinged, slidable barrier used to enter or exit a room' },
-      { word: 'window', image: 'https://images.unsplash.com/photo-1508349937151-22b68b72d5b1?w=300&auto=format&fit=crop&q=80', definition: 'An opening in a wall to let in light and air' },
-      { word: 'stairs', image: 'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=300&auto=format&fit=crop&q=80', definition: 'A set of steps leading from one floor of a building to another' }
+      { word: 'door', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300&auto=format&fit=crop&q=80', definition: 'A barrier used to enter or exit a room', type: 'noun' },
+      { word: 'window', image: 'https://images.unsplash.com/photo-1508349937151-22b68b72d5b1?w=300&auto=format&fit=crop&q=80', definition: 'An opening in a wall to let in light and air', type: 'noun' },
+      { word: 'stairs', image: 'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=300&auto=format&fit=crop&q=80', definition: 'A set of steps leading from one floor of a building to another', type: 'noun' }
     ]
   },
   {
@@ -59,11 +59,11 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Easy',
     time: '5 min',
-    thumbnail: 'assets/thumbnail_furniture.jpg', // Generated Kiddie Thumbnail!
+    thumbnail: 'assets/thumbnail_furniture.jpg',
     vocabulary: [
-      { word: 'sofa', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&auto=format&fit=crop&q=80', definition: 'A long comfortable seat for multiple people' },
-      { word: 'table', image: 'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture with a flat top and legs' },
-      { word: 'bed', image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture used for sleeping' }
+      { word: 'sofa', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&auto=format&fit=crop&q=80', definition: 'A long comfortable seat for multiple people', type: 'furniture' },
+      { word: 'table', image: 'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture with a flat top and legs', type: 'furniture' },
+      { word: 'bed', image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture used for sleeping', type: 'furniture' }
     ]
   },
   {
@@ -80,11 +80,11 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Easy',
     time: '4 min',
-    thumbnail: 'assets/thumbnail_rooms.jpg', // Generated Kiddie Thumbnail!
+    thumbnail: 'assets/thumbnail_rooms.jpg',
     vocabulary: [
-      { word: 'bedroom', image: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=300&auto=format&fit=crop&q=80', definition: 'The room where you sleep at night' },
-      { word: 'kitchen', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80', definition: 'The room where food is prepared and cooked' },
-      { word: 'bathroom', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop&q=80', definition: 'The room where you take a bath' }
+      { word: 'bedroom', image: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=300&auto=format&fit=crop&q=80', definition: 'The room where you sleep at night', type: 'room' },
+      { word: 'kitchen', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80', definition: 'The room where food is prepared and cooked', type: 'room' },
+      { word: 'bathroom', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop&q=80', definition: 'The room where you take a bath', type: 'room' }
     ]
   },
   {
@@ -101,85 +101,60 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Medium',
     time: '6 min',
-    thumbnail: 'assets/thumbnail_locations.jpg', // Generated Kiddie Thumbnail!
+    thumbnail: 'assets/thumbnail_locations.jpg',
     vocabulary: [
-      { word: 'cinema', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop&q=80', definition: 'A place where you watch movies' },
-      { word: 'park', image: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80', definition: 'A public green space with trees' },
-      { word: 'house', image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=300&auto=format&fit=crop&q=80', definition: 'A building where people live' }
-    ]
-  },
-  {
-    id: 'animals',
-    title: 'Animals in English',
-    description: 'Meeting wild and farm animals is fun! Perfect for rookie explorers.',
-    wordsCount: 14,
-    icon: '🦁',
-    previewImages: [
-      'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=150&auto=format&fit=crop&q=60', // Lion
-      'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=150&auto=format&fit=crop&q=60', // Panda
-      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=150&auto=format&fit=crop&q=60'  // Dog
-    ],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '5 min',
-    vocabulary: [
-      { word: 'lion', image: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=300&auto=format&fit=crop&q=80', definition: 'A large wild cat known as the king of the jungle' },
-      { word: 'panda', image: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=300&auto=format&fit=crop&q=80', definition: 'A large bear-like mammal with black and white markings' },
-      { word: 'dog', image: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&auto=format&fit=crop&q=80', definition: 'A friendly domestic pet that barks' }
-    ]
-  },
-  {
-    id: 'food',
-    title: 'Food in English',
-    description: 'Mmm! Let\'s talk about yummy food! Play and learn food words in English.',
-    wordsCount: 16,
-    icon: '🍕',
-    previewImages: [
-      'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=150&auto=format&fit=crop&q=60', // Pizza
-      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=150&auto=format&fit=crop&q=60', // Cake
-      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=60'  // Burger
-    ],
-    color: '#7850c9',
-    difficulty: 'Medium',
-    time: '7 min',
-    vocabulary: [
-      { word: 'pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&auto=format&fit=crop&q=80', definition: 'A flat baked bread topped with tomato and cheese' },
-      { word: 'cake', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&auto=format&fit=crop&q=80', definition: 'A sweet dessert often eaten at birthdays' },
-      { word: 'burger', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&auto=format&fit=crop&q=80', definition: 'A round patty of ground meat inside a bun' }
-    ]
-  },
-  {
-    id: 'body_parts',
-    title: 'Body parts in English',
-    description: 'Listen to English words and match them with the right picture!',
-    wordsCount: 14,
-    icon: '🖐️',
-    previewImages: [
-      'https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?w=150&auto=format&fit=crop&q=60', // Toe
-      'https://images.unsplash.com/photo-1544256718-3bcf237f3974?w=150&auto=format&fit=crop&q=60', // Nose
-      'https://images.unsplash.com/photo-1516246843873-9d12356b6fab?w=150&auto=format&fit=crop&q=60'  // Hand
-    ],
-    color: '#7850c9',
-    difficulty: 'Medium',
-    time: '6 min',
-    vocabulary: [
-      { word: 'toe', image: 'https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?w=300&auto=format&fit=crop&q=80', definition: 'One of the digits on your foot' },
-      { word: 'nose', image: 'https://images.unsplash.com/photo-1544256718-3bcf237f3974?w=300&auto=format&fit=crop&q=80', definition: 'The organ on your face used for breathing and smelling' },
-      { word: 'hand', image: 'https://images.unsplash.com/photo-1516246843873-9d12356b6fab?w=300&auto=format&fit=crop&q=80', definition: 'The parts at the end of your arms' }
+      { word: 'cinema', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop&q=80', definition: 'A place where you watch movies', type: 'location' },
+      { word: 'park', image: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80', definition: 'A public green space with trees', type: 'location' },
+      { word: 'house', image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=300&auto=format&fit=crop&q=80', definition: 'A building where people live', type: 'location' }
     ]
   }
 ];
 
-function GameHeader({ title, subtitle, score, onBack, icon: Icon }) {
+// ====================================================================
+// 2. Avatar customizations lists
+// ====================================================================
+const AVATAR_ITEMS = {
+  clothes: [
+    { id: 'shirt_green', label: 'Neon Green T-Shirt 👕', cost: 15 },
+    { id: 'shirt_purple', label: 'Royal Purple Hoodie 🧥', cost: 25 },
+    { id: 'suit_space', label: 'Space Suit Astronaut 🧑‍🚀', cost: 50 }
+  ],
+  pets: [
+    { id: 'pet_cat', label: 'Friendly Kitten 🐱', cost: 30 },
+    { id: 'pet_dog', label: 'Cute Puppy 🐶', cost: 35 },
+    { id: 'pet_dragon', label: 'Baby Fire Dragon 🐉', cost: 75 }
+  ],
+  frames: [
+    { id: 'frame_gold', label: 'Golden Star Border ✨', cost: 20 },
+    { id: 'frame_neon', label: 'Neon Rainbow Glow 🌈', cost: 40 }
+  ]
+};
+
+// ====================================================================
+// 3. Victory Screen
+// ====================================================================
+function VictoryScreen({ score, onBack }) {
   return (
-    <div className="game-header" style={{ padding: '16px 20px', background: '#090510', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem' }}><ArrowLeft size={16} /> Back</button>
-      <div><span style={{ color: '#bce94e', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 'bold' }}>{subtitle}</span><h2 style={{ fontSize: '1.45rem', fontWeight: '950', color: '#fff', margin: 0 }}>{title}</h2></div>
-      <div className="game-score" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(188, 233, 78, 0.08)', border: '1px solid rgba(188, 233, 78, 0.2)', padding: '6px 14px', borderRadius: '20px', color: '#bce94e' }}><Star size={16} fill="currentColor" /><strong>{score}</strong><span>stars</span></div>
+    <div style={{ maxWidth: '500px', margin: '80px auto', background: '#150d2e', border: '1px solid #bce94e', borderRadius: '24px', padding: '40px', textAlign: 'center', boxShadow: '0 20px 40px rgba(188,233,78,0.15)' }}>
+      <span style={{ fontSize: '4.5rem', display: 'block', marginBottom: '16px' }}>🏆</span>
+      <h2 style={{ fontSize: '2.2rem', fontWeight: '950', color: '#fff', marginBottom: '8px' }}>Mission Complete!</h2>
+      <p style={{ color: '#bce94e', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '24px' }}>
+        You earned +{score / 10} Stars 🌟
+      </p>
+      <button 
+        onClick={onBack}
+        className="portal-primary-button"
+        style={{ margin: '0 auto', background: '#bce94e', color: '#090510', fontSize: '0.85rem' }}
+      >
+        Back to games
+      </button>
     </div>
-  )
+  );
 }
 
+// ====================================================================
+// 4. Memory Match Game Engine
+// ====================================================================
 function MemoryMatchGame({ topic, onEarn, onBack }) {
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
@@ -230,7 +205,7 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      <GameHeader title="3D Realistic Memory Match 🎴" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
+      <GameHeader title="Memo Mix (Memory Match) 🎴" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
       
       {isCompleted ? (
         <VictoryScreen score={score} onBack={onBack} />
@@ -278,6 +253,9 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
   );
 }
 
+// ====================================================================
+// 5. Picture Quiz Game Engine
+// ====================================================================
 function PictureQuizGame({ topic, onEarn, onBack }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -305,7 +283,7 @@ function PictureQuizGame({ topic, onEarn, onBack }) {
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      <GameHeader title="3D Realistic Picture Quiz ❓" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
+      <GameHeader title="Quiz Corner ❓" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
       
       {isCompleted ? (
         <VictoryScreen score={score} onBack={onBack} />
@@ -357,6 +335,9 @@ function PictureQuizGame({ topic, onEarn, onBack }) {
   );
 }
 
+// ====================================================================
+// 6. Listening Game Engine
+// ====================================================================
 function ListeningGame({ topic, onEarn, onBack }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -471,25 +452,226 @@ function ListeningGame({ topic, onEarn, onBack }) {
   );
 }
 
-function VictoryScreen({ score, onBack }) {
+// ====================================================================
+// 7. Box Battle (Grammar & preposition box)
+// ====================================================================
+function BoxBattleGame({ topic, onEarn, onBack }) {
+  const [index, setIndex] = useState(0);
+  const [selectedBox, setSelectedBox] = useState(null);
+  const [score, setScore] = useState(0);
+
+  const question = topic.vocabulary[index % topic.vocabulary.length];
+  // Box A (Correct type/classification) vs Box B (Irrelevant classification)
+  const correctBox = question.type || 'target';
+  const otherBox = correctBox === 'room' ? 'furniture' : 'room';
+
+  const handleDrop = (boxName) => {
+    if (selectedBox) return;
+    setSelectedBox(boxName);
+    if (boxName === correctBox) {
+      setScore(prev => prev + 15);
+      onEarn(1);
+    }
+  };
+
+  const handleNext = () => {
+    setIndex(prev => prev + 1);
+    setSelectedBox(null);
+  };
+
+  const isCorrect = selectedBox === correctBox;
+  const isCompleted = index >= topic.vocabulary.length;
+
   return (
-    <div style={{ maxWidth: '500px', margin: '80px auto', background: '#150d2e', border: '1px solid #bce94e', borderRadius: '24px', padding: '40px', textAlign: 'center', boxShadow: '0 20px 40px rgba(188,233,78,0.15)' }}>
-      <span style={{ fontSize: '4.5rem', display: 'block', marginBottom: '16px' }}>🏆</span>
-      <h2 style={{ fontSize: '2.2rem', fontWeight: '950', color: '#fff', marginBottom: '8px' }}>Mission Complete!</h2>
-      <p style={{ color: '#bce94e', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '24px' }}>
-        You earned +{score / 10} Stars 🌟
-      </p>
-      <button 
-        onClick={onBack}
-        className="portal-primary-button"
-        style={{ margin: '0 auto', background: '#bce94e', color: '#090510', fontSize: '0.85rem' }}
-      >
-        Back to games
-      </button>
+    <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
+      <GameHeader title="Box Battle 📦" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
+      
+      {isCompleted ? (
+        <VictoryScreen score={score} onBack={onBack} />
+      ) : (
+        <div style={{ maxWidth: '650px', margin: '40px auto', textAlgin: 'center' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', marginBottom: '24px' }}>
+            Sort "{question.word}" into the correct Box!
+          </h2>
+
+          {/* Floating Vocabulary card */}
+          <div style={{ width: '180px', height: '180px', borderRadius: '24px', overflow: 'hidden', margin: '0 auto 30px auto', border: '3px solid #bce94e', boxShadow: '0 10px 25px rgba(188,233,78,0.2)' }}>
+            <img src={question.image} alt={question.word} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+
+          {/* Sorter Boxes */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+            <div 
+              onClick={() => handleDrop(correctBox)}
+              style={{
+                background: selectedBox === correctBox ? (isCorrect ? '#10b981' : '#ef4444') : 'rgba(120, 80, 201, 0.08)',
+                border: '2.5px dashed #7850c9',
+                borderRadius: '20px',
+                padding: '30px 10px',
+                textAlign: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ fontSize: '3rem', display: 'block', marginBottom: '8px' }}>📦</span>
+              <strong style={{ color: '#fff', fontSize: '1.1rem', textTransform: 'uppercase' }}>{correctBox}</strong>
+            </div>
+
+            <div 
+              onClick={() => handleDrop(otherBox)}
+              style={{
+                background: selectedBox === otherBox ? (!isCorrect ? '#ef4444' : '#10b981') : 'rgba(120, 80, 201, 0.08)',
+                border: '2.5px dashed #7850c9',
+                borderRadius: '20px',
+                padding: '30px 10px',
+                textAlign: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ fontSize: '3rem', display: 'block', marginBottom: '8px' }}>📦</span>
+              <strong style={{ color: '#fff', fontSize: '1.1rem', textTransform: 'uppercase' }}>{otherBox}</strong>
+            </div>
+          </div>
+
+          {selectedBox && (
+            <div style={{ marginTop: '28px', textAlign: 'center' }}>
+              <h3 style={{ color: isCorrect ? '#10b981' : '#ef4444', fontWeight: '950', fontSize: '1.25rem', marginBottom: '12px' }}>
+                {isCorrect ? 'Correct sorting! +1 star 🌟' : 'Wrong category try once more!'}
+              </h3>
+              <button 
+                onClick={handleNext}
+                className="portal-primary-button"
+                style={{ margin: '0 auto' }}
+              >
+                Next Battle <ArrowRight size={15} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
+// ====================================================================
+// 8. Word Bubbles (Popping bubble spelling)
+// ====================================================================
+function WordBubblesGame({ topic, onEarn, onBack }) {
+  const [index, setIndex] = useState(0);
+  const [typedLetters, setTypedLetters] = useState([]);
+  const [bubbles, setBubbles] = useState([]);
+  const [score, setScore] = useState(0);
+
+  const question = topic.vocabulary[index % topic.vocabulary.length];
+  const targetWord = question.word;
+
+  const initBubbles = () => {
+    // Generate scrambled letters with positions
+    const scrambled = targetWord.split('').map((char, i) => ({
+      id: `${char}-${i}`,
+      char,
+      x: 50 + Math.random() * 300,
+      y: 50 + Math.random() * 150
+    })).sort(() => Math.random() - 0.5);
+    setBubbles(scrambled);
+    setTypedLetters([]);
+  };
+
+  useEffect(() => {
+    if (question) initBubbles();
+  }, [index, topic]);
+
+  const popBubble = (bubble) => {
+    const nextExpectedIndex = typedLetters.length;
+    const expectedLetter = targetWord[nextExpectedIndex];
+
+    if (bubble.char === expectedLetter) {
+      setTypedLetters(prev => [...prev, bubble.char]);
+      setBubbles(prev => prev.filter(b => b.id !== bubble.id));
+      
+      // Bubble pop audio simulation
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(bubble.char);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // Check win
+      const won = typedLetters.length + 1 === targetWord.length;
+      if (won) {
+        setScore(prev => prev + 15);
+        onEarn(1);
+        setTimeout(() => {
+          setIndex(prev => prev + 1);
+        }, 1500);
+      }
+    } else {
+      // wrong pop vibration indicator
+      alert("Wrong letter bubble popped! Follow the spelling sequence.");
+    }
+  };
+
+  const isCompleted = index >= topic.vocabulary.length;
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
+      <GameHeader title="Bubbles spelling 🧼" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
+      
+      {isCompleted ? (
+        <VictoryScreen score={score} onBack={onBack} />
+      ) : (
+        <div style={{ maxWidth: '650px', margin: '40px auto', background: '#150d2e', border: '1px solid rgba(188,233,78,0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginBottom: '24px' }}>Pop the Bubbles to spell!</h2>
+          
+          <div style={{ width: '160px', height: '140px', borderRadius: '16px', overflow: 'hidden', margin: '0 auto 20px auto', boxShadow: '0 10px 20px rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.08)' }}>
+            <img src={question.image} alt={question.word} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+
+          {/* Current Typed letters box */}
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', minHeight: '44px', marginBottom: '30px', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px' }}>
+            {targetWord.split('').map((char, i) => (
+              <span key={i} style={{ width: '30px', height: '30px', borderBottom: '3px solid #bce94e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
+                {typedLetters[i] || ''}
+              </span>
+            ))}
+          </div>
+
+          {/* Floating Bubble arena */}
+          <div style={{ position: 'relative', width: '100%', height: '220px', background: 'rgba(0,0,0,0.25)', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {bubbles.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => popBubble(b)}
+                style={{
+                  position: 'absolute',
+                  left: `${b.x}px`,
+                  top: `${b.y}px`,
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(120,80,201,0.6) 0%, rgba(59,7,100,0.8) 100%)',
+                  border: '2px solid #bce94e',
+                  color: '#fff',
+                  fontWeight: '900',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 10px rgba(188,233,78,0.2)',
+                  animation: 'float 3s ease-in-out infinite'
+                }}
+              >
+                {b.char}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ====================================================================
+// 9. Avatar Customizer component
+// ====================================================================
 function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, equippedAvatar, setEquippedAvatar, onBack }) {
   const [activeTab, setActiveTab] = useState('clothes');
 
@@ -643,9 +825,11 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
 
 function GameModeSelector({ topic, onSelectType, onBack }) {
   const games = [
-    { id: 'match', title: '3D Memory Match 🎴', description: 'Flip and match vocabulary words to their corresponding realistic pictures with 3D rotations!' },
-    { id: 'quiz', title: '3D Picture Quiz ❓', description: 'Four choices with random order. Test your realistic visual memory!' },
-    { id: 'listen', title: '3D Listening Safari 🎧', description: 'Hear native pronunciation and select the correct realistic picture!' }
+    { id: 'match', title: 'Memo Mix (Memory) 🎴', description: 'Flip and match vocabulary words to their corresponding realistic pictures with 3D rotations!' },
+    { id: 'quiz', title: 'Quiz Corner ❓', description: 'Four choices with random order. Test your realistic visual memory!' },
+    { id: 'listen', title: 'Listening Safari 🎧', description: 'Hear native pronunciation and select the correct realistic picture!' },
+    { id: 'box', title: 'Box Battle (Grammar) 📦', description: 'Sort vocabulary cards into the correct prepositions or grammar boxes!' },
+    { id: 'bubbles', title: 'Bubbles spelling 🧼', description: 'Pop floating letter bubbles in the correct sequence to spell the target word!' }
   ];
 
   return (
@@ -845,6 +1029,26 @@ export default function StudentGames({ learner, onEarnStars }) {
     );
   }
 
+  if (activeGameType === 'box' && activeTopic) {
+    return (
+      <BoxBattleGame 
+        topic={activeTopic} 
+        onEarn={triggerEarn} 
+        onBack={() => { setActiveGameType(null); }} 
+      />
+    );
+  }
+
+  if (activeGameType === 'bubbles' && activeTopic) {
+    return (
+      <WordBubblesGame 
+        topic={activeTopic} 
+        onEarn={triggerEarn} 
+        onBack={() => { setActiveGameType(null); }} 
+      />
+    );
+  }
+
   if (activeTopic) {
     return (
       <GameModeSelector 
@@ -858,7 +1062,7 @@ export default function StudentGames({ learner, onEarnStars }) {
   return (
     <div className="games-hub portal-view" style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
       {/* Premium Hub Header */}
-      <section className="games-hero" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', borderRadius: '24px', padding: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 20px 50px rgba(120, 80, 201, 0.25)', border: '1px solid rgba(188, 233, 78, 0.15)', marginBottom: '32px' }}>
+      <section className="games-hero" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', borderRadius: '24px', padding: '30px', display: 'flex', justifyScontent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 20px 50px rgba(120, 80, 201, 0.25)', border: '1px solid rgba(188, 233, 78, 0.15)', marginBottom: '32px' }}>
         <div>
           <span className="portal-kicker" style={{ color: '#bce94e', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.72rem' }}>TutorPro English PH 3D Game Arena</span>
           <h1 style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff', letterSpacing: '-0.02em', margin: '6px 0' }}>English is your Superpower! ⚡</h1>
