@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
+    "canvas-confetti": "^1.9.4",
     "cos-js-sdk-v5": "^1.10.1",
     "lucide-react": "0.468.0",
     "pdf-lib": "1.17.1",
