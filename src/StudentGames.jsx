@@ -18,7 +18,7 @@ import {
 import confetti from 'canvas-confetti';
 
 // ====================================================================
-// 1. Exact 16 Vocabulary Topics based on the attached screenshots
+// 1. Exact 16 Vocabulary Topics with High-Resolution Realistic Pictures
 // ====================================================================
 
 const TOPICS = [
@@ -28,17 +28,18 @@ const TOPICS = [
     description: 'Let\'s explore the furniture in our homes. Can you find all the items in this English game?',
     wordsCount: 11,
     icon: '🛋️',
-    previewIcons: ['🗄️', '🛋️', '🪑'],
+    previewImages: [
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=150&auto=format&fit=crop&q=60', // Sofa
+      'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=150&auto=format&fit=crop&q=60', // Table
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=150&auto=format&fit=crop&q=60'  // Bed
+    ],
     color: '#7850c9',
     difficulty: 'Easy',
     time: '5 min',
     vocabulary: [
-      { word: 'cabinet', emoji: '🗄️', definition: 'A cupboard with shelves or drawers for storage' },
-      { word: 'sofa', emoji: '🛋️', definition: 'A long comfortable seat for multiple people' },
-      { word: 'table', emoji: '🪑', definition: 'A piece of furniture with a flat top and legs' },
-      { word: 'bed', emoji: '🛏️', definition: 'A piece of furniture used for sleeping' },
-      { word: 'lamp', emoji: '💡', definition: 'A device that provides artificial light' },
-      { word: 'chair', emoji: '🪑', definition: 'A seat for one person, with a back and legs' }
+      { word: 'sofa', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&auto=format&fit=crop&q=80', definition: 'A long comfortable seat for multiple people' },
+      { word: 'table', image: 'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture with a flat top and legs' },
+      { word: 'bed', image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture used for sleeping' }
     ]
   },
   {
@@ -47,33 +48,18 @@ const TOPICS = [
     description: 'Every room in our houses has a special name! Let\'s play this English language game and learn.',
     wordsCount: 6,
     icon: '🏠',
-    previewIcons: ['🛏️', '🍳', '🛁'],
+    previewImages: [
+      'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=150&auto=format&fit=crop&q=60', // Bedroom
+      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=150&auto=format&fit=crop&q=60', // Kitchen
+      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=150&auto=format&fit=crop&q=60'  // Bathroom
+    ],
     color: '#7850c9',
     difficulty: 'Easy',
     time: '4 min',
     vocabulary: [
-      { word: 'bedroom', emoji: '🛏️', definition: 'The room where you sleep at night' },
-      { word: 'kitchen', emoji: '🍳', definition: 'The room where food is prepared and cooked' },
-      { word: 'bathroom', emoji: '🛁', definition: 'The room where you take a bath or wash your hands' },
-      { word: 'living room', emoji: '📺', definition: 'The room where families relax and watch TV' },
-      { word: 'dining room', emoji: '🍽️', definition: 'The room where people eat meals' }
-    ]
-  },
-  {
-    id: 'days',
-    title: 'Days of the week in English',
-    description: 'Learn the words for the days of the week with our English learning games.',
-    wordsCount: 7,
-    icon: '🗓️',
-    previewIcons: ['📅', '📆', '🗓️'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '5 min',
-    vocabulary: [
-      { word: 'Monday', emoji: '📅', definition: 'The first day of the working week' },
-      { word: 'Wednesday', emoji: '📆', definition: 'The middle of the weekday schedule' },
-      { word: 'Friday', emoji: '🗓️', definition: 'The last day before the weekend' },
-      { word: 'Sunday', emoji: '☀️', definition: 'The final day of the week, a holiday' }
+      { word: 'bedroom', image: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=300&auto=format&fit=crop&q=80', definition: 'The room where you sleep at night' },
+      { word: 'kitchen', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80', definition: 'The room where food is prepared and cooked' },
+      { word: 'bathroom', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop&q=80', definition: 'The room where you take a bath' }
     ]
   },
   {
@@ -82,49 +68,38 @@ const TOPICS = [
     description: 'Where do you like to visit? Let\'s learn about places - English learning games are fun!',
     wordsCount: 15,
     icon: '🏫',
-    previewIcons: ['🎬', '⛲', '🏡'],
+    previewImages: [
+      'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=150&auto=format&fit=crop&q=60', // Cinema
+      'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=150&auto=format&fit=crop&q=60', // Park
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=150&auto=format&fit=crop&q=60'  // House
+    ],
     color: '#7850c9',
     difficulty: 'Medium',
     time: '6 min',
     vocabulary: [
-      { word: 'cinema', emoji: '🎬', definition: 'A place where you watch movies' },
-      { word: 'park', emoji: '⛲', definition: 'A public green space with trees and fountains' },
-      { word: 'house', emoji: '🏡', definition: 'A building where people live' },
-      { word: 'school', emoji: '🏫', definition: 'A place where students learn from teachers' }
+      { word: 'cinema', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop&q=80', definition: 'A place where you watch movies' },
+      { word: 'park', image: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80', definition: 'A public green space with trees' },
+      { word: 'house', image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=300&auto=format&fit=crop&q=80', definition: 'A building where people live' }
     ]
   },
   {
-    id: 'family',
-    title: 'Family members in English',
-    description: 'Can you name family members in English? Let\'s check and build your vocabulary!',
-    wordsCount: 9,
-    icon: '👨‍👩‍👧‍👦',
-    previewIcons: ['👨', '👩', '👶'],
+    id: 'animals',
+    title: 'Animals in English',
+    description: 'Meeting wild and farm animals is fun! Perfect for rookie explorers.',
+    wordsCount: 14,
+    icon: '🦁',
+    previewImages: [
+      'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=150&auto=format&fit=crop&q=60', // Lion
+      'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=150&auto=format&fit=crop&q=60', // Panda
+      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=150&auto=format&fit=crop&q=60'  // Dog
+    ],
     color: '#7850c9',
     difficulty: 'Easy',
     time: '5 min',
     vocabulary: [
-      { word: 'father', emoji: '👨', definition: 'A male parent' },
-      { word: 'mother', emoji: '👩', definition: 'A female parent' },
-      { word: 'baby', emoji: '👶', definition: 'A very young child or infant' },
-      { word: 'brother', emoji: '👦', definition: 'A male sibling' },
-      { word: 'sister', emoji: '👧', definition: 'A female sibling' }
-    ]
-  },
-  {
-    id: 'shapes',
-    title: 'Shapes in English',
-    description: 'Test your knowledge by playing this free game! Explore shapes and forms in English.',
-    wordsCount: 3,
-    icon: '🔺',
-    previewIcons: ['🟣', '🔺', '🟦'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '3 min',
-    vocabulary: [
-      { word: 'circle', emoji: '🟣', definition: 'A round shape with no corners' },
-      { word: 'triangle', emoji: '🔺', definition: 'A shape with three sides and three corners' },
-      { word: 'square', emoji: '🟦', definition: 'A shape with four equal sides' }
+      { word: 'lion', image: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=300&auto=format&fit=crop&q=80', definition: 'A large wild cat known as the king of the jungle' },
+      { word: 'panda', image: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=300&auto=format&fit=crop&q=80', definition: 'A large bear-like mammal with black and white markings' },
+      { word: 'dog', image: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&auto=format&fit=crop&q=80', definition: 'A friendly domestic pet that barks' }
     ]
   },
   {
@@ -133,142 +108,18 @@ const TOPICS = [
     description: 'Mmm! Let\'s talk about yummy food! Play and learn food words in English.',
     wordsCount: 16,
     icon: '🍕',
-    previewIcons: ['🍕', '🎂', '🍔'],
+    previewImages: [
+      'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=150&auto=format&fit=crop&q=60', // Pizza
+      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=150&auto=format&fit=crop&q=60', // Cake
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=60'  // Burger
+    ],
     color: '#7850c9',
     difficulty: 'Medium',
     time: '7 min',
     vocabulary: [
-      { word: 'pizza', emoji: '🍕', definition: 'A flat baked bread topped with tomato and cheese' },
-      { word: 'cake', emoji: '🎂', definition: 'A sweet dessert often eaten at birthdays' },
-      { word: 'burger', emoji: '🍔', definition: 'A round patty of ground meat inside a bun' }
-    ]
-  },
-  {
-    id: 'drinks',
-    title: 'Drinks in English',
-    description: 'Are you thirsty? Let\'s learn about different drinks in English with this game.',
-    wordsCount: 13,
-    icon: '🥛',
-    previewIcons: ['🍹', '🥛', '☕'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '5 min',
-    vocabulary: [
-      { word: 'juice', emoji: '🍹', definition: 'A sweet liquid drink made from fruit' },
-      { word: 'milk', emoji: '🥛', definition: 'A white nutrient-rich liquid from cows' },
-      { word: 'coffee', emoji: '☕', definition: 'A warm dark energy drink' }
-    ]
-  },
-  {
-    id: 'school_items',
-    title: 'School items in English',
-    description: 'School is cool! In this free game, you will learn words for school items!',
-    wordsCount: 9,
-    icon: '✏️',
-    previewIcons: ['✏️', '📓', '🎒'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '4 min',
-    vocabulary: [
-      { word: 'pen', emoji: '✏️', definition: 'An instrument used for writing with ink' },
-      { word: 'notebook', emoji: '📓', definition: 'A book with blank pages for writing notes' },
-      { word: 'backpack', emoji: '🎒', definition: 'A bag used to carry school items on your back' }
-    ]
-  },
-  {
-    id: 'feelings',
-    title: 'Feelings in English',
-    description: 'Play this free game and explore different emotions and feelings. Don\'t be sad, be happy!',
-    wordsCount: 7,
-    icon: '😴',
-    previewIcons: ['😴', '😡', '😀'],
-    color: '#7850c9',
-    difficulty: 'Medium',
-    time: '5 min',
-    vocabulary: [
-      { word: 'sleepy', emoji: '😴', definition: 'Feeling tired and wanting to go to bed' },
-      { word: 'angry', emoji: '😡', definition: 'Feeling strong displeasure or rage' },
-      { word: 'happy', emoji: '😀', definition: 'Feeling good, joyful, and smiling' }
-    ]
-  },
-  {
-    id: 'transportation',
-    title: 'Transportation in English',
-    description: 'Can you ride a bicycle? Or drive a car?! Click on the pictures and learn new English words!',
-    wordsCount: 7,
-    icon: '✈️',
-    previewIcons: ['✈️', '🚗', '🚌'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '4 min',
-    vocabulary: [
-      { word: 'airplane', emoji: '✈️', definition: 'A vehicle that flies in the sky' },
-      { word: 'car', emoji: '🚗', definition: 'A road vehicle with four wheels' },
-      { word: 'bus', emoji: '🚌', definition: 'A large road vehicle that carries many passengers' }
-    ]
-  },
-  {
-    id: 'hobbies',
-    title: 'Hobbies in English',
-    description: 'Discover a new hobby you\'ll love through this language game! Learn 14 new English words.',
-    wordsCount: 14,
-    icon: '🎵',
-    previewIcons: ['🎵', '🦋', '🪀'],
-    color: '#7850c9',
-    difficulty: 'Medium',
-    time: '6 min',
-    vocabulary: [
-      { word: 'music', emoji: '🎵', definition: 'Listening to pleasant sounds and songs' },
-      { word: 'catching', emoji: '🦋', definition: 'Trying to capture beautiful butterflies' },
-      { word: 'yoyo', emoji: '🪀', definition: 'Playing with a toy that spins up and down on a string' }
-    ]
-  },
-  {
-    id: 'colors',
-    title: 'Colours in English',
-    description: 'Can you name all the colours of the rainbow in English? Let\'s find out!',
-    wordsCount: 11,
-    icon: '🌈',
-    previewIcons: ['💛', '❤️', '💚'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '5 min',
-    vocabulary: [
-      { word: 'yellow', emoji: '💛', definition: 'The bright colour of sunshine' },
-      { word: 'red', emoji: '❤️', definition: 'The warm color of roses and apples' },
-      { word: 'green', emoji: '💚', definition: 'The colour of leaves and grass' }
-    ]
-  },
-  {
-    id: 'numbers',
-    title: 'Numbers 1-20 in English',
-    description: 'Let\'s learn to count from 1 to 20 in English! Numbers learning games are fun.',
-    wordsCount: 20,
-    icon: '🔢',
-    previewIcons: ['⑬', '4️⃣', '⑩'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '6 min',
-    vocabulary: [
-      { word: 'thirteen', emoji: '⑬', definition: 'The number after twelve' },
-      { word: 'four', emoji: '4️⃣', definition: 'The number after three' },
-      { word: 'ten', emoji: '⑩', definition: 'The number after nine' }
-    ]
-  },
-  {
-    id: 'toys',
-    title: 'Toys in English',
-    description: 'What is your favourite toy? A teddy bear? A robot? You can find them all in this free game!',
-    wordsCount: 10,
-    icon: '🧸',
-    previewIcons: ['🚗', '🤖', '🧸'],
-    color: '#7850c9',
-    difficulty: 'Easy',
-    time: '5 min',
-    vocabulary: [
-      { word: 'toy car', emoji: '🚗', definition: 'A small play vehicle' },
-      { word: 'robot', emoji: '🤖', definition: 'A mechanical moving toy friend' },
-      { word: 'teddy bear', emoji: '🧸', definition: 'A soft stuffed animal bear' }
+      { word: 'pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&auto=format&fit=crop&q=80', definition: 'A flat baked bread topped with tomato and cheese' },
+      { word: 'cake', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&auto=format&fit=crop&q=80', definition: 'A sweet dessert often eaten at birthdays' },
+      { word: 'burger', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&auto=format&fit=crop&q=80', definition: 'A round patty of ground meat inside a bun' }
     ]
   },
   {
@@ -277,14 +128,18 @@ const TOPICS = [
     description: 'Listen to English words and match them with the right picture!',
     wordsCount: 14,
     icon: '🖐️',
-    previewIcons: ['🦶', '👃', '🖐️'],
+    previewImages: [
+      'https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?w=150&auto=format&fit=crop&q=60', // Toe
+      'https://images.unsplash.com/photo-1544256718-3bcf237f3974?w=150&auto=format&fit=crop&q=60', // Nose
+      'https://images.unsplash.com/photo-1516246843873-9d12356b6fab?w=150&auto=format&fit=crop&q=60'  // Hand
+    ],
     color: '#7850c9',
     difficulty: 'Medium',
     time: '6 min',
     vocabulary: [
-      { word: 'toe', emoji: '🦶', definition: 'One of the digits on your foot' },
-      { word: 'nose', emoji: '👃', definition: 'The organ on your face used for breathing and smelling' },
-      { word: 'hand', emoji: '🖐️', definition: 'The parts at the end of your arms' }
+      { word: 'toe', image: 'https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?w=300&auto=format&fit=crop&q=80', definition: 'One of the digits on your foot' },
+      { word: 'nose', image: 'https://images.unsplash.com/photo-1544256718-3bcf237f3974?w=300&auto=format&fit=crop&q=80', definition: 'The organ on your face used for breathing and smelling' },
+      { word: 'hand', image: 'https://images.unsplash.com/photo-1516246843873-9d12356b6fab?w=300&auto=format&fit=crop&q=80', definition: 'The parts at the end of your arms' }
     ]
   }
 ];
@@ -307,8 +162,8 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
 
   useEffect(() => {
     const wordCards = topic.vocabulary.map((item) => ({ type: 'word', value: item.word, id: `${item.word}-word` }));
-    const emojiCards = topic.vocabulary.map((item) => ({ type: 'emoji', value: item.emoji, matchWord: item.word, id: `${item.word}-emoji` }));
-    const shuffled = [...wordCards, ...emojiCards].sort(() => Math.random() - 0.5);
+    const imageCards = topic.vocabulary.map((item) => ({ type: 'image', value: item.image, matchWord: item.word, id: `${item.word}-image` }));
+    const shuffled = [...wordCards, ...imageCards].sort(() => Math.random() - 0.5);
     setCards(shuffled);
   }, [topic]);
 
@@ -329,8 +184,8 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
       const first = cards[nextFlipped[0]];
       const second = cards[nextFlipped[1]];
       
-      const isMatch = (first.type === 'word' && second.type === 'emoji' && second.matchWord === first.value) ||
-                      (first.type === 'emoji' && second.type === 'word' && first.matchWord === second.value);
+      const isMatch = (first.type === 'word' && second.type === 'image' && second.matchWord === first.value) ||
+                      (first.type === 'image' && second.type === 'word' && first.matchWord === second.value);
 
       if (isMatch) {
         setMatched(prev => [...prev, ...nextFlipped]);
@@ -349,12 +204,12 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      <GameHeader title="Memory Match 🎴" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
+      <GameHeader title="3D Realistic Memory Match 🎴" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
       
       {isCompleted ? (
         <VictoryScreen score={score} onBack={onBack} />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', maxWidth: '600px', margin: '40px auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', maxWidth: '750px', margin: '40px auto', perspective: '1000px' }}>
           {cards.map((card, index) => {
             const isFlipped = flipped.includes(index) || matched.includes(index);
             return (
@@ -362,25 +217,31 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
                 key={card.id}
                 onClick={() => handleCardClick(index)}
                 style={{ 
-                  height: '110px', 
+                  height: '140px', 
                   borderRadius: '16px', 
-                  background: isFlipped ? '#7850c9' : '#150d2e', 
-                  border: isFlipped ? '2px solid #bce94e' : '1px solid rgba(255,255,255,0.1)',
+                  background: isFlipped ? '#1c123a' : '#150d2e', 
+                  border: isFlipped ? '3px solid #bce94e' : '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  fontSize: card.type === 'emoji' ? '2.5rem' : '1rem',
-                  fontWeight: 'bold',
-                  color: '#fff',
-                  transform: isFlipped ? 'rotateY(180deg)' : 'none',
-                  transition: 'transform 0.4s'
+                  overflow: 'hidden',
+                  transformStyle: 'preserve-3d',
+                  transform: isFlipped ? 'rotateY(180deg) translateZ(10px)' : 'translateZ(0px)',
+                  transition: 'transform 0.5s ease-out, box-shadow 0.2s'
                 }}
               >
                 {isFlipped ? (
-                  <span style={{ transform: 'rotateY(180deg)', display: 'block' }}>{card.value}</span>
+                  <div style={{ transform: 'rotateY(180deg)', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {card.type === 'image' ? (
+                      <img src={card.value} alt="Realistic representation" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#bce94e', textTransform: 'capitalize' }}>{card.value}</span>
+                    )}
+                  </div>
                 ) : (
-                  <span style={{ fontSize: '2rem' }}>❓</span>
+                  <span style={{ fontSize: '2.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }}>❓</span>
                 )}
               </div>
             );
@@ -397,12 +258,12 @@ function PictureQuizGame({ topic, onEarn, onBack }) {
   const [score, setScore] = useState(0);
 
   const question = topic.vocabulary[index % topic.vocabulary.length];
-  const options = topic.vocabulary.map(v => v.emoji).sort(() => Math.random() - 0.5);
+  const options = topic.vocabulary.map(v => v.image).sort(() => Math.random() - 0.5);
 
-  const handlePick = (emoji) => {
+  const handlePick = (image) => {
     if (selected) return;
-    setSelected(emoji);
-    if (emoji === question.emoji) {
+    setSelected(image);
+    if (image === question.image) {
       setScore(prev => prev + 15);
       onEarn(1);
     }
@@ -413,51 +274,54 @@ function PictureQuizGame({ topic, onEarn, onBack }) {
     setSelected(null);
   };
 
-  const isCorrect = selected === question.emoji;
+  const isCorrect = selected === question.image;
   const isCompleted = index >= topic.vocabulary.length;
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      <GameHeader title="Picture Quiz ❓" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
+      <GameHeader title="3D Realistic Picture Quiz ❓" subtitle={topic.title} score={score} onBack={onBack} icon={Gamepad2} />
       
       {isCompleted ? (
         <VictoryScreen score={score} onBack={onBack} />
       ) : (
-        <div style={{ maxWidth: '600px', margin: '40px auto', background: '#150d2e', border: '1px solid rgba(188,233,78,0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff', marginBottom: '10px' }}>What is "{question.word}"?</h2>
+        <div style={{ maxWidth: '650px', margin: '40px auto', background: '#150d2e', border: '1px solid rgba(188,233,78,0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', perspective: '1200px' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: '950', color: '#fff', marginBottom: '8px', textTransform: 'capitalize' }}>Find the "{question.word}"</h2>
           <p style={{ color: '#b9adc7', fontSize: '0.9rem', marginBottom: '24px' }}>Hint: {question.definition}</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-            {options.map((emoji) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+            {options.map((image) => (
               <button
-                key={emoji}
-                onClick={() => handlePick(emoji)}
+                key={image}
+                onClick={() => handlePick(image)}
                 style={{
-                  background: selected === emoji ? (isCorrect ? '#10b981' : '#ef4444') : 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '16px',
-                  fontSize: '3rem',
-                  padding: '16px',
+                  background: 'none',
+                  border: selected === image ? (isCorrect ? '4px solid #10b981' : '4px solid #ef4444') : '2px solid rgba(255,255,255,0.1)',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  height: '180px',
+                  padding: 0,
                   cursor: 'pointer',
-                  transition: 'background 0.2s'
+                  boxShadow: '0 10px 24px rgba(0,0,0,0.25)',
+                  transform: selected === image ? 'translateZ(15px)' : 'none',
+                  transition: 'all 0.3s'
                 }}
               >
-                {emoji}
+                <img src={image} alt="Option photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             ))}
           </div>
 
           {selected && (
-            <div style={{ marginTop: '24px' }}>
-              <h3 style={{ color: isCorrect ? '#10b981' : '#ef4444', fontWeight: 'bold', marginBottom: '12px' }}>
-                {isCorrect ? 'Correct! +1 star 🌟' : 'Wrong try once more!'}
+            <div style={{ marginTop: '28px' }}>
+              <h3 style={{ color: isCorrect ? '#10b981' : '#ef4444', fontWeight: '950', fontSize: '1.25rem', marginBottom: '12px' }}>
+                {isCorrect ? 'Excellent! +1 star 🌟' : 'Wrong try once more!'}
               </h3>
               <button 
                 onClick={handleNext}
                 className="portal-primary-button"
-                style={{ margin: '0 auto' }}
+                style={{ margin: '0 auto', background: '#bce94e', color: '#090510' }}
               >
-                Next Word <ArrowRight size={15} />
+                Next Level <ArrowRight size={15} />
               </button>
             </div>
           )}
@@ -507,32 +371,37 @@ function ListeningGame({ topic, onEarn, onBack }) {
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      <GameHeader title="Listening Safari 🎧" subtitle={topic.title} score={score} onBack={onBack} icon={Volume2} />
+      <GameHeader title="3D Realistic Listening 🎧" subtitle={topic.title} score={score} onBack={onBack} icon={Volume2} />
       
       {isCompleted ? (
         <VictoryScreen score={score} onBack={onBack} />
       ) : (
-        <div style={{ maxWidth: '600px', margin: '40px auto', background: '#150d2e', border: '1px solid rgba(188,233,78,0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
+        <div style={{ maxWidth: '650px', margin: '40px auto', background: '#150d2e', border: '1px solid rgba(188,233,78,0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
           <div 
             onClick={speak}
             style={{ 
-              width: '80px', 
-              height: '80px', 
+              width: '90px', 
+              height: '90px', 
               borderRadius: '50%', 
-              background: '#7850c9', 
+              background: 'linear-gradient(135deg, #7850c9 0%, #4c1d95 100%)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              margin: '0 auto 20px auto', 
+              margin: '0 auto 24px auto', 
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(120, 80, 201, 0.4)'
+              boxShadow: '0 8px 25px rgba(120, 80, 201, 0.45)',
+              transform: 'scale(1.05)',
+              transition: 'transform 0.2s'
             }}
           >
-            <Volume2 size={32} color="#fff" />
+            <Volume2 size={36} color="#fff" />
           </div>
 
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginBottom: '24px' }}>Listen and Choose the word!</h2>
-          <span style={{ fontSize: '4rem', display: 'block', marginBottom: '20px' }}>{question.emoji}</span>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#fff', marginBottom: '24px' }}>Listen and Choose!</h2>
+          
+          <div style={{ width: '220px', height: '180px', borderRadius: '16px', overflow: 'hidden', margin: '0 auto 24px auto', boxShadow: '0 10px 20px rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.08)' }}>
+            <img src={question.image} alt="Target illustration" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
             {options.map((word) => (
@@ -544,8 +413,8 @@ function ListeningGame({ topic, onEarn, onBack }) {
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '16px',
                   color: '#fff',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
+                  fontWeight: '900',
+                  fontSize: '1.05rem',
                   padding: '16px',
                   cursor: 'pointer',
                   textTransform: 'capitalize'
@@ -578,16 +447,16 @@ function ListeningGame({ topic, onEarn, onBack }) {
 
 function VictoryScreen({ score, onBack }) {
   return (
-    <div style={{ maxWidth: '500px', margin: '80px auto', background: '#150d2e', border: '1px solid #bce94e', borderRadius: '24px', padding: '40px', textAlign: 'center' }}>
-      <span style={{ fontSize: '4rem', display: 'block', marginBottom: '16px' }}>🏆</span>
-      <h2 style={{ fontSize: '2rem', fontWeight: '950', color: '#fff', marginBottom: '8px' }}>Mission Complete!</h2>
-      <p style={{ color: '#bce94e', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '20px' }}>
+    <div style={{ maxWidth: '500px', margin: '80px auto', background: '#150d2e', border: '1px solid #bce94e', borderRadius: '24px', padding: '40px', textAlign: 'center', boxShadow: '0 20px 40px rgba(188,233,78,0.15)' }}>
+      <span style={{ fontSize: '4.5rem', display: 'block', marginBottom: '16px' }}>🏆</span>
+      <h2 style={{ fontSize: '2.2rem', fontWeight: '950', color: '#fff', marginBottom: '8px' }}>Mission Complete!</h2>
+      <p style={{ color: '#bce94e', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '24px' }}>
         You earned +{score / 10} Stars 🌟
       </p>
       <button 
         onClick={onBack}
         className="portal-primary-button"
-        style={{ margin: '0 auto', background: '#bce94e', color: '#090510' }}
+        style={{ margin: '0 auto', background: '#bce94e', color: '#090510', fontSize: '0.85rem' }}
       >
         Back to games
       </button>
@@ -748,9 +617,9 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
 
 function GameModeSelector({ topic, onSelectType, onBack }) {
   const games = [
-    { id: 'match', title: 'Memory Match 🎴', description: 'Flip and match vocabulary words to their corresponding cartoon emojis!' },
-    { id: 'quiz', title: 'Picture Quiz ❓', description: 'Four choices with random order. Test your visual memory!' },
-    { id: 'listen', title: 'Listening Safari 🎧', description: 'Hear native pronunciation and select the correct picture!' }
+    { id: 'match', title: '3D Memory Match 🎴', description: 'Flip and match vocabulary words to their corresponding realistic pictures with 3D rotations!' },
+    { id: 'quiz', title: '3D Picture Quiz ❓', description: 'Four choices with random order. Test your realistic visual memory!' },
+    { id: 'listen', title: '3D Listening Safari 🎧', description: 'Hear native pronunciation and select the correct realistic picture!' }
   ];
 
   return (
@@ -766,7 +635,7 @@ function GameModeSelector({ topic, onSelectType, onBack }) {
         <span style={{ background: 'rgba(120, 80, 201, 0.1)', color: '#bce94e', padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
           Selected Topic: {topic.title}
         </span>
-        <h2 style={{ fontSize: '2rem', color: '#fff', fontWeight: '950', marginTop: '12px' }}>Select Game Engine</h2>
+        <h2 style={{ fontSize: '2.2rem', color: '#fff', fontWeight: '950', marginTop: '12px' }}>Select 3D Game Engine</h2>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', maxWidth: '900px', margin: '0 auto' }}>
@@ -774,9 +643,9 @@ function GameModeSelector({ topic, onSelectType, onBack }) {
           <div 
             key={g.id}
             onClick={() => onSelectType(g.id)}
-            style={{ background: '#150d2e', border: '1px solid rgba(188, 233, 78, 0.15)', borderRadius: '20px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s' }}
+            style={{ background: '#150d2e', border: '1px solid rgba(188, 233, 78, 0.15)', borderRadius: '20px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}
           >
-            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>{g.title}</h3>
+            <h3 style={{ fontSize: '1.45rem', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>{g.title}</h3>
             <p style={{ fontSize: '0.82rem', color: '#b9adc7', lineHeight: '1.5', marginBottom: '16px' }}>{g.description}</p>
             <button className="portal-primary-button" style={{ margin: '0 auto', pointerEvents: 'none' }}>
               Launch Game
@@ -797,47 +666,47 @@ function GameModeCard({ topic, onChoose }) {
         border: '1px solid rgba(188, 233, 78, 0.2)', 
         borderRadius: '20px', 
         padding: '24px', 
-        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        boxShadow: '0 15px 35px rgba(0,0,0,0.3)',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        transition: 'transform 220ms ease, box-shadow 220ms ease',
+        cursor: 'pointer'
       }}
     >
       <div>
-        {/* Styled card title & details to exactly match your screenshots */}
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#fff', marginBottom: '14px', letterSpacing: '-0.01em' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '950', color: '#fff', marginBottom: '14px', letterSpacing: '-0.02em' }}>
           {topic.title}
         </h2>
         
-        {/* Three square vocabulary item previews exactly like your screenshots! */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-          {topic.previewIcons.map((ico, idx) => (
+        {/* Three square vocabulary item previews using REALISTIC public domain Unsplash photo links! */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
+          {topic.previewImages.map((imgUrl, idx) => (
             <div 
               key={idx}
               style={{
-                width: '64px',
-                height: '64px',
-                background: '#fff',
+                width: '75px',
+                height: '75px',
                 border: '2.5px solid #090510',
-                borderRadius: '14px',
+                borderRadius: '16px',
+                overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '2.2rem',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+                boxShadow: '0 6px 12px rgba(0,0,0,0.2)'
               }}
             >
-              {ico}
+              <img src={imgUrl} alt="Realistic item preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           ))}
         </div>
 
-        <p style={{ fontSize: '0.82rem', color: '#b9adc7', lineHeight: '1.5', marginBottom: '12px' }}>
+        <p style={{ fontSize: '0.85rem', color: '#b9adc7', lineHeight: '1.5', marginBottom: '12px' }}>
           {topic.description}
         </p>
         
-        <strong style={{ display: 'block', fontSize: '0.78rem', color: '#bce94e', marginBottom: '16px' }}>
+        <strong style={{ display: 'block', fontSize: '0.8rem', color: '#bce94e', marginBottom: '16px' }}>
           Learn {topic.vocabulary.length} new English words
         </strong>
       </div>
@@ -848,12 +717,12 @@ function GameModeCard({ topic, onChoose }) {
         style={{ 
           background: '#fff', 
           color: '#321568', 
-          fontWeight: '900', 
-          fontSize: '0.85rem', 
-          padding: '10px 24px', 
+          fontWeight: '950', 
+          fontSize: '0.88rem', 
+          padding: '12px 28px', 
           borderRadius: '30px', 
           border: 'none',
-          boxShadow: '0 4px 12px rgba(255,255,255,0.15)',
+          boxShadow: '0 6px 15px rgba(255,255,255,0.15)',
           cursor: 'pointer',
           width: 'fit-content'
         }}
@@ -865,7 +734,6 @@ function GameModeCard({ topic, onChoose }) {
 }
 
 export default function StudentGames({ learner, onEarnStars }) {
-  const [activeGame, setActiveGame] = useState('');
   const [activeTopic, setActiveGameTopic] = useState(null);
   const [activeGameType, setActiveGameType] = useState(null); // 'match', 'quiz', 'listen', 'avatar'
   
@@ -945,9 +813,9 @@ export default function StudentGames({ learner, onEarnStars }) {
   return (
     <div className="games-hub portal-view" style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
       {/* Premium Hub Header */}
-      <section className="games-hero" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', borderRadius: '24px', padding: '30px', display: 'flex', justifyScontent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 20px 50px rgba(120, 80, 201, 0.25)', border: '1px solid rgba(188, 233, 78, 0.15)', marginBottom: '32px' }}>
+      <section className="games-hero" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', borderRadius: '24px', padding: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 20px 50px rgba(120, 80, 201, 0.25)', border: '1px solid rgba(188, 233, 78, 0.15)', marginBottom: '32px' }}>
         <div>
-          <span className="portal-kicker" style={{ color: '#bce94e', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.72rem' }}>TutorPro English PH Game Arena</span>
+          <span className="portal-kicker" style={{ color: '#bce94e', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.72rem' }}>TutorPro English PH 3D Game Arena</span>
           <h1 style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff', letterSpacing: '-0.02em', margin: '6px 0' }}>English is your Superpower! ⚡</h1>
           <p style={{ color: '#e9d5ff', fontSize: '0.92rem', margin: '0 0 16px 0', maxWidth: '500px' }}>
             Earn stars, collect shiny gold coins, and customize your special cartoon avatar by playing games!
@@ -986,7 +854,7 @@ export default function StudentGames({ learner, onEarnStars }) {
         </div>
       </div>
 
-      {/* Grid of beautiful cartoonish cards matching screenshots 100% perfectly */}
+      {/* Grid of beautiful 3D realistic cards matching screenshots 100% perfectly */}
       <div className="game-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' }}>
         {TOPICS.map((topic) => (
           <GameModeCard key={topic.id} topic={topic} onChoose={setActiveGameTopic} />
