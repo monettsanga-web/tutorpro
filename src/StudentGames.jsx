@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Gamepad2,
   Star,
@@ -8,362 +8,303 @@ import {
   Volume2,
   Sparkles,
   ArrowLeft,
-  CheckCircle2,
+  Check,
   RotateCcw,
   Zap,
-  Play,
   ArrowRight,
-  User,
-  Activity,
   Award,
   BookOpen
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // ====================================================================
-// 1. Vocabulary & Topics Datasets
+// 1. Exact 16 Vocabulary Topics based on the attached screenshots
 // ====================================================================
 
 const TOPICS = [
-  { 
-    id: 'furniture', 
-    title: 'Furniture in English', 
-    icon: '🛋️', 
-    wordsCount: 11, 
-    difficulty: 'Easy', 
-    time: '5 min', 
-    stars: 3, 
-    progress: 80, 
-    illustration: 'couch',
-    description: 'Let\'s explore the furniture in our homes. Can you find all items?',
+  {
+    id: 'furniture',
+    title: 'Furniture in English',
+    description: 'Let\'s explore the furniture in our homes. Can you find all the items in this English game?',
+    wordsCount: 11,
+    icon: '🛋️',
+    previewIcons: ['🗄️', '🛋️', '🪑'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '5 min',
     vocabulary: [
+      { word: 'cabinet', emoji: '🗄️', definition: 'A cupboard with shelves or drawers for storage' },
       { word: 'sofa', emoji: '🛋️', definition: 'A long comfortable seat for multiple people' },
       { word: 'table', emoji: '🪑', definition: 'A piece of furniture with a flat top and legs' },
-      { word: 'lamp', emoji: '💡', definition: 'A device that provides artificial light' },
       { word: 'bed', emoji: '🛏️', definition: 'A piece of furniture used for sleeping' },
-      { word: 'chair', emoji: '🪟', definition: 'A seat for one person, with a back and legs' },
-      { word: 'cabinet', emoji: '🗄️', definition: 'A cupboard with shelves or drawers for storage' }
+      { word: 'lamp', emoji: '💡', definition: 'A device that provides artificial light' },
+      { word: 'chair', emoji: '🪑', definition: 'A seat for one person, with a back and legs' }
     ]
   },
-  { 
-    id: 'animals', 
-    title: 'Animals in English', 
-    icon: '🦁', 
-    wordsCount: 14, 
-    difficulty: 'Easy', 
-    time: '6 min', 
-    stars: 4, 
-    progress: 65, 
-    illustration: 'panda',
-    description: 'Meeting wild and farm animals is fun! Perfect for rookie explorers.',
+  {
+    id: 'rooms',
+    title: 'Rooms in English',
+    description: 'Every room in our houses has a special name! Let\'s play this English language game and learn.',
+    wordsCount: 6,
+    icon: '🏠',
+    previewIcons: ['🛏️', '🍳', '🛁'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '4 min',
     vocabulary: [
-      { word: 'lion', emoji: '🦁', definition: 'A large wild cat known as the king of the jungle' },
-      { word: 'panda', emoji: '🐼', definition: 'A large bear-like mammal with black and white markings' },
-      { word: 'monkey', emoji: '🐒', definition: 'A clever primate with a long tail that climbs trees' },
-      { word: 'rabbit', emoji: '🐰', definition: 'A small animal with long ears that hops' },
-      { word: 'elephant', emoji: '🐘', definition: 'A giant mammal with a long trunk and tusks' },
-      { word: 'dog', emoji: '🐶', definition: 'A friendly domestic pet that barks' }
+      { word: 'bedroom', emoji: '🛏️', definition: 'The room where you sleep at night' },
+      { word: 'kitchen', emoji: '🍳', definition: 'The room where food is prepared and cooked' },
+      { word: 'bathroom', emoji: '🛁', definition: 'The room where you take a bath or wash your hands' },
+      { word: 'living room', emoji: '📺', definition: 'The room where families relax and watch TV' },
+      { word: 'dining room', emoji: '🍽️', definition: 'The room where people eat meals' }
     ]
   },
-  { 
-    id: 'food', 
-    title: 'Food in English', 
-    icon: '🍕', 
-    wordsCount: 16, 
-    difficulty: 'Medium', 
-    time: '7 min', 
-    stars: 5, 
-    progress: 90, 
-    illustration: 'icecream',
-    description: 'Mmm! Let\'s talk about yummy food and drinks. Learn 16 words.',
+  {
+    id: 'days',
+    title: 'Days of the week in English',
+    description: 'Learn the words for the days of the week with our English learning games.',
+    wordsCount: 7,
+    icon: '🗓️',
+    previewIcons: ['📅', '📆', '🗓️'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '5 min',
     vocabulary: [
-      { word: 'pizza', emoji: '🍕', definition: 'A baked flatbread topped with tomato and cheese' },
-      { word: 'burger', emoji: '🍔', definition: 'A round patty of ground beef inside a bun' },
-      { word: 'cake', emoji: '🎂', definition: 'A sweet baked dessert often eaten at birthdays' },
-      { word: 'ice cream', emoji: '🍦', definition: 'A cold, sweet frozen dessert made from milk' },
-      { word: 'apple', emoji: '🍎', definition: 'A round fruit with red, green, or yellow skin' },
-      { word: 'banana', emoji: '🍌', definition: 'A long curved yellow fruit' }
+      { word: 'Monday', emoji: '📅', definition: 'The first day of the working week' },
+      { word: 'Wednesday', emoji: '📆', definition: 'The middle of the weekday schedule' },
+      { word: 'Friday', emoji: '🗓️', definition: 'The last day before the weekend' },
+      { word: 'Sunday', emoji: '☀️', definition: 'The final day of the week, a holiday' }
     ]
   },
-  { 
-    id: 'body_parts', 
-    title: 'Body parts in English', 
-    icon: '🖐️', 
-    wordsCount: 14, 
-    difficulty: 'Medium', 
-    time: '6 min', 
-    stars: 4, 
-    progress: 50, 
-    illustration: 'hand',
+  {
+    id: 'locations',
+    title: 'Locations in English',
+    description: 'Where do you like to visit? Let\'s learn about places - English learning games are fun!',
+    wordsCount: 15,
+    icon: '🏫',
+    previewIcons: ['🎬', '⛲', '🏡'],
+    color: '#7850c9',
+    difficulty: 'Medium',
+    time: '6 min',
+    vocabulary: [
+      { word: 'cinema', emoji: '🎬', definition: 'A place where you watch movies' },
+      { word: 'park', emoji: '⛲', definition: 'A public green space with trees and fountains' },
+      { word: 'house', emoji: '🏡', definition: 'A building where people live' },
+      { word: 'school', emoji: '🏫', definition: 'A place where students learn from teachers' }
+    ]
+  },
+  {
+    id: 'family',
+    title: 'Family members in English',
+    description: 'Can you name family members in English? Let\'s check and build your vocabulary!',
+    wordsCount: 9,
+    icon: '👨‍👩‍👧‍👦',
+    previewIcons: ['👨', '👩', '👶'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '5 min',
+    vocabulary: [
+      { word: 'father', emoji: '👨', definition: 'A male parent' },
+      { word: 'mother', emoji: '👩', definition: 'A female parent' },
+      { word: 'baby', emoji: '👶', definition: 'A very young child or infant' },
+      { word: 'brother', emoji: '👦', definition: 'A male sibling' },
+      { word: 'sister', emoji: '👧', definition: 'A female sibling' }
+    ]
+  },
+  {
+    id: 'shapes',
+    title: 'Shapes in English',
+    description: 'Test your knowledge by playing this free game! Explore shapes and forms in English.',
+    wordsCount: 3,
+    icon: '🔺',
+    previewIcons: ['🟣', '🔺', '🟦'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '3 min',
+    vocabulary: [
+      { word: 'circle', emoji: '🟣', definition: 'A round shape with no corners' },
+      { word: 'triangle', emoji: '🔺', definition: 'A shape with three sides and three corners' },
+      { word: 'square', emoji: '🟦', definition: 'A shape with four equal sides' }
+    ]
+  },
+  {
+    id: 'food',
+    title: 'Food in English',
+    description: 'Mmm! Let\'s talk about yummy food! Play and learn food words in English.',
+    wordsCount: 16,
+    icon: '🍕',
+    previewIcons: ['🍕', '🎂', '🍔'],
+    color: '#7850c9',
+    difficulty: 'Medium',
+    time: '7 min',
+    vocabulary: [
+      { word: 'pizza', emoji: '🍕', definition: 'A flat baked bread topped with tomato and cheese' },
+      { word: 'cake', emoji: '🎂', definition: 'A sweet dessert often eaten at birthdays' },
+      { word: 'burger', emoji: '🍔', definition: 'A round patty of ground meat inside a bun' }
+    ]
+  },
+  {
+    id: 'drinks',
+    title: 'Drinks in English',
+    description: 'Are you thirsty? Let\'s learn about different drinks in English with this game.',
+    wordsCount: 13,
+    icon: '🥛',
+    previewIcons: ['🍹', '🥛', '☕'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '5 min',
+    vocabulary: [
+      { word: 'juice', emoji: '🍹', definition: 'A sweet liquid drink made from fruit' },
+      { word: 'milk', emoji: '🥛', definition: 'A white nutrient-rich liquid from cows' },
+      { word: 'coffee', emoji: '☕', definition: 'A warm dark energy drink' }
+    ]
+  },
+  {
+    id: 'school_items',
+    title: 'School items in English',
+    description: 'School is cool! In this free game, you will learn words for school items!',
+    wordsCount: 9,
+    icon: '✏️',
+    previewIcons: ['✏️', '📓', '🎒'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '4 min',
+    vocabulary: [
+      { word: 'pen', emoji: '✏️', definition: 'An instrument used for writing with ink' },
+      { word: 'notebook', emoji: '📓', definition: 'A book with blank pages for writing notes' },
+      { word: 'backpack', emoji: '🎒', definition: 'A bag used to carry school items on your back' }
+    ]
+  },
+  {
+    id: 'feelings',
+    title: 'Feelings in English',
+    description: 'Play this free game and explore different emotions and feelings. Don\'t be sad, be happy!',
+    wordsCount: 7,
+    icon: '😴',
+    previewIcons: ['😴', '😡', '😀'],
+    color: '#7850c9',
+    difficulty: 'Medium',
+    time: '5 min',
+    vocabulary: [
+      { word: 'sleepy', emoji: '😴', definition: 'Feeling tired and wanting to go to bed' },
+      { word: 'angry', emoji: '😡', definition: 'Feeling strong displeasure or rage' },
+      { word: 'happy', emoji: '😀', definition: 'Feeling good, joyful, and smiling' }
+    ]
+  },
+  {
+    id: 'transportation',
+    title: 'Transportation in English',
+    description: 'Can you ride a bicycle? Or drive a car?! Click on the pictures and learn new English words!',
+    wordsCount: 7,
+    icon: '✈️',
+    previewIcons: ['✈️', '🚗', '🚌'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '4 min',
+    vocabulary: [
+      { word: 'airplane', emoji: '✈️', definition: 'A vehicle that flies in the sky' },
+      { word: 'car', emoji: '🚗', definition: 'A road vehicle with four wheels' },
+      { word: 'bus', emoji: '🚌', definition: 'A large road vehicle that carries many passengers' }
+    ]
+  },
+  {
+    id: 'hobbies',
+    title: 'Hobbies in English',
+    description: 'Discover a new hobby you\'ll love through this language game! Learn 14 new English words.',
+    wordsCount: 14,
+    icon: '🎵',
+    previewIcons: ['🎵', '🦋', '🪀'],
+    color: '#7850c9',
+    difficulty: 'Medium',
+    time: '6 min',
+    vocabulary: [
+      { word: 'music', emoji: '🎵', definition: 'Listening to pleasant sounds and songs' },
+      { word: 'catching', emoji: '🦋', definition: 'Trying to capture beautiful butterflies' },
+      { word: 'yoyo', emoji: '🪀', definition: 'Playing with a toy that spins up and down on a string' }
+    ]
+  },
+  {
+    id: 'colors',
+    title: 'Colours in English',
+    description: 'Can you name all the colours of the rainbow in English? Let\'s find out!',
+    wordsCount: 11,
+    icon: '🌈',
+    previewIcons: ['💛', '❤️', '💚'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '5 min',
+    vocabulary: [
+      { word: 'yellow', emoji: '💛', definition: 'The bright colour of sunshine' },
+      { word: 'red', emoji: '❤️', definition: 'The warm color of roses and apples' },
+      { word: 'green', emoji: '💚', definition: 'The colour of leaves and grass' }
+    ]
+  },
+  {
+    id: 'numbers',
+    title: 'Numbers 1-20 in English',
+    description: 'Let\'s learn to count from 1 to 20 in English! Numbers learning games are fun.',
+    wordsCount: 20,
+    icon: '🔢',
+    previewIcons: ['⑬', '4️⃣', '⑩'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '6 min',
+    vocabulary: [
+      { word: 'thirteen', emoji: '⑬', definition: 'The number after twelve' },
+      { word: 'four', emoji: '4️⃣', definition: 'The number after three' },
+      { word: 'ten', emoji: '⑩', definition: 'The number after nine' }
+    ]
+  },
+  {
+    id: 'toys',
+    title: 'Toys in English',
+    description: 'What is your favourite toy? A teddy bear? A robot? You can find them all in this free game!',
+    wordsCount: 10,
+    icon: '🧸',
+    previewIcons: ['🚗', '🤖', '🧸'],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '5 min',
+    vocabulary: [
+      { word: 'toy car', emoji: '🚗', definition: 'A small play vehicle' },
+      { word: 'robot', emoji: '🤖', definition: 'A mechanical moving toy friend' },
+      { word: 'teddy bear', emoji: '🧸', definition: 'A soft stuffed animal bear' }
+    ]
+  },
+  {
+    id: 'body_parts',
+    title: 'Body parts in English',
     description: 'Listen to English words and match them with the right picture!',
+    wordsCount: 14,
+    icon: '🖐️',
+    previewIcons: ['🦶', '👃', '🖐️'],
+    color: '#7850c9',
+    difficulty: 'Medium',
+    time: '6 min',
     vocabulary: [
-      { word: 'hand', emoji: '🖐️', definition: 'The end part of a person\'s arm' },
-      { word: 'foot', emoji: '🦶', definition: 'The lower part of the leg that touches the ground' },
-      { word: 'eye', emoji: '👁️', definition: 'The organ used for seeing' },
-      { word: 'ear', emoji: '👂', definition: 'The organ used for hearing' },
-      { word: 'nose', emoji: '👃', definition: 'The organ used for smelling' },
-      { word: 'mouth', emoji: '👄', definition: 'The opening used for eating and speaking' }
+      { word: 'toe', emoji: '🦶', definition: 'One of the digits on your foot' },
+      { word: 'nose', emoji: '👃', definition: 'The organ on your face used for breathing and smelling' },
+      { word: 'hand', emoji: '🖐️', definition: 'The parts at the end of your arms' }
     ]
   }
 ];
 
-// ====================================================================
-// 2. Avatar customizations lists
-// ====================================================================
-const AVATAR_ITEMS = {
-  clothes: [
-    { id: 'shirt_green', label: 'Neon Green T-Shirt 👕', cost: 15 },
-    { id: 'shirt_purple', label: 'Royal Purple Hoodie 🧥', cost: 25 },
-    { id: 'suit_space', label: 'Space Suit Astronaut 🧑‍🚀', cost: 50 }
-  ],
-  pets: [
-    { id: 'pet_cat', label: 'Friendly Kitten 🐱', cost: 30 },
-    { id: 'pet_dog', label: 'Cute Puppy 🐶', cost: 35 },
-    { id: 'pet_dragon', label: 'Baby Fire Dragon 🐉', cost: 75 }
-  ],
-  frames: [
-    { id: 'frame_gold', label: 'Golden Star Border ✨', cost: 20 },
-    { id: 'frame_neon', label: 'Neon Rainbow Glow 🌈', cost: 40 }
-  ]
-};
-
-export default function StudentGames({ learner, onEarnStars }) {
-  const [activeTopic, setActiveGameTopic] = useState(null);
-  const [activeGameType, setActiveGameType] = useState(null); // 'match', 'quiz', 'listen', 'avatar'
-  
-  // Gamification Wallet state
-  const [stars, setStars] = useState(learner?.gameStars || 5);
-  const [coins, setCoins] = useState(120);
-  const [unlockedItems, setUnlockedItems] = useState(['shirt_green']);
-  const [equippedAvatar, setEquippedAvatar] = useState({ shirt: 'shirt_green', pet: null, frame: null });
-
-  // Update learner stars upon earning
-  const triggerEarn = (amt) => {
-    setStars(prev => prev + amt);
-    setCoins(prev => prev + (amt * 10)); // 10 coins per star
-    onEarnStars?.(amt);
-    confetti({
-      particleCount: 80,
-      spread: 60,
-      origin: { y: 0.8 },
-      colors: ['#bce94e', '#7850c9', '#ff9e2c']
-    });
-  };
-
-  if (activeGameType === 'avatar') {
-    return (
-      <AvatarCustomizer 
-        coins={coins} 
-        setCoins={setCoins}
-        unlockedItems={unlockedItems}
-        setUnlockedItems={setUnlockedItems}
-        equippedAvatar={equippedAvatar}
-        setEquippedAvatar={setEquippedAvatar}
-        onBack={() => setActiveGameType(null)} 
-      />
-    );
-  }
-
-  if (activeGameType === 'match' && activeTopic) {
-    return (
-      <MemoryMatchGame 
-        topic={activeTopic} 
-        onEarn={triggerEarn} 
-        onBack={() => { setActiveGameType(null); }} 
-      />
-    );
-  }
-
-  if (activeGameType === 'quiz' && activeTopic) {
-    return (
-      <PictureQuizGame 
-        topic={activeTopic} 
-        onEarn={triggerEarn} 
-        onBack={() => { setActiveGameType(null); }} 
-      />
-    );
-  }
-
-  if (activeGameType === 'listen' && activeTopic) {
-    return (
-      <ListeningGame 
-        topic={activeTopic} 
-        onEarn={triggerEarn} 
-        onBack={() => { setActiveGameType(null); }} 
-      />
-    );
-  }
-
-  if (activeTopic) {
-    return (
-      <GameModeSelector 
-        topic={activeTopic} 
-        onSelectType={setActiveGameType} 
-        onBack={() => setActiveGameTopic(null)} 
-      />
-    );
-  }
-
+function GameHeader({ title, subtitle, score, onBack, icon: Icon }) {
   return (
-    <div className="games-hub portal-view" style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      {/* Premium Hub Header */}
-      <section className="games-hero" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', borderRadius: '24px', padding: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 20px 50px rgba(120, 80, 201, 0.25)', border: '1px solid rgba(188, 233, 78, 0.15)', marginBottom: '32px' }}>
-        <div>
-          <span className="portal-kicker" style={{ color: '#bce94e', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.72rem' }}>TutorPro English PH Game Arena</span>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff', letterSpacing: '-0.02em', margin: '6px 0' }}>English is your Superpower! ⚡</h1>
-          <p style={{ color: '#e9d5ff', fontSize: '0.92rem', margin: '0 0 16px 0', maxWidth: '500px' }}>
-            Earn stars, collect shiny gold coins, and customize your special cartoon avatar by playing games!
-          </p>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              onClick={() => setActiveGameType('avatar')}
-              className="portal-primary-button" 
-              style={{ background: '#bce94e', color: '#090510', margin: 0, fontWeight: '900', padding: '10px 20px', borderRadius: '12px' }}
-            >
-              👑 Customize My Avatar
-            </button>
-          </div>
-        </div>
-
-        {/* Gamified Score wallets */}
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 20px', borderRadius: '16px', textAlign: 'center', minWidth: '100px' }}>
-            <Star size={24} fill="#ff9e2c" color="#ff9e2c" style={{ margin: '0 auto 4px auto' }} />
-            <small style={{ display: 'block', fontSize: '0.62rem', color: '#b9adc7', textTransform: 'uppercase', fontWeight: 'bold' }}>All Stars</small>
-            <strong style={{ fontSize: '1.45rem', color: '#fff' }}>{stars}</strong>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 20px', borderRadius: '16px', textAlign: 'center', minWidth: '100px' }}>
-            <Zap size={24} fill="#ffd700" color="#ffd700" style={{ margin: '0 auto 4px auto' }} />
-            <small style={{ display: 'block', fontSize: '0.62rem', color: '#b9adc7', textTransform: 'uppercase', fontWeight: 'bold' }}>Gold Coins</small>
-            <strong style={{ fontSize: '1.45rem', color: '#ffd700' }}>₱{coins}</strong>
-          </div>
-        </div>
-      </section>
-
-      {/* Topics Header */}
-      <div className="section-heading section-heading--split" style={{ marginBottom: '24px' }}>
-        <div>
-          <span className="kicker" style={{ color: '#bce94e', fontWeight: '900', letterSpacing: '0.08em' }}>CHOOSE YOUR ADVENTURE</span>
-          <h2 style={{ fontSize: '1.8rem', color: '#fff', fontWeight: '900' }}>Interactive Vocabulary Topics</h2>
-        </div>
-      </div>
-
-      {/* Grid of beautiful cartoonish cards */}
-      <div className="game-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '24px' }}>
-        {TOPICS.map((topic) => (
-          <article 
-            className="public-teacher-card novakid-style-card" 
-            key={topic.id}
-            style={{ 
-              background: '#150d2e', 
-              border: '1px solid rgba(188, 233, 78, 0.2)', 
-              borderRadius: '20px', 
-              padding: '24px', 
-              boxShadow: '0 10px 30px rgba(0,0,0,0.25)', 
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            {/* Top row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <span style={{ background: 'rgba(255,255,255,0.05)', fontSize: '2.5rem', width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {topic.icon}
-              </span>
-              <span style={{ background: 'rgba(188, 233, 78, 0.08)', border: '1px solid rgba(188, 233, 78, 0.25)', color: '#bce94e', padding: '3px 8px', borderRadius: '12px', fontSize: '0.62rem', fontWeight: '900', textTransform: 'uppercase' }}>
-                {topic.difficulty}
-              </span>
-            </div>
-
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff', marginBottom: '4px' }}>{topic.title}</h3>
-            <p style={{ fontSize: '0.78rem', color: '#b9adc7', marginBottom: '14px', minHeight: '38px', lineHeight: '1.4' }}>{topic.description}</p>
-
-            {/* Custom Progress Bar */}
-            <div style={{ marginBottom: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#b9adc7', marginBottom: '4px', fontWeight: 'bold' }}>
-                <span>Progress</span>
-                <span>{topic.progress}% ({topic.wordsCount} learned)</span>
-              </div>
-              <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${topic.progress}%`, background: '#bce94e', borderRadius: '10px' }} />
-              </div>
-            </div>
-
-            {/* Facts info */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginBottom: '16px', fontSize: '0.7rem', color: '#b9adc7' }}>
-              <span>⏱️ {topic.time}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Star size={11} fill="#ff9e2c" color="#ff9e2c" /> {topic.stars} stars earned</span>
-            </div>
-
-            {/* Play Button */}
-            <button 
-              onClick={() => setActiveGameTopic(topic)}
-              className="button button--primary button--full" 
-              style={{ background: '#bce94e', color: '#090510', fontWeight: '900', padding: '10px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-            >
-              Play Now <ArrowRight size={15} />
-            </button>
-          </article>
-        ))}
-      </div>
+    <div className="game-header" style={{ padding: '16px 20px', background: '#090510', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem' }}><ArrowLeft size={16} /> Back</button>
+      <div><span style={{ color: '#bce94e', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 'bold' }}>{subtitle}</span><h2 style={{ fontSize: '1.45rem', fontWeight: '950', color: '#fff', margin: 0 }}>{title}</h2></div>
+      <div className="game-score" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(188, 233, 78, 0.08)', border: '1px solid rgba(188, 233, 78, 0.2)', padding: '6px 14px', borderRadius: '20px', color: '#bce94e' }}><Star size={16} fill="currentColor" /><strong>{score}</strong><span>stars</span></div>
     </div>
-  );
+  )
 }
 
-// ====================================================================
-// 3. Game Type Selector component
-// ====================================================================
-function GameModeSelector({ topic, onSelectType, onBack }) {
-  const games = [
-    { id: 'match', title: 'Memory Match 🎴', description: 'Flip and match vocabulary words to their corresponding cartoon emojis!' },
-    { id: 'quiz', title: 'Picture Quiz ❓', description: 'Four choices with random order. Test your visual memory!' },
-    { id: 'listen', title: 'Listening Safari 🎧', description: 'Hear native pronunciation and select the correct picture!' }
-  ];
-
-  return (
-    <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
-      <button 
-        onClick={onBack} 
-        style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 'bold', marginBottom: '24px' }}
-      >
-        <ArrowLeft size={14} /> Back to Hub
-      </button>
-
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <span style={{ background: 'rgba(120, 80, 201, 0.1)', color: '#bce94e', padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-          Selected Topic: {topic.title}
-        </span>
-        <h2 style={{ fontSize: '2rem', color: '#fff', fontWeight: '950', marginTop: '12px' }}>Select Game Engine</h2>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', maxWidth: '900px', margin: '0 auto' }}>
-        {games.map((g) => (
-          <div 
-            key={g.id}
-            onClick={() => onSelectType(g.id)}
-            style={{ background: '#150d2e', border: '1px solid rgba(188, 233, 78, 0.15)', borderRadius: '20px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s' }}
-          >
-            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>{g.title}</h3>
-            <p style={{ fontSize: '0.82rem', color: '#b9adc7', lineHeight: '1.5', marginBottom: '16px' }}>{g.description}</p>
-            <button className="portal-primary-button" style={{ margin: '0 auto', pointerEvents: 'none' }}>
-              Launch Game
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ====================================================================
-// 4. Memory Match Game Engine
-// ====================================================================
 function MemoryMatchGame({ topic, onEarn, onBack }) {
   const [cards, setCards] = useState([]);
-  const [flipped, setFlipped] = useState([]); // indices
-  const [matched, setMatched] = useState([]); // indices
+  const [flipped, setFlipped] = useState([]);
+  const [matched, setMatched] = useState([]);
   const [score, setScore] = useState(0);
 
-  // Initialize cards matching word to emoji
   useEffect(() => {
     const wordCards = topic.vocabulary.map((item) => ({ type: 'word', value: item.word, id: `${item.word}-word` }));
     const emojiCards = topic.vocabulary.map((item) => ({ type: 'emoji', value: item.emoji, matchWord: item.word, id: `${item.word}-emoji` }));
@@ -377,7 +318,6 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
     const nextFlipped = [...flipped, index];
     setFlipped(nextFlipped);
 
-    // TTS pronunciation on click
     if (cards[index].type === 'word' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(cards[index].value);
@@ -451,9 +391,6 @@ function MemoryMatchGame({ topic, onEarn, onBack }) {
   );
 }
 
-// ====================================================================
-// 5. Picture Quiz Game Engine
-// ====================================================================
 function PictureQuizGame({ topic, onEarn, onBack }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -530,9 +467,6 @@ function PictureQuizGame({ topic, onEarn, onBack }) {
   );
 }
 
-// ====================================================================
-// 6. Listening Game Engine
-// ====================================================================
 function ListeningGame({ topic, onEarn, onBack }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -642,9 +576,6 @@ function ListeningGame({ topic, onEarn, onBack }) {
   );
 }
 
-// ====================================================================
-// 7. Victory Screen
-// ====================================================================
 function VictoryScreen({ score, onBack }) {
   return (
     <div style={{ maxWidth: '500px', margin: '80px auto', background: '#150d2e', border: '1px solid #bce94e', borderRadius: '24px', padding: '40px', textAlign: 'center' }}>
@@ -664,9 +595,6 @@ function VictoryScreen({ score, onBack }) {
   );
 }
 
-// ====================================================================
-// 8. Avatar Customizer component
-// ====================================================================
 function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, equippedAvatar, setEquippedAvatar, onBack }) {
   const [activeTab, setActiveTab] = useState('clothes');
 
@@ -687,6 +615,23 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
     }));
   };
 
+  const AVATAR_ITEMS = {
+    clothes: [
+      { id: 'shirt_green', label: 'Neon Green T-Shirt 👕', cost: 15 },
+      { id: 'shirt_purple', label: 'Royal Purple Hoodie 🧥', cost: 25 },
+      { id: 'suit_space', label: 'Space Suit Astronaut 🧑‍🚀', cost: 50 }
+    ],
+    pets: [
+      { id: 'pet_cat', label: 'Friendly Kitten 🐱', cost: 30 },
+      { id: 'pet_dog', label: 'Cute Puppy 🐶', cost: 35 },
+      { id: 'pet_dragon', label: 'Baby Fire Dragon 🐉', cost: 75 }
+    ],
+    frames: [
+      { id: 'frame_gold', label: 'Golden Star Border ✨', cost: 20 },
+      { id: 'frame_neon', label: 'Neon Rainbow Glow 🌈', cost: 40 }
+    ]
+  };
+
   return (
     <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
       <button 
@@ -701,8 +646,7 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
         <p style={{ color: '#bce94e', fontWeight: 'bold', marginTop: '4px' }}>My Wallet: ₱{coins} Gold Coins</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '30px', maxWidth: '900px', margin: '0 auto' }}>
-        {/* Left pane: Avatar Preview */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ background: '#150d2e', border: '1px solid rgba(188, 233, 78, 0.25)', borderRadius: '24px', padding: '24px', textAlign: 'center', height: 'fit-content' }}>
           <div style={{ 
             width: '120px', 
@@ -726,9 +670,7 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
           </div>
         </div>
 
-        {/* Right pane: Shop Catalog */}
         <div style={{ background: '#150d2e', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '24px' }}>
-          {/* Shop Tabs */}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '10px', width: 'fit-content' }}>
             {['clothes', 'pets', 'frames'].map((tab) => (
               <button
@@ -750,7 +692,6 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
             ))}
           </div>
 
-          {/* Items Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
             {AVATAR_ITEMS[activeTab].map((item) => {
               const isUnlocked = unlockedItems.includes(item.id);
@@ -805,6 +746,252 @@ function AvatarCustomizer({ coins, setCoins, unlockedItems, setUnlockedItems, eq
   );
 }
 
-function TargetIcon() {
-  return <Award size={25} />
+function GameModeSelector({ topic, onSelectType, onBack }) {
+  const games = [
+    { id: 'match', title: 'Memory Match 🎴', description: 'Flip and match vocabulary words to their corresponding cartoon emojis!' },
+    { id: 'quiz', title: 'Picture Quiz ❓', description: 'Four choices with random order. Test your visual memory!' },
+    { id: 'listen', title: 'Listening Safari 🎧', description: 'Hear native pronunciation and select the correct picture!' }
+  ];
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
+      <button 
+        onClick={onBack} 
+        style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 'bold', marginBottom: '24px' }}
+      >
+        <ArrowLeft size={14} /> Back to Hub
+      </button>
+
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <span style={{ background: 'rgba(120, 80, 201, 0.1)', color: '#bce94e', padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+          Selected Topic: {topic.title}
+        </span>
+        <h2 style={{ fontSize: '2rem', color: '#fff', fontWeight: '950', marginTop: '12px' }}>Select Game Engine</h2>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', maxWidth: '900px', margin: '0 auto' }}>
+        {games.map((g) => (
+          <div 
+            key={g.id}
+            onClick={() => onSelectType(g.id)}
+            style={{ background: '#150d2e', border: '1px solid rgba(188, 233, 78, 0.15)', borderRadius: '20px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s' }}
+          >
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>{g.title}</h3>
+            <p style={{ fontSize: '0.82rem', color: '#b9adc7', lineHeight: '1.5', marginBottom: '16px' }}>{g.description}</p>
+            <button className="portal-primary-button" style={{ margin: '0 auto', pointerEvents: 'none' }}>
+              Launch Game
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GameModeCard({ topic, onChoose }) {
+  return (
+    <article 
+      className="public-teacher-card novakid-style-card"
+      style={{ 
+        background: '#150d2e', 
+        border: '1px solid rgba(188, 233, 78, 0.2)', 
+        borderRadius: '20px', 
+        padding: '24px', 
+        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}
+    >
+      <div>
+        {/* Styled card title & details to exactly match your screenshots */}
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#fff', marginBottom: '14px', letterSpacing: '-0.01em' }}>
+          {topic.title}
+        </h2>
+        
+        {/* Three square vocabulary item previews exactly like your screenshots! */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+          {topic.previewIcons.map((ico, idx) => (
+            <div 
+              key={idx}
+              style={{
+                width: '64px',
+                height: '64px',
+                background: '#fff',
+                border: '2.5px solid #090510',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2.2rem',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+              }}
+            >
+              {ico}
+            </div>
+          ))}
+        </div>
+
+        <p style={{ fontSize: '0.82rem', color: '#b9adc7', lineHeight: '1.5', marginBottom: '12px' }}>
+          {topic.description}
+        </p>
+        
+        <strong style={{ display: 'block', fontSize: '0.78rem', color: '#bce94e', marginBottom: '16px' }}>
+          Learn {topic.vocabulary.length} new English words
+        </strong>
+      </div>
+
+      <button 
+        onClick={() => onChoose(topic)}
+        className="button button--primary" 
+        style={{ 
+          background: '#fff', 
+          color: '#321568', 
+          fontWeight: '900', 
+          fontSize: '0.85rem', 
+          padding: '10px 24px', 
+          borderRadius: '30px', 
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(255,255,255,0.15)',
+          cursor: 'pointer',
+          width: 'fit-content'
+        }}
+      >
+        Play Now
+      </button>
+    </article>
+  )
+}
+
+export default function StudentGames({ learner, onEarnStars }) {
+  const [activeGame, setActiveGame] = useState('');
+  const [activeTopic, setActiveGameTopic] = useState(null);
+  const [activeGameType, setActiveGameType] = useState(null); // 'match', 'quiz', 'listen', 'avatar'
+  
+  // Gamification Wallet state
+  const [stars, setStars] = useState(learner?.gameStars || 5);
+  const [coins, setCoins] = useState(120);
+  const [unlockedItems, setUnlockedItems] = useState(['shirt_green']);
+  const [equippedAvatar, setEquippedAvatar] = useState({ shirt: 'shirt_green', pet: null, frame: null });
+
+  // Update learner stars upon earning
+  const triggerEarn = (amt) => {
+    setStars(prev => prev + amt);
+    setCoins(prev => prev + (amt * 10)); // 10 coins per star
+    onEarnStars?.(amt);
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.8 },
+      colors: ['#bce94e', '#7850c9', '#ff9e2c']
+    });
+  };
+
+  if (activeGameType === 'avatar') {
+    return (
+      <AvatarCustomizer 
+        coins={coins} 
+        setCoins={setCoins}
+        unlockedItems={unlockedItems}
+        setUnlockedItems={setUnlockedItems}
+        equippedAvatar={equippedAvatar}
+        setEquippedAvatar={setEquippedAvatar}
+        onBack={() => setActiveGameType(null)} 
+      />
+    );
+  }
+
+  if (activeGameType === 'match' && activeTopic) {
+    return (
+      <MemoryMatchGame 
+        topic={activeTopic} 
+        onEarn={triggerEarn} 
+        onBack={() => { setActiveGameType(null); }} 
+      />
+    );
+  }
+
+  if (activeGameType === 'quiz' && activeTopic) {
+    return (
+      <PictureQuizGame 
+        topic={activeTopic} 
+        onEarn={triggerEarn} 
+        onBack={() => { setActiveGameType(null); }} 
+      />
+    );
+  }
+
+  if (activeGameType === 'listen' && activeTopic) {
+    return (
+      <ListeningGame 
+        topic={activeTopic} 
+        onEarn={triggerEarn} 
+        onBack={() => { setActiveGameType(null); }} 
+      />
+    );
+  }
+
+  if (activeTopic) {
+    return (
+      <GameModeSelector 
+        topic={activeTopic} 
+        onSelectType={setActiveGameType} 
+        onBack={() => setActiveGameTopic(null)} 
+      />
+    );
+  }
+
+  return (
+    <div className="games-hub portal-view" style={{ background: 'linear-gradient(135deg, #110925 0%, #090510 100%)', color: '#fff', minHeight: '100dvh', padding: '24px' }}>
+      {/* Premium Hub Header */}
+      <section className="games-hero" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', borderRadius: '24px', padding: '30px', display: 'flex', justifyScontent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 20px 50px rgba(120, 80, 201, 0.25)', border: '1px solid rgba(188, 233, 78, 0.15)', marginBottom: '32px' }}>
+        <div>
+          <span className="portal-kicker" style={{ color: '#bce94e', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.72rem' }}>TutorPro English PH Game Arena</span>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff', letterSpacing: '-0.02em', margin: '6px 0' }}>English is your Superpower! ⚡</h1>
+          <p style={{ color: '#e9d5ff', fontSize: '0.92rem', margin: '0 0 16px 0', maxWidth: '500px' }}>
+            Earn stars, collect shiny gold coins, and customize your special cartoon avatar by playing games!
+          </p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={() => setActiveGameType('avatar')}
+              className="portal-primary-button" 
+              style={{ background: '#bce94e', color: '#090510', margin: 0, fontWeight: '900', padding: '10px 20px', borderRadius: '12px' }}
+            >
+              👑 Customize My Avatar
+            </button>
+          </div>
+        </div>
+
+        {/* Gamified Score wallets */}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 20px', borderRadius: '16px', textAlign: 'center', minWidth: '100px' }}>
+            <Star size={24} fill="#ff9e2c" color="#ff9e2c" style={{ margin: '0 auto 4px auto' }} />
+            <small style={{ display: 'block', fontSize: '0.62rem', color: '#b9adc7', textTransform: 'uppercase', fontWeight: 'bold' }}>All Stars</small>
+            <strong style={{ fontSize: '1.45rem', color: '#fff' }}>{stars}</strong>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 20px', borderRadius: '16px', textAlign: 'center', minWidth: '100px' }}>
+            <Zap size={24} fill="#ffd700" color="#ffd700" style={{ margin: '0 auto 4px auto' }} />
+            <small style={{ display: 'block', fontSize: '0.62rem', color: '#b9adc7', textTransform: 'uppercase', fontWeight: 'bold' }}>Gold Coins</small>
+            <strong style={{ fontSize: '1.45rem', color: '#ffd700' }}>₱{coins}</strong>
+          </div>
+        </div>
+      </section>
+
+      {/* Topics Header */}
+      <div className="section-heading section-heading--split" style={{ marginBottom: '24px' }}>
+        <div>
+          <span className="kicker" style={{ color: '#bce94e', fontWeight: '900', letterSpacing: '0.08em' }}>FUN FREE ONLINE GAMES</span>
+          <h2 style={{ fontSize: '1.8rem', color: '#fff', fontWeight: '900' }}>Fun FREE online games to learn basic English vocabulary</h2>
+        </div>
+      </div>
+
+      {/* Grid of beautiful cartoonish cards matching screenshots 100% perfectly */}
+      <div className="game-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' }}>
+        {TOPICS.map((topic) => (
+          <GameModeCard key={topic.id} topic={topic} onChoose={setActiveGameTopic} />
+        ))}
+      </div>
+    </div>
+  );
 }
