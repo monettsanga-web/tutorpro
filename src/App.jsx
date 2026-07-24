@@ -30,6 +30,7 @@ import PortalAccess from './PortalAccess.jsx'
 import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
+import { currentVisitorLocale, subscribeToVisitorLocale } from './visitorLocale.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -478,16 +479,99 @@ function Programmes() {
 }
 
 function CurriculumFramework() {
+  const [locale, setLocale] = useState(currentVisitorLocale())
+
+  useEffect(() => {
+    const unsubscribe = subscribeToVisitorLocale(setLocale)
+    return () => unsubscribe()
+  }, [])
+
+  const country = (locale.country || '').toUpperCase()
+  // Rule: still english in the philippines!
+  const isPH = country === 'PH'
+  const isZH = !isPH && /^zh/i.test(locale.language || '')
+
+  const textMap = {
+    en: {
+      title: 'Structured English Curriculum Framework',
+      subtitle: 'Aligned with international CEFR levels, US Common Core State Standards (CCSS), and Cambridge English testing frameworks.',
+      age: 'Age',
+      grade: 'Grade Level',
+      cefr: 'CEFR Level',
+      ccss: 'US CCSS',
+      cambridge: 'Cambridge Prep',
+      outcomes: 'Learning Outcomes',
+      swipe: '👈 Swipe horizontally to view full framework columns (Lv.0 to Lv.11) 👉',
+      outcomes0_2: [
+        'Master 26 letters and 44 basic phonics sounds.',
+        'Able to blend and spell simple words.',
+        'Gradually build a strong foundation for English reading.',
+        'Communicate in simple, daily English conversations.'
+      ],
+      outcomes3_5: [
+        'Fully master phonics blends and diphthongs.',
+        'Develop active independent reading comprehension.',
+        'Write simple compositions of 2-3 sentences.',
+        'Engage in fluent, simple daily dialogues.'
+      ],
+      outcomes6_8: [
+        'Express personal views, preferences, and ideas fluently.',
+        'Write paragraph essays of up to 100 words.',
+        'Master different literary and semantic styles.',
+        'Proficiently apply multiple reading strategies.'
+      ],
+      outcomes9_11: [
+        'Communicate fluently and naturally with native speakers on various academic and social topics.',
+        'Develop analytical skills for complex texts, reaching US junior high school reading standards.'
+      ]
+    },
+    zh: {
+      title: '結構化英語課程體系框架',
+      subtitle: '對標歐盟 CEFR 標準、美國共同核心州立標準（CCSS）及劍橋少兒英語考試大綱。',
+      age: '年齡 Age',
+      grade: '年級對應 Grade',
+      cefr: 'CEFR 歐洲標準',
+      ccss: '美國CCSS標準',
+      cambridge: '劍橋考試準備',
+      outcomes: '能力達成 Outcomes',
+      swipe: '👈 左右滑動查看完整課程體系 (Lv.0 至 Lv.11) 👉',
+      outcomes0_2: [
+        '熟練掌握26個字母及44個基本發音及拼讀',
+        '能夠拼讀和拼寫簡單單詞',
+        '逐漸建立英語閱讀基礎',
+        '使用英語進行較為簡單的日常溝通'
+      ],
+      outcomes3_5: [
+        '完全掌握自然拼讀，會單個字母及字母組合的發音',
+        '培養學生閱讀能力',
+        '使用英語進行兩三句的寫作',
+        '可以進行日常簡單說話'
+      ],
+      outcomes6_8: [
+        '使學生能自如地用英語表達自己的觀點、喜好、想法',
+        '能進行段落和100詞以內的短小篇寫作',
+        '掌握不同文學語義的特點',
+        '熟練使用不同的閱讀策略'
+      ],
+      outcomes9_11: [
+        '能夠流暢地與英語母語使用者進行全方位的交流和交際，並能對各種主題進行研討與創造性協作。',
+        '培養學生對於各種複雜問題的解讀能力，達到美國教育部要求的美國中學生閱讀水準。'
+      ]
+    }
+  }
+
+  const t = isZH ? textMap.zh : textMap.en
+
   return (
     <section className="section curriculum-framework" id="curriculum" style={{ background: '#090510', padding: '80px 0', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
       <div className="container">
         <div className="section-heading section-heading--center" style={{ marginBottom: '50px', textAlign: 'center' }}>
           <span className="kicker" style={{ color: '#bce94e', fontWeight: '900', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Educational Pedigree</span>
           <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.02em', marginTop: '8px' }}>
-            Structured English Curriculum Framework
+            {t.title}
           </h2>
           <p style={{ color: '#b9adc7', fontSize: '1rem', maxWidth: '600px', margin: '12px auto 0', lineHeight: '1.6' }}>
-            Aligned with international CEFR levels, US Common Core State Standards (CCSS), and Cambridge English testing frameworks.
+            {t.subtitle}
           </p>
         </div>
 
@@ -499,12 +583,12 @@ function CurriculumFramework() {
               <tr style={{ background: '#1e3a8a', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
                 <th colSpan={13} style={{ padding: '16px', color: '#fff', fontSize: '1.25rem', fontWeight: '900' }}>
                   Tutorpro English Philippines
-                  <small style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', marginTop: '4px', opacity: 0.8 }}>Structured English Curriculum Framework</small>
+                  <small style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', marginTop: '4px', opacity: 0.8 }}>{t.title}</small>
                 </th>
               </tr>
               {/* Column labels */}
               <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <th style={{ padding: '12px', color: '#bce94e', fontSize: '0.85rem', fontWeight: 'bold', width: '150px', background: 'rgba(255,255,255,0.02)' }}>年齡 Age</th>
+                <th style={{ padding: '12px', color: '#bce94e', fontSize: '0.85rem', fontWeight: 'bold', width: '150px', background: 'rgba(255,255,255,0.02)' }}>{t.age}</th>
                 {Array.from({ length: 12 }).map((_, i) => (
                   <th key={i} style={{ padding: '12px', color: '#fff', fontSize: '0.85rem', fontWeight: '800', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Lv.{i}</th>
                 ))}
@@ -514,7 +598,7 @@ function CurriculumFramework() {
               {/* Grade Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <td style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
-                  年級對應<br/><span style={{ fontSize: '0.72rem', color: '#b9adc7' }}>Grade Level</span>
+                  {t.grade}
                 </td>
                 <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem' }}>K1</td>
                 <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>K2</td>
@@ -533,7 +617,7 @@ function CurriculumFramework() {
               {/* CEFR Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <td style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
-                  CEFR 歐洲標準<br/><span style={{ fontSize: '0.72rem', color: '#10b981' }}>CEFR Level</span>
+                  {t.cefr}
                 </td>
                 <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold' }}>pre-A1</td>
                 <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A1</td>
@@ -546,7 +630,7 @@ function CurriculumFramework() {
               {/* US CCSS Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <td style={{ padding: '14px', color: '#f59e0b', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
-                  美國CCSS標準<br/><span style={{ fontSize: '0.72rem', color: '#f59e0b' }}>US CCSS</span>
+                  {t.ccss}
                 </td>
                 <td colSpan={3} style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem' }}>GK</td>
                 <td colSpan={3} style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G1</td>
@@ -560,7 +644,7 @@ function CurriculumFramework() {
               {/* Cambridge Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <td style={{ padding: '14px', color: '#a855f7', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
-                  劍橋考試準備<br/><span style={{ fontSize: '0.72rem', color: '#a855f7' }}>Cambridge Prep</span>
+                  {t.cambridge}
                 </td>
                 <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem' }}>Towards Starters</td>
                 <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>YLE Starters</td>
@@ -573,40 +657,38 @@ function CurriculumFramework() {
               {/* Learning Outcomes Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <td style={{ padding: '20px 14px', color: '#ef4444', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)', verticalAlign: 'middle' }}>
-                  能力達成<br/><span style={{ fontSize: '0.72rem', color: '#ef4444' }}>Learning Outcomes</span>
+                  {t.outcomes}
                 </td>
                 {/* Column 1 */}
                 <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
-                    <li>熟練掌握26個字母及44個基本發音及拼讀</li>
-                    <li style={{ marginTop: '6px' }}>能夠拼讀和拼寫簡單單詞</li>
-                    <li style={{ marginTop: '6px' }}>逐漸建立英語閱讀基礎</li>
-                    <li style={{ marginTop: '6px' }}>使用英語進行較為簡單的日常溝通</li>
+                    {t.outcomes0_2.map((item, idx) => (
+                      <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
+                    ))}
                   </ul>
                 </td>
                 {/* Column 2 */}
                 <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
-                    <li>完全掌握自然拼讀，會單個字母及字母組合的發音</li>
-                    <li style={{ marginTop: '6px' }}>培養學生閱讀能力</li>
-                    <li style={{ marginTop: '6px' }}>使用英語進行兩三句的寫作</li>
-                    <li style={{ marginTop: '6px' }}>可以進行日常簡單說話</li>
+                    {t.outcomes3_5.map((item, idx) => (
+                      <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
+                    ))}
                   </ul>
                 </td>
                 {/* Column 3 */}
                 <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
-                    <li>使學生能自如地用英語表達自己的觀點、喜好、想法</li>
-                    <li style={{ marginTop: '6px' }}>能進行段落和100詞以內的短小篇寫作</li>
-                    <li style={{ marginTop: '6px' }}>掌握不同文學語義的特點</li>
-                    <li style={{ marginTop: '6px' }}>熟練使用不同的閱讀策略</li>
+                    {t.outcomes6_8.map((item, idx) => (
+                      <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
+                    ))}
                   </ul>
                 </td>
                 {/* Column 4 */}
                 <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
-                    <li>能夠流暢地與英語母語使用者進行全方位的交流和交際，並能對各種主題進行研討與創造性協作。</li>
-                    <li style={{ marginTop: '8px' }}>培養學生對於各種複雜問題的解讀能力，達到美國教育部要求的美國中學生閱讀水準。</li>
+                    {t.outcomes9_11.map((item, idx) => (
+                      <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
+                    ))}
                   </ul>
                 </td>
               </tr>
@@ -616,7 +698,7 @@ function CurriculumFramework() {
         
         {/* Mobile touch scroll indicator */}
         <div style={{ textAlign: 'center', color: '#bce94e', fontSize: '0.72rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} className="mobile-scroll-tip">
-          <span>👈 Swipe horizontally to view full framework columns (Lv.0 to Lv.11) 👉</span>
+          <span>{t.swipe}</span>
         </div>
       </div>
     </section>

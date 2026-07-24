@@ -1458,7 +1458,7 @@
   border-right: 1px solid #dce3ee;
   padding: 3px 9px 0 0;
   color: #344a67;
-  font-size: 0.59rem;
+  font-size: 0.85rem; /* increased text size */
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -1474,7 +1474,7 @@
 
 .schedule-time.half {
   color: #536984;
-  font-size: 0.59rem;
+  font-size: 0.85rem; /* increased text size */
   font-weight: 900;
 }
 
