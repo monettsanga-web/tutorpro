@@ -17,11 +17,34 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+const assetUrl = (path) => `${import.meta.env.BASE_URL || '/'}${path}`;
+
 // ====================================================================
-// 1. Exact 16 Vocabulary Topics with High-Resolution Realistic Pictures
+// 1. Exact 17 Vocabulary Topics with High-Resolution Realistic Pictures & Custom Kiddie Thumbnails
 // ====================================================================
 
 const TOPICS = [
+  {
+    id: 'parts_of_house',
+    title: 'Parts of a house in English',
+    description: 'Let\'s build a house! Learn the names of different parts of a house in English.',
+    wordsCount: 3,
+    icon: '🏠',
+    previewImages: [
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=60', // Door
+      'https://images.unsplash.com/photo-1508349937151-22b68b72d5b1?w=150&auto=format&fit=crop&q=60', // Window
+      'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=150&auto=format&fit=crop&q=60'  // Stairs
+    ],
+    color: '#7850c9',
+    difficulty: 'Easy',
+    time: '3 min',
+    thumbnail: 'assets/thumbnail_house_parts.jpg', // Generated Kiddie Thumbnail!
+    vocabulary: [
+      { word: 'door', image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300&auto=format&fit=crop&q=80', definition: 'A hinged, slidable barrier used to enter or exit a room' },
+      { word: 'window', image: 'https://images.unsplash.com/photo-1508349937151-22b68b72d5b1?w=300&auto=format&fit=crop&q=80', definition: 'An opening in a wall to let in light and air' },
+      { word: 'stairs', image: 'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=300&auto=format&fit=crop&q=80', definition: 'A set of steps leading from one floor of a building to another' }
+    ]
+  },
   {
     id: 'furniture',
     title: 'Furniture in English',
@@ -36,6 +59,7 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Easy',
     time: '5 min',
+    thumbnail: 'assets/thumbnail_furniture.jpg', // Generated Kiddie Thumbnail!
     vocabulary: [
       { word: 'sofa', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&auto=format&fit=crop&q=80', definition: 'A long comfortable seat for multiple people' },
       { word: 'table', image: 'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=300&auto=format&fit=crop&q=80', definition: 'A piece of furniture with a flat top and legs' },
@@ -56,6 +80,7 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Easy',
     time: '4 min',
+    thumbnail: 'assets/thumbnail_rooms.jpg', // Generated Kiddie Thumbnail!
     vocabulary: [
       { word: 'bedroom', image: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=300&auto=format&fit=crop&q=80', definition: 'The room where you sleep at night' },
       { word: 'kitchen', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80', definition: 'The room where food is prepared and cooked' },
@@ -76,6 +101,7 @@ const TOPICS = [
     color: '#7850c9',
     difficulty: 'Medium',
     time: '6 min',
+    thumbnail: 'assets/thumbnail_locations.jpg', // Generated Kiddie Thumbnail!
     vocabulary: [
       { word: 'cinema', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop&q=80', definition: 'A place where you watch movies' },
       { word: 'park', image: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80', definition: 'A public green space with trees' },
@@ -675,7 +701,23 @@ function GameModeCard({ topic, onChoose }) {
         cursor: 'pointer'
       }}
     >
-      <div>
+      {/* Dynamic Cartoon Kiddie Thumbnail background! */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '110px',
+          backgroundImage: `url(${assetUrl(topic.thumbnail || 'assets/thumbnail_furniture.jpg')})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.15,
+          zIndex: 0
+        }}
+      />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
         <h2 style={{ fontSize: '1.6rem', fontWeight: '950', color: '#fff', marginBottom: '14px', letterSpacing: '-0.02em' }}>
           {topic.title}
         </h2>
@@ -694,7 +736,8 @@ function GameModeCard({ topic, onChoose }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 6px 12px rgba(0,0,0,0.2)'
+                boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                background: '#fff'
               }}
             >
               <img src={imgUrl} alt="Realistic item preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -717,14 +760,16 @@ function GameModeCard({ topic, onChoose }) {
         style={{ 
           background: '#fff', 
           color: '#321568', 
-          fontWeight: '950', 
+          fontWeight: '955', 
           fontSize: '0.88rem', 
           padding: '12px 28px', 
           borderRadius: '30px', 
           border: 'none',
           boxShadow: '0 6px 15px rgba(255,255,255,0.15)',
           cursor: 'pointer',
-          width: 'fit-content'
+          width: 'fit-content',
+          position: 'relative',
+          zIndex: 1
         }}
       >
         Play Now
