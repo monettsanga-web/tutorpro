@@ -2242,8 +2242,8 @@ h3 {
 
 .footer__links {
   display: grid;
-  grid-template-columns: repeat(2, 145px);
-  gap: 70px;
+  grid-template-columns: repeat(3, minmax(145px, 190px));
+  gap: 45px;
 }
 
 .footer__links > div {
@@ -4163,6 +4163,7 @@ body {
   }
 
   .footer__links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 30px;
   }
 
@@ -4201,3 +4202,24 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Contact details in the public footer */
+.footer__contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.footer__contact .footer__whatsapp {
+  width: fit-content;
+  margin-top: 5px;
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: #35c76f;
+  color: #102c1c;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.footer__contact .footer__whatsapp:hover { color: #fff; background: #249f56; }

@@ -26,6 +26,7 @@ import {
   Flame,
   Gamepad2,
   GraduationCap,
+  Globe2,
   Home,
   Languages,
   LayoutDashboard,
@@ -88,6 +89,21 @@ const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro English user'
 const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
+const COUNTRY_NAMES = typeof Intl !== 'undefined' && Intl.DisplayNames
+  ? new Intl.DisplayNames(['en'], { type: 'region' })
+  : null
+
+function countryLabel(country) {
+  const code = String(country || '').toUpperCase()
+  if (!/^[A-Z]{2}$/.test(code)) return 'Location unavailable'
+  try { return COUNTRY_NAMES?.of(code) || code } catch { return code }
+}
+
+function countryFlag(country) {
+  const code = String(country || '').toUpperCase()
+  return /^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...[...code].map((letter) => 127397 + letter.charCodeAt(0))) : '✦'
+}
+
 const LEARNING_GOALS = [
   'Speaking with confidence',
   'Reading comprehension',
@@ -3342,6 +3358,17 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       },
     }]
   })
+  const countryGroups = students.reduce((groups, student) => {
+    const country = String(student.registrationCountry || '').toUpperCase()
+    const key = /^[A-Z]{2}$/.test(country) ? country : 'UNKNOWN'
+    const group = groups.get(key) || { code: key, families: 0, learners: 0 }
+    group.families += 1
+    group.learners += (student.children?.length || (student.child ? 1 : 0))
+    groups.set(key, group)
+    return groups
+  }, new Map())
+  const studentCountries = [...countryGroups.values()].sort((first, second) => second.learners - first.learners || first.code.localeCompare(second.code))
+  const locatedStudentFamilies = studentCountries.filter((country) => country.code !== 'UNKNOWN').reduce((total, country) => total + country.families, 0)
   const bookings = getBookings()
   const bookingStats = getBookingStats()
   const pendingTeachers = teachers.filter((teacher) => teacher.status === 'pending').length
@@ -3809,7 +3836,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="student-world-card"><div className="student-world-card__intro"><span className="student-world-card__orb"><Globe2 size={25} /></span><div><span className="portal-kicker">TutorPro around the world</span><h2>Your learning community, at a glance.</h2><p>Registration countries are estimated from the visitor’s IP at sign-up. We save only the country code—never an IP address.</p></div><div className="student-world-card__metric"><strong>{studentCountries.filter((country) => country.code !== 'UNKNOWN').length}</strong><span>countries represented</span></div></div><div className="student-world-card__countries">{studentCountries.length ? studentCountries.map((country) => <div className={`student-country-pill${country.code === 'UNKNOWN' ? ' student-country-pill--unknown' : ''}`} key={country.code}><span aria-hidden="true">{countryFlag(country.code)}</span><div><strong>{country.code === 'UNKNOWN' ? 'Awaiting location' : countryLabel(country.code)}</strong><small>{country.learners} learner{country.learners === 1 ? '' : 's'} · {country.families} {country.families === 1 ? 'family' : 'families'}</small></div></div>) : <div className="student-world-card__empty">Your global learner map will appear here as families register.</div>}</div><div className="student-world-card__footer"><span><i /> {locatedStudentFamilies} of {students.length} family accounts include a country estimate</span><span>Private, aggregate view for administrators</span></div></section><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Country</span><span>Status</span><span>Controls</span></div>{studentProfiles.length ? studentProfiles.map(({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="student-country-cell"><span aria-hidden="true">{countryFlag(student.registrationCountry)}</span><div><strong>{student.registrationCountry ? countryLabel(student.registrationCountry) : 'Unavailable'}</strong><small>{student.registrationCountry ? 'IP estimate at registration' : 'Registered before location capture'}</small></div></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>) : <EmptyState icon={GraduationCap} title="No students yet" text="New parent registrations will appear here." />}</div></section></div>
       )}
 
       {active === 'support' && <SupportInbox onUnreadChange={setSupportUnread} initialConversationId={initialSupportId} />}

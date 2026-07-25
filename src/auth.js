@@ -1,5 +1,6 @@
 import { cloudSyncEnabled, deleteCloudProfile, deleteCloudTeacherAccount, registerCloudProfile, signInCloudProfile, updateCloudProfile } from './cloudProfiles.js'
 import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
+import { readVisitorCountry } from './visitorLocale.js'
 
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
 const LEGACY_ACCOUNTS_KEY = 'tutorpro_accounts_v1'
@@ -336,6 +337,8 @@ export async function registerAccount(details) {
     children: [learner],
     selectedPlan: details.selectedPlan || '',
     preferredTeacherId: details.preferredTeacherId || '',
+    // Store only the country code estimated from the registration IP — never the IP address itself.
+    registrationCountry: readVisitorCountry().toUpperCase(),
     createdAt: new Date().toISOString(),
   }
 

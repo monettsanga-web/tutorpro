@@ -16,7 +16,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Mail,
   MessageCircle,
+  Phone,
   ShieldCheck,
   Sparkles,
   Star,
@@ -1085,6 +1087,12 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               )}
               <button onClick={onTeacherAccess}>Teacher portal</button>
               <button onClick={onAdminAccess}>Admin portal</button>
+            </div>
+            <div className="footer__contact">
+              <h3>Contact us</h3>
+              <a href="mailto:sejongenglish@yahoo.com"><Mail size={15} /> <span>sejongenglish@yahoo.com</span></a>
+              <a href="tel:+639625284849"><Phone size={15} /> <span>+63 962 528 4849</span></a>
+              <a className="footer__whatsapp" href="https://wa.me/639625284849" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on WhatsApp</span></a>
             </div>
           </div>
         </div>
