@@ -6148,3 +6148,51 @@
   .schedule-feedback-target ~ .schedule-booking-detail { opacity: 0; }
   .schedule-feedback-target ~ .schedule-feedback-prompt { opacity: 1; transform: translateY(0); }
 }
+
+/* Student country insights — aggregate country estimates only, never IP addresses. */
+.student-world-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(82, 111, 220, 0.18);
+  border-radius: 22px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 93% 15%, rgba(105, 226, 207, 0.42), transparent 26%),
+    radial-gradient(circle at 7% 100%, rgba(154, 128, 247, 0.28), transparent 32%),
+    linear-gradient(135deg, #152a68 0%, #283d90 50%, #5262ba 100%);
+  box-shadow: 0 18px 42px rgba(35, 52, 127, 0.18);
+  color: #fff;
+}
+
+.student-world-card__intro { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; }
+.student-world-card__orb { display: grid; width: 54px; height: 54px; place-items: center; border: 1px solid rgba(255,255,255,.35); border-radius: 18px; background: rgba(255,255,255,.15); box-shadow: inset 0 1px rgba(255,255,255,.3); }
+.student-world-card .portal-kicker { color: #a8f3df; }
+.student-world-card h2 { margin: 3px 0 5px; color: #fff; font-size: 1.25rem; }
+.student-world-card__intro p { max-width: 620px; margin: 0; color: #d8e2ff; font-size: .72rem; line-height: 1.55; }
+.student-world-card__metric { min-width: 108px; text-align: right; }
+.student-world-card__metric strong { display: block; color: #fff; font-size: 2.05rem; line-height: 1; }
+.student-world-card__metric span { color: #cfdcff; font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.student-world-card__countries { display: flex; flex-wrap: wrap; gap: 9px; margin: 22px 0 18px; }
+.student-country-pill { display: flex; min-width: 178px; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.19); border-radius: 14px; padding: 9px 12px; background: rgba(8, 18, 68, .25); backdrop-filter: blur(8px); }
+.student-country-pill > span, .student-country-cell > span { font-size: 1.25rem; line-height: 1; }
+.student-country-pill strong, .student-country-cell strong { display: block; font-size: .72rem; }
+.student-country-pill small, .student-country-cell small { display: block; margin-top: 2px; color: #cfdbff; font-size: .61rem; }
+.student-country-pill--unknown { opacity: .8; }
+.student-world-card__empty { color: #dbe5ff; font-size: .78rem; }
+.student-world-card__footer { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid rgba(255,255,255,.17); padding-top: 14px; color: #dbe5ff; font-size: .65rem; }
+.student-world-card__footer i { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: #72efd0; box-shadow: 0 0 0 4px rgba(114,239,208,.14); }
+.student-country-cell { display: flex; align-items: center; gap: 8px; }
+.student-country-cell small { color: var(--portal-muted); }
+
+.admin-table--students .admin-table__head,
+.admin-table--students .admin-table__row { grid-template-columns: 1.15fr .9fr 1fr 1fr .7fr .95fr; }
+
+@media (max-width: 700px) {
+  .student-world-card { padding: 18px; border-radius: 18px; }
+  .student-world-card__intro { grid-template-columns: auto 1fr; }
+  .student-world-card__metric { grid-column: 2; text-align: left; }
+  .student-world-card__countries { margin: 17px 0; }
+  .student-country-pill { flex: 1 1 145px; min-width: 0; }
+  .student-world-card__footer { flex-direction: column; }
+}
