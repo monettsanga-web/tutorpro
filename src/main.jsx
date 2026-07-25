@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { inject } from '@vercel/analytics'
 import App from './App.jsx'
 import AutoTranslate from './AutoTranslate.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
@@ -11,6 +12,8 @@ import './classroom.css'
 import './premium-motion.css'
 import './support-chat.css'
 import './support-inbox.css'
+
+inject()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
