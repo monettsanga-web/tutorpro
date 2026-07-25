@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 
-export default function PayPalButton({ bookingId }) {
+export default function PayPalButton({ bookingId, amount = '20.00' }) {
   useEffect(() => {
     if (window.paypal) {
       window.paypal.Buttons({
         createOrder: (data, actions) => actions.order.create({
-          purchase_units: [{ reference_id: bookingId, amount: { value: '20.00' } }],
+          purchase_units: [{ reference_id: bookingId, amount: { value: amount } }],
         }),
         onApprove: (data, actions) => actions.order.capture().then(() => alert('Paid for booking ' + bookingId)),
       }).render('#paypal-button-container');
