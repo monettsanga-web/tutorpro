@@ -216,6 +216,15 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
     .map((focus) => String(focus).trim())
     .filter(Boolean))].slice(0, 12)
   if (practiceWords.some((word) => word.length > 40)) throw new Error('Keep each practice word or phrase under 40 characters.')
+  const resourceLinks = (Array.isArray(feedback.resourceLinks) ? feedback.resourceLinks : [])
+    .map((link, index) => ({
+      title: String(link.title || '').trim().slice(0, 120),
+      url: String(link.url || '').trim().slice(0, 2048),
+      resourceType: ['link', 'video', 'worksheet', 'quiz', 'reading', 'audio', 'other'].includes(link.resourceType) ? link.resourceType : 'link',
+      sortOrder: index,
+    }))
+    .filter((link) => link.title && link.url && /^https?:\/\//i.test(link.url))
+    .slice(0, 10)
   return updateBooking(bookingId, {
     status: 'completed',
     teacherFeedback: {
@@ -225,6 +234,7 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
       homework: feedback.homework?.trim() || '',
       practiceWords,
       grammarFocus,
+      resourceLinks,
       createdAt: new Date().toISOString(),
     },
   })

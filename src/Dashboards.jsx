@@ -507,7 +507,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
 
           {booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}
         </div>
-        {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}{booking.teacherFeedback.practiceWords?.length > 0 && <div className="feedback-preview-tags"><b>Words:</b>{booking.teacherFeedback.practiceWords.map((word) => <i key={word}>{word}</i>)}</div>}{booking.teacherFeedback.grammarFocus?.length > 0 && <div className="feedback-preview-tags feedback-preview-tags--grammar"><b>Grammar:</b>{booking.teacherFeedback.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div>}</div>}
+        {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}{booking.teacherFeedback.practiceWords?.length > 0 && <div className="feedback-preview-tags"><b>Words:</b>{booking.teacherFeedback.practiceWords.map((word) => <i key={word}>{word}</i>)}</div>}{booking.teacherFeedback.grammarFocus?.length > 0 && <div className="feedback-preview-tags feedback-preview-tags--grammar"><b>Grammar:</b>{booking.teacherFeedback.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div>}{booking.teacherFeedback.resourceLinks?.length > 0 && <div className="feedback-preview-resources"><b><BookOpen size={11} /> Practice resources:</b>{booking.teacherFeedback.resourceLinks.map((link, index) => <a key={`${link.url}-${index}`} href={link.url} target="_blank" rel="noopener noreferrer" className="feedback-resource-link" title={link.url}>{link.resourceType === 'video' ? '🎬' : link.resourceType === 'worksheet' ? '📝' : link.resourceType === 'quiz' ? '❓' : link.resourceType === 'reading' ? '📖' : link.resourceType === 'audio' ? '🎧' : '🔗'} {link.title}</a>)}</div>}</div>}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
       </div>
       {actions && <div className="lesson-card__actions">{actions}</div>}
@@ -993,6 +993,15 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   const student = getAccountById(booking.studentId)
   const learner = student?.children?.find((item) => item.id === booking.learnerId) || student?.child
   const existing = booking.teacherFeedback || {}
+  const RESOURCE_TYPE_OPTIONS = [
+    { value: 'link', label: '🔗 Link', icon: '🔗' },
+    { value: 'video', label: '🎬 Video', icon: '🎬' },
+    { value: 'worksheet', label: '📝 Worksheet', icon: '📝' },
+    { value: 'quiz', label: '❓ Quiz', icon: '❓' },
+    { value: 'reading', label: '📖 Reading', icon: '📖' },
+    { value: 'audio', label: '🎧 Audio', icon: '🎧' },
+    { value: 'other', label: '📎 Other', icon: '📎' },
+  ]
   const [form, setForm] = useState({
     summary: existing.summary || '',
     strength: existing.strength || '',
@@ -1000,8 +1009,10 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     homework: existing.homework || '',
     practiceWords: Array.isArray(existing.practiceWords) ? existing.practiceWords : [],
     grammarFocus: Array.isArray(existing.grammarFocus) ? existing.grammarFocus : [],
+    resourceLinks: Array.isArray(existing.resourceLinks) ? existing.resourceLinks : [],
   })
   const [wordDraft, setWordDraft] = useState('')
+  const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
   const [error, setError] = useState('')
 
   const fillTemplate = (type) => {
@@ -1064,6 +1075,28 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
       grammarFocus: current.grammarFocus.includes(focus)
         ? current.grammarFocus.filter((item) => item !== focus)
         : [...current.grammarFocus, focus],
+    }))
+  }
+
+  const addResourceLink = () => {
+    const title = resourceDraft.title.trim()
+    const url = resourceDraft.url.trim()
+    if (!title) { setError('Add a title for the resource link.') ; return }
+    if (!url || !/^https?:\/\//i.test(url)) { setError('Resource links must start with http:// or https://') ; return }
+    if (title.length > 120) { setError('Keep the resource title under 120 characters.') ; return }
+    if (form.resourceLinks.length >= 10) { setError('You can add up to 10 resource links per feedback.') ; return }
+    setForm((current) => ({
+      ...current,
+      resourceLinks: [...current.resourceLinks, { title, url, resourceType: resourceDraft.resourceType }],
+    }))
+    setResourceDraft({ title: '', url: '', resourceType: 'link' })
+    setError('')
+  }
+
+  const removeResourceLink = (index) => {
+    setForm((current) => ({
+      ...current,
+      resourceLinks: current.resourceLinks.filter((_, i) => i !== index),
     }))
   }
 
@@ -1133,6 +1166,37 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
             <fieldset className="feedback-grammar-focus"><legend>Grammar to practise</legend><p>Select every grammar area that needs more practice.</p><div>{GRAMMAR_FOCUS_OPTIONS.map((focus) => <label className={form.grammarFocus.includes(focus) ? 'selected' : ''} key={focus}><input type="checkbox" checked={form.grammarFocus.includes(focus)} onChange={() => toggleGrammarFocus(focus)} /><span>{focus}</span></label>)}</div></fieldset>
           </div>
           <label><span>Optional homework</span><input value={form.homework} onChange={(event) => setForm((current) => ({ ...current, homework: event.target.value }))} placeholder="A short practice task for next class" /></label>
+
+          <fieldset className="feedback-resource-links">
+            <legend>Resource links for the student</legend>
+            <p>Attach worksheets, videos, quizzes or other practice materials the student can access after class.</p>
+            <div className="feedback-resource-entry">
+              <select value={resourceDraft.resourceType} onChange={(event) => setResourceDraft((current) => ({ ...current, resourceType: event.target.value }))} aria-label="Resource type" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 10px', color: '#fff', fontSize: '0.78rem', outline: 'none', minWidth: '110px' }}>
+                {RESOURCE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <input value={resourceDraft.title} onChange={(event) => setResourceDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Resource title (e.g. Phonics worksheet)" maxLength="120" onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addResourceLink() } }} style={{ flex: '1 1 140px', minWidth: '0' }} />
+              <input value={resourceDraft.url} onChange={(event) => setResourceDraft((current) => ({ ...current, url: event.target.value }))} placeholder="https://…" onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addResourceLink() } }} style={{ flex: '1 1 180px', minWidth: '0' }} />
+              <button type="button" onClick={addResourceLink} disabled={form.resourceLinks.length >= 10} style={{ whiteSpace: 'nowrap' }}><Plus size={15} /> Add</button>
+            </div>
+            {form.resourceLinks.length > 0 && (
+              <div className="feedback-resource-list">
+                {form.resourceLinks.map((link, index) => {
+                  const typeOption = RESOURCE_TYPE_OPTIONS.find((option) => option.value === link.resourceType) || RESOURCE_TYPE_OPTIONS[0]
+                  return (
+                    <div className="feedback-resource-item" key={`${link.url}-${index}`}>
+                      <span className="feedback-resource-type">{typeOption.icon}</span>
+                      <div className="feedback-resource-detail">
+                        <strong>{link.title}</strong>
+                        <small>{link.url}</small>
+                      </div>
+                      <button type="button" onClick={() => removeResourceLink(index)} aria-label={`Remove ${link.title}`}><X size={13} /></button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {form.resourceLinks.length === 0 && <small style={{ color: '#b9adc7' }}>No resource links added yet.</small>}
+          </fieldset>
           <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button">Save feedback & complete class <Check size={16} /></button></div>
         </form>
       </section>
