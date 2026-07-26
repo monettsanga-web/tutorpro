@@ -111,6 +111,17 @@ const LEARNING_GOALS = [
   'Schoolwork and exam support',
   'Build an all-round foundation',
 ]
+const WEEKLY_SESSION_OPTIONS = [1, 2, 3, 4, 5, 6]
+const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
+const weeklyPlanTotal = (sessions) => Number(sessions) * weeklySessionRate(sessions)
+const formatUsd = (amount) => `$${Number(amount).toFixed(2)} USD`
+
+const paymentMethodLabel = {
+  paypal: 'PayPal Sandbox',
+  aub: 'AUB PayMate QR',
+  wechat: 'WeChat Pay',
+  gcash: 'GCash',
+}
 const GRAMMAR_FOCUS_OPTIONS = [
   'Sentence structure',
   'Verb tenses',
@@ -1257,6 +1268,213 @@ function AddStudentDialog({ account, onClose, onAdded }) {
   )
 }
 
+function StudentPaymentGateway({ account, onPaymentComplete }) {
+  const defaultWeeklySessions = Number(account.preferredWeeklySessions || 4)
+  const [weeklySessions, setWeeklySessions] = useState(WEEKLY_SESSION_OPTIONS.includes(defaultWeeklySessions) ? defaultWeeklySessions : 4)
+  const [paymentMethod, setPaymentMethod] = useState('paypal')
+  const [gatewayError, setGatewayError] = useState('')
+  const [gatewayReady, setGatewayReady] = useState(false)
+  const [lastPaymentMessage, setLastPaymentMessage] = useState('')
+  const paypalContainerId = `paypal-weekly-plan-${String(account.id || 'student').replace(/[^a-zA-Z0-9_-]/g, '')}`
+  const sessionRate = weeklySessionRate(weeklySessions)
+  const weeklyTotal = weeklyPlanTotal(weeklySessions)
+  const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
+  const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb'
+  const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
+  const aubCheckoutUrl = import.meta.env.VITE_AUB_PAYMATE_CHECKOUT_URL || ''
+  const isPayPalTestMode = paypalClientId === 'sb' || import.meta.env.VITE_PAYPAL_ENV === 'sandbox'
+  const selectedMethodName = paymentMethodLabel[paymentMethod] || 'Selected gateway'
+
+  useEffect(() => {
+    if (paymentMethod !== 'paypal') return undefined
+    let cancelled = false
+    const scriptId = 'paypal-weekly-plan-sdk'
+    const renderPayPalButtons = () => {
+      if (cancelled) return
+      const container = document.getElementById(paypalContainerId)
+      if (!container || !window.paypal?.Buttons) return
+      container.innerHTML = ''
+      setGatewayError('')
+      setGatewayReady(true)
+      window.paypal.Buttons({
+        style: {
+          layout: 'vertical',
+          color: 'gold',
+          shape: 'rect',
+          label: 'paypal',
+        },
+        createOrder(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              description: `TutorPro English weekly plan - ${weeklySessions} x 25-minute sessions`,
+              custom_id: account.id,
+              amount: {
+                currency_code: paypalCurrency,
+                value: weeklyTotal.toFixed(2),
+              },
+            }],
+          })
+        },
+        onApprove(data, actions) {
+          return actions.order.capture().then((details) => {
+            const nextBalance = currentCredits + weeklySessions
+            const updated = updateAccount(account.id, {
+              paidLessonsBalance: nextBalance,
+              preferredWeeklySessions: weeklySessions,
+              latestPayment: {
+                provider: 'paypal-sandbox',
+                orderId: data.orderID,
+                payerName: details?.payer?.name?.given_name || details?.payer?.email_address || 'PayPal test payer',
+                weeklySessions,
+                sessionRate,
+                amount: weeklyTotal,
+                currency: paypalCurrency,
+                status: details?.status || 'COMPLETED',
+                paidAt: new Date().toISOString(),
+              },
+            })
+            onPaymentComplete(updated)
+            const message = `Payment captured. ${weeklySessions} booking credit${weeklySessions > 1 ? 's' : ''} added. New balance: ${nextBalance}.`
+            setLastPaymentMessage(message)
+            window.alert(`🎉 ${message}`)
+          })
+        },
+        onCancel() {
+          setGatewayError('Payment was cancelled before completion.')
+        },
+        onError(error) {
+          console.error('PayPal payment error:', error)
+          setGatewayError('PayPal could not complete the payment. Please try again or refresh the page.')
+        },
+      }).render(`#${paypalContainerId}`).catch((error) => {
+        console.error('PayPal render error:', error)
+        if (!cancelled) setGatewayError('PayPal buttons could not load. Please refresh and try again.')
+      })
+    }
+
+    if (window.paypal?.Buttons) {
+      renderPayPalButtons()
+      return () => {
+        cancelled = true
+        const container = document.getElementById(paypalContainerId)
+        if (container) container.innerHTML = ''
+      }
+    }
+
+    let script = document.getElementById(scriptId)
+    const handleLoad = () => renderPayPalButtons()
+    const handleError = () => {
+      if (!cancelled) setGatewayError('PayPal SDK failed to load. Check your internet connection or PayPal client ID.')
+    }
+    if (!script) {
+      script = document.createElement('script')
+      script.id = scriptId
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=${encodeURIComponent(paypalCurrency)}&intent=capture&components=buttons`
+      script.async = true
+      script.addEventListener('load', handleLoad)
+      script.addEventListener('error', handleError)
+      document.head.appendChild(script)
+    } else {
+      script.addEventListener('load', handleLoad)
+      script.addEventListener('error', handleError)
+      if (window.paypal?.Buttons) renderPayPalButtons()
+    }
+
+    return () => {
+      cancelled = true
+      script?.removeEventListener('load', handleLoad)
+      script?.removeEventListener('error', handleError)
+      const container = document.getElementById(paypalContainerId)
+      if (container) container.innerHTML = ''
+    }
+  }, [account.id, currentCredits, onPaymentComplete, paymentMethod, paypalClientId, paypalContainerId, paypalCurrency, sessionRate, weeklySessions, weeklyTotal])
+
+  const openAubCheckout = () => {
+    if (!aubCheckoutUrl) {
+      setGatewayError('AUB PayMate, WeChat Pay and GCash need your AUB merchant checkout URL/API credentials before live checkout can be enabled.')
+      return
+    }
+    const checkout = new URL(aubCheckoutUrl)
+    checkout.searchParams.set('amount', weeklyTotal.toFixed(2))
+    checkout.searchParams.set('currency', paypalCurrency)
+    checkout.searchParams.set('sessions', String(weeklySessions))
+    checkout.searchParams.set('student', account.id)
+    window.open(checkout.toString(), '_blank', 'noopener,noreferrer')
+  }
+
+  const methodCards = [
+    { id: 'paypal', title: 'PayPal Sandbox', text: 'Test checkout is enabled now.', enabled: true },
+    { id: 'aub', title: 'AUB PayMate QR', text: aubCheckoutUrl ? 'Open configured AUB checkout.' : 'Needs AUB merchant checkout/API.', enabled: Boolean(aubCheckoutUrl) },
+    { id: 'wechat', title: 'WeChat Pay', text: 'Available through AUB PayMate setup.', enabled: Boolean(aubCheckoutUrl) },
+    { id: 'gcash', title: 'GCash', text: 'Available through AUB PayMate setup.', enabled: Boolean(aubCheckoutUrl) },
+  ]
+
+  return (
+    <section className="portal-card" style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #eef2ff 48%, #f5f3ff 100%)', border: '1px solid rgba(120, 80, 201, 0.15)', borderRadius: '18px', padding: '22px', marginBottom: '24px', boxShadow: '0 16px 42px rgba(91, 33, 182, 0.08)' }}>
+      <div className="portal-card__heading portal-card__heading--small" style={{ alignItems: 'flex-start', gap: '16px' }}>
+        <div>
+          <span className="portal-kicker">Weekly payment gateway</span>
+          <h2>Choose your weekly lesson plan</h2>
+          <p style={{ color: '#5b6478', margin: '6px 0 0' }}>Each class is 25 minutes. Select 1–6 sessions per week and test checkout through PayPal Sandbox.</p>
+        </div>
+        <span className="portal-card__icon" style={{ background: '#3b0764', color: '#fff' }}><Coins size={21} /></span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', margin: '18px 0' }}>
+        <label style={{ display: 'grid', gap: '8px', fontWeight: 800, color: '#241042' }}>
+          Weekly sessions
+          <select value={weeklySessions} onChange={(event) => { setWeeklySessions(Number(event.target.value)); setGatewayError(''); setLastPaymentMessage('') }} style={{ width: '100%', border: '1px solid rgba(91, 33, 182, 0.18)', borderRadius: '12px', padding: '11px 12px', fontWeight: 800, color: '#241042', background: '#fff' }}>
+            {WEEKLY_SESSION_OPTIONS.map((sessions) => <option key={sessions} value={sessions}>{sessions} session{sessions > 1 ? 's' : ''} / week · {formatUsd(weeklyPlanTotal(sessions))}</option>)}
+          </select>
+        </label>
+        <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
+          <small style={{ color: '#6b7280', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Selected price</small>
+          <strong style={{ display: 'block', color: '#3b0764', fontSize: '1.45rem', marginTop: '4px' }}>{formatUsd(weeklyTotal)}</strong>
+          <span style={{ color: '#5b6478', fontSize: '0.86rem' }}>{formatUsd(sessionRate)} per 25-minute session · {weeklySessions} credit{weeklySessions > 1 ? 's' : ''}</span>
+        </div>
+        <div style={{ background: '#3b0764', borderRadius: '14px', color: '#fff', padding: '14px' }}>
+          <small style={{ color: '#d8b4fe', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Current booking credits</small>
+          <strong style={{ display: 'block', fontSize: '1.45rem', marginTop: '4px' }}>{currentCredits}</strong>
+          <span style={{ color: '#ede9fe', fontSize: '0.86rem' }}>Successful payment adds {weeklySessions} credit{weeklySessions > 1 ? 's' : ''}.</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+        {methodCards.map((method) => (
+          <button key={method.id} type="button" onClick={() => { setPaymentMethod(method.id); setGatewayError(''); setLastPaymentMessage('') }} style={{ textAlign: 'left', border: paymentMethod === method.id ? '2px solid #7c3aed' : '1px solid rgba(91, 33, 182, 0.14)', background: paymentMethod === method.id ? '#f5f3ff' : '#fff', borderRadius: '14px', padding: '12px', cursor: 'pointer', opacity: method.enabled || method.id === 'paypal' ? 1 : 0.72 }}>
+            <strong style={{ color: '#241042', display: 'block' }}>{method.title}</strong>
+            <small style={{ color: method.enabled || method.id === 'paypal' ? '#16a34a' : '#92400e', fontWeight: 800 }}>{method.text}</small>
+          </button>
+        ))}
+      </div>
+
+      {paymentMethod === 'paypal' ? (
+        <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '10px' }}>
+            <strong style={{ color: '#241042' }}>Pay with PayPal Sandbox</strong>
+            <span style={{ background: isPayPalTestMode ? '#dcfce7' : '#fee2e2', color: isPayPalTestMode ? '#166534' : '#991b1b', borderRadius: '999px', padding: '5px 10px', fontSize: '0.76rem', fontWeight: 900 }}>{isPayPalTestMode ? 'TEST MODE' : 'LIVE CLIENT ID'}</span>
+          </div>
+          <div id={paypalContainerId} style={{ minHeight: '48px' }} />
+          {!gatewayReady && !gatewayError && <p style={{ color: '#6b7280', fontSize: '0.84rem', margin: '8px 0 0' }}>Loading PayPal test buttons…</p>}
+        </div>
+      ) : (
+        <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
+          <strong style={{ color: '#241042' }}>{selectedMethodName}</strong>
+          <p style={{ color: '#5b6478', margin: '6px 0 12px' }}>This method is prepared in the dashboard. To activate real checkout, add your AUB PayMate merchant checkout/API credentials in Vercel as <code>VITE_AUB_PAYMATE_CHECKOUT_URL</code> or connect a secure backend endpoint.</p>
+          <button type="button" className="portal-secondary-button" onClick={openAubCheckout}>{aubCheckoutUrl ? `Open ${selectedMethodName} checkout` : 'AUB merchant setup required'}</button>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gap: '6px', marginTop: '12px', color: '#5b6478', fontSize: '0.84rem' }}>
+        <span>Pricing rule: 1–3 sessions/week = $10 per 25 minutes. 4–6 sessions/week = $8 per 25 minutes.</span>
+        <span>For production PayPal, set <code>VITE_PAYPAL_CLIENT_ID</code> to your live PayPal client ID in Vercel.</span>
+      </div>
+      {gatewayError && <div className="portal-error" role="alert" style={{ marginTop: '12px' }}>{gatewayError}</div>}
+      {lastPaymentMessage && <div className="portal-success" role="status" style={{ marginTop: '12px' }}><CheckCircle2 size={16} /> {lastPaymentMessage}</div>}
+    </section>
+  )
+}
+
 export function StudentDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false, initialLearnerId = '' }) {
   const [active, setActive] = useState('overview')
   const [account, setAccount] = useState(initialAccount)
@@ -1406,6 +1624,12 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     setBookingVersion((value) => value + 1)
   }
 
+  const completeStudentPayment = useCallback((updatedAccount) => {
+    setAccount(updatedAccount)
+    onAccountChange(updatedAccount)
+    setBookingVersion((value) => value + 1)
+  }, [onAccountChange])
+
   const earnGameStars = (stars) => {
     const latestAccount = getAccountById(account.id)
     const latestLearner = latestAccount.children.find((item) => item.id === learner.id) || latestAccount.child
@@ -1457,6 +1681,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             </div>
             <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
           </section>
+
+          <StudentPaymentGateway account={account} onPaymentComplete={completeStudentPayment} />
 
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{learner.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
