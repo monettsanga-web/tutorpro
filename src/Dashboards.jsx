@@ -122,7 +122,7 @@ const chinaSessionTotal = (sessions) => Number(sessions) * (CHINA_TUITION_PER_25
 const formatRmb = (amount) => `RMB${Number(amount).toFixed(2)}`
 
 const paymentMethodLabel = {
-  paypal: 'PayPal Sandbox',
+  paypal: 'PayPal Checkout',
   chinaQr: 'AUB PayMate / WeChat Pay QR',
 }
 const GRAMMAR_FOCUS_OPTIONS = [
@@ -1287,9 +1287,10 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const chinaProcessingFee = weeklySessions * CHINA_PROCESSING_FEE_PER_SESSION
   const chinaTotal = chinaSessionTotal(weeklySessions)
   const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
-  const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb'
+  const configuredPayPalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || ''
+  const paypalClientId = configuredPayPalClientId || 'sb'
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
-  const isPayPalTestMode = paypalClientId === 'sb' || import.meta.env.VITE_PAYPAL_ENV === 'sandbox'
+  const isPayPalTestMode = !configuredPayPalClientId || paypalClientId === 'sb' || import.meta.env.VITE_PAYPAL_ENV === 'sandbox'
   const selectedMethodName = paymentMethodLabel[paymentMethod] || 'Selected gateway'
 
   useEffect(() => subscribeToVisitorLocale(setVisitorLocale), [])
@@ -1338,7 +1339,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               paidLessonsBalance: nextBalance,
               preferredWeeklySessions: weeklySessions,
               latestPayment: {
-                provider: 'paypal-sandbox',
+                provider: isPayPalTestMode ? 'paypal-sandbox' : 'paypal-live',
                 orderId: data.orderID,
                 payerName: details?.payer?.name?.given_name || details?.payer?.email_address || 'PayPal test payer',
                 weeklySessions,
@@ -1406,7 +1407,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   }, [account.id, currentCredits, onPaymentComplete, paymentMethod, paypalClientId, paypalContainerId, paypalCurrency, sessionRate, weeklySessions, weeklyTotal])
 
   const methodCards = [
-    { id: 'paypal', title: 'PayPal Sandbox', text: 'Test checkout is enabled now.', enabled: true },
+    { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal checkout is active.', enabled: true },
     ...(chinaQrAllowed ? [{ id: 'chinaQr', title: 'AUB PayMate / WeChat Pay QR', text: adminPreview ? 'Admin preview access.' : 'China visitor payment QR.', enabled: true }] : []),
   ]
 
@@ -1460,8 +1461,8 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       {paymentMethod === 'paypal' ? (
         <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '10px' }}>
-            <strong style={{ color: '#241042' }}>Pay with PayPal Sandbox</strong>
-            <span style={{ background: isPayPalTestMode ? '#dcfce7' : '#fee2e2', color: isPayPalTestMode ? '#166534' : '#991b1b', borderRadius: '999px', padding: '5px 10px', fontSize: '0.76rem', fontWeight: 900 }}>{isPayPalTestMode ? 'TEST MODE' : 'LIVE CLIENT ID'}</span>
+            <strong style={{ color: '#241042' }}>{isPayPalTestMode ? 'Pay with PayPal Sandbox' : 'Pay with PayPal Checkout'}</strong>
+            <span style={{ background: isPayPalTestMode ? '#fef3c7' : '#dcfce7', color: isPayPalTestMode ? '#92400e' : '#166534', borderRadius: '999px', padding: '5px 10px', fontSize: '0.76rem', fontWeight: 900 }}>{isPayPalTestMode ? 'TEST MODE' : 'LIVE PAYPAL'}</span>
           </div>
           <div id={paypalContainerId} style={{ minHeight: '48px' }} />
           {!gatewayReady && !gatewayError && <p style={{ color: '#6b7280', fontSize: '0.84rem', margin: '8px 0 0' }}>Loading PayPal test buttons…</p>}
@@ -1490,7 +1491,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       <div style={{ display: 'grid', gap: '6px', marginTop: '12px', color: '#5b6478', fontSize: '0.84rem' }}>
         <span>USD PayPal rule: 1–3 sessions/week = $10 per 25 minutes. 4–6 sessions/week = $8 per 25 minutes.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. This QR option is hidden outside China except for admin preview.</span>}
-        <span>For production PayPal, set <code>VITE_PAYPAL_CLIENT_ID</code> to your live PayPal client ID in Vercel.</span>
+        <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments automatically add booking credits.'}</span>
       </div>
       {gatewayError && <div className="portal-error" role="alert" style={{ marginTop: '12px' }}>{gatewayError}</div>}
       {lastPaymentMessage && <div className="portal-success" role="status" style={{ marginTop: '12px' }}><CheckCircle2 size={16} /> {lastPaymentMessage}</div>}
