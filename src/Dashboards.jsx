@@ -83,6 +83,7 @@ import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToC
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
+import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -115,12 +116,14 @@ const WEEKLY_SESSION_OPTIONS = [1, 2, 3, 4, 5, 6]
 const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
 const weeklyPlanTotal = (sessions) => Number(sessions) * weeklySessionRate(sessions)
 const formatUsd = (amount) => `$${Number(amount).toFixed(2)} USD`
+const CHINA_TUITION_PER_25_MINUTES = 25
+const CHINA_PROCESSING_FEE_PER_SESSION = 5
+const chinaSessionTotal = (sessions) => Number(sessions) * (CHINA_TUITION_PER_25_MINUTES + CHINA_PROCESSING_FEE_PER_SESSION)
+const formatRmb = (amount) => `RMB${Number(amount).toFixed(2)}`
 
 const paymentMethodLabel = {
   paypal: 'PayPal Sandbox',
-  aub: 'AUB PayMate QR',
-  wechat: 'WeChat Pay',
-  gcash: 'GCash',
+  chinaQr: 'AUB PayMate / WeChat Pay QR',
 }
 const GRAMMAR_FOCUS_OPTIONS = [
   'Sentence structure',
@@ -1268,24 +1271,37 @@ function AddStudentDialog({ account, onClose, onAdded }) {
   )
 }
 
-function StudentPaymentGateway({ account, onPaymentComplete }) {
+function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplete }) {
   const defaultWeeklySessions = Number(account.preferredWeeklySessions || 4)
   const [weeklySessions, setWeeklySessions] = useState(WEEKLY_SESSION_OPTIONS.includes(defaultWeeklySessions) ? defaultWeeklySessions : 4)
-  const [paymentMethod, setPaymentMethod] = useState('paypal')
+  const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
+  const chinaQrAllowed = adminPreview || isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: account.registrationCountry })
+  const [paymentMethod, setPaymentMethod] = useState(chinaQrAllowed ? 'chinaQr' : 'paypal')
   const [gatewayError, setGatewayError] = useState('')
   const [gatewayReady, setGatewayReady] = useState(false)
   const [lastPaymentMessage, setLastPaymentMessage] = useState('')
   const paypalContainerId = `paypal-weekly-plan-${String(account.id || 'student').replace(/[^a-zA-Z0-9_-]/g, '')}`
   const sessionRate = weeklySessionRate(weeklySessions)
   const weeklyTotal = weeklyPlanTotal(weeklySessions)
+  const chinaTuition = weeklySessions * CHINA_TUITION_PER_25_MINUTES
+  const chinaProcessingFee = weeklySessions * CHINA_PROCESSING_FEE_PER_SESSION
+  const chinaTotal = chinaSessionTotal(weeklySessions)
   const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
   const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb'
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
-  const aubCheckoutUrl = import.meta.env.VITE_AUB_PAYMATE_CHECKOUT_URL || ''
   const isPayPalTestMode = paypalClientId === 'sb' || import.meta.env.VITE_PAYPAL_ENV === 'sandbox'
   const selectedMethodName = paymentMethodLabel[paymentMethod] || 'Selected gateway'
 
+  useEffect(() => subscribeToVisitorLocale(setVisitorLocale), [])
+
   useEffect(() => {
+    if (!chinaQrAllowed && paymentMethod === 'chinaQr') {
+      setPaymentMethod('paypal')
+    }
+  }, [chinaQrAllowed, paymentMethod])
+
+  useEffect(() => {
+    setGatewayReady(false)
     if (paymentMethod !== 'paypal') return undefined
     let cancelled = false
     const scriptId = 'paypal-weekly-plan-sdk'
@@ -1389,24 +1405,9 @@ function StudentPaymentGateway({ account, onPaymentComplete }) {
     }
   }, [account.id, currentCredits, onPaymentComplete, paymentMethod, paypalClientId, paypalContainerId, paypalCurrency, sessionRate, weeklySessions, weeklyTotal])
 
-  const openAubCheckout = () => {
-    if (!aubCheckoutUrl) {
-      setGatewayError('AUB PayMate, WeChat Pay and GCash need your AUB merchant checkout URL/API credentials before live checkout can be enabled.')
-      return
-    }
-    const checkout = new URL(aubCheckoutUrl)
-    checkout.searchParams.set('amount', weeklyTotal.toFixed(2))
-    checkout.searchParams.set('currency', paypalCurrency)
-    checkout.searchParams.set('sessions', String(weeklySessions))
-    checkout.searchParams.set('student', account.id)
-    window.open(checkout.toString(), '_blank', 'noopener,noreferrer')
-  }
-
   const methodCards = [
     { id: 'paypal', title: 'PayPal Sandbox', text: 'Test checkout is enabled now.', enabled: true },
-    { id: 'aub', title: 'AUB PayMate QR', text: aubCheckoutUrl ? 'Open configured AUB checkout.' : 'Needs AUB merchant checkout/API.', enabled: Boolean(aubCheckoutUrl) },
-    { id: 'wechat', title: 'WeChat Pay', text: 'Available through AUB PayMate setup.', enabled: Boolean(aubCheckoutUrl) },
-    { id: 'gcash', title: 'GCash', text: 'Available through AUB PayMate setup.', enabled: Boolean(aubCheckoutUrl) },
+    ...(chinaQrAllowed ? [{ id: 'chinaQr', title: 'AUB PayMate / WeChat Pay QR', text: adminPreview ? 'Admin preview access.' : 'China visitor payment QR.', enabled: true }] : []),
   ]
 
   return (
@@ -1415,7 +1416,7 @@ function StudentPaymentGateway({ account, onPaymentComplete }) {
         <div>
           <span className="portal-kicker">Weekly payment gateway</span>
           <h2>Choose your weekly lesson plan</h2>
-          <p style={{ color: '#5b6478', margin: '6px 0 0' }}>Each class is 25 minutes. Select 1–6 sessions per week and test checkout through PayPal Sandbox.</p>
+          <p style={{ color: '#5b6478', margin: '6px 0 0' }}>Each class is 25 minutes. Select 1–6 sessions per week and choose an available payment method.</p>
         </div>
         <span className="portal-card__icon" style={{ background: '#3b0764', color: '#fff' }}><Coins size={21} /></span>
       </div>
@@ -1424,26 +1425,34 @@ function StudentPaymentGateway({ account, onPaymentComplete }) {
         <label style={{ display: 'grid', gap: '8px', fontWeight: 800, color: '#241042' }}>
           Weekly sessions
           <select value={weeklySessions} onChange={(event) => { setWeeklySessions(Number(event.target.value)); setGatewayError(''); setLastPaymentMessage('') }} style={{ width: '100%', border: '1px solid rgba(91, 33, 182, 0.18)', borderRadius: '12px', padding: '11px 12px', fontWeight: 800, color: '#241042', background: '#fff' }}>
-            {WEEKLY_SESSION_OPTIONS.map((sessions) => <option key={sessions} value={sessions}>{sessions} session{sessions > 1 ? 's' : ''} / week · {formatUsd(weeklyPlanTotal(sessions))}</option>)}
+            {WEEKLY_SESSION_OPTIONS.map((sessions) => <option key={sessions} value={sessions}>{sessions} session{sessions > 1 ? 's' : ''} / week</option>)}
           </select>
         </label>
-        <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
-          <small style={{ color: '#6b7280', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Selected price</small>
-          <strong style={{ display: 'block', color: '#3b0764', fontSize: '1.45rem', marginTop: '4px' }}>{formatUsd(weeklyTotal)}</strong>
-          <span style={{ color: '#5b6478', fontSize: '0.86rem' }}>{formatUsd(sessionRate)} per 25-minute session · {weeklySessions} credit{weeklySessions > 1 ? 's' : ''}</span>
-        </div>
+        {paymentMethod === 'chinaQr' && chinaQrAllowed ? (
+          <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
+            <small style={{ color: '#6b7280', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>China QR amount due</small>
+            <strong style={{ display: 'block', color: '#3b0764', fontSize: '1.45rem', marginTop: '4px' }}>{formatRmb(chinaTotal)}</strong>
+            <span style={{ color: '#5b6478', fontSize: '0.86rem' }}>{formatRmb(chinaTuition)} tuition + {formatRmb(chinaProcessingFee)} processing fee</span>
+          </div>
+        ) : (
+          <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
+            <small style={{ color: '#6b7280', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Selected price</small>
+            <strong style={{ display: 'block', color: '#3b0764', fontSize: '1.45rem', marginTop: '4px' }}>{formatUsd(weeklyTotal)}</strong>
+            <span style={{ color: '#5b6478', fontSize: '0.86rem' }}>{formatUsd(sessionRate)} per 25-minute session · {weeklySessions} credit{weeklySessions > 1 ? 's' : ''}</span>
+          </div>
+        )}
         <div style={{ background: '#3b0764', borderRadius: '14px', color: '#fff', padding: '14px' }}>
           <small style={{ color: '#d8b4fe', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Current booking credits</small>
           <strong style={{ display: 'block', fontSize: '1.45rem', marginTop: '4px' }}>{currentCredits}</strong>
-          <span style={{ color: '#ede9fe', fontSize: '0.86rem' }}>Successful payment adds {weeklySessions} credit{weeklySessions > 1 ? 's' : ''}.</span>
+          <span style={{ color: '#ede9fe', fontSize: '0.86rem' }}>Verified payment adds {weeklySessions} credit{weeklySessions > 1 ? 's' : ''}.</span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginBottom: '16px' }}>
         {methodCards.map((method) => (
-          <button key={method.id} type="button" onClick={() => { setPaymentMethod(method.id); setGatewayError(''); setLastPaymentMessage('') }} style={{ textAlign: 'left', border: paymentMethod === method.id ? '2px solid #7c3aed' : '1px solid rgba(91, 33, 182, 0.14)', background: paymentMethod === method.id ? '#f5f3ff' : '#fff', borderRadius: '14px', padding: '12px', cursor: 'pointer', opacity: method.enabled || method.id === 'paypal' ? 1 : 0.72 }}>
+          <button key={method.id} type="button" onClick={() => { setPaymentMethod(method.id); setGatewayError(''); setLastPaymentMessage('') }} style={{ textAlign: 'left', border: paymentMethod === method.id ? '2px solid #7c3aed' : '1px solid rgba(91, 33, 182, 0.14)', background: paymentMethod === method.id ? '#f5f3ff' : '#fff', borderRadius: '14px', padding: '12px', cursor: 'pointer', opacity: method.enabled ? 1 : 0.72 }}>
             <strong style={{ color: '#241042', display: 'block' }}>{method.title}</strong>
-            <small style={{ color: method.enabled || method.id === 'paypal' ? '#16a34a' : '#92400e', fontWeight: 800 }}>{method.text}</small>
+            <small style={{ color: method.enabled ? '#16a34a' : '#92400e', fontWeight: 800 }}>{method.text}</small>
           </button>
         ))}
       </div>
@@ -1459,14 +1468,28 @@ function StudentPaymentGateway({ account, onPaymentComplete }) {
         </div>
       ) : (
         <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
-          <strong style={{ color: '#241042' }}>{selectedMethodName}</strong>
-          <p style={{ color: '#5b6478', margin: '6px 0 12px' }}>This method is prepared in the dashboard. To activate real checkout, add your AUB PayMate merchant checkout/API credentials in Vercel as <code>VITE_AUB_PAYMATE_CHECKOUT_URL</code> or connect a secure backend endpoint.</p>
-          <button type="button" className="portal-secondary-button" onClick={openAubCheckout}>{aubCheckoutUrl ? `Open ${selectedMethodName} checkout` : 'AUB merchant setup required'}</button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 280px) 1fr', gap: '18px', alignItems: 'start' }}>
+            <img src={assetUrl('assets/aub-wechat-pay-qr.jpg')} alt="TutorPro AUB PayMate and WeChat Pay QR code" style={{ width: '100%', borderRadius: '14px', border: '1px solid rgba(91, 33, 182, 0.16)', background: '#e0f2fe' }} />
+            <div>
+              <strong style={{ color: '#241042' }}>{selectedMethodName}</strong>
+              <p style={{ color: '#5b6478', margin: '6px 0 12px' }}>For China visitors only. Scan this QR with AUB PayMate or WeChat Pay and pay the exact amount below.</p>
+              <div style={{ display: 'grid', gap: '8px', background: '#f8fafc', borderRadius: '12px', padding: '12px', border: '1px solid rgba(91, 33, 182, 0.1)' }}>
+                <span><strong>Sessions:</strong> {weeklySessions} x 25 minutes</span>
+                <span><strong>Tuition:</strong> RMB25 / 25 minutes, RMB50 / 50 minutes</span>
+                <span><strong>Processing fee:</strong> RMB5 per selected session</span>
+                <span><strong>Total to pay:</strong> {formatRmb(chinaTotal)}</span>
+                <span><strong>Merchant ID:</strong> 108382</span>
+              </div>
+              <p style={{ color: '#92400e', fontWeight: 800, margin: '12px 0 0' }}>After paying, send your receipt to admin support. Credits are added only after admin verification.</p>
+              {adminPreview && <p style={{ color: '#166534', fontWeight: 800, margin: '8px 0 0' }}>Admin preview: China QR is visible because you opened the student dashboard from admin access.</p>}
+            </div>
+          </div>
         </div>
       )}
 
       <div style={{ display: 'grid', gap: '6px', marginTop: '12px', color: '#5b6478', fontSize: '0.84rem' }}>
-        <span>Pricing rule: 1–3 sessions/week = $10 per 25 minutes. 4–6 sessions/week = $8 per 25 minutes.</span>
+        <span>USD PayPal rule: 1–3 sessions/week = $10 per 25 minutes. 4–6 sessions/week = $8 per 25 minutes.</span>
+        {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. This QR option is hidden outside China except for admin preview.</span>}
         <span>For production PayPal, set <code>VITE_PAYPAL_CLIENT_ID</code> to your live PayPal client ID in Vercel.</span>
       </div>
       {gatewayError && <div className="portal-error" role="alert" style={{ marginTop: '12px' }}>{gatewayError}</div>}
@@ -1682,7 +1705,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
           </section>
 
-          <StudentPaymentGateway account={account} onPaymentComplete={completeStudentPayment} />
+          <StudentPaymentGateway account={account} adminPreview={adminPreview} onPaymentComplete={completeStudentPayment} />
 
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{learner.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
