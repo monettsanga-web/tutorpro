@@ -1271,7 +1271,6 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [managedBooking, setManagedBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
   const [directChatUser, setDirectChatUser] = useState(null)
-  const [selectedPackage, setSelectedPackage] = useState('5') // 5, 10, 20
   const learners = (account.children?.length ? account.children : [account.child]).filter(Boolean)
   const hasLearnerProfile = learners.length > 0
   const learner = learners.find((item) => item.id === activeLearnerId) || learners[0] || {
@@ -1297,75 +1296,6 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
   const studentSyncCallbacks = useRef({ onAccountChange, onLogout })
   void bookingVersion
-
-  useEffect(() => {
-    if (active === 'overview') {
-      const scriptId = 'paypal-sdk-script';
-      
-      const renderPaypal = () => {
-        if (!window.paypal) return;
-        const container = document.getElementById('paypal-smart-button-container');
-        if (!container) return;
-        
-        container.innerHTML = ''; // prevent duplicates
-        
-        const priceMap = { '5': '40.00', '10': '75.00', '20': '140.00' };
-        const creditsMap = { '5': 5, '10': 10, '20': 20 };
-        const priceValue = priceMap[selectedPackage] || '40.00';
-        const creditsToAdd = creditsMap[selectedPackage] || 5;
-
-        window.paypal.Buttons({
-          style: {
-            layout: 'horizontal',
-            color:  'gold',
-            shape:  'rect',
-            label:  'paypal',
-            tagline: false
-          },
-          createOrder: function(data, actions) {
-            return actions.order.create({
-              purchase_units: [{
-                description: `TutorPro English - ${creditsToAdd} Lesson Package`,
-                amount: {
-                  currency_code: 'USD',
-                  value: priceValue
-                }
-              }]
-            });
-          },
-          onApprove: function(data, actions) {
-            return actions.order.capture().then(function(details) {
-              const currentBalance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1;
-              const nextBalance = currentBalance + creditsToAdd;
-              
-              const updated = updateAccount(account.id, { paidLessonsBalance: nextBalance });
-              setAccount(updated);
-              onAccountChange(updated);
-              
-              alert(`🎉 PayPal Checkout Successful! Thank you, ${details.payer.name.given_name}. Your account has been credited with +${creditsToAdd} booking sessions (New Balance: ${nextBalance} credits).`);
-            });
-          },
-          onError: function(err) {
-            console.error("PayPal Error: ", err);
-          }
-        }).render('#paypal-smart-button-container');
-      };
-
-      if (!window.paypal) {
-        const script = document.createElement('script');
-        script.id = scriptId;
-        // Global Sandbox Client ID for universal client testing
-        script.src = "https://www.paypal.com/sdk/js?client-id=AT9bU5K6i8N8IqVEX8_jV3R1bT-u7M_5H9_5H-5H9_5H&currency=USD&disable-funding=credit,card";
-        script.async = true;
-        script.onload = () => {
-          renderPaypal();
-        };
-        document.head.appendChild(script);
-      } else {
-        renderPaypal();
-      }
-    }
-  }, [active, selectedPackage, account.paidLessonsBalance]);
 
   useEffect(() => {
     studentSyncCallbacks.current = { onAccountChange, onLogout }
@@ -1476,24 +1406,6 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     setBookingVersion((value) => value + 1)
   }
 
-  const buyCreditsWithPayPal = async (creditsCount, price) => {
-    const confirmPayment = window.confirm(`Proceed to PayPal Checkout to purchase a package of ${creditsCount} lessons for $${price}? (Supported internationally in all countries)`);
-    if (!confirmPayment) return;
-    
-    try {
-      const currentBalance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
-      const nextBalance = currentBalance + creditsCount
-      
-      const updated = updateAccount(account.id, { paidLessonsBalance: nextBalance })
-      setAccount(updated)
-      onAccountChange(updated)
-      
-      alert(`🎉 Payment of $${price} successful via PayPal! Your account has been credited with +${creditsCount} booking sessions (New Balance: ${nextBalance} credits).`);
-    } catch (err) {
-      alert("Payment failed: " + err.message);
-    }
-  }
-
   const earnGameStars = (stars) => {
     const latestAccount = getAccountById(account.id)
     const latestLearner = latestAccount.children.find((item) => item.id === learner.id) || latestAccount.child
@@ -1545,46 +1457,6 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             </div>
             <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
           </section>
-
-          {/* PAID LESSONS BALANCE BILLING CARD */}
-          <div className="portal-card" style={{ background: 'linear-gradient(135deg, #7850c9 0%, #3b0764 100%)', border: '1px solid rgba(188, 233, 78, 0.2)', borderRadius: '16px', padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', alignItems: 'center', marginBottom: '24px', boxShadow: '0 10px 30px rgba(120, 80, 201, 0.15)' }}>
-            <div>
-              <span className="portal-kicker" style={{ color: '#bce94e', textTransform: 'uppercase', fontWeight: '850', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Lesson Packages & Tuition</span>
-              <h2 style={{ fontSize: '1.65rem', fontWeight: '900', color: '#fff', margin: '4px 0' }}>
-                🎉 You have {typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1} Booking Credits
-              </h2>
-              <p style={{ fontSize: '0.8rem', color: '#e9d5ff', margin: 0, lineHeight: '1.4' }}>
-                Every booked lesson decrements exactly 1 credit from your balance. Buy more lessons securely through our PayPal Smart Gateway (accepted in 200+ countries!) to top up instantly.
-              </p>
-            </div>
-            
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '6px' }}>Select Package:</label>
-              <select
-                value={selectedPackage}
-                onChange={(e) => setSelectedPackage(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(0,0,0,0.3)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: '#fff',
-                  fontSize: '0.8rem',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  marginBottom: '12px'
-                }}
-              >
-                <option value="5">5 Lesson Sessions ($40.00 USD)</option>
-                <option value="10">10 Lesson Sessions ($75.00 USD)</option>
-                <option value="20">20 Lesson Sessions ($140.00 USD)</option>
-              </select>
-
-              {/* Live Target Mount Container for PayPal Smart Buttons */}
-              <div id="paypal-smart-button-container" style={{ minHeight: '44px' }} />
-            </div>
-          </div>
 
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{learner.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
