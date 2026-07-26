@@ -84,6 +84,7 @@ import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinut
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
+import { supabase } from './supabaseClient.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -1301,6 +1302,23 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
     }
   }, [chinaQrAllowed, paymentMethod])
 
+  const paypalApiRequest = useCallback(async (path, body) => {
+    const { data } = supabase ? await supabase.auth.getSession() : { data: null }
+    const token = data?.session?.access_token
+    if (!token) throw new Error('Please log in again before starting payment.')
+    const response = await fetch(path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || 'Payment verification failed.')
+    return payload
+  }, [])
+
   useEffect(() => {
     setGatewayReady(false)
     if (paymentMethod !== 'paypal') return undefined
@@ -1320,41 +1338,32 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
           shape: 'rect',
           label: 'paypal',
         },
-        createOrder(data, actions) {
-          return actions.order.create({
-            purchase_units: [{
-              description: `TutorPro English weekly plan - ${weeklySessions} x 25-minute sessions`,
-              custom_id: account.id,
-              amount: {
-                currency_code: paypalCurrency,
-                value: weeklyTotal.toFixed(2),
-              },
-            }],
-          })
-        },
-        onApprove(data, actions) {
-          return actions.order.capture().then((details) => {
-            const nextBalance = currentCredits + weeklySessions
-            const updated = updateAccount(account.id, {
-              paidLessonsBalance: nextBalance,
-              preferredWeeklySessions: weeklySessions,
-              latestPayment: {
-                provider: isPayPalTestMode ? 'paypal-sandbox' : 'paypal-live',
-                orderId: data.orderID,
-                payerName: details?.payer?.name?.given_name || details?.payer?.email_address || 'PayPal test payer',
-                weeklySessions,
-                sessionRate,
-                amount: weeklyTotal,
-                currency: paypalCurrency,
-                status: details?.status || 'COMPLETED',
-                paidAt: new Date().toISOString(),
-              },
+        createOrder() {
+          return paypalApiRequest('/api/paypal/create-order', { accountId: account.id, weeklySessions })
+            .then((payload) => payload.orderId)
+            .catch((error) => {
+              setGatewayError(error.message)
+              throw error
             })
-            onPaymentComplete(updated)
-            const message = `Payment captured. ${weeklySessions} booking credit${weeklySessions > 1 ? 's' : ''} added. New balance: ${nextBalance}.`
-            setLastPaymentMessage(message)
-            window.alert(`🎉 ${message}`)
-          })
+        },
+        onApprove(data) {
+          return paypalApiRequest('/api/paypal/capture-order', { accountId: account.id, orderId: data.orderID })
+            .then((payload) => {
+              const updated = updateLocalAccount(account.id, {
+                paidLessonsBalance: payload.paidLessonsBalance,
+                preferredWeeklySessions: payload.preferredWeeklySessions || weeklySessions,
+                latestPayment: payload.latestPayment,
+              })
+              onPaymentComplete(updated)
+              const addedText = payload.alreadyCredited ? 'This payment was already credited.' : `${weeklySessions} booking credit${weeklySessions > 1 ? 's' : ''} added.`
+              const message = `Server verified PayPal payment. ${addedText} New balance: ${payload.paidLessonsBalance}.`
+              setLastPaymentMessage(message)
+              window.alert(`🎉 ${message}`)
+            })
+            .catch((error) => {
+              setGatewayError(error.message)
+              throw error
+            })
         },
         onCancel() {
           setGatewayError('Payment was cancelled before completion.')
@@ -1365,7 +1374,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
         },
       }).render(`#${paypalContainerId}`).catch((error) => {
         console.error('PayPal render error:', error)
-        if (!cancelled) setGatewayError('PayPal buttons could not load. Please refresh and try again.')
+        if (!cancelled) setGatewayError(error.message || 'PayPal buttons could not load. Please refresh and try again.')
       })
     }
 
@@ -1404,7 +1413,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       const container = document.getElementById(paypalContainerId)
       if (container) container.innerHTML = ''
     }
-  }, [account.id, currentCredits, onPaymentComplete, paymentMethod, paypalClientId, paypalContainerId, paypalCurrency, sessionRate, weeklySessions, weeklyTotal])
+  }, [account.id, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
 
   const methodCards = [
     { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal checkout is active.', enabled: true },
@@ -1491,7 +1500,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       <div style={{ display: 'grid', gap: '6px', marginTop: '12px', color: '#5b6478', fontSize: '0.84rem' }}>
         <span>USD PayPal rule: 1–3 sessions/week = $10 per 25 minutes. 4–6 sessions/week = $8 per 25 minutes.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. This QR option is hidden outside China except for admin preview.</span>}
-        <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments automatically add booking credits.'}</span>
+        <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>
       {gatewayError && <div className="portal-error" role="alert" style={{ marginTop: '12px' }}>{gatewayError}</div>}
       {lastPaymentMessage && <div className="portal-success" role="status" style={{ marginTop: '12px' }}><CheckCircle2 size={16} /> {lastPaymentMessage}</div>}
