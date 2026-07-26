@@ -867,9 +867,9 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     }
 
     // Restrict bookings to only paid session count (booking credits) for Parent view
-    const balance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
+    const balance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
     if (!adminBooking && selectedLessons.length > balance) {
-      setError(`⚠️ You only have ${balance} paid lesson credits left, but you are trying to book ${selectedLessons.length} lessons. Please purchase a package or buy more credits below under the 'Curriculum Framework' tab!`)
+      setError(`⚠️ You only have ${balance} paid lesson credits left, but you are trying to book ${selectedLessons.length} lessons. Please complete payment first so your booking credits can be added.`)
       return
     }
 
@@ -1286,7 +1286,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const chinaTuition = weeklySessions * CHINA_TUITION_PER_25_MINUTES
   const chinaProcessingFee = weeklySessions * CHINA_PROCESSING_FEE_PER_SESSION
   const chinaTotal = chinaSessionTotal(weeklySessions)
-  const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1
+  const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
   const configuredPayPalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || ''
   const paypalClientId = configuredPayPalClientId || 'sb'
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
@@ -2857,7 +2857,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const [goalError, setGoalError] = useState('')
   const [goalSaved, setGoalSaved] = useState(false)
 
-  const [paidBalance, setPaidBalance] = useState(typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 1)
+  const [paidBalance, setPaidBalance] = useState(typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0)
   const [savingBalance, setSavingBalance] = useState(false)
   const [balanceSaved, setBalanceSaved] = useState(false)
 
