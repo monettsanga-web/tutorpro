@@ -114,7 +114,7 @@ const LEARNING_GOALS = [
   'Build an all-round foundation',
 ]
 const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
-const MONTHLY_PACKAGE_OPTIONS = [4, 5]
+const MONTHLY_PACKAGE_OPTIONS = [4, 5, 6, 7]
 const MONTHLY_BILLING_WEEKS = 4
 const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
 const planSessionRate = (billingPlan, sessions) => billingPlan === 'monthly' ? 8 : weeklySessionRate(sessions)
@@ -1495,7 +1495,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               >
                 <small>Package</small>
                 <strong>Monthly package</strong>
-                <span>4–5 sessions/week · $8 per 25-minute class</span>
+                <span>4–7 sessions/week · $8 per 25-minute class</span>
               </button>
             </div>
 
@@ -1634,7 +1634,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       </div>
 
       <div className="student-payment-pro__footer-notes">
-        <span>USD pricing: Weekly plan is $10 per 25-minute class. Monthly package is 4–5 sessions/week billed for 4 weeks at $8 per class.</span>
+        <span>USD pricing: Weekly plan is $10 per 25-minute class. Monthly package is 4–7 sessions/week billed for 4 weeks at $8 per class.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. Hidden outside China except for admin preview.</span>}
         <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>

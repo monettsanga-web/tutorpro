@@ -6333,10 +6333,21 @@
   line-height: 0.94;
 }
 
+.student-payment-pro__amount-card small {
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.18);
+}
+
+.student-payment-pro__amount-card strong {
+  color: #ffffff !important;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.22);
+}
+
 .student-payment-pro__amount-card span {
-  color: rgba(255, 255, 255, 0.84);
+  color: rgba(255, 255, 255, 0.88) !important;
   font-size: 0.84rem;
   font-weight: 750;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.16);
 }
 
 .student-payment-pro__layout {
