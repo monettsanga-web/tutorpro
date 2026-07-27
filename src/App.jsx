@@ -1100,46 +1100,23 @@ function FinalCTA({ onBook }) {
 }
 
 function FacebookMessengerContact() {
-  const facebookPageId = import.meta.env.VITE_FACEBOOK_PAGE_ID || '526047974195321'
   const [locale, setLocale] = useState(currentVisitorLocale)
   const chineseVisitor = isChineseVisitor(locale)
 
   useEffect(() => subscribeToVisitorLocale(setLocale), [])
-
-  useEffect(() => {
-    if (chineseVisitor || !facebookPageId || typeof window === 'undefined') return undefined
-    window.fbAsyncInit = function fbAsyncInit() {
-      window.FB?.init({ xfbml: true, version: 'v20.0' })
-    }
-    if (!document.getElementById('facebook-jssdk')) {
-      const script = document.createElement('script')
-      script.id = 'facebook-jssdk'
-      script.async = true
-      script.defer = true
-      script.crossOrigin = 'anonymous'
-      script.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js'
-      document.body.appendChild(script)
-    } else {
-      window.FB?.XFBML?.parse()
-    }
-    return undefined
-  }, [chineseVisitor, facebookPageId])
 
   if (chineseVisitor) {
     return <SupportChatWidget />
   }
 
   return (
-    <>
-      {facebookPageId && <div id="fb-root" />}
-      {facebookPageId && <div className="fb-customerchat" attribution="biz_inbox" page_id={facebookPageId} greeting_dialog_display="fade" greeting_dialog_delay="3" theme_color="#6d28d9" logged_in_greeting="Hi! Message TutorPro English here. Our admin will reply in Facebook Messenger." logged_out_greeting="Hi! Message TutorPro English here. Our admin will reply in Facebook Messenger." />}
-      <a className="messenger-float" href="https://m.me/526047974195321" target="_blank" rel="noreferrer" aria-label="Message TutorPro English on Facebook Messenger">
-        <MessageCircle size={21} />
-        <span><strong>Need help?</strong><small>Chat on Messenger</small></span>
-      </a>
-    </>
+    <a className="messenger-float" href="https://m.me/526047974195321" target="_blank" rel="noreferrer" aria-label="Message TutorPro English on Facebook Messenger">
+      <MessageCircle size={21} />
+      <span><strong>Need help?</strong><small>Open Messenger</small></span>
+    </a>
   )
 }
+
 
 function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
   return (

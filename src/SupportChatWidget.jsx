@@ -201,6 +201,13 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
     setTranslations({})
   }
 
+  const submitOnEnter = (event, submitHandler) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      submitHandler(event)
+    }
+  }
+
   return (
     <div className={`support-widget ${embedded ? 'support-widget--embedded' : ''} ${open ? 'support-widget--open' : ''}`}>
       {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
@@ -214,7 +221,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
           {account?.role === 'teacher' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为教师账户' : 'Registered teacher account identified'}</div>}
           <label><span>{chinese ? '家长姓名' : 'Parent name'}</span><input value={form.parentName} onChange={(event) => setForm((current) => ({ ...current, parentName: event.target.value }))} placeholder={chinese ? '请输入您的姓名' : 'Your name'} maxLength="100" /></label>
           <label><span>{chinese ? '联系邮箱' : 'Contact email'}</span><input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder={chinese ? 'QQ、163、Outlook 或其他邮箱' : 'you@example.com'} maxLength="180" /></label>
-          <label><span>{chinese ? '您的问题' : 'How can we help?'}</span><textarea value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} placeholder={chinese ? '请告诉我们您想咨询的问题…' : 'Tell us your question…'} maxLength="1000" /></label>
+          <label><span>{chinese ? '您的问题' : 'How can we help?'}</span><textarea value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} onKeyDown={(event) => submitOnEnter(event, beginConversation)} placeholder={chinese ? '请告诉我们您想咨询的问题…' : 'Tell us your question…'} maxLength="1000" /></label>
           {error && <div className="support-error">{error}</div>}
           <button type="submit" disabled={loading}>{loading ? (chinese ? '正在发送…' : 'Sending…') : (chinese ? '开始咨询' : 'Start conversation')} <Send size={16} /></button>
           <p><ShieldCheck size={13} /> {chinese ? '此对话仅对您和 TutorPro 管理员可见。' : 'Private between you and the TutorPro administrator.'}</p>
@@ -222,7 +229,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
           <div className="support-thread-meta"><span className={`support-thread-status support-thread-status--${thread?.status || 'open'}`}>{thread?.status === 'closed' ? (chinese ? '已结束' : 'Closed') : (chinese ? '客服对话' : 'Support conversation')}</span><button onClick={startAgain}><RotateCcw size={13} /> {chinese ? '新对话' : 'New'}</button></div>
           <div className="support-messages" ref={messagesRef}>{thread?.messages?.length ? thread.messages.map((message) => <div className={`support-message support-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? (chinese ? 'TutorPro 管理员' : 'TutorPro Admin') : (chinese ? '您' : 'You')}</small><p>{message.body}</p>{translations[message.id] && <p className="support-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleTimeString(locale.language || 'en', { hour: 'numeric', minute: '2-digit' })}</time></div>) : <div className="support-loading">{chinese ? '正在加载对话…' : 'Loading conversation…'}</div>}</div>
           {error && <div className="support-error">{error}</div>}
-          <form className="support-reply" onSubmit={sendMessage}>{attachment && <div className="support-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (attachmentInputRef.current) attachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-file-button" title={chinese ? '上传文件' : 'Upload file'}><FileUp size={17} /><input ref={attachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={thread?.status === 'closed' ? (chinese ? '发送消息将重新开启对话' : 'A new message will reopen this conversation') : (chinese ? '输入消息…' : 'Write a message…')} maxLength="1000" /><button type="submit" disabled={loading || (!draft.trim() && !attachment)} aria-label="Send message"><Send size={17} /></button></form>
+          <form className="support-reply" onSubmit={sendMessage}>{attachment && <div className="support-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (attachmentInputRef.current) attachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-file-button" title={chinese ? '上传文件' : 'Upload file'}><FileUp size={17} /><input ref={attachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => submitOnEnter(event, sendMessage)} placeholder={thread?.status === 'closed' ? (chinese ? '发送消息将重新开启对话' : 'A new message will reopen this conversation') : (chinese ? '输入消息…' : 'Write a message…')} maxLength="1000" /><button type="submit" disabled={loading || (!draft.trim() && !attachment)} aria-label="Send message"><Send size={17} /></button></form>
         </div>}
       </section>}
     </div>
