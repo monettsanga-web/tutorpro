@@ -5,9 +5,15 @@ const PAYPAL_API_BASE = process.env.PAYPAL_ENV === 'sandbox'
   ? 'https://api-m.sandbox.paypal.com'
   : 'https://api-m.paypal.com'
 
-export const WEEKLY_SESSION_OPTIONS = [1, 2, 3, 4, 5, 6]
+export const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
+export const MONTHLY_PACKAGE_OPTIONS = [4, 5]
+export const MONTHLY_BILLING_WEEKS = 4
 export const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
-export const weeklyPlanTotal = (sessions) => Number(sessions) * weeklySessionRate(sessions)
+export const parseBillingPlan = (value = 'weekly') => value === 'monthly' ? 'monthly' : 'weekly'
+export const planSessionRate = (billingPlan, sessions) => parseBillingPlan(billingPlan) === 'monthly' ? 8 : weeklySessionRate(sessions)
+export const planCreditCount = (billingPlan, sessions) => Number(sessions) * (parseBillingPlan(billingPlan) === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
+export const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
+export const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)
 
 function json(res, status, payload) {
   res.status(status).setHeader('Content-Type', 'application/json')
@@ -22,9 +28,13 @@ export function sendJson(res, status, payload) {
   return json(res, status, payload)
 }
 
-export function parseSessions(value) {
+export function parseSessions(value, billingPlan = 'weekly') {
+  const plan = parseBillingPlan(billingPlan)
   const sessions = Number(value)
-  if (!WEEKLY_SESSION_OPTIONS.includes(sessions)) throw new Error('Choose between 1 and 6 weekly sessions.')
+  const options = plan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
+  if (!options.includes(sessions)) {
+    throw new Error(plan === 'monthly' ? 'Choose 4 or 5 weekly sessions for the monthly package.' : 'Choose between 1 and 3 weekly sessions.')
+  }
   return sessions
 }
 
@@ -92,24 +102,30 @@ export async function requireStudent(req, accountId) {
 }
 
 export function parseCustomId(customId = '') {
-  const [accountId, sessionsText] = String(customId).split(':')
-  const sessions = parseSessions(sessionsText)
+  const parts = String(customId).split(':')
+  const accountId = parts[0]
+  const billingPlan = parts.length >= 3 ? parseBillingPlan(parts[1]) : 'weekly'
+  const sessionsText = parts.length >= 3 ? parts[2] : parts[1]
+  const sessions = parseSessions(sessionsText, billingPlan)
   if (!accountId) throw new Error('PayPal order is missing the student account reference.')
-  return { accountId, sessions }
+  return { accountId, billingPlan, sessions }
 }
 
 export function extractOrderDetails(order) {
   const unit = order?.purchase_units?.[0]
   const capture = unit?.payments?.captures?.[0]
-  const { accountId, sessions } = parseCustomId(unit?.custom_id)
-  const expectedAmount = weeklyPlanTotal(sessions).toFixed(2)
+  const { accountId, billingPlan, sessions } = parseCustomId(unit?.custom_id)
+  const expectedAmount = planTotal(billingPlan, sessions).toFixed(2)
   const capturedAmount = capture?.amount?.value || unit?.amount?.value || '0.00'
   const currency = capture?.amount?.currency_code || unit?.amount?.currency_code || 'USD'
   if (currency !== 'USD') throw new Error('Unexpected payment currency.')
   if (Number(capturedAmount) + 0.0001 < Number(expectedAmount)) throw new Error('Captured amount is lower than the selected plan price.')
   return {
     accountId,
+    billingPlan,
     sessions,
+    credits: planCreditCount(billingPlan, sessions),
+    sessionRate: planSessionRate(billingPlan, sessions),
     amount: Number(capturedAmount),
     currency,
     orderId: order.id,
@@ -141,8 +157,10 @@ export async function awardPaymentCredits(supabase, details) {
     captureId: details.captureId,
     payerEmail: details.payerEmail,
     payerName: details.payerName,
+    billingPlan: details.billingPlan,
     weeklySessions: details.sessions,
-    sessionRate: weeklySessionRate(details.sessions),
+    credits: details.credits,
+    sessionRate: details.sessionRate,
     amount: details.amount,
     currency: details.currency,
     status: details.status,
@@ -153,8 +171,9 @@ export async function awardPaymentCredits(supabase, details) {
     ? { ...profileData, latestPayment: paymentRecord }
     : {
         ...profileData,
-        paidLessonsBalance: currentBalance + details.sessions,
+        paidLessonsBalance: currentBalance + details.credits,
         preferredWeeklySessions: details.sessions,
+        preferredBillingPlan: details.billingPlan,
         latestPayment: paymentRecord,
         paymentTransactions: [...transactions, paymentRecord].slice(-50),
       }
@@ -169,6 +188,8 @@ export async function awardPaymentCredits(supabase, details) {
     alreadyCredited,
     paidLessonsBalance: nextData.paidLessonsBalance ?? currentBalance,
     preferredWeeklySessions: nextData.preferredWeeklySessions,
+    preferredBillingPlan: nextData.preferredBillingPlan,
+    creditsAdded: alreadyCredited ? 0 : details.credits,
     latestPayment: paymentRecord,
   }
 }

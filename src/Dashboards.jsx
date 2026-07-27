@@ -113,13 +113,18 @@ const LEARNING_GOALS = [
   'Schoolwork and exam support',
   'Build an all-round foundation',
 ]
-const WEEKLY_SESSION_OPTIONS = [1, 2, 3, 4, 5, 6]
+const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
+const MONTHLY_PACKAGE_OPTIONS = [4, 5]
+const MONTHLY_BILLING_WEEKS = 4
 const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
-const weeklyPlanTotal = (sessions) => Number(sessions) * weeklySessionRate(sessions)
+const planSessionRate = (billingPlan, sessions) => billingPlan === 'monthly' ? 8 : weeklySessionRate(sessions)
+const planCreditCount = (billingPlan, sessions) => Number(sessions) * (billingPlan === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
+const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
+const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)
 const formatUsd = (amount) => `$${Number(amount).toFixed(2)} USD`
 const CHINA_TUITION_PER_25_MINUTES = 25
 const CHINA_PROCESSING_FEE_PER_SESSION = 5
-const chinaSessionTotal = (sessions) => Number(sessions) * (CHINA_TUITION_PER_25_MINUTES + CHINA_PROCESSING_FEE_PER_SESSION)
+const chinaSessionTotal = (sessions, billingPlan = 'weekly') => planCreditCount(billingPlan, sessions) * (CHINA_TUITION_PER_25_MINUTES + CHINA_PROCESSING_FEE_PER_SESSION)
 const formatRmb = (amount) => `RMB${Number(amount).toFixed(2)}`
 
 const paymentMethodLabel = {
@@ -1274,7 +1279,10 @@ function AddStudentDialog({ account, onClose, onAdded }) {
 
 function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplete }) {
   const defaultWeeklySessions = Number(account.preferredWeeklySessions || 4)
-  const [weeklySessions, setWeeklySessions] = useState(WEEKLY_SESSION_OPTIONS.includes(defaultWeeklySessions) ? defaultWeeklySessions : 4)
+  const defaultBillingPlan = account.preferredBillingPlan || (defaultWeeklySessions >= 4 ? 'monthly' : 'weekly')
+  const [billingPlan, setBillingPlan] = useState(defaultBillingPlan === 'monthly' ? 'monthly' : 'weekly')
+  const initialOptions = defaultBillingPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
+  const [weeklySessions, setWeeklySessions] = useState(initialOptions.includes(defaultWeeklySessions) ? defaultWeeklySessions : initialOptions[0])
   const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
   const chinaQrAllowed = adminPreview || isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: account.registrationCountry })
   const [paymentMethod, setPaymentMethod] = useState(chinaQrAllowed ? 'chinaQr' : 'paypal')
@@ -1282,11 +1290,13 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const [gatewayReady, setGatewayReady] = useState(false)
   const [lastPaymentMessage, setLastPaymentMessage] = useState('')
   const paypalContainerId = `paypal-weekly-plan-${String(account.id || 'student').replace(/[^a-zA-Z0-9_-]/g, '')}`
-  const sessionRate = weeklySessionRate(weeklySessions)
-  const weeklyTotal = weeklyPlanTotal(weeklySessions)
-  const chinaTuition = weeklySessions * CHINA_TUITION_PER_25_MINUTES
-  const chinaProcessingFee = weeklySessions * CHINA_PROCESSING_FEE_PER_SESSION
-  const chinaTotal = chinaSessionTotal(weeklySessions)
+  const sessionOptions = billingPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
+  const sessionRate = planSessionRate(billingPlan, weeklySessions)
+  const creditCount = planCreditCount(billingPlan, weeklySessions)
+  const weeklyTotal = planTotal(billingPlan, weeklySessions)
+  const chinaTuition = creditCount * CHINA_TUITION_PER_25_MINUTES
+  const chinaProcessingFee = creditCount * CHINA_PROCESSING_FEE_PER_SESSION
+  const chinaTotal = chinaSessionTotal(weeklySessions, billingPlan)
   const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
   const configuredPayPalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || ''
   const paypalClientId = configuredPayPalClientId || 'sb'
@@ -1301,6 +1311,20 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       setPaymentMethod('paypal')
     }
   }, [chinaQrAllowed, paymentMethod])
+
+  useEffect(() => {
+    if (!sessionOptions.includes(weeklySessions)) {
+      setWeeklySessions(sessionOptions[0])
+    }
+  }, [billingPlan, sessionOptions, weeklySessions])
+
+  const chooseBillingPlan = (nextPlan) => {
+    const options = nextPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
+    setBillingPlan(nextPlan)
+    setWeeklySessions((current) => options.includes(current) ? current : options[0])
+    setGatewayError('')
+    setLastPaymentMessage('')
+  }
 
   const paypalApiRequest = useCallback(async (path, body) => {
     const { data } = supabase ? await supabase.auth.getSession() : { data: null }
@@ -1339,7 +1363,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
           label: 'paypal',
         },
         createOrder() {
-          return paypalApiRequest('/api/paypal/create-order', { accountId: account.id, weeklySessions })
+          return paypalApiRequest('/api/paypal/create-order', { accountId: account.id, billingPlan, weeklySessions })
             .then((payload) => payload.orderId)
             .catch((error) => {
               setGatewayError(error.message)
@@ -1352,10 +1376,11 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               const updated = updateLocalAccount(account.id, {
                 paidLessonsBalance: payload.paidLessonsBalance,
                 preferredWeeklySessions: payload.preferredWeeklySessions || weeklySessions,
+                preferredBillingPlan: payload.preferredBillingPlan || billingPlan,
                 latestPayment: payload.latestPayment,
               })
               onPaymentComplete(updated)
-              const addedText = payload.alreadyCredited ? 'This payment was already credited.' : `${weeklySessions} booking credit${weeklySessions > 1 ? 's' : ''} added.`
+              const addedText = payload.alreadyCredited ? 'This payment was already credited.' : `${payload.creditsAdded || creditCount} booking credit${(payload.creditsAdded || creditCount) > 1 ? 's' : ''} added.`
               const message = `Server verified PayPal payment. ${addedText} New balance: ${payload.paidLessonsBalance}.`
               setLastPaymentMessage(message)
               window.alert(`🎉 ${message}`)
@@ -1413,7 +1438,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       const container = document.getElementById(paypalContainerId)
       if (container) container.innerHTML = ''
     }
-  }, [account.id, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
+  }, [account.id, billingPlan, creditCount, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
 
   const methodCards = [
     { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal / Card Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal and debit/credit card checkout is active.', enabled: true },
@@ -1425,9 +1450,9 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       <div className="student-payment-pro__glow" aria-hidden="true" />
       <div className="student-payment-pro__header">
         <div className="student-payment-pro__intro">
-          <span className="portal-kicker">Secure weekly checkout</span>
+          <span className="portal-kicker">Secure package checkout</span>
           <h2 id="student-payment-title">Choose your lesson package</h2>
-          <p>Book confidence-building English lessons with server-verified payments and instant booking credits after PayPal confirmation.</p>
+          <p>Choose flexible weekly credits or the monthly package from our pricing plan, with server-verified payments before scheduling unlocks.</p>
           <div className="student-payment-pro__trust-row">
             <span><ShieldCheck size={14} /> Server verified</span>
             <span><Clock3 size={14} /> 25-minute sessions</span>
@@ -1437,7 +1462,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
         <div className="student-payment-pro__amount-card">
           <small>{paymentMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : 'Amount due today'}</small>
           <strong>{paymentMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : formatUsd(weeklyTotal)}</strong>
-          <span>{weeklySessions} session{weeklySessions > 1 ? 's' : ''} / week · {weeklySessions} booking credit{weeklySessions > 1 ? 's' : ''}</span>
+          <span>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'} · {creditCount} booking credit{creditCount > 1 ? 's' : ''}</span>
         </div>
       </div>
 
@@ -1447,25 +1472,56 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
             <div className="student-payment-pro__panel-heading">
               <div>
                 <small>Step 1</small>
-                <h3>Select weekly sessions</h3>
+                <h3>Choose package</h3>
               </div>
-              <span>{weeklySessions}/6 selected</span>
+              <span>{billingPlan === 'monthly' ? 'Monthly' : 'Weekly'}</span>
             </div>
-            <div className="student-payment-pro__session-grid" role="list" aria-label="Weekly session options">
-              {WEEKLY_SESSION_OPTIONS.map((sessions) => {
+            <div className="student-payment-pro__package-grid" role="list" aria-label="Billing package options">
+              <button
+                type="button"
+                className={`student-payment-pro__package${billingPlan === 'weekly' ? ' student-payment-pro__package--active' : ''}`}
+                onClick={() => chooseBillingPlan('weekly')}
+                aria-pressed={billingPlan === 'weekly'}
+              >
+                <small>Weekly</small>
+                <strong>Flexible weekly plan</strong>
+                <span>1–3 sessions/week · $10 per 25 minutes</span>
+              </button>
+              <button
+                type="button"
+                className={`student-payment-pro__package${billingPlan === 'monthly' ? ' student-payment-pro__package--active' : ''}`}
+                onClick={() => chooseBillingPlan('monthly')}
+                aria-pressed={billingPlan === 'monthly'}
+              >
+                <small>Package</small>
+                <strong>Monthly package</strong>
+                <span>4–5 sessions/week · $8 per 25-minute class</span>
+              </button>
+            </div>
+
+            <div className="student-payment-pro__panel-heading student-payment-pro__panel-heading--sub">
+              <div>
+                <small>{billingPlan === 'monthly' ? 'Monthly package sessions' : 'Weekly sessions'}</small>
+                <h3>{billingPlan === 'monthly' ? 'Select your weekly rhythm' : 'Select weekly credits'}</h3>
+              </div>
+              <span>{weeklySessions} / week</span>
+            </div>
+            <div className="student-payment-pro__session-grid" role="list" aria-label="Session options">
+              {sessionOptions.map((sessions) => {
                 const selected = sessions === weeklySessions
-                const rate = weeklySessionRate(sessions)
+                const credits = planCreditCount(billingPlan, sessions)
                 return (
                   <button
-                    key={sessions}
+                    key={`${billingPlan}-${sessions}`}
                     type="button"
                     className={`student-payment-pro__session${selected ? ' student-payment-pro__session--active' : ''}`}
                     onClick={() => { setWeeklySessions(sessions); setGatewayError(''); setLastPaymentMessage('') }}
                     aria-pressed={selected}
                   >
                     <strong>{sessions}</strong>
-                    <span>session{sessions > 1 ? 's' : ''}</span>
-                    <small>{formatUsd(weeklyPlanTotal(sessions))} · ${rate}/class</small>
+                    <span>session{sessions > 1 ? 's' : ''} / week</span>
+                    <small>{formatUsd(planTotal(billingPlan, sessions))} · {credits} credit{credits > 1 ? 's' : ''}</small>
+                    {billingPlan === 'monthly' && <em>4-week monthly billing</em>}
                   </button>
                 )
               })}
@@ -1481,7 +1537,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
             </div>
             <div className="student-payment-pro__summary-list">
               <div><span>Current booking credits</span><strong>{currentCredits}</strong></div>
-              <div><span>Credits after verified payment</span><strong>{currentCredits + weeklySessions}</strong></div>
+              <div><span>Credits after verified payment</span><strong>{currentCredits + creditCount}</strong></div>
               {paymentMethod === 'chinaQr' && chinaQrAllowed ? (
                 <>
                   <div><span>Tuition</span><strong>{formatRmb(chinaTuition)}</strong></div>
@@ -1490,7 +1546,9 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
                 </>
               ) : (
                 <>
+                  <div><span>Package</span><strong>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'}</strong></div>
                   <div><span>Rate</span><strong>{formatUsd(sessionRate)} / class</strong></div>
+                  <div><span>Credits included</span><strong>{creditCount}</strong></div>
                   <div className="student-payment-pro__summary-total"><span>Total PayPal payment</span><strong>{formatUsd(weeklyTotal)}</strong></div>
                 </>
               )}
@@ -1540,7 +1598,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               {!gatewayReady && !gatewayError && <p className="student-payment-pro__loading">Loading secure PayPal checkout…</p>}
               <ul className="student-payment-pro__micro-list">
                 <li>Debit/credit card availability depends on PayPal and the buyer’s country.</li>
-                <li>Successful payment immediately unlocks schedule booking credits.</li>
+                <li>Successful payment adds the package credits shown in the summary.</li>
               </ul>
             </div>
           ) : (
@@ -1559,7 +1617,8 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
                 <div className="student-payment-pro__qr-details">
                   <p>For China visitors only. Scan this QR with AUB PayMate or WeChat Pay and pay the exact amount below.</p>
                   <div className="student-payment-pro__summary-list student-payment-pro__qr-breakdown">
-                    <div><span>Sessions</span><strong>{weeklySessions} × 25 minutes</strong></div>
+                    <div><span>Package</span><strong>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'}</strong></div>
+                    <div><span>Sessions</span><strong>{creditCount} × 25 minutes</strong></div>
                     <div><span>Tuition</span><strong>RMB25 / 25 minutes</strong></div>
                     <div><span>Processing fee</span><strong>RMB5 / session</strong></div>
                     <div className="student-payment-pro__summary-total"><span>Total to pay</span><strong>{formatRmb(chinaTotal)}</strong></div>
@@ -1575,7 +1634,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       </div>
 
       <div className="student-payment-pro__footer-notes">
-        <span>USD PayPal rule: 1–3 sessions/week = $10 per 25 minutes. 4–6 sessions/week = $8 per 25 minutes.</span>
+        <span>USD pricing: Weekly plan is $10 per 25-minute class. Monthly package is 4–5 sessions/week billed for 4 weeks at $8 per class.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. Hidden outside China except for admin preview.</span>}
         <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>
