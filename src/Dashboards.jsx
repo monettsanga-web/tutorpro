@@ -1658,6 +1658,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [managedBooking, setManagedBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
   const [directChatUser, setDirectChatUser] = useState(null)
+  const [supportLocale, setSupportLocale] = useState(currentVisitorLocale)
   const learners = (account.children?.length ? account.children : [account.child]).filter(Boolean)
   const hasLearnerProfile = learners.length > 0
   const learner = learners.find((item) => item.id === activeLearnerId) || learners[0] || {
@@ -1681,8 +1682,11 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const upcoming = bookings.find((booking) => booking.date >= today() && ['pending', 'confirmed', 'ongoing'].includes(booking.status))
   const completed = bookings.filter((booking) => booking.status === 'completed').length
   const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
+  const parentChinaSupport = isChineseVisitor(supportLocale) || isChineseVisitor({ language: '', country: account.registrationCountry })
   const studentSyncCallbacks = useRef({ onAccountChange, onLogout })
   void bookingVersion
+
+  useEffect(() => subscribeToVisitorLocale(setSupportLocale), [])
 
   useEffect(() => {
     studentSyncCallbacks.current = { onAccountChange, onLogout }
@@ -1989,7 +1993,22 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         </div>
       )}
 
-      {active === 'support' && <div className="portal-view parent-support-view"><div className="portal-page-heading"><div><span className="portal-kicker">English & 中文 support</span><h1>Chat with TutorPro English</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div><span className="support-inbox-live"><i /> Private support</span></div><SupportChatWidget embedded /></div>}
+      {active === 'support' && (
+        <div className="portal-view parent-support-view">
+          <div className="portal-page-heading">
+            <div><span className="portal-kicker">English & 中文 support</span><h1>Chat with TutorPro English</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div>
+            <span className="support-inbox-live"><i /> Private support</span>
+          </div>
+          {!parentChinaSupport && (
+            <section className="portal-card parent-support-channel-card">
+              <div><span className="portal-kicker">Messenger available</span><h2>Prefer Facebook Messenger?</h2><p>Parents outside China can message TutorPro English directly on Facebook Messenger. If Messenger is unavailable, use the secure website chat below.</p></div>
+              <a className="portal-primary-button" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Chat on Messenger</a>
+            </section>
+          )}
+          {parentChinaSupport && <div className="support-language-note support-language-note--portal"><Languages size={15} /><span>Facebook/Messenger may not be accessible in China. Please use the secure website chat below; admin will reply from the TutorPro inbox.</span></div>}
+          <SupportChatWidget embedded />
+        </div>
+      )}
 
 
       {active === 'profile' && (
