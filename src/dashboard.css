@@ -6759,3 +6759,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Force premium amount card text to stay readable over the dark gradient. */
+.student-payment-pro .student-payment-pro__amount-card,
+.student-payment-pro .student-payment-pro__amount-card *,
+.portal-card.student-payment-pro .student-payment-pro__amount-card,
+.portal-card.student-payment-pro .student-payment-pro__amount-card * {
+  color: #ffffff !important;
+}
+
+.student-payment-pro .student-payment-pro__amount-card small,
+.portal-card.student-payment-pro .student-payment-pro__amount-card small {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.student-payment-pro .student-payment-pro__amount-card span,
+.portal-card.student-payment-pro .student-payment-pro__amount-card span {
+  color: rgba(255, 255, 255, 0.9) !important;
+}

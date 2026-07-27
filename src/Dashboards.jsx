@@ -1460,9 +1460,9 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
           </div>
         </div>
         <div className="student-payment-pro__amount-card">
-          <small>{paymentMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : 'Amount due today'}</small>
-          <strong>{paymentMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : formatUsd(weeklyTotal)}</strong>
-          <span>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'} · {creditCount} booking credit{creditCount > 1 ? 's' : ''}</span>
+          <small style={{ color: 'rgba(255, 255, 255, 0.82)' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : 'Amount due today'}</small>
+          <strong style={{ color: '#ffffff' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : formatUsd(weeklyTotal)}</strong>
+          <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'} · {creditCount} booking credit{creditCount > 1 ? 's' : ''}</span>
         </div>
       </div>
 
