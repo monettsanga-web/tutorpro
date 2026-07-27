@@ -4444,3 +4444,10 @@ body {
 .public-teacher-card [class*="badge"] {
   backdrop-filter: blur(10px);
 }
+
+.global-discovery__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}

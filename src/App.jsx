@@ -961,9 +961,12 @@ function GlobalDiscovery({ onBook }) {
           <ul>
             {comparisonPoints.map((point) => <li key={point}><Check size={16} /> {point}</li>)}
           </ul>
-          <button className="button button--primary" onClick={() => onBook('Global online English classes')}>
-            Start online English classes <ArrowRight size={17} />
-          </button>
+          <div className="global-discovery__actions">
+            <button className="button button--primary" onClick={() => onBook('Global online English classes')}>
+              Start online English classes <ArrowRight size={17} />
+            </button>
+            <a className="button button--outline" href="/online-english-alternatives.html">Compare alternatives <ArrowUpRight size={17} /></a>
+          </div>
         </div>
         <div className="global-discovery__panel" aria-label="Popular search terms TutorPro English supports">
           <span>Popular searches</span>
