@@ -6,11 +6,11 @@ const PAYPAL_API_BASE = process.env.PAYPAL_ENV === 'sandbox'
   : 'https://api-m.paypal.com'
 
 export const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
-export const MONTHLY_PACKAGE_OPTIONS = [4, 5, 6, 7]
+export const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 export const MONTHLY_BILLING_WEEKS = 4
 export const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
 export const parseBillingPlan = (value = 'weekly') => value === 'monthly' ? 'monthly' : 'weekly'
-export const planSessionRate = (billingPlan, sessions) => parseBillingPlan(billingPlan) === 'monthly' ? 8 : weeklySessionRate(sessions)
+export const planSessionRate = (billingPlan, sessions) => parseBillingPlan(billingPlan) === 'monthly' ? (Number(sessions) <= 3 ? 10 : 8) : weeklySessionRate(sessions)
 export const planCreditCount = (billingPlan, sessions) => Number(sessions) * (parseBillingPlan(billingPlan) === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
 export const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
 export const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)
@@ -33,7 +33,7 @@ export function parseSessions(value, billingPlan = 'weekly') {
   const sessions = Number(value)
   const options = plan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
   if (!options.includes(sessions)) {
-    throw new Error(plan === 'monthly' ? 'Choose 4, 5, 6, or 7 weekly sessions for the monthly package.' : 'Choose between 1 and 3 weekly sessions.')
+    throw new Error(plan === 'monthly' ? 'Choose 3, 4, 5, 6, or 7 weekly sessions for the monthly package.' : 'Choose between 1 and 3 weekly sessions.')
   }
   return sessions
 }

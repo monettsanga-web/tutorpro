@@ -114,10 +114,10 @@ const LEARNING_GOALS = [
   'Build an all-round foundation',
 ]
 const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
-const MONTHLY_PACKAGE_OPTIONS = [4, 5, 6, 7]
+const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 const MONTHLY_BILLING_WEEKS = 4
 const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
-const planSessionRate = (billingPlan, sessions) => billingPlan === 'monthly' ? 8 : weeklySessionRate(sessions)
+const planSessionRate = (billingPlan, sessions) => billingPlan === 'monthly' ? (Number(sessions) <= 3 ? 10 : 8) : weeklySessionRate(sessions)
 const planCreditCount = (billingPlan, sessions) => Number(sessions) * (billingPlan === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
 const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
 const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)
@@ -1495,7 +1495,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               >
                 <small>Package</small>
                 <strong>Monthly package</strong>
-                <span>4–7 sessions/week · $8 per 25-minute class</span>
+                <span>3–7 sessions/week · $10/class for 3, $8/class for 4+</span>
               </button>
             </div>
 
@@ -1634,7 +1634,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       </div>
 
       <div className="student-payment-pro__footer-notes">
-        <span>USD pricing: Weekly plan is $10 per 25-minute class. Monthly package is 4–7 sessions/week billed for 4 weeks at $8 per class.</span>
+        <span>USD pricing: Weekly plan is $10 per 25-minute class. Monthly package is 3–7 sessions/week billed for 4 weeks: 3/week at $10 per class, 4–7/week at $8 per class.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. Hidden outside China except for admin preview.</span>}
         <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>
