@@ -1100,7 +1100,7 @@ function FinalCTA({ onBook }) {
 }
 
 function FacebookMessengerContact() {
-  const facebookPageId = import.meta.env.VITE_FACEBOOK_PAGE_ID || ''
+  const facebookPageId = import.meta.env.VITE_FACEBOOK_PAGE_ID || '526047974195321'
   const [locale, setLocale] = useState(currentVisitorLocale)
   const chineseVisitor = isChineseVisitor(locale)
 
@@ -1133,7 +1133,7 @@ function FacebookMessengerContact() {
     <>
       {facebookPageId && <div id="fb-root" />}
       {facebookPageId && <div className="fb-customerchat" attribution="biz_inbox" page_id={facebookPageId} greeting_dialog_display="fade" greeting_dialog_delay="3" theme_color="#6d28d9" logged_in_greeting="Hi! Message TutorPro English here. Our admin will reply in Facebook Messenger." logged_out_greeting="Hi! Message TutorPro English here. Our admin will reply in Facebook Messenger." />}
-      <a className="messenger-float" href="https://m.me/tutorproenglish" target="_blank" rel="noreferrer" aria-label="Message TutorPro English on Facebook Messenger">
+      <a className="messenger-float" href="https://m.me/526047974195321" target="_blank" rel="noreferrer" aria-label="Message TutorPro English on Facebook Messenger">
         <MessageCircle size={21} />
         <span><strong>Need help?</strong><small>Chat on Messenger</small></span>
       </a>
@@ -1178,7 +1178,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <a href="mailto:sejongenglish@yahoo.com"><Mail size={15} /> <span>sejongenglish@yahoo.com</span></a>
               <a href="tel:+639625284849"><Phone size={15} /> <span>+63 962 528 4849</span></a>
               <a href="https://www.facebook.com/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Facebook Page</span></a>
-              <a className="footer__whatsapp" href="https://m.me/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on Messenger</span></a>
+              <a className="footer__whatsapp" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on Messenger</span></a>
               <a className="footer__whatsapp" href="https://wa.me/639625284849" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on WhatsApp</span></a>
             </div>
           </div>

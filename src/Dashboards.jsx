@@ -2458,7 +2458,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <section className="portal-card teacher-support-channel-card">
             <div><span className="portal-kicker">Choose a chat channel</span><h2>How would you like to contact admin?</h2><p>Facebook Messenger is quick for non-China access. Website chat works inside TutorPro and will not ask for your email again.</p></div>
             <div className="teacher-support-channel-card__actions">
-              <a className="portal-primary-button" href="https://m.me/tutorproenglish" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Facebook Messenger</a>
+              <a className="portal-primary-button" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Facebook Messenger</a>
               <a className="portal-secondary-button" href="#teacher-website-support"><MessageSquareText size={16} /> Website chat</a>
             </div>
           </section>
