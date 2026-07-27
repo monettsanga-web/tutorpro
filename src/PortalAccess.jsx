@@ -16,7 +16,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { loginAccount, registerTeacher } from './auth.js'
+import { loginAccount, registerTeacher, requestPasswordReset } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 
 const TeacherAIInterview = lazy(() => import('./TeacherAIInterview.jsx'))
@@ -131,6 +131,24 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
     }
   }
 
+  const submitPasswordResetRequest = async (event) => {
+    event.preventDefault()
+    const next = {}
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) next.email = 'Enter the email address on your teacher account.'
+    setErrors(next)
+    if (Object.keys(next).length) return
+    setSubmitting(true)
+    setError('')
+    try {
+      await requestPasswordReset(form.email)
+      setView('reset-sent')
+    } catch (submitError) {
+      setError(submitError.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const handleFiles = (event) => {
     const files = Array.from(event.target.files || []).slice(0, 5)
     setForm((current) => ({ ...current, credentials: files.map((file) => file.name) }))
@@ -182,7 +200,22 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
           )}
 
           {!isAdmin && view === 'login' && (
-            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} /><p className="auth-switch">New to TutorPro English? <button onClick={() => { setView('register'); setError('') }}>Apply as a teacher</button></p></>
+            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch">New to TutorPro English? <button onClick={() => { setView('register'); setError('') }}>Apply as a teacher</button></p></>
+          )}
+
+          {!isAdmin && view === 'reset-request' && (
+            <>
+              <div className="auth-heading role-login-heading"><span className="auth-heading__icon"><Mail size={22} /></span><div><span>Password help</span><h2 id="role-access-title">Reset teacher password</h2><p>Enter your registered teacher email and we’ll send a secure reset link.</p></div></div>
+              <form className="auth-form" onSubmit={submitPasswordResetRequest} noValidate>
+                <label><span>Email address</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus name="email" autoComplete="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
+                <button className="button button--primary button--full auth-submit" type="submit" disabled={submitting}>{submitting ? 'Sending reset link…' : 'Send reset link'} {!submitting && <ArrowRight size={17} />}</button>
+              </form>
+              <p className="auth-switch">Remembered your password? <button onClick={() => { setView('login'); setError(''); setErrors({}) }}>Back to teacher login</button></p>
+            </>
+          )}
+
+          {!isAdmin && view === 'reset-sent' && (
+            <div className="role-success"><span><CheckCircle2 size={36} /></span><span className="kicker">Reset link sent</span><h2 id="role-access-title">Check your email.</h2><p>If that teacher email is registered, you’ll receive a secure password reset link. Open the link and create your new password.</p><button className="button button--primary button--full" onClick={() => setView('login')}>Back to teacher login</button></div>
           )}
 
           {!isAdmin && view === 'success' && created && (
@@ -205,12 +238,13 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
   )
 }
 
-function LoginForm({ form, update, errors, showPassword, setShowPassword, submitting, onSubmit }) {
+function LoginForm({ form, update, errors, showPassword, setShowPassword, submitting, onSubmit, onForgot }) {
   return (
     <form className="auth-form" onSubmit={onSubmit} noValidate>
       <label><span>Email, WeChat ID or WhatsApp number</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus name="email" autoComplete="username" value={form.email} onChange={update} placeholder="Enter your account login" /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
       <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={form.password} onChange={update} placeholder="Your password" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
       <button className="button button--primary button--full auth-submit" type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Open teacher dashboard'} {!submitting && <ArrowRight size={17} />}</button>
+      {onForgot && <p className="auth-switch auth-switch--compact"><button type="button" onClick={onForgot}>Forgot password?</button></p>}
     </form>
   )
 }

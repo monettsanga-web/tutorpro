@@ -1,4 +1,4 @@
-import { cloudSyncEnabled, deleteCloudProfile, deleteCloudTeacherAccount, registerCloudProfile, signInCloudProfile, updateCloudProfile } from './cloudProfiles.js'
+import { cloudSyncEnabled, deleteCloudProfile, deleteCloudTeacherAccount, registerCloudProfile, requestCloudPasswordReset, signInCloudProfile, updateCloudPassword, updateCloudProfile } from './cloudProfiles.js'
 import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
 import { readVisitorCountry } from './visitorLocale.js'
 
@@ -569,6 +569,15 @@ export async function loginAccount(loginValue, password) {
 
   writeSessionId(account.id)
   return publicAccount(account)
+}
+
+
+export async function requestPasswordReset(loginValue) {
+  return requestCloudPasswordReset(loginValue)
+}
+
+export async function completePasswordReset(newPassword) {
+  return updateCloudPassword(newPassword)
 }
 
 export function updateLocalAccount(accountId, changes) {

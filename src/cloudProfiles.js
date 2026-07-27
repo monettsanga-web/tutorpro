@@ -186,6 +186,27 @@ export async function deleteCloudTeacherAccount(account) {
   return { mode: 'deactivated' }
 }
 
+
+export async function requestCloudPasswordReset(loginValue, redirectTo) {
+  if (!supabase) throw new Error('Password reset is not configured yet. Please contact TutorPro English support.')
+  const login = String(loginValue || '').trim().toLowerCase()
+  if (!/^\S+@\S+\.\S+$/.test(login)) throw new Error('Password reset is available for email-based accounts. Please enter your registered email address or contact admin support.')
+  const destination = redirectTo || (typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}#reset-password` : undefined)
+  const { error } = await supabase.auth.resetPasswordForEmail(login, { redirectTo: destination })
+  if (error) throw new Error(`Password reset email could not be sent: ${error.message}`)
+  return true
+}
+
+export async function updateCloudPassword(newPassword) {
+  if (!supabase) throw new Error('Password reset is not configured yet. Please contact TutorPro English support.')
+  if (typeof newPassword !== 'string' || newPassword.length < 8 || !/[0-9]/.test(newPassword)) {
+    throw new Error('Use at least 8 characters and include at least one number.')
+  }
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw new Error(`Password could not be updated: ${error.message}`)
+  return true
+}
+
 export function subscribeToCloudProfiles(onChange) {
   if (!supabase) return () => {}
   profileListeners.add(onChange)

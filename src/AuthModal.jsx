@@ -16,7 +16,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { loginAccount, logoutAccount, registerAccount } from './auth.js'
+import { completePasswordReset, loginAccount, logoutAccount, registerAccount, requestPasswordReset } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 
@@ -170,6 +170,45 @@ export default function AuthModal({
       const account = await loginAccount(form.email, form.password)
       onAuthenticated(account)
       onEnterPortal(account)
+    } catch (error) {
+      setFormError(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const submitPasswordResetRequest = async (event) => {
+    event.preventDefault()
+    const nextErrors = {}
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) nextErrors.email = 'Enter the email address on your account.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setIsSubmitting(true)
+    setFormError('')
+    try {
+      await requestPasswordReset(form.email)
+      setView('reset-sent')
+    } catch (error) {
+      setFormError(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const submitNewPassword = async (event) => {
+    event.preventDefault()
+    const nextErrors = {}
+    if (form.password.length < 8 || !/[0-9]/.test(form.password)) nextErrors.password = 'Use 8+ characters with at least one number.'
+    if (form.confirmPassword !== form.password) nextErrors.confirmPassword = 'Passwords do not match.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setIsSubmitting(true)
+    setFormError('')
+    try {
+      await completePasswordReset(form.password)
+      setForm((current) => ({ ...current, password: '', confirmPassword: '' }))
+      setView('reset-complete')
+      if (typeof window !== 'undefined') window.history.replaceState(null, '', window.location.pathname)
     } catch (error) {
       setFormError(error.message)
     } finally {
@@ -383,10 +422,59 @@ export default function AuthModal({
                   {isSubmitting ? 'Logging in…' : 'Log in'} {!isSubmitting && <ArrowRight size={17} />}
                 </button>
               </form>
+              <p className="auth-switch auth-switch--compact"><button onClick={() => switchView('reset-request')}>Forgot password?</button></p>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
               <p className="auth-switch">New to TutorPro English? <button onClick={() => switchView('register')}>Create a free account</button></p>
               <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Teacher registration and login</button>
             </>
+          )}
+
+          {view === 'reset-request' && (
+            <>
+              <div className="auth-heading auth-heading--compact">
+                <span className="auth-heading__icon"><Mail size={22} /></span>
+                <div><span>Password help</span><h2 id="auth-title">Reset your student password</h2><p>Enter your registered email and we’ll send a secure reset link.</p></div>
+              </div>
+              {formError && <div className="auth-alert" role="alert">{formError}</div>}
+              <form className="auth-form auth-form--login" onSubmit={submitPasswordResetRequest} noValidate>
+                <label><span>Email address</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus autoComplete="email" name="email" value={form.email} onChange={updateField} placeholder="you@example.com" /></div><FieldError>{errors.email}</FieldError></label>
+                <button className="button button--primary button--full auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending reset link…' : 'Send reset link'} {!isSubmitting && <ArrowRight size={17} />}</button>
+              </form>
+              <p className="auth-switch">Remembered your password? <button onClick={() => switchView('login')}>Back to login</button></p>
+            </>
+          )}
+
+          {view === 'reset-sent' && (
+            <div className="auth-success">
+              <span><CheckCircle2 size={34} /></span>
+              <h2 id="auth-title">Check your email</h2>
+              <p>If that email is registered, you’ll receive a secure password reset link. Open it on this device and set your new password.</p>
+              <button className="button button--primary button--full" onClick={() => switchView('login')}>Back to login</button>
+            </div>
+          )}
+
+          {view === 'reset-password' && (
+            <>
+              <div className="auth-heading auth-heading--compact">
+                <span className="auth-heading__icon"><LockKeyhole size={22} /></span>
+                <div><span>Secure reset</span><h2 id="auth-title">Create a new password</h2><p>Use at least 8 characters and include a number.</p></div>
+              </div>
+              {formError && <div className="auth-alert" role="alert">{formError}</div>}
+              <form className="auth-form auth-form--login" onSubmit={submitNewPassword} noValidate>
+                <label><span>New password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input autoFocus name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={updateField} placeholder="8+ characters" /><button type="button" onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div><FieldError>{errors.password}</FieldError></label>
+                <label><span>Confirm new password</span><div className={`input-wrap ${errors.confirmPassword ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.confirmPassword} onChange={updateField} placeholder="Repeat password" /></div><FieldError>{errors.confirmPassword}</FieldError></label>
+                <button className="button button--primary button--full auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Updating password…' : 'Update password'} {!isSubmitting && <ArrowRight size={17} />}</button>
+              </form>
+            </>
+          )}
+
+          {view === 'reset-complete' && (
+            <div className="auth-success">
+              <span><CheckCircle2 size={34} /></span>
+              <h2 id="auth-title">Password updated</h2>
+              <p>Your password has been changed. You can now log in with your new password.</p>
+              <button className="button button--primary button--full" onClick={() => switchView('login')}>Go to login</button>
+            </div>
           )}
 
           {view === 'success' && activeAccount && (

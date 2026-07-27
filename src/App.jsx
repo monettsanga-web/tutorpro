@@ -1194,6 +1194,17 @@ export default function App() {
   const [showPublicTeachers, setShowPublicTeachers] = useState(false)
 
   useEffect(() => {
+    const url = new URL(window.location.href)
+    const hashParams = new URLSearchParams((url.hash || '').replace(/^#/, ''))
+    const isRecovery = url.searchParams.get('type') === 'recovery' || hashParams.get('type') === 'recovery' || url.hash === '#reset-password'
+    if (isRecovery) {
+      setAuthMode('reset-password')
+      setAuthOpen(true)
+      setRoleAccess(null)
+    }
+  }, [])
+
+  useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash === '#teachers') {
         setShowPublicTeachers(true)
