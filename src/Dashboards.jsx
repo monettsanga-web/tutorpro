@@ -1370,7 +1370,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
         },
         onError(error) {
           console.error('PayPal payment error:', error)
-          setGatewayError('PayPal could not complete the payment. Please try again or refresh the page.')
+          setGatewayError((current) => current || 'PayPal could not complete the payment. Please try again or refresh the page.')
         },
       }).render(`#${paypalContainerId}`).catch((error) => {
         console.error('PayPal render error:', error)
@@ -1395,7 +1395,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
     if (!script) {
       script = document.createElement('script')
       script.id = scriptId
-      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=${encodeURIComponent(paypalCurrency)}&intent=capture&components=buttons`
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=${encodeURIComponent(paypalCurrency)}&intent=capture&components=buttons&enable-funding=card`
       script.async = true
       script.addEventListener('load', handleLoad)
       script.addEventListener('error', handleError)
@@ -1416,7 +1416,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   }, [account.id, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
 
   const methodCards = [
-    { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal checkout is active.', enabled: true },
+    { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal / Card Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal and debit/credit card checkout is active.', enabled: true },
     ...(chinaQrAllowed ? [{ id: 'chinaQr', title: 'AUB PayMate / WeChat Pay QR', text: adminPreview ? 'Admin preview access.' : 'China visitor payment QR.', enabled: true }] : []),
   ]
 
@@ -1470,7 +1470,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       {paymentMethod === 'paypal' ? (
         <div style={{ background: '#fff', border: '1px solid rgba(91, 33, 182, 0.12)', borderRadius: '14px', padding: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '10px' }}>
-            <strong style={{ color: '#241042' }}>{isPayPalTestMode ? 'Pay with PayPal Sandbox' : 'Pay with PayPal Checkout'}</strong>
+            <strong style={{ color: '#241042' }}>{isPayPalTestMode ? 'Pay with PayPal Sandbox' : 'Pay with PayPal or Card'}</strong>
             <span style={{ background: isPayPalTestMode ? '#fef3c7' : '#dcfce7', color: isPayPalTestMode ? '#92400e' : '#166534', borderRadius: '999px', padding: '5px 10px', fontSize: '0.76rem', fontWeight: 900 }}>{isPayPalTestMode ? 'TEST MODE' : 'LIVE PAYPAL'}</span>
           </div>
           <div id={paypalContainerId} style={{ minHeight: '48px' }} />
