@@ -51,7 +51,7 @@ const pageTitles = {
 }
 
 const countryLanguages = {
-  PH: 'tl', KR: 'ko', CN: 'zh-CN', TW: 'zh-TW', HK: 'zh-TW', MO: 'zh-TW', JP: 'ja',
+  PH: 'en', KR: 'ko', CN: 'zh-CN', TW: 'zh-TW', HK: 'zh-TW', MO: 'zh-TW', JP: 'ja',
   ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
   FR: 'fr', DE: 'de', AT: 'de', BR: 'pt', PT: 'pt',
   SA: 'ar', AE: 'ar', QA: 'ar', EG: 'ar', VN: 'vi', TH: 'th',
