@@ -1033,6 +1033,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   })
   const [wordDraft, setWordDraft] = useState('')
   const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
+  const [aiCommand, setAiCommand] = useState('')
   const [error, setError] = useState('')
 
   const fillTemplate = (type) => {
@@ -1073,6 +1074,42 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         homework: selected.homework
       }))
     }
+  }
+
+
+  const generateAiFeedback = () => {
+    const command = aiCommand.trim()
+    if (command.length < 4) {
+      setError('Type a short AI instruction, such as: "good speaking, needs past tense practice".')
+      return
+    }
+    const studentName = learner?.name || 'the student'
+    const lower = command.toLowerCase()
+    const focus = booking.focus || 'English skills'
+    const positiveTone = /excellent|great|good|confident|improved|participat|effort|happy|active/.test(lower)
+    const grammarNeed = /grammar|tense|past|present|sentence|verb|article|a\/an|plural/.test(lower)
+    const speakingNeed = /speak|speaking|conversation|pronunciation|fluency|confidence/.test(lower)
+    const readingNeed = /read|reading|phonics|sound|comprehension/.test(lower)
+    const summary = `${studentName} completed a productive ${focus} lesson today. Based on the teacher note: “${command}”, ${studentName} ${positiveTone ? 'showed strong engagement and a positive learning attitude' : 'worked through the class activities with support and guidance'}. We practised targeted English skills through guided examples, correction, and student speaking time so the lesson stayed active and personalised.`
+    const strength = positiveTone
+      ? `${studentName} showed confidence, effort, and willingness to participate during class.`
+      : `${studentName} was able to follow teacher guidance and complete the lesson tasks with support.`
+    const nextStep = grammarNeed
+      ? 'Continue practising accurate grammar in complete sentences, especially the target pattern from today’s lesson.'
+      : speakingNeed
+        ? 'Build more fluent spoken answers by using complete sentences and adding details.'
+        : readingNeed
+          ? 'Keep strengthening reading accuracy, pronunciation, and comprehension through short daily practice.'
+          : 'Review today’s target words and use them in complete spoken or written sentences.'
+    const homework = grammarNeed
+      ? 'Write 3–5 sentences using today’s grammar target and read them aloud before the next class.'
+      : speakingNeed
+        ? 'Prepare 3 complete spoken answers about a familiar topic and practise saying them clearly.'
+        : readingNeed
+          ? 'Read a short passage aloud twice and underline any difficult words to review next lesson.'
+          : 'Review the lesson notes for 5 minutes and practise the new words in sentences.'
+    setForm((current) => ({ ...current, summary, strength, nextStep, homework }))
+    setError('')
   }
 
   const addPracticeWord = () => {
@@ -1140,6 +1177,11 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
         <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
         {error && <div className="portal-error" role="alert">{error}</div>}
+
+        <div className="feedback-ai-assistant">
+          <div><span>🤖 AI feedback assistant</span><strong>Tell AI what happened in class</strong><small>Example: “Great reading today, needs practice with past tense and complete sentences.”</small></div>
+          <div className="feedback-ai-assistant__command"><input value={aiCommand} onChange={(event) => setAiCommand(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); generateAiFeedback() } }} placeholder="Command the AI to generate feedback…" /><button type="button" onClick={generateAiFeedback}>Generate feedback</button></div>
+        </div>
 
         {/* ✨ FAST FEEDBACK TEMPLATE RECOMMENDATIONS */}
         <div className="feedback-recommendations" style={{ margin: '15px 0', padding: '12px', background: 'rgba(120, 80, 201, 0.08)', border: '1px solid rgba(120, 80, 201, 0.2)', borderRadius: '10px' }}>
@@ -1773,7 +1815,12 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     if (!file) return
     setMediaError('')
     try {
-      await saveProfileMedia(`${account.id}-${learner.id}`, 'avatar', file)
+      const media = await saveProfileMedia(`${account.id}-${learner.id}`, 'avatar', file)
+      if (media.dataUrl) {
+        const updated = updateStudentProfile(account.id, { profilePhotoUrl: media.dataUrl }, learner.id)
+        setAccount(updated)
+        onAccountChange(updated)
+      }
       setMediaVersion((value) => value + 1)
     } catch (uploadError) {
       setMediaError(uploadError.message)
@@ -2191,7 +2238,12 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     if (!file) return
     setMediaError('')
     try {
-      await saveProfileMedia(account.id, kind, file)
+      const media = await saveProfileMedia(account.id, kind, file)
+      if (kind === 'avatar' && media.dataUrl) {
+        const updated = updateAccount(account.id, { profilePhotoUrl: media.dataUrl })
+        setAccount(updated)
+        onAccountChange(updated)
+      }
       setMediaVersion((value) => value + 1)
     } catch (uploadError) {
       setMediaError(uploadError.message)

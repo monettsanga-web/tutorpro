@@ -7098,3 +7098,75 @@
     justify-content: center;
   }
 }
+
+/* AI-assisted teacher feedback */
+.feedback-ai-assistant {
+  display: grid;
+  gap: 12px;
+  margin: 15px 0;
+  border: 1px solid rgba(188, 233, 78, 0.2);
+  border-radius: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(188, 233, 78, 0.1), rgba(124, 58, 237, 0.12));
+}
+
+.feedback-ai-assistant > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.feedback-ai-assistant span {
+  color: #bce94e;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.feedback-ai-assistant strong {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.feedback-ai-assistant small {
+  color: #b9adc7;
+  font-size: 0.78rem;
+}
+
+.feedback-ai-assistant__command {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.feedback-ai-assistant__command input {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 12px 13px;
+  background: rgba(0,0,0,0.22);
+  color: #fff;
+  outline: none;
+}
+
+.feedback-ai-assistant__command input:focus {
+  border-color: #bce94e;
+  box-shadow: 0 0 0 3px rgba(188, 233, 78, 0.12);
+}
+
+.feedback-ai-assistant__command button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #bce94e;
+  color: #130a25;
+  font-weight: 950;
+}
+
+@media (max-width: 680px) {
+  .feedback-ai-assistant__command {
+    grid-template-columns: 1fr;
+  }
+  .feedback-ai-assistant__command button {
+    min-height: 44px;
+  }
+}

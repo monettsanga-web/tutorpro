@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Play } from 'lucide-react'
 import { getProfileMedia } from './media.js'
-import { getAccountById } from './auth.js'
+import { getAccountById, getAccounts } from './auth.js'
+
+function cloudProfileMediaUrl(accountId, kind) {
+  if (kind !== 'avatar' || !accountId) return ''
+  const direct = getAccountById(accountId)
+  if (direct?.profilePhotoUrl) return direct.profilePhotoUrl
+  const accounts = getAccounts()
+  for (const account of accounts) {
+    const learner = (account.children || []).find((item) => `${account.id}-${item.id}` === accountId)
+    if (learner?.profilePhotoUrl) return learner.profilePhotoUrl
+  }
+  return ''
+}
 
 function useProfileMediaUrl(accountId, kind, refreshKey) {
   const [url, setUrl] = useState('')
@@ -15,12 +27,12 @@ function useProfileMediaUrl(accountId, kind, refreshKey) {
         if (!active) return
         const isBlob = record?.blob && (record.blob instanceof Blob || (typeof File !== 'undefined' && record.blob instanceof File))
         objectUrl = isBlob ? URL.createObjectURL(record.blob) : ''
-        setUrl(objectUrl)
+        setUrl(objectUrl || record?.dataUrl || cloudProfileMediaUrl(accountId, kind))
         setLoading(false)
       })
       .catch(() => {
         if (active) {
-          setUrl('')
+          setUrl(cloudProfileMediaUrl(accountId, kind))
           setLoading(false)
         }
       })

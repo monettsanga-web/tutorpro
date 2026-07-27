@@ -2,6 +2,31 @@ const DB_NAME = 'tutorpro_profile_media'
 const STORE_NAME = 'media'
 const DB_VERSION = 1
 
+
+async function imageFileToDataUrl(file) {
+  if (!file?.type?.startsWith('image/')) return ''
+  const bitmap = await createImageBitmap(file).catch(() => null)
+  if (!bitmap) {
+    return await new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+      reader.onerror = () => resolve('')
+      reader.readAsDataURL(file)
+    })
+  }
+  const maxSide = 720
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
+  const width = Math.max(1, Math.round(bitmap.width * scale))
+  const height = Math.max(1, Math.round(bitmap.height * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  context.drawImage(bitmap, 0, 0, width, height)
+  bitmap.close?.()
+  return canvas.toDataURL('image/jpeg', 0.82)
+}
+
 function openDatabase() {
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
@@ -25,6 +50,7 @@ export async function saveProfileMedia(accountId, kind, file) {
   const maximumSize = kind === 'avatar' ? 5 * 1024 * 1024 : 50 * 1024 * 1024
   if (file.size > maximumSize) throw new Error(kind === 'avatar' ? 'Profile photos must be under 5 MB.' : 'Introduction videos must be under 50 MB.')
 
+  const dataUrl = kind === 'avatar' ? await imageFileToDataUrl(file) : ''
   const database = await openDatabase()
   await new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, 'readwrite')
@@ -33,6 +59,7 @@ export async function saveProfileMedia(accountId, kind, file) {
       accountId,
       kind,
       blob: file,
+      dataUrl,
       fileName: file.name,
       mimeType: file.type,
       updatedAt: new Date().toISOString(),
@@ -41,7 +68,7 @@ export async function saveProfileMedia(accountId, kind, file) {
     transaction.onerror = () => reject(transaction.error || new Error('The media file could not be saved.'))
   })
   database.close()
-  return { fileName: file.name, mimeType: file.type, updatedAt: new Date().toISOString() }
+  return { fileName: file.name, mimeType: file.type, dataUrl, updatedAt: new Date().toISOString() }
 }
 
 export async function deleteProfileMediaOwner(accountId) {
