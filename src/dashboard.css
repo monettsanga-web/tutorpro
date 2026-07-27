@@ -7005,3 +7005,96 @@
     transform: none;
   }
 }
+
+.external-game-zone--launcher-only .external-game-zone__frame-card {
+  display: none;
+}
+
+.external-game-zone__launch-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1fr);
+  gap: clamp(18px, 3vw, 34px);
+  align-items: center;
+  overflow: hidden;
+  padding: clamp(18px, 3vw, 30px);
+  background:
+    radial-gradient(circle at 85% 15%, rgba(124, 58, 237, 0.14), transparent 30%),
+    linear-gradient(135deg, #ffffff 0%, #f8f7ff 50%, #eef6ff 100%);
+  border: 1px solid rgba(124, 58, 237, 0.14);
+  box-shadow: 0 24px 70px rgba(49, 21, 104, 0.1);
+}
+
+.external-game-zone__launch-art {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #160b3d;
+  box-shadow: 0 24px 58px rgba(22, 11, 61, 0.28);
+}
+
+.external-game-zone__launch-art img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.external-game-zone__launch-art span {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: #bce94e;
+  color: #160b2d;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.external-game-zone__launch-copy h2 {
+  margin: 5px 0 10px;
+  color: #211047;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.external-game-zone__launch-copy p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--portal-muted);
+  line-height: 1.6;
+}
+
+.external-game-zone__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.external-game-zone__steps span {
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.external-game-zone__launch-copy .portal-primary-button {
+  width: fit-content;
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .external-game-zone__launch-card {
+    grid-template-columns: 1fr;
+  }
+  .external-game-zone__launch-copy .portal-primary-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
