@@ -21,31 +21,51 @@ function requireSupabase() {
 
 function chatError(error, fallback) {
   const message = error?.message || fallback
-  if (/get_support|support_conversation|support-attachments|bucket not found|schema cache|function .* does not exist/i.test(message)) {
+  if (/get_account_support|send_account_support|function .* does not exist|schema cache/i.test(message)) {
+    return new Error('Support chat account-mode setup is not complete yet. The administrator needs to run the latest support_chat.sql in Supabase.')
+  }
+  if (/get_support|support_conversation|support-attachments|bucket not found|schema cache/i.test(message)) {
     return new Error('Support chat setup is not complete yet. The administrator needs to run support_chat.sql in Supabase.')
   }
   return new Error(message)
 }
 
-export function readSavedSupportThread() {
+function keyFor(storageKey = '') {
+  return storageKey ? `${THREAD_KEY}:${storageKey}` : THREAD_KEY
+}
+
+export function readSavedSupportThread(storageKey = '') {
   try {
-    const value = JSON.parse(localStorage.getItem(THREAD_KEY) || 'null')
-    return value?.conversationId && value?.accessToken ? value : null
+    const value = JSON.parse(localStorage.getItem(keyFor(storageKey)) || 'null')
+    return value?.conversationId && (value?.accessToken || value?.accountMode) ? value : null
   } catch {
     return null
   }
 }
 
-export function saveSupportThread(credentials) {
-  try { localStorage.setItem(THREAD_KEY, JSON.stringify(credentials)) } catch { /* The active tab still keeps the credentials. */ }
+export function saveSupportThread(credentials, storageKey = '') {
+  try { localStorage.setItem(keyFor(storageKey), JSON.stringify(credentials)) } catch { /* The active tab still keeps the credentials. */ }
 }
 
-export function clearSavedSupportThread() {
-  try { localStorage.removeItem(THREAD_KEY) } catch { /* Storage cleanup is best-effort. */ }
+export function clearSavedSupportThread(storageKey = '') {
+  try { localStorage.removeItem(keyFor(storageKey)) } catch { /* Storage cleanup is best-effort. */ }
 }
 
-export async function createSupportConversation({ parentName, email, language, message }) {
+export async function createSupportConversation({ parentName, email, language, message, accountMode = false, storageKey = '' }) {
   requireSupabase()
+  if (accountMode) {
+    const { data, error } = await supabase.rpc('get_or_create_account_support_conversation', {
+      parent_name: parentName,
+      parent_email: email,
+      visitor_language: language,
+      first_message: message,
+    })
+    if (error) throw chatError(error, 'The account support conversation could not be opened.')
+    const credentials = { conversationId: data.conversationId, accountMode: true }
+    saveSupportThread(credentials, storageKey)
+    return credentials
+  }
+
   const { data, error } = await supabase.rpc('create_support_conversation', {
     parent_name: parentName,
     parent_email: email,
@@ -54,12 +74,20 @@ export async function createSupportConversation({ parentName, email, language, m
   })
   if (error) throw chatError(error, 'The conversation could not be created.')
   const credentials = { conversationId: data.conversationId, accessToken: data.accessToken }
-  saveSupportThread(credentials)
+  saveSupportThread(credentials, storageKey)
   return credentials
 }
 
 export async function fetchSupportThread(credentials) {
   requireSupabase()
+  if (credentials.accountMode) {
+    const { data, error } = await supabase.rpc('get_account_support_thread', {
+      target_conversation_id: credentials.conversationId,
+    })
+    if (error) throw chatError(error, 'The account support conversation could not be loaded.')
+    return data || { status: 'open', messages: [] }
+  }
+
   const { data, error } = await supabase.rpc('get_support_thread', {
     target_conversation_id: credentials.conversationId,
     visitor_token: credentials.accessToken,
@@ -70,6 +98,15 @@ export async function fetchSupportThread(credentials) {
 
 export async function sendParentSupportMessage(credentials, message) {
   requireSupabase()
+  if (credentials.accountMode) {
+    const { data, error } = await supabase.rpc('send_account_support_message', {
+      target_conversation_id: credentials.conversationId,
+      message_body: message,
+    })
+    if (error) throw chatError(error, 'The message could not be sent.')
+    return data
+  }
+
   const { data, error } = await supabase.rpc('send_support_message', {
     target_conversation_id: credentials.conversationId,
     visitor_token: credentials.accessToken,
@@ -82,9 +119,24 @@ export async function sendParentSupportMessage(credentials, message) {
 export async function uploadParentSupportAttachment(credentials, file, message = '') {
   requireSupabase()
   validateAttachment(file)
-  const path = `${credentials.conversationId}/${credentials.accessToken}/${crypto.randomUUID()}-${safeFileName(file.name)}`
+  const folderToken = credentials.accountMode ? 'account' : credentials.accessToken
+  const path = `${credentials.conversationId}/${folderToken}/${crypto.randomUUID()}-${safeFileName(file.name)}`
   const { error: uploadError } = await supabase.storage.from(SUPPORT_BUCKET).upload(path, file, { contentType: file.type, upsert: false })
   if (uploadError) throw chatError(uploadError, 'The attachment could not be uploaded.')
+
+  if (credentials.accountMode) {
+    const { data, error } = await supabase.rpc('send_account_support_attachment', {
+      target_conversation_id: credentials.conversationId,
+      message_body: message,
+      uploaded_path: path,
+      original_name: file.name.slice(-180),
+      mime_type: file.type,
+      byte_size: file.size,
+    })
+    if (error) throw chatError(error, 'The attachment message could not be sent.')
+    return data
+  }
+
   const { data, error } = await supabase.rpc('send_support_attachment', {
     target_conversation_id: credentials.conversationId,
     visitor_token: credentials.accessToken,
@@ -136,7 +188,7 @@ export async function uploadAdminSupportAttachment(conversationId, file, message
     mime_type: file.type,
     byte_size: file.size,
   })
-  if (error) throw chatError(error, 'The attachment reply could not be sent.')
+  if (error) throw chatError(error, 'The attachment message could not be sent.')
   return data
 }
 
@@ -147,11 +199,11 @@ export async function downloadSupportAttachment(attachment) {
   const url = URL.createObjectURL(data)
   const link = document.createElement('a')
   link.href = url
-  link.download = attachment.name || 'attachment'
+  link.download = attachment.name || 'support-attachment'
   document.body.appendChild(link)
   link.click()
   link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  window.setTimeout(() => URL.revokeObjectURL(url), 500)
 }
 
 export async function setSupportConversationStatus(conversationId, status) {
@@ -160,6 +212,6 @@ export async function setSupportConversationStatus(conversationId, status) {
     target_conversation_id: conversationId,
     next_status: status,
   })
-  if (error) throw chatError(error, 'The conversation status could not be changed.')
-  return Boolean(data)
+  if (error) throw chatError(error, 'The conversation status could not be updated.')
+  return data
 }

@@ -36,9 +36,11 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
   const [error, setError] = useState('')
   const messagesRef = useRef(null)
   const attachmentInputRef = useRef(null)
+  const creatingRef = useRef(false)
   const supportLanguage = (locale.country || '').toUpperCase() === 'PH' ? 'en' : (locale.language || 'en')
   const chinese = isChineseVisitor({ language: supportLanguage, country: locale.country })
   const supportRoleLabel = audience === 'teacher' ? (chinese ? '教师客服' : 'Teachers Support') : (chinese ? '家长客服' : 'Parent Support')
+  const supportStorageKey = account?.id ? `${audience}:${account.id}` : ''
 
   useEffect(() => {
     const refreshAccount = () => {
@@ -59,6 +61,12 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
       unsubscribeLocale()
     }
   }, [])
+
+  useEffect(() => {
+    if (!supportStorageKey) return undefined
+    setCredentials(readSavedSupportThread(supportStorageKey))
+    return undefined
+  }, [supportStorageKey])
 
   useEffect(() => {
     if (!embedded) return undefined
@@ -104,11 +112,17 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
   }, [supportLanguage, thread?.messages, translations])
 
   useEffect(() => {
-    if (!open || !embedded || !autoStartForAccount || credentials || !account || account.role === 'admin') return undefined
+    if (!open || !embedded || !autoStartForAccount || credentials || !account || account.role === 'admin' || creatingRef.current) return undefined
     let cancelled = false
     const start = async () => {
+      const saved = readSavedSupportThread(supportStorageKey)
+      if (saved) {
+        setCredentials(saved)
+        return
+      }
       const email = accountEmail(account) || (account.id ? `${account.id}@tutorpro.local` : '')
       if (!email) return
+      creatingRef.current = true
       setLoading(true)
       setError('')
       try {
@@ -120,6 +134,8 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
           message: audience === 'teacher'
             ? `${displayName} opened a teacher website support chat.`
             : `${displayName} opened a family website support chat.`,
+          accountMode: true,
+          storageKey: supportStorageKey,
         })
         if (cancelled) return
         setCredentials(nextCredentials)
@@ -127,21 +143,30 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
       } catch (createError) {
         if (!cancelled) setError(createError.message)
       } finally {
+        creatingRef.current = false
         if (!cancelled) setLoading(false)
       }
     }
     start()
     return () => { cancelled = true }
-  }, [account, audience, autoStartForAccount, credentials, embedded, open, supportLanguage])
+  }, [account, audience, autoStartForAccount, credentials, embedded, open, supportLanguage, supportStorageKey])
 
   if (account?.role === 'admin') return null
 
   const beginConversation = async (event) => {
     event.preventDefault()
+    if (creatingRef.current) return
     if (form.parentName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(form.email.trim()) || !form.message.trim()) {
       setError(chinese ? '请填写姓名、有效邮箱和您的问题。' : 'Add your name, a valid email and your question.')
       return
     }
+    const saved = readSavedSupportThread(supportStorageKey)
+    if (saved) {
+      setCredentials(saved)
+      setThread(await fetchSupportThread(saved))
+      return
+    }
+    creatingRef.current = true
     setLoading(true)
     setError('')
     try {
@@ -150,6 +175,8 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
         email: form.email.trim(),
         language: supportLanguage || 'en',
         message: form.message.trim(),
+        accountMode: Boolean(account?.id),
+        storageKey: supportStorageKey,
       })
       setCredentials(nextCredentials)
       setForm((current) => ({ ...current, message: '' }))
@@ -157,6 +184,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
     } catch (createError) {
       setError(createError.message)
     } finally {
+      creatingRef.current = false
       setLoading(false)
     }
   }
@@ -192,8 +220,16 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
     setError('')
   }
 
-  const startAgain = () => {
-    clearSavedSupportThread()
+  const startAgain = async () => {
+    if (credentials?.accountMode) {
+      setError('')
+      setDraft('')
+      setAttachment(null)
+      setTranslations({})
+      setThread(await fetchSupportThread(credentials).catch(() => thread))
+      return
+    }
+    clearSavedSupportThread(supportStorageKey)
     setCredentials(null)
     setThread(null)
     setError('')
@@ -227,7 +263,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
           <button type="submit" disabled={loading}>{loading ? (chinese ? '正在发送…' : 'Sending…') : (chinese ? '开始咨询' : 'Start conversation')} <Send size={16} /></button>
           <p><ShieldCheck size={13} /> {chinese ? '此对话仅对您和 TutorPro 管理员可见。' : 'Private between you and the TutorPro administrator.'}</p>
         </form> : <div className="support-thread">
-          <div className="support-thread-meta"><span className={`support-thread-status support-thread-status--${thread?.status || 'open'}`}>{thread?.status === 'closed' ? (chinese ? '已结束' : 'Closed') : (chinese ? '客服对话' : 'Support conversation')}</span><button onClick={startAgain}><RotateCcw size={13} /> {chinese ? '新对话' : 'New'}</button></div>
+          <div className="support-thread-meta"><span className={`support-thread-status support-thread-status--${thread?.status || 'open'}`}>{thread?.status === 'closed' ? (chinese ? '已结束' : 'Closed') : (chinese ? '客服对话' : 'Support conversation')}</span><button onClick={startAgain}><RotateCcw size={13} /> {credentials?.accountMode ? (chinese ? '刷新' : 'Refresh') : (chinese ? '新对话' : 'New')}</button></div>
           <div className="support-messages" ref={messagesRef}>{thread?.messages?.length ? thread.messages.map((message) => <div className={`support-message support-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? (chinese ? 'TutorPro 管理员' : 'TutorPro Admin') : (chinese ? '您' : 'You')}</small><p>{message.body}</p>{translations[message.id] && <p className="support-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleTimeString(supportLanguage || 'en', { hour: 'numeric', minute: '2-digit' })}</time></div>) : <div className="support-loading">{chinese ? '正在加载对话…' : 'Loading conversation…'}</div>}</div>
           {error && <div className="support-error">{error}</div>}
           <form className="support-reply" onSubmit={sendMessage}>{attachment && <div className="support-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (attachmentInputRef.current) attachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-file-button" title={chinese ? '上传文件' : 'Upload file'}><FileUp size={17} /><input ref={attachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => submitOnEnter(event, sendMessage)} placeholder={thread?.status === 'closed' ? (chinese ? '发送消息将重新开启对话' : 'A new message will reopen this conversation') : (chinese ? '输入消息…' : 'Write a message…')} maxLength="1000" /><button type="submit" disabled={loading || (!draft.trim() && !attachment)} aria-label="Send message"><Send size={17} /></button></form>
