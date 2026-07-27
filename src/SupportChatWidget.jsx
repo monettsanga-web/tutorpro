@@ -18,7 +18,7 @@ function accountEmail(account) {
   return candidate.includes('@') ? candidate : ''
 }
 
-export default function SupportChatWidget({ embedded = false }) {
+export default function SupportChatWidget({ embedded = false, autoStartForAccount = false, audience = 'parent' }) {
   const [account, setAccount] = useState(getCurrentAccount)
   const [locale, setLocale] = useState(currentVisitorLocale)
   const [open, setOpen] = useState(embedded)
@@ -37,6 +37,7 @@ export default function SupportChatWidget({ embedded = false }) {
   const messagesRef = useRef(null)
   const attachmentInputRef = useRef(null)
   const chinese = isChineseVisitor(locale)
+  const supportRoleLabel = audience === 'teacher' ? (chinese ? '教师客服' : 'Teacher Support') : (chinese ? '家长客服' : 'Parent Support')
 
   useEffect(() => {
     const refreshAccount = () => {
@@ -100,6 +101,37 @@ export default function SupportChatWidget({ embedded = false }) {
     })
     return () => { active = false }
   }, [locale.language, thread?.messages, translations])
+
+  useEffect(() => {
+    if (!open || !embedded || !autoStartForAccount || credentials || !account || account.role === 'admin') return undefined
+    let cancelled = false
+    const start = async () => {
+      const email = accountEmail(account) || (account.id ? `${account.id}@tutorpro.local` : '')
+      if (!email) return
+      setLoading(true)
+      setError('')
+      try {
+        const displayName = account.parentName || account.fullName || account.displayName || 'TutorPro English user'
+        const nextCredentials = await createSupportConversation({
+          parentName: displayName,
+          email,
+          language: locale.language || 'en',
+          message: audience === 'teacher'
+            ? `${displayName} opened a teacher website support chat.`
+            : `${displayName} opened a family website support chat.`,
+        })
+        if (cancelled) return
+        setCredentials(nextCredentials)
+        setThread(await fetchSupportThread(nextCredentials))
+      } catch (createError) {
+        if (!cancelled) setError(createError.message)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    start()
+    return () => { cancelled = true }
+  }, [account, audience, autoStartForAccount, credentials, embedded, locale.language, open])
 
   if (account?.role === 'admin') return null
 
@@ -174,11 +206,12 @@ export default function SupportChatWidget({ embedded = false }) {
       {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
 
       {open && <section className="support-panel" role="dialog" aria-label={chinese ? '家长客服聊天' : 'Parent support chat'}>
-        <header><span><Headphones size={21} /></span><div><strong>{chinese ? 'TutorPro 中文家长客服' : 'TutorPro Parent Support'}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div>{!embedded && <button onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>}</header>
+        <header><span><Headphones size={21} /></span><div><strong>{supportRoleLabel}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div>{!embedded && <button onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>}</header>
 
-        {!credentials ? <form className="support-start" onSubmit={beginConversation}>
+        {!credentials && autoStartForAccount && account ? <div className="support-loading">{loading ? (chinese ? '正在打开对话…' : 'Opening your support chat…') : (error || (chinese ? '无法自动打开对话。' : 'Unable to open chat automatically.'))}</div> : !credentials ? <form className="support-start" onSubmit={beginConversation}>
           <div className="support-language-note"><Languages size={15} /><span>{chinese ? '您可以使用中文留言。管理员的回复会保存在这里。' : 'Write in English or Chinese. Replies stay in this private conversation.'}</span></div>
           {account?.role === 'student' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为注册家长账户' : 'Registered family account identified'}</div>}
+          {account?.role === 'teacher' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为教师账户' : 'Registered teacher account identified'}</div>}
           <label><span>{chinese ? '家长姓名' : 'Parent name'}</span><input value={form.parentName} onChange={(event) => setForm((current) => ({ ...current, parentName: event.target.value }))} placeholder={chinese ? '请输入您的姓名' : 'Your name'} maxLength="100" /></label>
           <label><span>{chinese ? '联系邮箱' : 'Contact email'}</span><input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder={chinese ? 'QQ、163、Outlook 或其他邮箱' : 'you@example.com'} maxLength="180" /></label>
           <label><span>{chinese ? '您的问题' : 'How can we help?'}</span><textarea value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} placeholder={chinese ? '请告诉我们您想咨询的问题…' : 'Tell us your question…'} maxLength="1000" /></label>
