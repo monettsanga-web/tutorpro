@@ -1363,7 +1363,7 @@ export default function App() {
           <FinalCTA onBook={openRegistration} />
         </main>
       )}
-      <FacebookMessengerContact />
+      {currentAccount && <FacebookMessengerContact />}
       <Footer
         onRegister={openRegistration}
         onLogin={openLogin}
