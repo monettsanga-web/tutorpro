@@ -4223,3 +4223,109 @@ body {
 }
 
 .footer__contact .footer__whatsapp:hover { color: #fff; background: #249f56; }
+
+/* SEO-focused global discovery section */
+.global-discovery {
+  position: relative;
+  padding: clamp(64px, 8vw, 110px) 0;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(188, 233, 78, 0.16), transparent 30%),
+    linear-gradient(135deg, #321568 0%, #4c1d95 52%, #111827 100%);
+  color: #fff;
+  overflow: hidden;
+}
+
+.global-discovery::after {
+  content: '';
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  right: -190px;
+  bottom: -230px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent 65%);
+}
+
+.global-discovery__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: clamp(24px, 5vw, 60px);
+  align-items: center;
+}
+
+.global-discovery .kicker {
+  color: #bce94e;
+}
+
+.global-discovery__content h2 {
+  max-width: 760px;
+  margin: 10px 0 14px;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.global-discovery__content p {
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.global-discovery__content ul {
+  display: grid;
+  gap: 11px;
+  margin: 24px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.global-discovery__content li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 760;
+}
+
+.global-discovery__content li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #bce94e;
+}
+
+.global-discovery__panel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 28px;
+  padding: clamp(18px, 3vw, 28px);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.global-discovery__panel span {
+  color: #bce94e;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.global-discovery__panel strong {
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+@media (max-width: 860px) {
+  .global-discovery__grid {
+    grid-template-columns: 1fr;
+  }
+}

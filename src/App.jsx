@@ -99,7 +99,7 @@ const faqs = [
   {
     question: 'What is the difference between the plans?',
     answer:
-      'The Weekly plan is designed for one or two classes a week and is paid weekly. The Package plan is for four or five 25-minute classes a week, paid monthly, with priority scheduling and a dedicated tutor.',
+      'The Weekly plan is designed for 1–3 classes a week and is paid weekly. The Monthly Package is for 4–7 25-minute classes a week, billed monthly, with priority scheduling and a dedicated tutor.',
   },
   {
     question: 'Can I change plans later?',
@@ -939,6 +939,47 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
   )
 }
 
+function GlobalDiscovery({ onBook }) {
+  const comparisonPoints = [
+    '1-to-1 online English classes for kids and teens worldwide',
+    'Cambridge and Oxford-aligned lessons for Primary and Secondary learners',
+    'Flexible weekly plans and monthly packages for consistent progress',
+    'A focused alternative for families comparing Novakid, 51Talk and other online English platforms',
+  ]
+
+  return (
+    <section className="global-discovery" id="online-english-classes">
+      <div className="container global-discovery__grid">
+        <div className="global-discovery__content">
+          <span className="kicker">Global online English classes</span>
+          <h2>Looking for a Novakid or 51Talk alternative?</h2>
+          <p>
+            TutorPro English helps families around the world find personalised online English classes for children,
+            with friendly 1-to-1 tutoring, school-aligned support and transparent lesson packages.
+          </p>
+          <ul>
+            {comparisonPoints.map((point) => <li key={point}><Check size={16} /> {point}</li>)}
+          </ul>
+          <button className="button button--primary" onClick={() => onBook('Global online English classes')}>
+            Start online English classes <ArrowRight size={17} />
+          </button>
+        </div>
+        <div className="global-discovery__panel" aria-label="Popular search terms TutorPro English supports">
+          <span>Popular searches</span>
+          {[
+            'online English classes for kids',
+            'English tutor online for children',
+            'Cambridge English tutor online',
+            'Oxford English classes online',
+            'Novakid alternative',
+            '51Talk alternative',
+          ].map((term) => <strong key={term}>{term}</strong>)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Pricing({ onBook }) {
   return (
     <section className="section pricing" id="pricing">
@@ -981,7 +1022,7 @@ function Pricing({ onBook }) {
             <div className="package-price">
               <strong>$8</strong><span>/ 25 min class</span>
             </div>
-            <p className="price-card__cadence">4–5 classes per week · pay monthly</p>
+            <p className="price-card__cadence">4–7 classes per week · pay monthly</p>
             <ul>
               <li><Check size={16} /> Save $2 on every class</li>
               <li><Check size={16} /> Priority scheduling</li>
@@ -1279,6 +1320,7 @@ export default function App() {
           <Stats />
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />
+          <GlobalDiscovery onBook={openRegistration} />
           <Programmes />
           <CurriculumFramework />
           <HowItWorks onBook={openRegistration} />
