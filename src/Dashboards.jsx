@@ -1996,7 +1996,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'support' && (
         <div className="portal-view parent-support-view">
           <div className="portal-page-heading">
-            <div><span className="portal-kicker">English & 中文 support</span><h1>Chat with TutorPro English</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div>
+            <div><span className="portal-kicker">English & 中文 support</span><h1>Parent Support</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div>
             <span className="support-inbox-live"><i /> Private support</span>
           </div>
           {!parentChinaSupport && (
@@ -2469,7 +2469,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <div className="portal-page-heading">
             <div>
               <span className="portal-kicker">TutorPro Helpdesk</span>
-              <h1>Contact Administration</h1>
+              <h1>Teachers Support</h1>
               <p>Choose Facebook Messenger or secure website chat. Website chat opens directly from your teacher account.</p>
             </div>
             <span className="support-inbox-live"><i /> Teacher support</span>

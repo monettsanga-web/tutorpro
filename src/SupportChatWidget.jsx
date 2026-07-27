@@ -38,7 +38,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
   const attachmentInputRef = useRef(null)
   const supportLanguage = (locale.country || '').toUpperCase() === 'PH' ? 'en' : (locale.language || 'en')
   const chinese = isChineseVisitor({ language: supportLanguage, country: locale.country })
-  const supportRoleLabel = audience === 'teacher' ? (chinese ? '教师客服' : 'Teacher Support') : (chinese ? '家长客服' : 'Parent Support')
+  const supportRoleLabel = audience === 'teacher' ? (chinese ? '教师客服' : 'Teachers Support') : (chinese ? '家长客服' : 'Parent Support')
 
   useEffect(() => {
     const refreshAccount = () => {
