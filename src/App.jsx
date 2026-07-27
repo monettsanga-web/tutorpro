@@ -32,8 +32,9 @@ import PortalAccess from './PortalAccess.jsx'
 import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
-import { currentVisitorLocale, subscribeToVisitorLocale } from './visitorLocale.js'
+import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
+import SupportChatWidget from './SupportChatWidget.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -1100,9 +1101,13 @@ function FinalCTA({ onBook }) {
 
 function FacebookMessengerContact() {
   const facebookPageId = import.meta.env.VITE_FACEBOOK_PAGE_ID || ''
+  const [locale, setLocale] = useState(currentVisitorLocale)
+  const chineseVisitor = isChineseVisitor(locale)
+
+  useEffect(() => subscribeToVisitorLocale(setLocale), [])
 
   useEffect(() => {
-    if (!facebookPageId || typeof window === 'undefined') return undefined
+    if (chineseVisitor || !facebookPageId || typeof window === 'undefined') return undefined
     window.fbAsyncInit = function fbAsyncInit() {
       window.FB?.init({ xfbml: true, version: 'v20.0' })
     }
@@ -1118,7 +1123,11 @@ function FacebookMessengerContact() {
       window.FB?.XFBML?.parse()
     }
     return undefined
-  }, [facebookPageId])
+  }, [chineseVisitor, facebookPageId])
+
+  if (chineseVisitor) {
+    return <SupportChatWidget />
+  }
 
   return (
     <>

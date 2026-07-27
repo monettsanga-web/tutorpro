@@ -1997,11 +1997,20 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             <div>
               <span className="portal-kicker">TutorPro Helpdesk</span>
               <h1>Contact Administration</h1>
-              <p>Chat with TutorPro Customer Service about bookings, payouts, rates, or general inquiries in real-time.</p>
+              <p>Choose Facebook Messenger or the secure website chat for bookings, payouts, rates, or general inquiries.</p>
             </div>
-            <span className="support-inbox-live"><i /> Secure Chat</span>
+            <span className="support-inbox-live"><i /> Teacher support</span>
           </div>
-          <SupportChatWidget embedded />
+          <section className="portal-card teacher-support-channel-card">
+            <div><span className="portal-kicker">Choose a chat channel</span><h2>How would you like to contact admin?</h2><p>Facebook Messenger is quick for non-China access. Website chat works inside TutorPro and is the safer option when Facebook is unavailable.</p></div>
+            <div className="teacher-support-channel-card__actions">
+              <a className="portal-primary-button" href="https://m.me/tutorproenglish" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Facebook Messenger</a>
+              <a className="portal-secondary-button" href="#teacher-website-support"><MessageSquareText size={16} /> Website chat</a>
+            </div>
+          </section>
+          <div id="teacher-website-support">
+            <SupportChatWidget embedded />
+          </div>
         </div>
       )}
 
