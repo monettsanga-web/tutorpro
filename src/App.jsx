@@ -944,7 +944,7 @@ function GlobalDiscovery({ onBook }) {
     '1-to-1 online English classes for kids and teens worldwide',
     'Cambridge and Oxford-aligned lessons for Primary and Secondary learners',
     'Flexible weekly plans and monthly packages for consistent progress',
-    'A focused alternative for families comparing Novakid, 51Talk and other online English platforms',
+    'A focused alternative for families comparing Novakid, 51Talk, Preply and other online English platforms',
   ]
 
   return (
@@ -952,7 +952,7 @@ function GlobalDiscovery({ onBook }) {
       <div className="container global-discovery__grid">
         <div className="global-discovery__content">
           <span className="kicker">Global online English classes</span>
-          <h2>Looking for a Novakid or 51Talk alternative?</h2>
+          <h2>Looking for a Novakid, 51Talk or Preply alternative?</h2>
           <p>
             TutorPro English helps families around the world find personalised online English classes for children,
             with friendly 1-to-1 tutoring, school-aligned support and transparent lesson packages.
@@ -973,6 +973,7 @@ function GlobalDiscovery({ onBook }) {
             'Oxford English classes online',
             'Novakid alternative',
             '51Talk alternative',
+            'Preply alternative for kids',
           ].map((term) => <strong key={term}>{term}</strong>)}
         </div>
       </div>
@@ -1097,6 +1098,40 @@ function FinalCTA({ onBook }) {
   )
 }
 
+function FacebookMessengerContact() {
+  const facebookPageId = import.meta.env.VITE_FACEBOOK_PAGE_ID || ''
+
+  useEffect(() => {
+    if (!facebookPageId || typeof window === 'undefined') return undefined
+    window.fbAsyncInit = function fbAsyncInit() {
+      window.FB?.init({ xfbml: true, version: 'v20.0' })
+    }
+    if (!document.getElementById('facebook-jssdk')) {
+      const script = document.createElement('script')
+      script.id = 'facebook-jssdk'
+      script.async = true
+      script.defer = true
+      script.crossOrigin = 'anonymous'
+      script.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js'
+      document.body.appendChild(script)
+    } else {
+      window.FB?.XFBML?.parse()
+    }
+    return undefined
+  }, [facebookPageId])
+
+  return (
+    <>
+      {facebookPageId && <div id="fb-root" />}
+      {facebookPageId && <div className="fb-customerchat" attribution="biz_inbox" page_id={facebookPageId} greeting_dialog_display="fade" greeting_dialog_delay="3" theme_color="#6d28d9" logged_in_greeting="Hi! Message TutorPro English here. Our admin will reply in Facebook Messenger." logged_out_greeting="Hi! Message TutorPro English here. Our admin will reply in Facebook Messenger." />}
+      <a className="messenger-float" href="https://m.me/tutorproenglish" target="_blank" rel="noreferrer" aria-label="Message TutorPro English on Facebook Messenger">
+        <MessageCircle size={21} />
+        <span><strong>Need help?</strong><small>Chat on Messenger</small></span>
+      </a>
+    </>
+  )
+}
+
 function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
   return (
     <footer className="footer">
@@ -1133,6 +1168,8 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <h3>Contact us</h3>
               <a href="mailto:sejongenglish@yahoo.com"><Mail size={15} /> <span>sejongenglish@yahoo.com</span></a>
               <a href="tel:+639625284849"><Phone size={15} /> <span>+63 962 528 4849</span></a>
+              <a href="https://www.facebook.com/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Facebook Page</span></a>
+              <a className="footer__whatsapp" href="https://m.me/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on Messenger</span></a>
               <a className="footer__whatsapp" href="https://wa.me/639625284849" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on WhatsApp</span></a>
             </div>
           </div>
@@ -1329,6 +1366,7 @@ export default function App() {
           <FinalCTA onBook={openRegistration} />
         </main>
       )}
+      <FacebookMessengerContact />
       <Footer
         onRegister={openRegistration}
         onLogin={openLogin}
