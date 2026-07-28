@@ -4,8 +4,8 @@ const fs = require('fs')
 
 const APP_NAME = 'TutorPro English Classroom'
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || 'http://127.0.0.1:5173'
+const PRODUCTION_APP_URL = process.env.TUTORPRO_APP_URL || 'https://www.tutorpro.site'
 const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_RENDERER_URL
-const appOrigin = isDev ? DEV_SERVER_URL : `file://${path.join(__dirname, '..', 'dist', 'index.html')}`
 
 app.setName(APP_NAME)
 
@@ -51,7 +51,7 @@ function createMainWindow() {
   })
 
   if (isDev) window.loadURL(DEV_SERVER_URL)
-  else window.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+  else window.loadURL(PRODUCTION_APP_URL)
 
   return window
 }
