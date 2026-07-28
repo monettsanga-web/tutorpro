@@ -5096,3 +5096,70 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.teacher-dashboard-profile-card__schedule-preview--real {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.teacher-dashboard-profile-card__course-panel,
+.teacher-dashboard-profile-card__resume-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.teacher-dashboard-profile-card__course-panel > div,
+.teacher-dashboard-profile-card__resume-panel > div,
+.teacher-dashboard-profile-card__empty-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fff;
+}
+
+.teacher-dashboard-profile-card__course-panel strong,
+.teacher-dashboard-profile-card__resume-panel strong,
+.teacher-dashboard-profile-card__empty-panel strong {
+  display: block;
+  color: #111827;
+  font-size: .92rem;
+}
+
+.teacher-dashboard-profile-card__course-panel span,
+.teacher-dashboard-profile-card__resume-panel span,
+.teacher-dashboard-profile-card__empty-panel span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: .76rem;
+  line-height: 1.4;
+}
+
+.teacher-dashboard-profile-card__empty-panel {
+  display: grid;
+  min-height: 190px;
+  align-content: center;
+  text-align: center;
+}
+
+.teacher-dashboard-profile-card__lesson-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.teacher-dashboard-profile-card__lesson-panel .profile-intro-video,
+.teacher-dashboard-profile-card__lesson-panel .video-iframe-container,
+.teacher-dashboard-profile-card__lesson-panel .profile-video-placeholder {
+  height: 190px !important;
+}
+
+@media (max-width: 700px) {
+  .teacher-dashboard-profile-card__course-panel,
+  .teacher-dashboard-profile-card__resume-panel,
+  .teacher-dashboard-profile-card__lesson-panel {
+    grid-template-columns: 1fr;
+  }
+}

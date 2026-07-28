@@ -35,6 +35,7 @@ import { getBookings, mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
+import { WEEKDAYS } from './schedule.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
 
@@ -761,7 +762,7 @@ function HowItWorks({ onBook }) {
 }
 
 function PublicTeacherCard({ teacher, onChooseTeacher }) {
-  const [activeMedia, setActiveMedia] = useState('photo')
+  const [activeMedia, setActiveMedia] = useState('schedule')
   const profile = teacher.teacher || {}
   const reviews = getBookings({ teacherId: teacher.id })
     .filter((booking) => booking.studentRating?.score)
@@ -775,6 +776,14 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
   const experience = Number(profile.experience || 0)
   const firstName = teacher.fullName?.split(' ')[0] || 'Teacher'
   const parentReview = reviews[0]
+  const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
+  const availabilityByDay = WEEKDAYS.map((day, dayIndex) => ({
+    day,
+    times: availabilitySlots
+      .filter((slot) => String(slot).startsWith(`${dayIndex}-`))
+      .map((slot) => String(slot).split('-').slice(1).join('-'))
+      .sort(),
+  })).filter((item) => item.times.length)
 
   return (
     <article className="teacher-dashboard-profile-card">
@@ -787,7 +796,7 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
               <BadgeCheck size={18} fill="#1877f2" color="#1877f2" />
             </div>
             <p>{profile.specialization || 'English Teacher'} · {profile.languages || 'English'}</p>
-            <span className="teacher-dashboard-profile-card__top-badge">TOP Tutor</span>
+            {teacher.status === 'approved' && <span className="teacher-dashboard-profile-card__top-badge">TOP Tutor</span>}
           </div>
           <button type="button" className="teacher-dashboard-profile-card__save" aria-label={`Save ${teacher.fullName}`}>♡</button>
         </div>
@@ -803,23 +812,22 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
           {profile.bio || "Enhance your child’s English skills with a friendly, patient tutor. Lessons are personalised for speaking confidence, grammar, reading and school success."}
         </p>
 
-        <div className="teacher-dashboard-profile-card__tabs" role="group" aria-label="Teacher profile actions">
-          <button type="button" className="active" onClick={() => onChooseTeacher(teacher)}>Schedule</button>
-          <button type="button" onClick={() => setActiveMedia('sample')}>Courses</button>
-          <button type="button" onClick={() => setActiveMedia('photo')}>Resume</button>
-          <button type="button" onClick={() => setActiveMedia('intro')}>Lessons</button>
+        <div className="teacher-dashboard-profile-card__tabs" role="group" aria-label="Teacher profile sections">
+          <button type="button" className={activeMedia === 'schedule' ? 'active' : ''} onClick={() => setActiveMedia('schedule')}>Schedule</button>
+          <button type="button" className={activeMedia === 'courses' ? 'active' : ''} onClick={() => setActiveMedia('courses')}>Courses</button>
+          <button type="button" className={activeMedia === 'resume' ? 'active' : ''} onClick={() => setActiveMedia('resume')}>Resume</button>
+          <button type="button" className={activeMedia === 'lessons' ? 'active' : ''} onClick={() => setActiveMedia('lessons')}>Lessons</button>
         </div>
 
         <div className="teacher-dashboard-profile-card__media">
-          {activeMedia === 'photo' && (
-            <div className="teacher-dashboard-profile-card__schedule-preview">
-              <div><span>GMT+8</span><strong>Mon</strong><small>English Grammar<br />08:00 – 09:00</small></div>
-              <div><span>GMT+8</span><strong>Wed</strong><small>Speaking Practice<br />09:00 – 10:30</small></div>
-              <div><span>GMT+8</span><strong>Fri</strong><small>Reading Class<br />10:00 – 11:00</small></div>
-            </div>
+          {activeMedia === 'schedule' && (
+            availabilityByDay.length ? <div className="teacher-dashboard-profile-card__schedule-preview teacher-dashboard-profile-card__schedule-preview--real">
+              {availabilityByDay.slice(0, 5).map((item) => <div key={item.day}><span>Available</span><strong>{item.day.slice(0, 3)}</strong><small>{item.times.slice(0, 4).join(' · ')}{item.times.length > 4 ? ' +' : ''}</small></div>)}
+            </div> : <div className="teacher-dashboard-profile-card__empty-panel"><strong>Schedule being prepared</strong><span>This teacher’s available times will appear here after availability is saved.</span></div>
           )}
-          {activeMedia === 'intro' && <IntroVideo accountId={teacher.id} compact={false} />}
-          {activeMedia === 'sample' && <SampleClassPlayer url={profile.sampleClassUrl} />}
+          {activeMedia === 'courses' && <div className="teacher-dashboard-profile-card__course-panel"><div><strong>Cambridge English</strong><span>Primary and Secondary support</span></div><div><strong>Oxford English</strong><span>Grammar, reading and writing</span></div><div><strong>Speaking Confidence</strong><span>Conversation and pronunciation</span></div><div><strong>School Support</strong><span>Homework, exams and progress goals</span></div></div>}
+          {activeMedia === 'resume' && <div className="teacher-dashboard-profile-card__resume-panel"><div><span>Education</span><strong>{profile.education || 'Education details being updated'}</strong></div><div><span>Experience</span><strong>{experience || 0} year{experience === 1 ? '' : 's'} teaching experience</strong></div><div><span>Languages</span><strong>{profile.languages || 'English'}</strong></div><div><span>Credentials</span><strong>{profile.credentials?.length || 0} file{profile.credentials?.length === 1 ? '' : 's'} submitted</strong></div></div>}
+          {activeMedia === 'lessons' && <div className="teacher-dashboard-profile-card__lesson-panel"><IntroVideo accountId={teacher.id} compact={false} /><SampleClassPlayer url={profile.sampleClassUrl} /></div>}
         </div>
 
         <button className="teacher-dashboard-profile-card__cta" onClick={() => onChooseTeacher(teacher)}>
