@@ -1173,7 +1173,11 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="portal-dialog feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
-        <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
+        <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || booking.learnerName || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
+        <div className="feedback-selected-student-card">
+          <span><UserRound size={18} /></span>
+          <div><small>Selected student</small><strong>{learner?.name || booking.learnerName || 'Student'}</strong><em>{formatLessonDate(booking.date, booking.time, true)} at {formatTime(booking.time)} · {booking.focus}</em></div>
+        </div>
         {error && <div className="portal-error" role="alert">{error}</div>}
 
 
