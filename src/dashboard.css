@@ -7356,3 +7356,90 @@
   background: #bce94e;
   color: #130a25;
 }
+
+/* Feedback dialog readability fix — dark text on light feedback panels */
+.feedback-dialog,
+.feedback-dialog * {
+  color-scheme: light;
+}
+
+.feedback-dialog .portal-dialog__heading h2,
+.feedback-dialog h2,
+.feedback-dialog h3,
+.feedback-dialog strong,
+.feedback-dialog legend,
+.feedback-dialog label,
+.feedback-dialog label > span,
+.feedback-dialog .feedback-form label,
+.feedback-dialog .feedback-form label > span,
+.feedback-dialog .feedback-form legend {
+  color: #1f2937 !important;
+}
+
+.feedback-dialog .portal-dialog__heading p,
+.feedback-dialog .portal-dialog__heading small,
+.feedback-dialog p,
+.feedback-dialog small,
+.feedback-dialog .feedback-form p,
+.feedback-dialog .feedback-form small,
+.feedback-dialog .feedback-resource-links p,
+.feedback-dialog .feedback-word-practice p,
+.feedback-dialog .feedback-grammar-focus p {
+  color: #64748b !important;
+}
+
+.feedback-dialog .feedback-ai-assistant {
+  background: linear-gradient(135deg, #f8fafc 0%, #f5f3ff 100%) !important;
+  border-color: rgba(124, 58, 237, 0.18) !important;
+}
+
+.feedback-dialog .feedback-ai-assistant span,
+.feedback-dialog .feedback-recommendations > span {
+  color: #5b21b6 !important;
+}
+
+.feedback-dialog .feedback-ai-assistant strong {
+  color: #1f2937 !important;
+}
+
+.feedback-dialog .feedback-ai-assistant small {
+  color: #64748b !important;
+}
+
+.feedback-dialog .feedback-ai-assistant__tones button {
+  background: #ffffff !important;
+  color: #4c1d95 !important;
+  border-color: rgba(124, 58, 237, 0.24) !important;
+}
+
+.feedback-dialog .feedback-ai-assistant__tones button.active,
+.feedback-dialog .feedback-ai-assistant__command button {
+  background: #321568 !important;
+  color: #ffffff !important;
+}
+
+.feedback-dialog .feedback-ai-assistant__command input,
+.feedback-dialog .feedback-form textarea,
+.feedback-dialog .feedback-form input,
+.feedback-dialog .feedback-resource-entry select {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.feedback-dialog .feedback-ai-assistant__command input::placeholder,
+.feedback-dialog .feedback-form textarea::placeholder,
+.feedback-dialog .feedback-form input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.feedback-dialog .feedback-recommendations {
+  background: #f8fafc !important;
+  border-color: rgba(124, 58, 237, 0.16) !important;
+}
+
+.feedback-dialog .feedback-recommendations button {
+  background: #ffffff !important;
+  color: #321568 !important;
+  border-color: rgba(124, 58, 237, 0.22) !important;
+}
