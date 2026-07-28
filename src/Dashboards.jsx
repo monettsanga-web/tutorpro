@@ -1034,6 +1034,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   const [wordDraft, setWordDraft] = useState('')
   const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
   const [aiCommand, setAiCommand] = useState('')
+  const [aiTone, setAiTone] = useState('warm')
   const [error, setError] = useState('')
 
   const fillTemplate = (type) => {
@@ -1090,7 +1091,8 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     const grammarNeed = /grammar|tense|past|present|sentence|verb|article|a\/an|plural/.test(lower)
     const speakingNeed = /speak|speaking|conversation|pronunciation|fluency|confidence/.test(lower)
     const readingNeed = /read|reading|phonics|sound|comprehension/.test(lower)
-    const summary = `${studentName} completed a productive ${focus} lesson today. Based on the teacher note: “${command}”, ${studentName} ${positiveTone ? 'showed strong engagement and a positive learning attitude' : 'worked through the class activities with support and guidance'}. We practised targeted English skills through guided examples, correction, and student speaking time so the lesson stayed active and personalised.`
+    const toneLead = aiTone === 'concise' ? 'In today’s class' : aiTone === 'premium' ? 'Today’s personalised TutorPro English lesson' : 'Today’s lesson'
+    const summary = `${toneLead}, ${studentName} completed a productive ${focus} session. Based on the teacher note: “${command}”, ${studentName} ${positiveTone ? 'showed strong engagement, confidence, and a positive learning attitude' : 'worked through the class activities with support and teacher guidance'}. We practised targeted English skills through examples, correction, and student speaking time so the lesson stayed active and personalised.`
     const strength = positiveTone
       ? `${studentName} showed confidence, effort, and willingness to participate during class.`
       : `${studentName} was able to follow teacher guidance and complete the lesson tasks with support.`
@@ -1101,6 +1103,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         : readingNeed
           ? 'Keep strengthening reading accuracy, pronunciation, and comprehension through short daily practice.'
           : 'Review today’s target words and use them in complete spoken or written sentences.'
+    const polishedNextStep = aiTone === 'premium' ? `${nextStep} We will continue building accuracy and independence step by step.` : nextStep
     const homework = grammarNeed
       ? 'Write 3–5 sentences using today’s grammar target and read them aloud before the next class.'
       : speakingNeed
@@ -1108,7 +1111,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         : readingNeed
           ? 'Read a short passage aloud twice and underline any difficult words to review next lesson.'
           : 'Review the lesson notes for 5 minutes and practise the new words in sentences.'
-    setForm((current) => ({ ...current, summary, strength, nextStep, homework }))
+    setForm((current) => ({ ...current, summary, strength, nextStep: polishedNextStep, homework }))
     setError('')
   }
 
@@ -1180,7 +1183,8 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 
         <div className="feedback-ai-assistant">
           <div><span>🤖 AI feedback assistant</span><strong>Tell AI what happened in class</strong><small>Example: “Great reading today, needs practice with past tense and complete sentences.”</small></div>
-          <div className="feedback-ai-assistant__command"><input value={aiCommand} onChange={(event) => setAiCommand(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); generateAiFeedback() } }} placeholder="Command the AI to generate feedback…" /><button type="button" onClick={generateAiFeedback}>Generate feedback</button></div>
+          <div className="feedback-ai-assistant__tones" role="group" aria-label="AI feedback tone"><button type="button" className={aiTone === 'warm' ? 'active' : ''} onClick={() => setAiTone('warm')}>Warm</button><button type="button" className={aiTone === 'concise' ? 'active' : ''} onClick={() => setAiTone('concise')}>Concise</button><button type="button" className={aiTone === 'premium' ? 'active' : ''} onClick={() => setAiTone('premium')}>Detailed</button></div>
+          <div className="feedback-ai-assistant__command"><input value={aiCommand} onChange={(event) => setAiCommand(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); generateAiFeedback() } }} placeholder="Command the AI like ChatGPT: great speaking, needs past tense practice…" /><button type="button" onClick={generateAiFeedback}>Generate feedback</button></div>
         </div>
 
         {/* ✨ FAST FEEDBACK TEMPLATE RECOMMENDATIONS */}
@@ -2167,6 +2171,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   const tencentClassroomReady = isTencentClassroomConfigured()
   const pending = bookings.filter((booking) => booking.status === 'pending').length
+  const feedbackNeededBookings = bookings
+    .filter((booking) => ['completed', 'ongoing'].includes(booking.status) && !booking.teacherFeedback)
+    .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
   const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
   const bookingStatusCount = (status) => status === 'all' ? bookings.length : bookings.filter((booking) => booking.status === status).length
   const teacherSyncCallbacks = useRef({ onAccountChange, onLogout })
@@ -2436,8 +2443,27 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             <article><span className="stat-icon stat-icon--orange"><ClipboardCheck size={21} /></span><div><small>Pending requests</small><strong>{pending}</strong><em>Needs attention</em></div></article>
             <article><span className="stat-icon stat-icon--blue"><Video size={21} /></span><div><small>Lessons completed</small><strong>{account.teacher.lessonsCompleted || 0}</strong><em>All time</em></div></article>
             <article><span className="stat-icon stat-icon--gold"><Star size={21} /></span><div><small>Teacher rating</small><strong>{account.teacher.rating ? `${account.teacher.rating}.0` : 'New'}</strong><em>Student feedback</em></div></article>
+            <article className="teacher-feedback-due-stat"><span className="stat-icon stat-icon--pink"><MessageSquareText size={21} /></span><div><small>Feedback due</small><strong>{feedbackNeededBookings.length}</strong><em>Needs remark</em></div></article>
             <article style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.04)' }}><span className="stat-icon stat-icon--green"><Coins size={21} style={{ color: '#10b981' }} /></span><div><small style={{ color: '#10b981' }}>Estimated Earnings</small><strong style={{ color: '#10b981' }}>₱{estimatedEarnings.toLocaleString()}</strong><em style={{ fontSize: '0.65rem' }}>{trialCompletedBookings.length} trials · {regularCompletedBookings.length} regular classes</em></div></article>
           </div>
+          <section className="portal-card teacher-feedback-queue-card">
+            <div className="portal-card__heading portal-card__heading--small">
+              <div><span className="portal-kicker">Smart feedback queue</span><h2>Classes needing remarks</h2><p>Quickly complete class feedback while the lesson is still fresh.</p></div>
+              <button className="portal-text-button" onClick={() => setActive('bookings')}>All bookings <ChevronRight size={15} /></button>
+            </div>
+            {feedbackNeededBookings.length ? (
+              <div className="teacher-feedback-queue-list">
+                {feedbackNeededBookings.slice(0, 4).map((booking) => (
+                  <article key={booking.id}>
+                    <div><strong>{booking.learnerName || 'Student'}</strong><span>{formatLessonDate(booking.date, booking.time)} · {formatTime(booking.time)} · {booking.focus}</span></div>
+                    <StatusBadge status={booking.status} />
+                    <button type="button" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={15} /> Write feedback</button>
+                  </article>
+                ))}
+              </div>
+            ) : <EmptyState icon={MessageSquareText} title="No remarks due" text="Completed lessons without feedback will appear here automatically." />}
+          </section>
+
           <div className="teacher-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Action centre</span><h2>Booking requests</h2></div><button className="portal-text-button" onClick={() => setActive('bookings')}>View all <ChevronRight size={15} /></button></div>
@@ -3072,6 +3098,9 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const [paidBalance, setPaidBalance] = useState(typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0)
   const [savingBalance, setSavingBalance] = useState(false)
   const [balanceSaved, setBalanceSaved] = useState(false)
+  const [enrollmentSaving, setEnrollmentSaving] = useState(false)
+  const [enrollmentSaved, setEnrollmentSaved] = useState(false)
+  const [enrollmentStatus, setEnrollmentStatus] = useState(learner.enrollmentStatus || (learner.trialClass ? 'trial' : 'enrolled'))
 
   const handleSaveBalance = async () => {
     setSavingBalance(true)
@@ -3089,6 +3118,31 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       setSavingBalance(false)
     }
   }
+
+  const updateEnrollmentStatus = async (nextStatus) => {
+    if (isIncomplete || nextStatus === enrollmentStatus) return
+    setEnrollmentSaving(true)
+    setEnrollmentSaved(false)
+    try {
+      const updated = updateStudentProfile(account.id, {
+        enrollmentStatus: nextStatus,
+        trialClass: nextStatus === 'trial',
+        enrolledAt: nextStatus === 'enrolled' ? new Date().toISOString() : learner.enrolledAt || '',
+      }, learner.id)
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      setEnrollmentStatus(nextStatus)
+      setEnrollmentSaved(true)
+      window.setTimeout(() => setEnrollmentSaved(false), 2200)
+    } catch (err) {
+      alert('Failed to update enrollment status: ' + err.message)
+    } finally {
+      setEnrollmentSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    setEnrollmentStatus(learner.enrollmentStatus || (learner.trialClass ? 'trial' : 'enrolled'))
+  }, [learner.enrollmentStatus, learner.trialClass])
 
   useEffect(() => {
     if (typeof account.paidLessonsBalance === 'number') {
@@ -3170,6 +3224,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       {isIncomplete && <div className="student-profile-suspension"><GraduationCap size={20} /><div><strong>This registration is incomplete</strong><span>Open the student account and add the learner name, school year, curriculum and learning goal.</span></div></div>}
       <div className="admin-student-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
+        <section className="portal-card admin-enrollment-card"><div><span className="portal-kicker">Trial & enrollment</span><h2>Student class stage</h2><p>Mark whether this learner is still on a trial class or already enrolled. This helps admin and teacher payout review.</p></div>{enrollmentSaved && <span className="saved-label"><Check size={14} /> Saved</span>}<div className="admin-enrollment-card__options"><button type="button" className={enrollmentStatus === 'trial' ? 'active' : ''} onClick={() => updateEnrollmentStatus('trial')} disabled={enrollmentSaving || isIncomplete}><Sparkles size={16} /> Trial class</button><button type="button" className={enrollmentStatus === 'enrolled' ? 'active' : ''} onClick={() => updateEnrollmentStatus('enrolled')} disabled={enrollmentSaving || isIncomplete}><UserCheck size={16} /> Enrolled student</button></div><small>{enrollmentSaving ? 'Saving status…' : `Current stage: ${enrollmentStatus === 'trial' ? 'Trial class' : 'Enrolled student'}`}</small></section>
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed', 'ongoing'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family separate.</p></section>

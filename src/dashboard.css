@@ -7170,3 +7170,189 @@
     min-height: 44px;
   }
 }
+
+/* Teacher overview feedback queue */
+.teacher-feedback-due-stat {
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+  background: rgba(236, 72, 153, 0.045) !important;
+}
+
+.stat-icon--pink {
+  background: rgba(236, 72, 153, 0.12);
+  color: #ec4899;
+}
+
+.teacher-feedback-queue-card {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff7ed 48%, #f5f3ff 100%);
+  border: 1px solid rgba(236, 72, 153, 0.16);
+  box-shadow: 0 22px 60px rgba(49, 21, 104, 0.1);
+}
+
+.teacher-feedback-queue-list {
+  display: grid;
+  gap: 12px;
+}
+
+.teacher-feedback-queue-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.teacher-feedback-queue-list strong {
+  display: block;
+  color: #241042;
+  font-size: 1rem;
+}
+
+.teacher-feedback-queue-list span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.teacher-feedback-queue-list button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 13px;
+  background: #3b0764;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .teacher-feedback-queue-list article {
+    grid-template-columns: 1fr;
+  }
+  .teacher-feedback-queue-list button {
+    justify-content: center;
+  }
+}
+
+/* Admin trial/enrollment stage */
+.admin-enrollment-card {
+  display: grid;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(188, 233, 78, 0.08), rgba(112, 72, 223, 0.08));
+}
+
+.admin-enrollment-card p {
+  margin: 6px 0 0;
+  color: var(--portal-muted);
+  line-height: 1.55;
+}
+
+.admin-enrollment-card__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-enrollment-card__options button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  border-radius: 16px;
+  padding: 12px;
+  background: #fff;
+  color: #321568;
+  font-weight: 950;
+}
+
+.admin-enrollment-card__options button.active {
+  border-color: #bce94e;
+  background: #321568;
+  color: #bce94e;
+  box-shadow: 0 16px 34px rgba(49, 21, 104, 0.16);
+}
+
+.admin-enrollment-card > small {
+  color: var(--portal-muted);
+  font-weight: 800;
+}
+
+/* More readable feedback dialog */
+.feedback-dialog {
+  font-size: 16px;
+}
+
+.feedback-dialog .portal-dialog__heading h2 {
+  color: #ffffff;
+  font-size: 1.55rem;
+}
+
+.feedback-dialog .portal-dialog__heading p,
+.feedback-dialog .portal-dialog__heading small {
+  color: #d8d0e8;
+  font-size: 0.9rem;
+}
+
+.feedback-form label {
+  color: #f8fafc !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+}
+
+.feedback-form label > span,
+.feedback-form legend {
+  color: #ffffff !important;
+  font-size: 0.92rem !important;
+  font-weight: 950 !important;
+}
+
+.feedback-form textarea,
+.feedback-form input,
+.feedback-resource-entry select {
+  min-height: 50px;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #111827 !important;
+  font-size: 0.94rem !important;
+  line-height: 1.5;
+}
+
+.feedback-form textarea {
+  min-height: 130px;
+}
+
+.feedback-form p,
+.feedback-form small,
+.feedback-resource-links p,
+.feedback-word-practice p,
+.feedback-grammar-focus p {
+  color: #d8d0e8 !important;
+  font-size: 0.82rem !important;
+}
+
+.feedback-ai-assistant__tones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feedback-ai-assistant__tones button {
+  border: 1px solid rgba(188, 233, 78, 0.22);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-weight: 900;
+}
+
+.feedback-ai-assistant__tones button.active {
+  background: #bce94e;
+  color: #130a25;
+}
