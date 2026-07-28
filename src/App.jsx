@@ -761,7 +761,7 @@ function HowItWorks({ onBook }) {
 }
 
 function PublicTeacherCard({ teacher, onChooseTeacher }) {
-  const [activeMedia, setActiveMedia] = useState('photo') // photo, intro, sample
+  const [activeMedia, setActiveMedia] = useState('photo')
   const profile = teacher.teacher || {}
   const reviews = getBookings({ teacherId: teacher.id })
     .filter((booking) => booking.studentRating?.score)
@@ -769,138 +769,96 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
     .slice(0, 3)
   const reviewAverage = reviews.length
     ? Math.round((reviews.reduce((sum, booking) => sum + Number(booking.studentRating.score || 0), 0) / reviews.length) * 10) / 10
-    : null
-
-  // Some fun default superpowers if none is provided
-  const defaultSuperpowers = [
-    "Makes grammar feel like a magical adventure! 🪄",
-    "Unbreakable patience and a constant warm smile! 😊",
-    "Uses amazing animal puppets and hand props! 🧸",
-    "Speaks in clear, simple accents perfect for kids! 🗣️",
-    "Transforms vocabulary drills into fun games! 🎮"
-  ]
-  const seedIndex = (teacher.fullName?.charCodeAt(0) || 0) % defaultSuperpowers.length
-  const superpower = profile.superpower || defaultSuperpowers[seedIndex]
-
-  // Generate specialties
-  const badges = []
-  if (profile.specialization) badges.push(profile.specialization)
-  if (Number(profile.experience) >= 5) badges.push("5+ Yrs Exp")
-  if (profile.rating && Number(profile.rating) >= 4.8) badges.push("⭐ Top Rated")
-  badges.push("TEFL Certified")
-  badges.push("Kids Specialist")
+    : (profile.rating || 0)
+  const displayRating = reviewAverage || profile.rating || 'New'
+  const completedLessons = profile.lessonsCompleted || 0
+  const experience = Number(profile.experience || 0)
+  const firstName = teacher.fullName?.split(' ')[0] || 'Teacher'
+  const parentReview = reviews[0]
 
   return (
-    <article className="public-teacher-card novakid-style-card" style={{ background: '#110925', border: '1px solid rgba(188, 233, 78, 0.25)', boxShadow: '0 15px 40px rgba(0, 0, 0, 0.45)', borderRadius: '22px', padding: '24px', transition: 'transform 220ms ease, box-shadow 220ms ease' }}>
-      {/* Media Viewport */}
-      <div className="public-teacher-card__media-viewport" style={{ position: 'relative', height: '220px', borderRadius: '12px', overflow: 'hidden', background: '#090510', marginBottom: '16px' }}>
-        {activeMedia === 'photo' && (
-          <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #2b184a 0%, #110925 100%)' }}>
-            <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="public-teacher-photo-large" style={{ width: '120px', height: '120px', borderRadius: '50%', border: '4px solid #bce94e', objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-              <span style={{ background: '#bce94e', color: '#090510', fontSize: '0.62rem', fontWeight: '850', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>Available</span>
-              <span style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.62rem', fontWeight: '700', padding: '3px 8px', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>1-on-1 Class</span>
+    <article className="teacher-dashboard-profile-card">
+      <div className="teacher-dashboard-profile-card__main">
+        <div className="teacher-dashboard-profile-card__identity">
+          <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="teacher-dashboard-profile-card__photo" />
+          <div className="teacher-dashboard-profile-card__name-block">
+            <div className="teacher-dashboard-profile-card__name-row">
+              <h3>{teacher.fullName}</h3>
+              <BadgeCheck size={18} fill="#1877f2" color="#1877f2" />
             </div>
+            <p>{profile.specialization || 'English Teacher'} · {profile.languages || 'English'}</p>
+            <span className="teacher-dashboard-profile-card__top-badge">TOP Tutor</span>
           </div>
-        )}
-        {activeMedia === 'intro' && (
-          <div style={{ width: '100%', height: '100%' }}>
-            <IntroVideo accountId={teacher.id} compact={false} />
-          </div>
-        )}
-        {activeMedia === 'sample' && (
-          <div style={{ width: '100%', height: '100%' }}>
-            <SampleClassPlayer url={profile.sampleClassUrl} />
-          </div>
-        )}
-
-        {/* Media Selector Overlay Buttons */}
-        <div className="media-tab-selector" style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.4)', padding: '3px', borderRadius: '20px', backdropFilter: 'blur(4px)', zIndex: 10 }}>
-          <button
-            type="button"
-            onClick={() => setActiveMedia('photo')}
-            style={{ border: 'none', background: activeMedia === 'photo' ? '#bce94e' : 'transparent', color: activeMedia === 'photo' ? '#090510' : '#fff', padding: '3px 8px', borderRadius: '15px', fontSize: '0.6rem', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s' }}
-          >
-            Photo
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMedia('intro')}
-            style={{ border: 'none', background: activeMedia === 'intro' ? '#bce94e' : 'transparent', color: activeMedia === 'intro' ? '#090510' : '#fff', padding: '3px 8px', borderRadius: '15px', fontSize: '0.6rem', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s' }}
-          >
-            Intro 🎬
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMedia('sample')}
-            style={{ border: 'none', background: activeMedia === 'sample' ? '#bce94e' : 'transparent', color: activeMedia === 'sample' ? '#090510' : '#fff', padding: '3px 8px', borderRadius: '15px', fontSize: '0.6rem', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s' }}
-          >
-            Sample 📖
-          </button>
+          <button type="button" className="teacher-dashboard-profile-card__save" aria-label={`Save ${teacher.fullName}`}>♡</button>
         </div>
-      </div>
 
-      {/* Teacher Profile Info */}
-      <div className="public-teacher-card__profile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-        <div>
-          {/* Bold, prominent Novakid-style name */}
-          <h3 style={{ fontSize: '1.45rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.02em', marginBottom: '2px', fontFamily: '"Manrope", sans-serif' }}>
-            {teacher.fullName}
-          </h3>
-          <p style={{ fontSize: '0.78rem', color: '#b9adc7', margin: 0 }}>
-            {profile.specialization || "Professional ESL Educator"}
-          </p>
+        <div className="teacher-dashboard-profile-card__stats">
+          <div><strong>{experience || 'New'}</strong><span>Years experience</span></div>
+          <div><strong>{completedLessons}+</strong><span>Lessons completed</span></div>
+          <div><strong>{profile.credentials?.length || profile.education ? 'Verified' : 'Ready'}</strong><span>Qualifications</span></div>
+          <div><strong>1-to-1</strong><span>Online classes</span></div>
         </div>
-        <div className="public-teacher-rating" style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '8px' }}>
-          <Star size={14} fill="#ffc107" color="#ffc107" />
-          <strong style={{ fontSize: '0.82rem', color: '#fff' }}>{reviewAverage || profile.rating || 'New'}</strong>
-          {(reviews.length || profile.ratingCount > 0) && <small style={{ fontSize: '0.68rem', color: '#b9adc7' }}>({reviews.length || profile.ratingCount})</small>}
-        </div>
-      </div>
 
-      {/* Specialty Badges Row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '14px' }}>
-        {badges.slice(0, 4).map((badge, idx) => (
-          <span key={idx} style={{ background: 'rgba(188, 233, 78, 0.08)', border: '1px solid rgba(188, 233, 78, 0.2)', color: '#bce94e', fontSize: '0.65rem', fontWeight: '800', padding: '2px 8px', borderRadius: '6px' }}>
-            {badge}
-          </span>
-        ))}
-      </div>
-
-      {/* Kid-Friendly Superpower section */}
-      <div style={{ background: 'rgba(120, 80, 201, 0.07)', border: '1px solid rgba(120, 80, 201, 0.15)', borderRadius: '8px', padding: '10px 12px', marginBottom: '14px' }}>
-        <p style={{ margin: 0, fontSize: '0.74rem', color: '#e9d5ff', lineHeight: '1.4' }}>
-          <span style={{ fontWeight: '900', color: '#bce94e', marginRight: '4px' }}>⚡ SUPERPOWER:</span>
-          {superpower}
+        <p className="teacher-dashboard-profile-card__bio">
+          {profile.bio || "Enhance your child’s English skills with a friendly, patient tutor. Lessons are personalised for speaking confidence, grammar, reading and school success."}
         </p>
+
+        <div className="teacher-dashboard-profile-card__tabs" role="group" aria-label="Teacher profile actions">
+          <button type="button" className="active" onClick={() => onChooseTeacher(teacher)}>Schedule</button>
+          <button type="button" onClick={() => setActiveMedia('sample')}>Courses</button>
+          <button type="button" onClick={() => setActiveMedia('photo')}>Resume</button>
+          <button type="button" onClick={() => setActiveMedia('intro')}>Lessons</button>
+        </div>
+
+        <div className="teacher-dashboard-profile-card__media">
+          {activeMedia === 'photo' && (
+            <div className="teacher-dashboard-profile-card__schedule-preview">
+              <div><span>GMT+8</span><strong>Mon</strong><small>English Grammar<br />08:00 – 09:00</small></div>
+              <div><span>GMT+8</span><strong>Wed</strong><small>Speaking Practice<br />09:00 – 10:30</small></div>
+              <div><span>GMT+8</span><strong>Fri</strong><small>Reading Class<br />10:00 – 11:00</small></div>
+            </div>
+          )}
+          {activeMedia === 'intro' && <IntroVideo accountId={teacher.id} compact={false} />}
+          {activeMedia === 'sample' && <SampleClassPlayer url={profile.sampleClassUrl} />}
+        </div>
+
+        <button className="teacher-dashboard-profile-card__cta" onClick={() => onChooseTeacher(teacher)}>
+          Book Free Trial with {firstName} <ArrowRight size={16} />
+        </button>
       </div>
 
-      <p className="public-teacher-card__bio" style={{ fontSize: '0.76rem', color: '#b9adc7', lineHeight: '1.5', margin: '0 0 14px 0', minHeight: '44px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical' }}>
-        {profile.bio || "Hello! Let's build your child's English confidence with interactive, high-energy, fun learning slots."}
-      </p>
-
-      <div className="public-teacher-facts" style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', marginBottom: '16px', gap: '15px' }}>
-        <span style={{ flex: 1, fontSize: '0.72rem', color: '#b9adc7' }}><strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{profile.experience || 0} yrs</strong> Experience</span>
-        <span style={{ flex: 1, fontSize: '0.72rem', color: '#b9adc7' }}><strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{profile.lessonsCompleted || 0}+</strong> Classes</span>
-        <span style={{ flex: 1, fontSize: '0.72rem', color: '#b9adc7' }}><strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{profile.languages?.split(',')[0] || 'English'}</strong> Native</span>
-      </div>
-
-      {reviews.length > 0 && (
-        <div className="public-teacher-reviews">
-          <div><strong>Parent reviews</strong><span>{reviewAverage}/5 average from completed classes</span></div>
-          {reviews.map((booking) => (
-            <blockquote key={booking.id}>
-              <span>{'★'.repeat(Number(booking.studentRating.score || 0))}{'☆'.repeat(5 - Number(booking.studentRating.score || 0))}</span>
-              {booking.studentRating.comment ? <p>“{booking.studentRating.comment}”</p> : <p>Parent rated this class {booking.studentRating.score}/5.</p>}
-              <small>{booking.learnerName || 'TutorPro learner'}</small>
-            </blockquote>
+      <aside className="teacher-dashboard-profile-card__side">
+        <div className="teacher-dashboard-profile-card__review-box">
+          <div className="teacher-dashboard-profile-card__review-head">
+            <strong>Review ({reviews.length || profile.ratingCount || 0})</strong>
+            <span>View all</span>
+          </div>
+          <div className="teacher-dashboard-profile-card__score">
+            <strong>{displayRating}</strong>
+            <span>{'★'.repeat(Math.round(Number(reviewAverage || profile.rating || 0)) || 5)}</span>
+            <small>{reviews.length || profile.ratingCount || 0} reviews</small>
+          </div>
+          {['Qualification', 'Expertise', 'Communication', 'Value'].map((label, index) => (
+            <div className="teacher-dashboard-profile-card__bar" key={label}>
+              <span>{label}</span><i><b style={{ width: `${Math.max(68, 92 - index * 8)}%` }} /></i><em>{(4.9 - index * 0.2).toFixed(1)}</em>
+            </div>
           ))}
         </div>
-      )}
 
-      <button className="button button--primary button--full" style={{ background: '#bce94e', color: '#090510', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.78rem', padding: '10px 16px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(188, 233, 78, 0.15)' }} onClick={() => onChooseTeacher(teacher)}>
-        Book Free Trial with {teacher.fullName.split(' ')[0]} <ArrowRight size={16} />
-      </button>
+        {parentReview ? (
+          <blockquote className="teacher-dashboard-profile-card__testimonial">
+            <div><ProfilePhoto accountId={`${parentReview.studentId}-${parentReview.learnerId || 'student'}`} name={parentReview.learnerName || 'Parent'} className="teacher-dashboard-profile-card__reviewer" /><strong>{parentReview.learnerName || 'TutorPro parent'}</strong></div>
+            <span>{'★'.repeat(Number(parentReview.studentRating.score || 0))}{'☆'.repeat(5 - Number(parentReview.studentRating.score || 0))}</span>
+            <p>{parentReview.studentRating.comment || `Parent rated this class ${parentReview.studentRating.score}/5.`}</p>
+          </blockquote>
+        ) : (
+          <blockquote className="teacher-dashboard-profile-card__testimonial">
+            <div><span className="teacher-dashboard-profile-card__reviewer teacher-dashboard-profile-card__reviewer--empty">★</span><strong>Parent feedback</strong></div>
+            <span>★★★★★</span>
+            <p>Parent reviews from completed classes will appear here once students rate lessons.</p>
+          </blockquote>
+        )}
+      </aside>
     </article>
   )
 }
@@ -946,7 +904,7 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
             Compare credentials, read friendly superpowers, and switch between their presentation video and a live sample class recording to find the perfect educator.
           </p>
         </div>
-        <div className="public-teacher-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' }}>
+        <div className="public-teacher-grid public-teacher-grid--dashboard">
           {teachers.length ? teachers.map((teacher) => (
             <PublicTeacherCard key={teacher.id} teacher={teacher} onChooseTeacher={onChooseTeacher} />
           )) : <div className="public-teachers-empty" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.08)' }}>
