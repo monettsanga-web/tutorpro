@@ -1,0 +1,41 @@
+{
+  "name": "TutorPro English Classroom",
+  "short_name": "TutorPro Classroom",
+  "description": "TutorPro English classroom and dashboard app for online English lessons.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "background_color": "#090510",
+  "theme_color": "#321568",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Dashboard",
+      "short_name": "Dashboard",
+      "url": "/?shortcut=dashboard",
+      "icons": [{ "src": "/assets/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Student Registration",
+      "short_name": "Register",
+      "url": "/?shortcut=register",
+      "icons": [{ "src": "/assets/pwa-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

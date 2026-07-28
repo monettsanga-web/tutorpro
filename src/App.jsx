@@ -1109,6 +1109,53 @@ function FacebookMessengerContact() {
 }
 
 
+function PWAInstallPrompt() {
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [installed, setInstalled] = useState(false)
+  const [dismissed, setDismissed] = useState(() => {
+    try { return sessionStorage.getItem('tutorpro_pwa_dismissed') === '1' } catch { return false }
+  })
+
+  useEffect(() => {
+    const handlePrompt = (event) => {
+      event.preventDefault()
+      setInstallPrompt(event)
+    }
+    const handleInstalled = () => {
+      setInstalled(true)
+      setInstallPrompt(null)
+    }
+    window.addEventListener('beforeinstallprompt', handlePrompt)
+    window.addEventListener('appinstalled', handleInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handlePrompt)
+      window.removeEventListener('appinstalled', handleInstalled)
+    }
+  }, [])
+
+  const install = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    await installPrompt.userChoice.catch(() => null)
+    setInstallPrompt(null)
+  }
+
+  const dismiss = () => {
+    setDismissed(true)
+    try { sessionStorage.setItem('tutorpro_pwa_dismissed', '1') } catch { /* ignore */ }
+  }
+
+  if (!installPrompt || installed || dismissed) return null
+
+  return (
+    <aside className="pwa-install-card" aria-label="Install TutorPro English Classroom app">
+      <div><span>📱</span><strong>Install TutorPro Classroom</strong><small>Add the website as an app on your laptop or phone.</small></div>
+      <button type="button" onClick={install}>Install app</button>
+      <button type="button" className="pwa-install-card__close" onClick={dismiss} aria-label="Dismiss install prompt">×</button>
+    </aside>
+  )
+}
+
 function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
   return (
     <footer className="footer">
@@ -1363,6 +1410,7 @@ export default function App() {
         </main>
       )}
       {currentAccount && <FacebookMessengerContact />}
+      <PWAInstallPrompt />
       <Footer
         onRegister={openRegistration}
         onLogin={openLogin}
