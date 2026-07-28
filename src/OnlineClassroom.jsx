@@ -59,6 +59,7 @@ import { CosCloudIcon } from './components/CosCloudIcon.jsx'
 import { WhiteboardSlides, SafeSlidesErrorBoundary } from './components/WhiteboardSlides.jsx'
 import { ClassroomDashboard } from './components/ClassroomDashboard.jsx'
 import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
+import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import {
   CLASSROOM_FILE_ACCEPT,
   getClassroomFileSizeLimit,
@@ -230,6 +231,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const teacher = getAccountById(roomBooking.teacherId)
   const teacherClassroom = account.role === 'teacher' ? account.teacher?.classroom : teacher?.teacher?.classroom
   const useTencentClassroom = teacherClassroom?.platform === 'voov' && isTencentClassroomConfigured()
+  const voovFallbackLink = teacherClassroom?.voovLink || ''
   const participantName = account.role === 'student' ? learner?.name : account.fullName || account.parentName || 'Participant'
   const participantIdRef = useRef(`${account.id}-${crypto.randomUUID().slice(0, 8)}`)
   const localVideoRef = useRef(null)
@@ -276,6 +278,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [presentedFile, setPresentedFile] = useState(null)
   const [connectionStatus, setConnectionStatus] = useState('waiting')
   const [signalingStatus, setSignalingStatus] = useState('connecting')
+  const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
+  const [lowBandwidthMode, setLowBandwidthMode] = useState(false)
   const [reconnectKey, setReconnectKey] = useState(0)
   const [participantCount, setParticipantCount] = useState(1)
   const [annotationMode, setAnnotationMode] = useState(false)
@@ -288,6 +292,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [cosSlidePage, setCosSlidePage] = useState(1)
   const [useGoogleClassroomMode, setUseGoogleClassroomMode] = useState(false)
   const [sidebarTab, setSidebarTab] = useState('chat')
+  const chinaConnection = isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: studentAccount?.registrationCountry })
   const [chatMessages, setChatMessages] = useState([])
   const [chatDraft, setChatDraft] = useState('')
   const [chatLanguage, setChatLanguage] = useState('en')
@@ -340,6 +345,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     return () => document.body.classList.remove('classroom-active')
   }, [joined])
 
+  useEffect(() => subscribeToVisitorLocale(setVisitorLocale), [])
+
   useEffect(() => {
     const updateFullscreenState = () => setStageFullscreen(document.fullscreenElement === stageRef.current)
     document.addEventListener('fullscreenchange', updateFullscreenState)
@@ -354,7 +361,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+        video: lowBandwidthMode
+          ? { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 12, max: 18 }, facingMode: 'user' }
+          : { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 24, max: 30 }, facingMode: 'user' },
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       })
       cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
@@ -1619,6 +1628,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           <section className="prejoin-details">
             <span className="classroom-brand"><Presentation size={20} /> TutorPro English Classroom</span>
             {useTencentClassroom && <span className="tencent-provider-badge"><Video size={14} /> Embedded VooV / Tencent RTC</span>}
+            {chinaConnection && <div className="china-classroom-connect-card"><div><Globe size={17} /><strong>China connection mode</strong></div><p>For China networks, Chrome/Edge plus Tencent/VooV gives the best class connection. If video does not connect, open the VooV backup link.</p><div><button type="button" onClick={() => setLowBandwidthMode((value) => !value)}>{lowBandwidthMode ? 'Standard video' : 'Low-bandwidth mode'}</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer">Open VooV backup</a>}</div></div>}
             <small>{account.role === 'teacher' ? 'Teacher room' : account.role === 'admin' ? 'Administrator access' : 'Booked student room'}</small>
             <h1>Ready for class, {participantName}?</h1>
             <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at <strong className="classroom-lesson-time">{formatTime(roomBooking.time)}</strong></p>
@@ -1665,7 +1675,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         </div>
       </header>
 
-      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{participantCount > 1 ? 'Reconnecting both participants' : 'Waiting for the same booked classroom'}</strong><small>{connectionHelpText} Room ID: {roomBooking.classroomId}</small></div><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry connection</button></div>}
+      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'China-friendly connection help' : participantCount > 1 ? 'Reconnecting both participants' : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? 'If cross-border video does not connect, retry once or use the VooV/Tencent backup link.' : connectionHelpText} Room ID: {roomBooking.classroomId}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
 
       <div className="classroom-workspace">
         <section className="classroom-stage">

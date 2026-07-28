@@ -1366,3 +1366,87 @@ body.classroom-active .support-widget {
 .tencent-screen-view.classroom-presentation-video--fill video {
   object-fit: cover !important;
 }
+
+/* China-friendly classroom connection panel */
+.china-classroom-connect-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(188, 233, 78, 0.24);
+  border-radius: 16px;
+  padding: 13px;
+  background: linear-gradient(135deg, rgba(188, 233, 78, 0.12), rgba(112, 72, 223, 0.12));
+}
+
+.china-classroom-connect-card > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #bce94e;
+}
+
+.china-classroom-connect-card strong {
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+.china-classroom-connect-card p {
+  margin: 0 !important;
+  color: #d8cceb !important;
+  font-size: 0.68rem !important;
+  line-height: 1.5;
+}
+
+.china-classroom-connect-card > div:last-child,
+.classroom-connection-help__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.china-classroom-connect-card button,
+.china-classroom-connect-card a,
+.classroom-connection-help__actions button,
+.classroom-connection-help__actions a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 11px;
+  background: #bce94e;
+  color: #26320c;
+  font-size: 0.58rem;
+  font-weight: 950;
+  text-decoration: none;
+}
+
+.china-classroom-connect-card a,
+.classroom-connection-help__actions a {
+  background: #7048df;
+  color: #fff;
+}
+
+.classroom-connection-help__actions {
+  justify-content: flex-end;
+}
+
+.classroom-connection-help__actions button {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .classroom-connection-help {
+    grid-template-columns: auto 1fr;
+  }
+  .classroom-connection-help__actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+  .classroom-connection-help__actions button,
+  .classroom-connection-help__actions a {
+    flex: 1;
+  }
+}
