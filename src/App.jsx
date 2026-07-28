@@ -31,6 +31,8 @@ import AuthModal from './AuthModal.jsx'
 import PortalAccess from './PortalAccess.jsx'
 import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
+import { getBookings, mergeCloudBookings } from './bookings.js'
+import { fetchCloudBookings } from './cloudBookings.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
@@ -761,6 +763,13 @@ function HowItWorks({ onBook }) {
 function PublicTeacherCard({ teacher, onChooseTeacher }) {
   const [activeMedia, setActiveMedia] = useState('photo') // photo, intro, sample
   const profile = teacher.teacher || {}
+  const reviews = getBookings({ teacherId: teacher.id })
+    .filter((booking) => booking.studentRating?.score)
+    .sort((a, b) => (b.studentRating?.createdAt || '').localeCompare(a.studentRating?.createdAt || ''))
+    .slice(0, 3)
+  const reviewAverage = reviews.length
+    ? Math.round((reviews.reduce((sum, booking) => sum + Number(booking.studentRating.score || 0), 0) / reviews.length) * 10) / 10
+    : null
 
   // Some fun default superpowers if none is provided
   const defaultSuperpowers = [
@@ -844,8 +853,8 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
         </div>
         <div className="public-teacher-rating" style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '8px' }}>
           <Star size={14} fill="#ffc107" color="#ffc107" />
-          <strong style={{ fontSize: '0.82rem', color: '#fff' }}>{profile.rating || 'New'}</strong>
-          {profile.ratingCount > 0 && <small style={{ fontSize: '0.68rem', color: '#b9adc7' }}>({profile.ratingCount})</small>}
+          <strong style={{ fontSize: '0.82rem', color: '#fff' }}>{reviewAverage || profile.rating || 'New'}</strong>
+          {(reviews.length || profile.ratingCount > 0) && <small style={{ fontSize: '0.68rem', color: '#b9adc7' }}>({reviews.length || profile.ratingCount})</small>}
         </div>
       </div>
 
@@ -875,6 +884,19 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
         <span style={{ flex: 1, fontSize: '0.72rem', color: '#b9adc7' }}><strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{profile.lessonsCompleted || 0}+</strong> Classes</span>
         <span style={{ flex: 1, fontSize: '0.72rem', color: '#b9adc7' }}><strong style={{ color: '#fff', fontSize: '0.85rem', display: 'block' }}>{profile.languages?.split(',')[0] || 'English'}</strong> Native</span>
       </div>
+
+      {reviews.length > 0 && (
+        <div className="public-teacher-reviews">
+          <div><strong>Parent reviews</strong><span>{reviewAverage}/5 average from completed classes</span></div>
+          {reviews.map((booking) => (
+            <blockquote key={booking.id}>
+              <span>{'★'.repeat(Number(booking.studentRating.score || 0))}{'☆'.repeat(5 - Number(booking.studentRating.score || 0))}</span>
+              {booking.studentRating.comment ? <p>“{booking.studentRating.comment}”</p> : <p>Parent rated this class {booking.studentRating.score}/5.</p>}
+              <small>{booking.learnerName || 'TutorPro learner'}</small>
+            </blockquote>
+          ))}
+        </div>
+      )}
 
       <button className="button button--primary button--full" style={{ background: '#bce94e', color: '#090510', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.78rem', padding: '10px 16px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(188, 233, 78, 0.15)' }} onClick={() => onChooseTeacher(teacher)}>
         Book Free Trial with {teacher.fullName.split(' ')[0]} <ArrowRight size={16} />
@@ -1216,9 +1238,10 @@ export default function App() {
     let active = true
     const refreshTeachers = async () => {
       try {
-        const teachers = await fetchPublicTeachers()
+        const [teachers, sharedBookings] = await Promise.all([fetchPublicTeachers(), fetchCloudBookings().catch(() => [])])
         if (!active) return
         mergeCloudAccounts(teachers)
+        if (sharedBookings.length) mergeCloudBookings(sharedBookings)
         setTeacherVersion((value) => value + 1)
       } catch {
         // Existing browser data remains available until Supabase reconnects.

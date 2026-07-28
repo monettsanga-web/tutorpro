@@ -4451,3 +4451,58 @@ body {
   gap: 12px;
   margin-top: 24px;
 }
+
+.public-teacher-reviews {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 13px;
+}
+
+.public-teacher-reviews > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.public-teacher-reviews > div:first-child strong {
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.public-teacher-reviews > div:first-child span {
+  color: #bce94e;
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-align: right;
+}
+
+.public-teacher-reviews blockquote {
+  margin: 0;
+  border: 1px solid rgba(188, 233, 78, 0.13);
+  border-radius: 14px;
+  padding: 10px 11px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.public-teacher-reviews blockquote span {
+  color: #ffc107;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.public-teacher-reviews blockquote p {
+  margin: 4px 0;
+  color: #f8fafc;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.public-teacher-reviews blockquote small {
+  color: #b9adc7;
+  font-size: 0.64rem;
+  font-weight: 800;
+}

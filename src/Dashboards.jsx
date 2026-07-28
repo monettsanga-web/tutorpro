@@ -2160,7 +2160,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const tencentClassroomReady = isTencentClassroomConfigured()
   const pending = bookings.filter((booking) => booking.status === 'pending').length
   const feedbackNeededBookings = bookings
-    .filter((booking) => ['completed', 'ongoing'].includes(booking.status) && !booking.teacherFeedback)
+    .filter((booking) => booking.status === 'completed' && !booking.teacherFeedback?.summary?.trim())
     .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
   const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
   const bookingStatusCount = (status) => status === 'all' ? bookings.length : bookings.filter((booking) => booking.status === status).length
@@ -2448,7 +2448,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           </div>
           <section className="portal-card teacher-feedback-queue-card">
             <div className="portal-card__heading portal-card__heading--small">
-              <div><span className="portal-kicker">Smart feedback queue</span><h2>Classes needing remarks</h2><p>Quickly complete class feedback while the lesson is still fresh.</p></div>
+              <div><span className="portal-kicker">Smart feedback queue</span><h2>Completed classes needing remarks</h2><p>All completed lessons without teacher feedback appear here until remarks are saved.</p></div>
               <div className="teacher-feedback-queue-actions"><button className="portal-text-button" onClick={refresh}>Refresh <RotateCcw size={15} /></button><button className="portal-text-button" onClick={() => setActive('bookings')}>All bookings <ChevronRight size={15} /></button></div>
             </div>
             {feedbackNeededBookings.length ? (
@@ -2461,7 +2461,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                   </article>
                 ))}
               </div>
-            ) : <EmptyState icon={MessageSquareText} title="No remarks due" text="Completed lessons without feedback will appear here automatically." />}
+            ) : <EmptyState icon={MessageSquareText} title="No completed classes need remarks" text="Every completed class already has teacher feedback." />}
           </section>
 
           <div className="teacher-overview-grid">
