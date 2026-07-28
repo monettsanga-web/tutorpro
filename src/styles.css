@@ -4731,3 +4731,28 @@ body {
     width: fit-content;
   }
 }
+
+/* Teacher profile card refinements */
+.public-teacher-photo-large::after {
+  display: none !important;
+}
+
+.public-teacher-card.novakid-style-card > button.button {
+  display: flex !important;
+  width: calc(100% - 48px) !important;
+  margin-left: 24px !important;
+  margin-right: 24px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.public-teacher-card__bio {
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  -webkit-box-orient: unset !important;
+  white-space: normal !important;
+}
