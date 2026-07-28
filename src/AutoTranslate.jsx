@@ -149,15 +149,20 @@ export default function AutoTranslate() {
   }
 
   const labels = languageControlLabels[language] || languageControlLabels.en
+  const quickTranslateUrl = typeof window !== 'undefined'
+    ? `https://translate.google.com/translate?sl=en&tl=${encodeURIComponent(language)}&u=${encodeURIComponent(window.location.href)}`
+    : ''
+  const showQuickTranslate = language && language !== 'en'
 
   return (
-    <div className="language-control" title={labels.choose}>
+    <div className={`language-control ${showQuickTranslate ? 'language-control--translate-ready' : ''}`} title={labels.choose}>
       <Globe2 size={17} />
       <span>{labels.choose}</span>
       <select value={automatic ? 'auto' : language} onChange={chooseLanguage} aria-label={labels.choose}>
         <option value="auto">{labels.auto}</option>
         {languages.map((item) => <option value={item.code} key={item.code}>{item.label}</option>)}
       </select>
+      {showQuickTranslate && <a className="quick-translate-link" href={quickTranslateUrl} target="_blank" rel="noreferrer">Quick translate</a>}
     </div>
   )
 }

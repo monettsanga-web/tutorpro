@@ -117,6 +117,7 @@ const LEARNING_GOALS = [
 const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
 const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 const MONTHLY_BILLING_WEEKS = 4
+const MAX_CUSTOM_WEEKLY_SESSIONS = 12
 const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
 const planSessionRate = (billingPlan, sessions) => billingPlan === 'monthly' ? (Number(sessions) <= 3 ? 10 : 8) : weeklySessionRate(sessions)
 const planCreditCount = (billingPlan, sessions) => Number(sessions) * (billingPlan === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
@@ -1454,7 +1455,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const defaultBillingPlan = account.preferredBillingPlan || (defaultWeeklySessions >= 4 ? 'monthly' : 'weekly')
   const [billingPlan, setBillingPlan] = useState(defaultBillingPlan === 'monthly' ? 'monthly' : 'weekly')
   const initialOptions = defaultBillingPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
-  const [weeklySessions, setWeeklySessions] = useState(initialOptions.includes(defaultWeeklySessions) ? defaultWeeklySessions : initialOptions[0])
+  const [weeklySessions, setWeeklySessions] = useState(Math.min(MAX_CUSTOM_WEEKLY_SESSIONS, Math.max(1, initialOptions.includes(defaultWeeklySessions) ? defaultWeeklySessions : initialOptions[0])))
   const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
   const chinaQrAllowed = adminPreview || isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: account.registrationCountry })
   const [paymentMethod, setPaymentMethod] = useState(chinaQrAllowed ? 'chinaQr' : 'paypal')
@@ -1485,15 +1486,22 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   }, [chinaQrAllowed, paymentMethod])
 
   useEffect(() => {
-    if (!sessionOptions.includes(weeklySessions)) {
-      setWeeklySessions(sessionOptions[0])
-    }
-  }, [billingPlan, sessionOptions, weeklySessions])
+    if (!Number.isFinite(Number(weeklySessions)) || Number(weeklySessions) < 1) setWeeklySessions(1)
+    if (Number(weeklySessions) > MAX_CUSTOM_WEEKLY_SESSIONS) setWeeklySessions(MAX_CUSTOM_WEEKLY_SESSIONS)
+  }, [weeklySessions])
+
+  const setCustomSessionCount = (value) => {
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return
+    setWeeklySessions(Math.min(MAX_CUSTOM_WEEKLY_SESSIONS, Math.max(1, Math.round(numeric))))
+    setGatewayError('')
+    setLastPaymentMessage('')
+  }
 
   const chooseBillingPlan = (nextPlan) => {
     const options = nextPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
     setBillingPlan(nextPlan)
-    setWeeklySessions((current) => options.includes(current) ? current : options[0])
+    setWeeklySessions((current) => Math.min(MAX_CUSTOM_WEEKLY_SESSIONS, Math.max(1, Number(current) || options[0])))
     setGatewayError('')
     setLastPaymentMessage('')
   }
@@ -1657,7 +1665,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               >
                 <small>Weekly</small>
                 <strong>Flexible weekly plan</strong>
-                <span>1–3 sessions/week · $10 per 25 minutes</span>
+                <span>1–12 sessions/week · auto-calculated</span>
               </button>
               <button
                 type="button"
@@ -1667,7 +1675,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               >
                 <small>Package</small>
                 <strong>Monthly package</strong>
-                <span>3–7 sessions/week · $10/class for 3, $8/class for 4+</span>
+                <span>1–12 sessions/week · monthly total calculated</span>
               </button>
             </div>
 
@@ -1697,6 +1705,13 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
                   </button>
                 )
               })}
+            </div>
+            <div className="student-payment-pro__custom-session-input">
+              <label>
+                <span>Type exact sessions per week</span>
+                <input type="number" min="1" max={MAX_CUSTOM_WEEKLY_SESSIONS} value={weeklySessions} onChange={(event) => setCustomSessionCount(event.target.value)} />
+              </label>
+              <p>{billingPlan === 'monthly' ? `${creditCount} total monthly credits · 4-week billing` : `${creditCount} weekly credit${creditCount > 1 ? 's' : ''}`} · {formatUsd(sessionRate)} per class · Total {formatUsd(weeklyTotal)}</p>
             </div>
           </div>
 

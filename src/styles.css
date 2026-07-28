@@ -5163,3 +5163,22 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.language-control--translate-ready {
+  gap: 8px;
+}
+
+.quick-translate-link {
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(188, 233, 78, 0.16);
+  color: #bce94e;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.quick-translate-link:hover {
+  background: rgba(188, 233, 78, 0.24);
+}

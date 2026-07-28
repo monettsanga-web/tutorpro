@@ -8,6 +8,7 @@ const PAYPAL_API_BASE = process.env.PAYPAL_ENV === 'sandbox'
 export const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
 export const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 export const MONTHLY_BILLING_WEEKS = 4
+export const MAX_CUSTOM_WEEKLY_SESSIONS = 12
 export const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
 export const parseBillingPlan = (value = 'weekly') => value === 'monthly' ? 'monthly' : 'weekly'
 export const planSessionRate = (billingPlan, sessions) => parseBillingPlan(billingPlan) === 'monthly' ? (Number(sessions) <= 3 ? 10 : 8) : weeklySessionRate(sessions)
@@ -29,11 +30,9 @@ export function sendJson(res, status, payload) {
 }
 
 export function parseSessions(value, billingPlan = 'weekly') {
-  const plan = parseBillingPlan(billingPlan)
   const sessions = Number(value)
-  const options = plan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
-  if (!options.includes(sessions)) {
-    throw new Error(plan === 'monthly' ? 'Choose 3, 4, 5, 6, or 7 weekly sessions for the monthly package.' : 'Choose between 1 and 3 weekly sessions.')
+  if (!Number.isInteger(sessions) || sessions < 1 || sessions > MAX_CUSTOM_WEEKLY_SESSIONS) {
+    throw new Error(`Choose between 1 and ${MAX_CUSTOM_WEEKLY_SESSIONS} weekly sessions.`)
   }
   return sessions
 }

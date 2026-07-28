@@ -7749,3 +7749,51 @@
     grid-column: 1 / -1;
   }
 }
+
+.student-payment-pro__custom-session-input {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  border: 1px solid rgba(124, 58, 237, 0.14);
+  border-radius: 18px;
+  padding: 13px;
+  background: #ffffff;
+}
+
+.student-payment-pro__custom-session-input label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  gap: 12px;
+  align-items: center;
+  color: #241042;
+  font-weight: 900;
+}
+
+.student-payment-pro__custom-session-input label span {
+  color: #241042;
+  font-size: 0.84rem;
+}
+
+.student-payment-pro__custom-session-input input {
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 8px 10px;
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.student-payment-pro__custom-session-input input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+.student-payment-pro__custom-session-input p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
