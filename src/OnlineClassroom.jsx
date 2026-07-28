@@ -241,6 +241,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const trtcRef = useRef(null)
   const trtcModuleRef = useRef(null)
   const sharedScreenVideoRef = useRef(null)
+  const remoteScreenVideoRef = useRef(null)
   const remoteStreamRef = useRef(null)
   const annotationCanvasRef = useRef(null)
   const stageRef = useRef(null)
@@ -314,7 +315,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [canUndoClear, setCanUndoClear] = useState(false)
 
   const setVideoStream = (element, stream) => {
-    if (element && element.srcObject !== stream) element.srcObject = stream || null
+    if (element && element.srcObject !== stream) {
+      element.srcObject = stream || null
+      if (stream) element.play?.().catch(() => {})
+    }
   }
 
   useEffect(() => {
@@ -405,6 +409,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     setVideoStream(localVideoRef.current, cameraStreamRef.current)
     setVideoStream(sharedScreenVideoRef.current, screenStreamRef.current)
     setVideoStream(remoteVideoRef.current, remoteStreamRef.current)
+    setVideoStream(remoteScreenVideoRef.current, remoteStreamRef.current)
   }, [joined, screenSharing, remoteScreenSharing])
 
   useEffect(() => {
@@ -426,7 +431,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (peerRef.current) return peerRef.current
       const peer = new RTCPeerConnection(rtcConfiguration)
       peerRef.current = peer
-      localStreamRef.current?.getTracks().forEach((track) => peer.addTrack(track, localStreamRef.current))
+      const outgoingStream = screenSharing && screenStreamRef.current ? screenStreamRef.current : localStreamRef.current
+      const audioTracks = localStreamRef.current?.getAudioTracks() || []
+      const videoTracks = outgoingStream?.getVideoTracks() || localStreamRef.current?.getVideoTracks() || []
+      audioTracks.forEach((track) => peer.addTrack(track, localStreamRef.current))
+      videoTracks.slice(0, 1).forEach((track) => peer.addTrack(track, outgoingStream || localStreamRef.current))
       peer.onicecandidate = (event) => {
         if (event.candidate) transportRef.current?.send({ type: 'ice', candidate: event.candidate })
       }
@@ -435,6 +444,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         if (stream) {
           remoteStreamRef.current = stream
           setVideoStream(remoteVideoRef.current, stream)
+          setVideoStream(remoteScreenVideoRef.current, stream)
         }
       }
       peer.onconnectionstatechange = () => {
@@ -958,6 +968,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       screenStreamRef.current = stream
       const sender = peerRef.current?.getSenders().find((item) => item.track?.kind === 'video')
       if (sender) await sender.replaceTrack(screenTrack)
+      else if (peerRef.current) peerRef.current.addTrack(screenTrack, stream)
       setVideoStream(sharedScreenVideoRef.current, stream)
       setPresentedFile(null)
       setScreenPaused(false)
@@ -1712,7 +1723,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
                   <span>Sharing Screen (Active Preview)</span>
                 </div>
               </div>
-            ) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteVideoRef} autoPlay playsInline />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a browser tab, present a website, or share an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            ) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteScreenVideoRef} autoPlay playsInline muted={false} />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a browser tab, present a website, or share an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
             {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
             <canvas
               ref={annotationCanvasRef}

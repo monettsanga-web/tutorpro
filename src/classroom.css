@@ -1322,3 +1322,47 @@ body.classroom-active .support-widget {
 @media (prefers-reduced-motion: reduce) {
   .classroom-file-uploading__spinner { animation: none; }
 }
+
+/* Screen share presentation fixes: keep shared screen inside the lesson board */
+.classroom-lesson-board:has(.classroom-presentation-video),
+.classroom-lesson-board:has(.tencent-screen-view) {
+  background: #08040f;
+}
+
+.classroom-presentation-video,
+.teacher-screen-sharing-active video {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #08040f !important;
+}
+
+.classroom-presentation-video--fill,
+.teacher-screen-sharing-active video.classroom-presentation-video--fill {
+  object-fit: cover !important;
+}
+
+.tencent-screen-view {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
+  background: #08040f !important;
+}
+
+.tencent-screen-view video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #08040f !important;
+}
+
+.tencent-screen-view.classroom-presentation-video--fill video {
+  object-fit: cover !important;
+}
