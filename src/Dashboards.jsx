@@ -213,9 +213,11 @@ export function ScheduleCalendar({
   const dragState = useRef(null)
   const scrollRef = useRef(null)
   const inactiveCalendarStatuses = new Set(['cancelled', 'declined', 'absent'])
+  const releasedCalendarStatuses = new Set(['cancelled', 'declined'])
+  const calendarBookings = bookings.filter((booking) => !releasedCalendarStatuses.has(booking.status))
   const activeBookings = showInactiveBookings
-    ? [...bookings].sort((first, second) => Number(!inactiveCalendarStatuses.has(first.status)) - Number(!inactiveCalendarStatuses.has(second.status)))
-    : bookings.filter((booking) => !inactiveCalendarStatuses.has(booking.status))
+    ? [...calendarBookings].sort((first, second) => Number(!inactiveCalendarStatuses.has(first.status)) - Number(!inactiveCalendarStatuses.has(second.status)))
+    : calendarBookings.filter((booking) => !inactiveCalendarStatuses.has(booking.status))
   const occupied = new Map()
 
   activeBookings.forEach((booking) => {

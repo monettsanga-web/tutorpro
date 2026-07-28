@@ -7882,3 +7882,39 @@
   color: #111827 !important;
   text-decoration: none !important;
 }
+
+/* Admin reservation panel alignment fixes */
+.admin-reserve-panel,
+.admin-reserve-panel * {
+  box-sizing: border-box;
+}
+
+.admin-reserve-panel > label,
+.admin-reserve-panel__selected {
+  min-width: 0 !important;
+}
+
+.admin-reserve-panel select,
+.admin-reserve-panel input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.admin-reserve-panel label:nth-child(1) { grid-column: span 4 !important; }
+.admin-reserve-panel label:nth-child(2) { grid-column: span 3 !important; }
+.admin-reserve-panel label:nth-child(3) { grid-column: span 2 !important; }
+.admin-reserve-panel label:nth-child(4) { grid-column: span 3 !important; }
+.admin-reserve-panel__selected { grid-column: span 6 !important; }
+.admin-reserve-panel > .portal-primary-button { grid-column: span 6 !important; }
+
+@media (max-width: 1280px) {
+  .admin-reserve-panel label:nth-child(1),
+  .admin-reserve-panel label:nth-child(2),
+  .admin-reserve-panel label:nth-child(3),
+  .admin-reserve-panel label:nth-child(4),
+  .admin-reserve-panel__selected,
+  .admin-reserve-panel > .portal-primary-button {
+    grid-column: 1 / -1 !important;
+  }
+}
