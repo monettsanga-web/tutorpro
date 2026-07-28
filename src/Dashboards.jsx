@@ -3936,6 +3936,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminBookingView, setAdminBookingView] = useState('list') // list, calendar
   const [selectedCalendarTeacherId, setSelectedCalendarTeacherId] = useState('')
   const [adminCalendarWeek, setAdminCalendarWeek] = useState(0)
+  const [adminReserveSlot, setAdminReserveSlot] = useState(null)
+  const [adminReserveDuration, setAdminReserveDuration] = useState('25')
+  const [adminReserveFocus, setAdminReserveFocus] = useState('Speaking with confidence')
+  const [adminReserveNote, setAdminReserveNote] = useState('Reserved by administrator')
+  const [adminReserveMessage, setAdminReserveMessage] = useState('')
+  const [adminReserveError, setAdminReserveError] = useState('')
+  const [adminReserving, setAdminReserving] = useState(false)
 
   const teachers = getAccounts('teacher')
   const students = getAccounts('student')
@@ -3972,12 +3979,20 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const bookingProfile = studentProfiles.find((profile) => profile.learner.id === bookingStudentId) || studentProfiles[0] || null
   const bookingStudent = bookingProfile?.account || null
   const bookingLearner = bookingProfile?.learner || null
+  const selectedCalendarTeacher = teachers.find((teacher) => teacher.id === selectedCalendarTeacherId) || teachers[0] || null
+  const selectedTeacherBookings = selectedCalendarTeacher ? bookings.filter((booking) => booking.teacherId === selectedCalendarTeacher.id) : []
 
   useEffect(() => {
     if (teachers.length && !selectedCalendarTeacherId) {
       setSelectedCalendarTeacherId(teachers[0].id)
     }
   }, [teachers, selectedCalendarTeacherId])
+
+  useEffect(() => {
+    setAdminReserveSlot(null)
+    setAdminReserveError('')
+    setAdminReserveMessage('')
+  }, [selectedCalendarTeacherId, bookingStudentId, adminReserveDuration, adminCalendarWeek])
 
   useEffect(() => {
     const synchronize = () => setVersion((value) => value + 1)
@@ -4335,6 +4350,50 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
   }
 
+  const reserveAdminTeacherSlot = async () => {
+    setAdminReserveError('')
+    setAdminReserveMessage('')
+    if (!selectedCalendarTeacher) {
+      setAdminReserveError('Select a teacher first.')
+      return
+    }
+    if (!bookingStudent || !bookingLearner || bookingLearner.incomplete) {
+      setAdminReserveError('Select a complete student profile to reserve this slot.')
+      return
+    }
+    if (!adminReserveSlot?.date || !adminReserveSlot?.time) {
+      setAdminReserveError('Click an available slot on the teacher schedule first.')
+      return
+    }
+    setAdminReserving(true)
+    try {
+      let booking = createBooking({
+        teacherId: selectedCalendarTeacher.id,
+        teacherName: selectedCalendarTeacher.fullName,
+        studentId: bookingStudent.id,
+        learnerId: bookingLearner.id,
+        learnerName: bookingLearner.name,
+        learnerProfile: bookingLearner,
+        date: adminReserveSlot.date,
+        time: adminReserveSlot.time,
+        duration: Number(adminReserveDuration),
+        focus: adminReserveFocus,
+        note: adminReserveNote,
+      })
+      booking = updateBooking(booking.id, { status: 'confirmed', reservedByAdmin: true })
+      if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The reserved booking did not sync in time.')
+      void notifyBookingParticipants(booking, 'confirmed')
+      setManagedBooking(booking)
+      setAdminReserveSlot(null)
+      setAdminReserveMessage(`Reserved ${formatLessonDate(booking.date, booking.time, true)} at ${formatTime(booking.time)} for ${bookingLearner.name}.`)
+      refresh()
+    } catch (reserveError) {
+      setAdminReserveError(reserveError.message)
+    } finally {
+      setAdminReserving(false)
+    }
+  }
+
   const setBookingStatus = (bookingId, status) => {
     const previous = bookings.find((booking) => booking.id === bookingId)
     const updatedBooking = updateBooking(bookingId, { status })
@@ -4534,18 +4593,34 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             {adminBookingView === 'list' ? (
               <AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} />
             ) : (
-              <section className="portal-card booking-calendar-card teacher-booking-calendar">
+              <section className="portal-card booking-calendar-card teacher-booking-calendar admin-reserve-calendar-card">
                 <div className="drag-instruction teacher-feedback-instruction" style={{ marginBottom: '15px' }}>
                   <span><CalendarCheck2 size={18} /></span>
                   <div>
-                    <strong>Viewing Schedule for {teachers.find(t => t.id === selectedCalendarTeacherId)?.fullName || 'Selected Teacher'}</strong>
-                    <small>Yellow highlights display trials. Confirm, complete, or cancel bookings directly from the calendar slots.</small>
+                    <strong>Reserve a slot for {selectedCalendarTeacher?.fullName || 'selected teacher'}</strong>
+                    <small>Choose a student, click any available teacher slot, then reserve it as a confirmed class.</small>
                   </div>
                 </div>
+
+                <div className="admin-reserve-panel">
+                  <label><span>Student</span><select value={bookingLearner?.id || ''} onChange={(event) => setBookingStudentId(event.target.value)}>{studentProfiles.map(({ account: student, learner: optionLearner }) => <option key={optionLearner.id} value={optionLearner.id}>{optionLearner.name} · {student.parentName} · {optionLearner.accessStatus}</option>)}</select></label>
+                  <label><span>Lesson focus</span><select value={adminReserveFocus} onChange={(event) => setAdminReserveFocus(event.target.value)}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+                  <label><span>Length</span><select value={adminReserveDuration} onChange={(event) => setAdminReserveDuration(event.target.value)}><option value="25">25 min</option><option value="50">50 min</option></select></label>
+                  <label><span>Admin note</span><input value={adminReserveNote} onChange={(event) => setAdminReserveNote(event.target.value)} placeholder="Reserved by administrator" /></label>
+                  <div className="admin-reserve-panel__selected"><span>Selected slot</span><strong>{adminReserveSlot ? `${formatLessonDate(adminReserveSlot.date, adminReserveSlot.time, true)} at ${formatTime(adminReserveSlot.time)}` : 'Click an available slot below'}</strong></div>
+                  <button type="button" className="portal-primary-button" onClick={reserveAdminTeacherSlot} disabled={adminReserving || !adminReserveSlot || !bookingLearner || bookingLearner.incomplete}>{adminReserving ? 'Reserving…' : 'Reserve selected slot'} <CalendarCheck2 size={16} /></button>
+                </div>
+                {adminReserveError && <div className="portal-error" role="alert">{adminReserveError}</div>}
+                {adminReserveMessage && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Slot reserved</strong><span>{adminReserveMessage}</span></div></div>}
+
                 <ScheduleCalendar 
                   weekOffset={adminCalendarWeek} 
-                  onWeekOffset={setAdminCalendarWeek} 
-                  bookings={bookings.filter(b => b.teacherId === selectedCalendarTeacherId)} 
+                  onWeekOffset={setAdminCalendarWeek}
+                  availabilitySlots={selectedCalendarTeacher?.teacher?.availabilitySlots || []}
+                  bookings={selectedTeacherBookings}
+                  duration={Number(adminReserveDuration)}
+                  selectedLessons={adminReserveSlot ? [{ ...adminReserveSlot, duration: Number(adminReserveDuration) }] : []}
+                  onSelect={(slot) => { setAdminReserveSlot({ date: slot.date, time: slot.time, duration: Number(adminReserveDuration) }); setAdminReserveError(''); setAdminReserveMessage('') }}
                   onBookingOpen={setManagedBooking} 
                   showInactiveBookings 
                 />
