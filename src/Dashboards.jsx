@@ -449,6 +449,38 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
   )
 }
 
+
+function TeacherFeedbackSummary({ feedback }) {
+  if (!feedback) return null
+  const summary = feedback.summary || ''
+  const createdAt = feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
+  return (
+    <section className="parent-class-feedback-summary" aria-label="Professional class feedback summary">
+      <div className="parent-class-feedback-summary__header">
+        <span><MessageSquareText size={18} /></span>
+        <div>
+          <small>Teacher class feedback</small>
+          <strong>Professional lesson summary</strong>
+          {createdAt && <em>{createdAt}</em>}
+        </div>
+      </div>
+      <div className="parent-class-feedback-summary__body">
+        <article><h4>Class summary</h4><p>{summary}</p></article>
+        {(feedback.strength || feedback.nextStep || feedback.homework) && (
+          <div className="parent-class-feedback-summary__grid">
+            {feedback.strength && <div><span>Strength shown</span><p>{feedback.strength}</p></div>}
+            {feedback.nextStep && <div><span>Next learning step</span><p>{feedback.nextStep}</p></div>}
+            {feedback.homework && <div><span>Home practice</span><p>{feedback.homework}</p></div>}
+          </div>
+        )}
+        {feedback.practiceWords?.length > 0 && <div className="parent-feedback-chip-row"><b>Words to practise</b>{feedback.practiceWords.map((word) => <i key={word}>{word}</i>)}</div>}
+        {feedback.grammarFocus?.length > 0 && <div className="parent-feedback-chip-row parent-feedback-chip-row--grammar"><b>Grammar focus</b>{feedback.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div>}
+        {feedback.resourceLinks?.length > 0 && <div className="parent-feedback-resources"><b><BookOpen size={13} /> Practice resources</b>{feedback.resourceLinks.map((link, index) => <a key={`${link.url}-${index}`} href={link.url} target="_blank" rel="noopener noreferrer" title={link.url}>{link.resourceType === 'video' ? '🎬' : link.resourceType === 'worksheet' ? '📝' : link.resourceType === 'quiz' ? '❓' : link.resourceType === 'reading' ? '📖' : link.resourceType === 'audio' ? '🎧' : '🔗'} {link.title}</a>)}</div>}
+      </div>
+    </section>
+  )
+}
+
 function BookingCard({ booking, showStudent = false, showTeacher = false, actions, onEnterClassroom, onManageBooking, onOpenChat }) {
   const student = getAccountById(booking.studentId)
   const teacher = getAccountById(booking.teacherId)
@@ -527,7 +559,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
 
           {booking.status === 'confirmed' && <button className="add-calendar-button" onClick={() => downloadBookingCalendar(booking, { teacherName: teacher?.fullName || booking.teacherName, learnerName: learner?.name || booking.learnerName })}><CalendarPlus size={14} /> Add to phone calendar</button>}
         </div>
-        {booking.teacherFeedback && <div className="lesson-feedback-preview"><strong><MessageSquareText size={12} /> Teacher feedback</strong><span>{booking.teacherFeedback.summary}</span>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}{booking.teacherFeedback.practiceWords?.length > 0 && <div className="feedback-preview-tags"><b>Words:</b>{booking.teacherFeedback.practiceWords.map((word) => <i key={word}>{word}</i>)}</div>}{booking.teacherFeedback.grammarFocus?.length > 0 && <div className="feedback-preview-tags feedback-preview-tags--grammar"><b>Grammar:</b>{booking.teacherFeedback.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div>}{booking.teacherFeedback.resourceLinks?.length > 0 && <div className="feedback-preview-resources"><b><BookOpen size={11} /> Practice resources:</b>{booking.teacherFeedback.resourceLinks.map((link, index) => <a key={`${link.url}-${index}`} href={link.url} target="_blank" rel="noopener noreferrer" className="feedback-resource-link" title={link.url}>{link.resourceType === 'video' ? '🎬' : link.resourceType === 'worksheet' ? '📝' : link.resourceType === 'quiz' ? '❓' : link.resourceType === 'reading' ? '📖' : link.resourceType === 'audio' ? '🎧' : '🔗'} {link.title}</a>)}</div>}</div>}
+        {booking.teacherFeedback && <TeacherFeedbackSummary feedback={booking.teacherFeedback} />}
         {booking.studentRating && <div className="lesson-rating-preview"><Star size={12} fill="currentColor" /> {booking.studentRating.score}/5 {booking.studentRating.comment && <span>“{booking.studentRating.comment}”</span>}</div>}
       </div>
       {actions && <div className="lesson-card__actions">{actions}</div>}
@@ -1181,7 +1213,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         </div>
 
         <form className="feedback-form" onSubmit={submit}>
-          <label><span>Class summary *</span><textarea autoFocus value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="What did you cover and how did the student participate?" /></label>
+          <label><span>Class summary * <em>{form.summary.length}/5000</em></span><textarea autoFocus value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="Paste or type up to 5,000 characters. What did you cover and how did the student participate?" maxLength={5000} /></label>
           <div><label><span>Strength shown</span><input value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="e.g. Clear spoken answers" /></label><label><span>Next learning step</span><input value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="e.g. Use richer vocabulary" /></label></div>
           <div className="feedback-practice-grid">
             <fieldset className="feedback-word-practice"><legend>Words or phrases to practise</legend><p>Add up to 12 vocabulary or pronunciation targets for the student.</p><div className="feedback-word-entry"><input value={wordDraft} onChange={(event) => setWordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); addPracticeWord() } }} placeholder="Type a word, then press Enter" maxLength="40" /><button type="button" onClick={addPracticeWord} disabled={!wordDraft.trim() || form.practiceWords.length >= 12}><Plus size={15} /> Add</button></div><div className="feedback-chip-list">{form.practiceWords.length ? form.practiceWords.map((word) => <span key={word}>{word}<button type="button" onClick={() => setForm((current) => ({ ...current, practiceWords: current.practiceWords.filter((item) => item !== word) }))} aria-label={`Remove ${word}`}><X size={12} /></button></span>) : <small>No practice words selected yet.</small>}</div></fieldset>

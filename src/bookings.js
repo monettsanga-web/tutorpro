@@ -208,7 +208,7 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
   if (!booking || booking.teacherId !== teacherId) throw new Error('This lesson is not assigned to the teacher account.')
   if (!['confirmed', 'ongoing', 'completed'].includes(booking.status)) throw new Error('Confirm or start the lesson before adding post-class feedback.')
   if (!feedback.summary?.trim()) throw new Error('Add a short class summary before saving feedback.')
-  if (feedback.summary.trim().length > 1000) throw new Error('Keep the class summary under 1,000 characters.')
+  if (feedback.summary.trim().length > 5000) throw new Error('Keep the class summary under 5,000 characters.')
   const practiceWords = [...new Set((Array.isArray(feedback.practiceWords) ? feedback.practiceWords : [])
     .map((word) => String(word).trim())
     .filter(Boolean))].slice(0, 12)
