@@ -7443,3 +7443,14 @@
   color: #321568 !important;
   border-color: rgba(124, 58, 237, 0.22) !important;
 }
+
+.teacher-feedback-queue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.teacher-feedback-queue-actions .portal-text-button {
+  white-space: nowrap;
+}

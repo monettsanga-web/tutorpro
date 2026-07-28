@@ -1033,8 +1033,6 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   })
   const [wordDraft, setWordDraft] = useState('')
   const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
-  const [aiCommand, setAiCommand] = useState('')
-  const [aiTone, setAiTone] = useState('warm')
   const [error, setError] = useState('')
 
   const fillTemplate = (type) => {
@@ -1077,124 +1075,6 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     }
   }
 
-
-  const generateAiFeedback = () => {
-    const command = aiCommand.trim()
-    if (command.length < 4) {
-      setError('Type a short AI instruction, such as: "good speaking, needs past tense practice".')
-      return
-    }
-
-    const studentName = learner?.name || 'the student'
-    const lower = command.toLowerCase()
-    const focus = booking.focus || learner?.goal || 'English communication skills'
-    const lessonDate = booking.date ? new Date(`${booking.date}T00:00:00`).toLocaleDateString('en', { month: 'short', day: 'numeric' }) : 'today'
-
-    const has = (pattern) => pattern.test(lower)
-    const positiveTone = has(/excellent|great|good|confident|improved|participat|effort|happy|active|amazing|wonderful|strong|focused|engaged|well/) 
-    const needsSupport = has(/need|needs|struggle|struggled|difficult|hard|confus|mistake|shy|quiet|support|practice|improve|weak/)
-    const grammarNeed = has(/grammar|tense|past|present|sentence|verb|article|a\/an|plural|preposition|pronoun|punctuation|subject|agreement/)
-    const speakingNeed = has(/speak|speaking|conversation|pronunciation|fluency|confidence|answer|oral|voice|talk/)
-    const readingNeed = has(/read|reading|phonics|sound|blend|comprehension|decode|paragraph|story|passage/)
-    const writingNeed = has(/write|writing|spell|spelling|paragraph|essay|composition|punctuation/)
-    const vocabularyNeed = has(/vocab|vocabulary|word|words|meaning|definition|adjective|noun/)
-
-    const focusAreas = [
-      speakingNeed ? 'speaking confidence and oral sentence building' : '',
-      readingNeed ? 'reading accuracy, phonics, and comprehension' : '',
-      grammarNeed ? 'grammar accuracy and sentence structure' : '',
-      writingNeed ? 'writing organisation and spelling accuracy' : '',
-      vocabularyNeed ? 'vocabulary expansion and word usage' : '',
-    ].filter(Boolean)
-    const focusText = focusAreas.length ? focusAreas.join(', ') : focus
-
-    const participation = positiveTone
-      ? `${studentName} participated actively, listened carefully, and showed a positive learning attitude throughout the class.`
-      : needsSupport
-        ? `${studentName} worked through the activities with teacher guidance and is beginning to build more confidence with the target skills.`
-        : `${studentName} followed the lesson well and completed the guided practice activities with steady effort.`
-
-    const accuracyNote = grammarNeed
-      ? `We corrected grammar patterns in real time and practised using complete sentences so ${studentName} can become more accurate and independent.`
-      : speakingNeed
-        ? `We encouraged longer spoken answers, clearer pronunciation, and more natural responses instead of short one-word answers.`
-        : readingNeed
-          ? `We focused on reading flow, word recognition, pronunciation, and checking understanding after each short passage.`
-          : writingNeed
-            ? `We worked on organising ideas clearly and checking sentence-level accuracy before moving on.`
-            : `We used guided examples, repetition, and correction to strengthen today’s learning target.`
-
-    const toneOpening = aiTone === 'concise'
-      ? `${studentName} had a productive ${focus} lesson on ${lessonDate}.`
-      : aiTone === 'premium' || aiTone === 'comprehensive'
-        ? `During today’s personalised TutorPro English lesson on ${lessonDate}, ${studentName} worked on ${focusText}.`
-        : `Today, ${studentName} completed a productive ${focus} lesson.`
-
-    const teacherObservation = `Teacher note: “${command}”.`
-    const comprehensiveEnding = aiTone === 'comprehensive'
-      ? ` Overall, this lesson showed useful progress and gave us a clear direction for the next class: continue building confidence, accuracy, and independent sentence production through short but consistent practice.`
-      : ''
-
-    const summary = aiTone === 'concise'
-      ? `${toneOpening} ${participation} ${accuracyNote}`
-      : `${toneOpening} ${teacherObservation} ${participation} ${accuracyNote}${comprehensiveEnding}`
-
-    const strength = positiveTone
-      ? `${studentName}’s strongest point today was active participation, willingness to try, and growing confidence when responding to teacher prompts.`
-      : speakingNeed
-        ? `${studentName} showed good effort in attempting spoken answers and responding to guided speaking prompts.`
-        : readingNeed
-          ? `${studentName} showed steady effort in reading practice and was able to follow correction during pronunciation work.`
-          : grammarNeed
-            ? `${studentName} was able to notice teacher corrections and apply some target grammar patterns during guided practice.`
-            : `${studentName} showed effort, attention, and a willingness to complete the lesson tasks.`
-
-    const nextStep = grammarNeed
-      ? `Next, ${studentName} should practise using the target grammar in complete sentences without waiting for teacher prompts. We will continue focusing on accuracy, word order, and self-correction.`
-      : speakingNeed
-        ? `Next, ${studentName} should answer in complete sentences with one extra detail, such as a reason, example, or feeling. This will help improve fluency and confidence.`
-        : readingNeed
-          ? `Next, ${studentName} should continue reading short passages aloud while paying attention to pronunciation, punctuation pauses, and comprehension questions.`
-          : writingNeed
-            ? `Next, ${studentName} should practise writing short organised sentences and checking spelling, punctuation, and grammar before submitting work.`
-            : `Next, ${studentName} should review today’s target vocabulary and use the new words in complete spoken or written sentences.`
-
-    const homework = grammarNeed
-      ? `Homework: Write 5 sentences using today’s grammar target. Read each sentence aloud and check for correct word order and verb form.`
-      : speakingNeed
-        ? `Homework: Prepare 3 complete spoken answers about a familiar topic. Each answer should include one reason or example.`
-        : readingNeed
-          ? `Homework: Read a short English passage aloud twice. Circle difficult words and practise saying them clearly before the next class.`
-          : writingNeed
-            ? `Homework: Write a short 4-sentence paragraph about today’s topic, then check capital letters, punctuation, and spelling.`
-            : `Homework: Review the new words from class and use at least 3 of them in complete sentences.`
-
-    const autoGrammarFocus = GRAMMAR_FOCUS_OPTIONS.filter((focusOption) => {
-      const normalized = focusOption.toLowerCase()
-      return lower.includes(normalized.split(' ')[0])
-        || (normalized.includes('tense') && /tense|past|present|verb/.test(lower))
-        || (normalized.includes('sentence') && /sentence|word order/.test(lower))
-        || (normalized.includes('article') && /article|a\/an| a | an /.test(lower))
-        || (normalized.includes('punctuation') && /punctuation|capital|period|comma/.test(lower))
-    })
-
-    const extractedWords = [...new Set((command.match(/"([^"]+)"|'([^']+)'|\b[a-zA-Z]{4,}\b/g) || [])
-      .map((item) => item.replace(/^['"]|['"]$/g, '').trim())
-      .filter((word) => word.length >= 4 && word.length <= 40)
-      .filter((word) => !/today|class|great|good|need|needs|practice|student|speaking|reading|grammar|feedback|sentence|complete|teacher|lesson|improve/i.test(word))
-      .slice(0, 6))]
-
-    setForm((current) => ({
-      ...current,
-      summary,
-      strength,
-      nextStep,
-      homework,
-      grammarFocus: [...new Set([...(current.grammarFocus || []), ...autoGrammarFocus])],
-      practiceWords: [...new Set([...(current.practiceWords || []), ...extractedWords])].slice(0, 12),
-    }))
-    setError('')
-  }
 
   const addPracticeWord = () => {
     const word = wordDraft.trim().replace(/^,+|,+$/g, '')
@@ -1262,11 +1142,6 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
         {error && <div className="portal-error" role="alert">{error}</div>}
 
-        <div className="feedback-ai-assistant">
-          <div><span>🤖 AI feedback assistant</span><strong>Tell AI what happened in class</strong><small>Example: “Great reading today, needs past tense, pronunciation, and complete sentences.”</small></div>
-          <div className="feedback-ai-assistant__tones" role="group" aria-label="AI feedback tone"><button type="button" className={aiTone === 'warm' ? 'active' : ''} onClick={() => setAiTone('warm')}>Warm</button><button type="button" className={aiTone === 'concise' ? 'active' : ''} onClick={() => setAiTone('concise')}>Concise</button><button type="button" className={aiTone === 'premium' ? 'active' : ''} onClick={() => setAiTone('premium')}>Detailed</button><button type="button" className={aiTone === 'comprehensive' ? 'active' : ''} onClick={() => setAiTone('comprehensive')}>ChatGPT-style</button></div>
-          <div className="feedback-ai-assistant__command"><input value={aiCommand} onChange={(event) => setAiCommand(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); generateAiFeedback() } }} placeholder="Command the AI like ChatGPT: great speaking, needs past tense practice…" /><button type="button" onClick={generateAiFeedback}>Generate feedback</button></div>
-        </div>
 
         {/* ✨ FAST FEEDBACK TEMPLATE RECOMMENDATIONS */}
         <div className="feedback-recommendations" style={{ margin: '15px 0', padding: '12px', background: 'rgba(120, 80, 201, 0.08)', border: '1px solid rgba(120, 80, 201, 0.2)', borderRadius: '10px' }}>
@@ -2319,6 +2194,18 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     }
   }, [initialAccount.id])
 
+  useEffect(() => {
+    if (active !== 'overview') return undefined
+    const refreshFeedbackQueue = () => setVersion((value) => value + 1)
+    refreshFeedbackQueue()
+    window.addEventListener('focus', refreshFeedbackQueue)
+    const interval = window.setInterval(refreshFeedbackQueue, 1500)
+    return () => {
+      window.removeEventListener('focus', refreshFeedbackQueue)
+      window.clearInterval(interval)
+    }
+  }, [active])
+
   const refresh = () => setVersion((value) => value + 1)
 
   const uploadTeacherMedia = async (event, kind) => {
@@ -2530,7 +2417,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <section className="portal-card teacher-feedback-queue-card">
             <div className="portal-card__heading portal-card__heading--small">
               <div><span className="portal-kicker">Smart feedback queue</span><h2>Classes needing remarks</h2><p>Quickly complete class feedback while the lesson is still fresh.</p></div>
-              <button className="portal-text-button" onClick={() => setActive('bookings')}>All bookings <ChevronRight size={15} /></button>
+              <div className="teacher-feedback-queue-actions"><button className="portal-text-button" onClick={refresh}>Refresh <RotateCcw size={15} /></button><button className="portal-text-button" onClick={() => setActive('bookings')}>All bookings <ChevronRight size={15} /></button></div>
             </div>
             {feedbackNeededBookings.length ? (
               <div className="teacher-feedback-queue-list">
