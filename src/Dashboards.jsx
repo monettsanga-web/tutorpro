@@ -85,6 +85,7 @@ import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSu
 import { translateSupportText } from './supportTranslation.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { supabase } from './supabaseClient.js'
+import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferralLink, getReferralStats, getShareTargets, referralActivity } from './referrals.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -1311,6 +1312,143 @@ function AddStudentDialog({ account, onClose, onAdded }) {
   )
 }
 
+
+function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
+  const [copied, setCopied] = useState('')
+  const [posterReady, setPosterReady] = useState(false)
+  const allAccounts = getAccounts()
+  const stats = getReferralStats(account, allAccounts)
+  const code = stats.code
+  const link = stats.link
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`
+  const nextLabel = stats.nextLevel ? `${stats.nextLevel.label} at ${stats.nextLevel.min} successful referrals` : 'Top ambassador level unlocked'
+  const shareText = role === 'teacher'
+    ? `Join TutorPro English PH through my teacher referral link and start learning online English.`
+    : `Try TutorPro English PH for online English classes. Use my referral link and we both earn a free lesson after your first package.`
+  const shareTargets = getShareTargets(link, shareText)
+  const recent = referralActivity(account, allAccounts).slice(0, 8)
+
+  useEffect(() => {
+    if (!account.referralCode) {
+      const updated = updateAccount(account.id, { referralCode: code, referralWallet: account.referralWallet || { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] } })
+      onAccountChange?.(updated)
+    }
+  }, [account.id])
+
+  const copy = async (value, label) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(label)
+      window.setTimeout(() => setCopied(''), 1600)
+    } catch {
+      setCopied('Copy failed')
+    }
+  }
+
+  const downloadPoster = async () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1080
+    canvas.height = 1350
+    const ctx = canvas.getContext('2d')
+    const gradient = ctx.createLinearGradient(0, 0, 1080, 1350)
+    gradient.addColorStop(0, '#321568')
+    gradient.addColorStop(0.55, '#7048df')
+    gradient.addColorStop(1, '#090510')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = 'rgba(255,255,255,0.1)'
+    ctx.beginPath(); ctx.arc(910, 130, 240, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#bce94e'
+    ctx.font = '900 48px sans-serif'
+    ctx.fillText('TutorPro English PH', 70, 115)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '900 88px sans-serif'
+    ctx.fillText('Invite a friend.', 70, 260)
+    ctx.fillText('Earn free lessons.', 70, 360)
+    ctx.fillStyle = 'rgba(255,255,255,0.82)'
+    ctx.font = '36px sans-serif'
+    ctx.fillText(`Referral code: ${code}`, 70, 470)
+    ctx.fillText(`${displayName(account)} is inviting you to join.`, 70, 530)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(70, 620, 420, 420)
+    try {
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.src = qrUrl
+      await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject })
+      ctx.drawImage(image, 90, 640, 380, 380)
+    } catch {
+      ctx.fillStyle = '#321568'
+      ctx.font = '900 42px sans-serif'
+      ctx.fillText(code, 145, 845)
+    }
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '900 44px sans-serif'
+    ctx.fillText('Scan to register', 540, 720)
+    ctx.fillStyle = 'rgba(255,255,255,0.82)'
+    ctx.font = '32px sans-serif'
+    ctx.fillText('New parent reward: 1 free lesson', 540, 790)
+    ctx.fillText('Referrer reward: 1 free lesson', 540, 845)
+    ctx.font = '27px sans-serif'
+    ctx.fillText(link.replace(/^https?:\/\//, ''), 70, 1140)
+    ctx.fillStyle = '#bce94e'
+    ctx.font = '900 38px sans-serif'
+    ctx.fillText('Start learning English with confidence.', 70, 1220)
+    const a = document.createElement('a')
+    a.download = `tutorpro-referral-${code}.png`
+    a.href = canvas.toDataURL('image/png')
+    a.click()
+    setPosterReady(true)
+    window.setTimeout(() => setPosterReady(false), 1800)
+  }
+
+  return (
+    <div className="portal-view referral-dashboard-view">
+      <section className="referral-hero-card">
+        <div>
+          <span className="portal-kicker">Referral & ambassador programme</span>
+          <h1>{stats.level.emoji} {stats.level.label}</h1>
+          <p>Share TutorPro English PH and earn free lessons automatically when your friend registers and purchases their first package.</p>
+          <div className="referral-hero-stats"><span><strong>{stats.successfulReferrals}</strong> successful</span><span><strong>{stats.pendingReferrals}</strong> pending</span><span><strong>{stats.wallet.freeLessons}</strong> wallet lessons</span></div>
+        </div>
+        <div className="referral-qr-card"><img src={qrUrl} alt="Referral QR code" /><strong>{code}</strong><button onClick={() => copy(code, 'Code copied')}>Copy code</button></div>
+      </section>
+
+      <section className="referral-grid">
+        <article className="portal-card referral-link-card"><span className="portal-kicker">Your referral link</span><h2>Invite families</h2><div className="referral-copy-box"><code>{link}</code><button onClick={() => copy(link, 'Link copied')}>Copy</button></div>{copied && <small className="referral-copied">{copied}</small>}<div className="referral-share-buttons">{shareTargets.map((target) => <a key={target.id} href={target.url} target="_blank" rel="noreferrer">{target.label}</a>)}</div><button className="portal-primary-button" onClick={downloadPoster}><Download size={16} /> Generate poster</button>{posterReady && <span className="saved-label"><Check size={14} /> Poster downloaded</span>}</article>
+        <article className="portal-card referral-progress-card"><span className="portal-kicker">Next reward</span><h2>{nextLabel}</h2><div className="referral-progress"><i><b style={{ width: `${stats.progressToNext}%` }} /></i><span>{stats.progressToNext}%</span></div><ul>{stats.level.benefits.map((benefit) => <li key={benefit}><CheckCircle2 size={15} /> {benefit}</li>)}</ul></article>
+        <article className="portal-card referral-wallet-card"><span className="portal-kicker">Rewards wallet</span><h2>Free lessons & bonuses</h2><dl><div><dt>Free lessons</dt><dd>{stats.wallet.freeLessons}</dd></div><div><dt>Coins</dt><dd>{stats.wallet.coins}</dd></div><div><dt>XP</dt><dd>{stats.wallet.xp}</dd></div><div><dt>Coupons</dt><dd>{stats.wallet.coupons.length}</dd></div></dl></article>
+      </section>
+
+      <section className="portal-card referral-activity-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Recent activity</span><h2>Referral history</h2></div><span className="support-inbox-live"><i /> Auto tracked</span></div>{recent.length ? <div className="referral-activity-list">{recent.map((item) => <article key={item.id}><span>{item.type === 'reward' ? '🎁' : '👨‍👩‍👧'}</span><div><strong>{item.title}</strong><small>{item.status} {item.date ? `· ${new Date(item.date).toLocaleDateString('en')}` : ''}</small></div></article>)}</div> : <EmptyState icon={Award} title="No referral activity yet" text="Share your link with families and your registrations will appear here." />}</section>
+    </div>
+  )
+}
+
+function AdminReferralDashboard() {
+  const accounts = getAccounts()
+  const participants = accounts.filter((account) => ['student', 'teacher'].includes(account.role))
+  const rows = participants.map((account) => ({ account, stats: getReferralStats(account, accounts) })).sort((a, b) => b.stats.successfulReferrals - a.stats.successfulReferrals)
+  const successful = rows.reduce((sum, row) => sum + row.stats.successfulReferrals, 0)
+  const pending = rows.reduce((sum, row) => sum + row.stats.pendingReferrals, 0)
+  const exportCsv = () => {
+    const header = 'Name,Role,Referral Code,Successful,Pending,Level\n'
+    const body = rows.map(({ account, stats }) => [displayName(account), account.role, stats.code, stats.successfulReferrals, stats.pendingReferrals, stats.level.label].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([header + body], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'tutorpro-referrals.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+  return (
+    <div className="portal-view referral-dashboard-view">
+      <div className="portal-page-heading"><div><span className="portal-kicker">Growth engine</span><h1>Referral analytics</h1><p>Track parent and teacher referrals, rewards, conversion and ambassador progress.</p></div><button className="portal-primary-button" onClick={exportCsv}><Download size={16} /> Export CSV</button></div>
+      <div className="portal-stat-grid"><article><span className="stat-icon stat-icon--green"><Award size={21} /></span><div><small>Successful referrals</small><strong>{successful}</strong><em>Rewarded</em></div></article><article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Pending referrals</small><strong>{pending}</strong><em>Awaiting first package</em></div></article><article><span className="stat-icon stat-icon--blue"><Users size={21} /></span><div><small>Ambassadors</small><strong>{rows.filter((row) => row.stats.successfulReferrals > 0).length}</strong><em>Active referrers</em></div></article><article><span className="stat-icon stat-icon--gold"><Coins size={21} /></span><div><small>Free lessons issued</small><strong>{successful * 2}</strong><em>Both families</em></div></article></div>
+      <section className="portal-card referral-admin-table"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Leaderboard</span><h2>Top ambassadors</h2></div></div><div className="admin-table"><div className="admin-table__head"><span>Member</span><span>Code</span><span>Level</span><span>Successful</span><span>Pending</span></div>{rows.slice(0, 30).map(({ account, stats }) => <div className="admin-table__row" key={account.id}><div className="table-person"><ProfilePhoto accountId={account.id} name={displayName(account)} className="learner-tab-photo" /><div><strong>{displayName(account)}</strong><small>{account.role}</small></div></div><div><strong>{stats.code}</strong><small>{stats.link}</small></div><div><strong>{stats.level.emoji} {stats.level.label}</strong><small>{stats.nextLevel ? `Next: ${stats.nextLevel.label}` : 'Top level'}</small></div><div><strong>{stats.successfulReferrals}</strong></div><div><strong>{stats.pendingReferrals}</strong></div></div>)}</div></section>
+    </div>
+  )
+}
+
 function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplete }) {
   const defaultWeeklySessions = Number(account.preferredWeeklySessions || 4)
   const defaultBillingPlan = account.preferredBillingPlan || (defaultWeeklySessions >= 4 ? 'monthly' : 'weekly')
@@ -1858,6 +1996,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'lessons', label: 'My lessons', icon: CalendarDays, badge: pendingCount },
     { id: 'curriculum', label: 'Curriculum Framework', icon: BookOpen },
     { id: 'games', label: 'English games', icon: Gamepad2 },
+    { id: 'referrals', label: 'Referrals', icon: Award },
     { id: 'support', label: 'Parent support', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
@@ -1934,6 +2073,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       )}
 
       {active === 'games' && <Suspense fallback={<div className="game-loading"><i /><strong>Launching 3D English Game Zone…</strong><span>Preparing the world for {learner.name}</span></div>}><StudentGames key={learner.id} learner={learner} onEarnStars={earnGameStars} /></Suspense>}
+
+      {active === 'referrals' && <ReferralDashboardPanel account={account} role="parent" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'curriculum' && (
         <div className="portal-view">
@@ -2427,6 +2568,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'classroom', label: 'Classroom', icon: Video },
     { id: 'schedule', label: 'Availability', icon: CalendarDays },
     { id: 'support', label: 'Support & Chat', icon: MessageSquareText },
+    { id: 'referrals', label: 'Teacher referrals', icon: Award },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -2564,6 +2706,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           </div>
         </div>
       )}
+
+      {active === 'referrals' && <ReferralDashboardPanel account={account} role="teacher" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'profile' && (
         <div className="portal-view">
@@ -4223,6 +4367,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
     { id: 'students', label: 'Students', icon: GraduationCap },
     { id: 'support', label: 'Parents/Teachers support', icon: MessageSquareText, badge: supportUnread },
+    { id: 'referrals', label: 'Referral growth', icon: Award },
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
@@ -4293,6 +4438,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'support' && <SupportInbox onUnreadChange={setSupportUnread} initialConversationId={initialSupportId} />}
+
+      {active === 'referrals' && <AdminReferralDashboard />}
 
       {active === 'announcements' && <AdminAnnouncementsPanel />}
 

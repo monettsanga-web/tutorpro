@@ -29,6 +29,34 @@ function validLoginId(provider, value) {
   return /^\S+@\S+\.\S+$/.test(login)
 }
 
+function normalizeReferralCode(code = '') {
+  return String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16)
+}
+
+function createReferralCode(name = '', id = '') {
+  const prefix = String(name || 'TP').replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase().padEnd(3, 'X')
+  let hash = 0
+  const source = `${name}:${id}`
+  for (let index = 0; index < source.length; index += 1) hash = ((hash << 5) - hash) + source.charCodeAt(index)
+  return normalizeReferralCode(`${prefix}${Math.abs(hash).toString(36).toUpperCase().slice(0, 5).padEnd(5, '0')}`)
+}
+
+function readIncomingReferralCode(details = {}) {
+  const direct = normalizeReferralCode(details.referralCode || details.ref || '')
+  if (direct) return direct
+  try {
+    const url = new URL(window.location.href)
+    const fromUrl = normalizeReferralCode(url.searchParams.get('ref') || '')
+    if (fromUrl) {
+      localStorage.setItem('tutorpro_pending_referral_code', fromUrl)
+      return fromUrl
+    }
+    return normalizeReferralCode(localStorage.getItem('tutorpro_pending_referral_code') || '')
+  } catch {
+    return ''
+  }
+}
+
 function validateNewCredentials(provider, login, password) {
   if (!validLoginId(provider, login)) throw new Error('Enter a valid login for the selected provider.')
   if (typeof password !== 'string' || password.length < 8 || !/[0-9]/.test(password)) {
@@ -337,6 +365,8 @@ export async function registerAccount(details) {
     children: [learner],
     selectedPlan: details.selectedPlan || '',
     preferredTeacherId: details.preferredTeacherId || '',
+    referredByCode: readIncomingReferralCode(details),
+    referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     // Store only the country code estimated from the registration IP — never the IP address itself.
     registrationCountry: readVisitorCountry().toUpperCase(),
     createdAt: new Date().toISOString(),
@@ -347,6 +377,8 @@ export async function registerAccount(details) {
     account.id = cloud.userId
     account.cloudProfile = true
   }
+  account.referralCode = createReferralCode(account.parentName, account.id)
+  if (account.referredByCode === account.referralCode) account.referredByCode = ''
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
@@ -382,6 +414,7 @@ export async function registerTeacher(details) {
     passwordHash: await hashPassword(details.password, salt),
     salt,
     createdAt: new Date().toISOString(),
+    referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     teacher: {
       specialization: details.specialization,
       bio: details.bio.trim(),
@@ -411,6 +444,7 @@ export async function registerTeacher(details) {
     account.id = cloud.userId
     account.cloudProfile = true
   }
+  account.referralCode = createReferralCode(account.fullName, account.id)
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
@@ -439,6 +473,7 @@ export async function createTeacherByAdmin(details) {
     passwordHash: await hashPassword(details.password, salt),
     salt,
     createdAt: new Date().toISOString(),
+    referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     teacher: {
       specialization: details.specialization || 'Both Curricula',
       bio: details.bio?.trim() || 'TutorPro English teacher.',
@@ -454,6 +489,7 @@ export async function createTeacherByAdmin(details) {
     },
   }
 
+  account.referralCode = createReferralCode(account.fullName, account.id)
   accounts.push(account)
   writeAccounts(accounts)
   return publicAccount(account)

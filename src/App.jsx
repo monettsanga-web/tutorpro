@@ -1169,6 +1169,13 @@ export default function App() {
   const [preferredTeacher, setPreferredTeacher] = useState(null)
   const [teacherVersion, setTeacherVersion] = useState(0)
   const [showPublicTeachers, setShowPublicTeachers] = useState(false)
+  const [incomingReferralCode] = useState(() => {
+    try {
+      const code = new URL(window.location.href).searchParams.get('ref') || localStorage.getItem('tutorpro_pending_referral_code') || ''
+      if (code) localStorage.setItem('tutorpro_pending_referral_code', code.toUpperCase())
+      return code.toUpperCase()
+    } catch { return '' }
+  })
 
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -1370,6 +1377,7 @@ export default function App() {
           initialMode={authMode}
           selectedPlan={selectedPlan}
           preferredTeacher={preferredTeacher}
+          referralCode={incomingReferralCode}
           currentAccount={currentAccount}
           onClose={() => setAuthOpen(false)}
           onAuthenticated={setCurrentAccount}

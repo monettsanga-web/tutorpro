@@ -136,6 +136,25 @@ export function extractOrderDetails(order) {
   }
 }
 
+function normalizeReferralCode(code = '') {
+  return String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16)
+}
+
+function addWalletReward(profileData, reward) {
+  const wallet = profileData.referralWallet && typeof profileData.referralWallet === 'object' && !Array.isArray(profileData.referralWallet)
+    ? profileData.referralWallet
+    : {}
+  const transactions = Array.isArray(wallet.transactions) ? wallet.transactions : []
+  return {
+    ...wallet,
+    freeLessons: Number(wallet.freeLessons || 0) + (reward.freeLessons || 0),
+    coins: Number(wallet.coins || 0) + (reward.coins || 0),
+    xp: Number(wallet.xp || 0) + (reward.xp || 0),
+    coupons: Array.isArray(wallet.coupons) ? wallet.coupons : [],
+    transactions: [...transactions, { ...reward, createdAt: new Date().toISOString() }].slice(-100),
+  }
+}
+
 export async function awardPaymentCredits(supabase, details) {
   const { data: profile, error } = await supabase
     .from('profiles')
@@ -167,14 +186,72 @@ export async function awardPaymentCredits(supabase, details) {
     paidAt: new Date().toISOString(),
     serverVerified: true,
   }
+  let referralReward = null
+  let referralBonusCredits = 0
+  const referredByCode = normalizeReferralCode(profileData.referredByCode)
+  const canRewardReferral = !alreadyCredited && referredByCode && !profileData.referralRewardApplied
+
+  if (canRewardReferral) {
+    const { data: possibleReferrers } = await supabase
+      .from('profiles')
+      .select('id, profile_data')
+      .neq('id', details.accountId)
+    const referrer = (possibleReferrers || []).find((row) => normalizeReferralCode(row.profile_data?.referralCode) === referredByCode)
+    if (referrer?.id) {
+      const referrerData = referrer.profile_data && typeof referrer.profile_data === 'object' && !Array.isArray(referrer.profile_data) ? referrer.profile_data : {}
+      const referrerBalance = typeof referrerData.paidLessonsBalance === 'number' ? referrerData.paidLessonsBalance : 0
+      const referrerWallet = addWalletReward(referrerData, {
+        type: 'free_lesson',
+        source: 'referral_referrer',
+        description: `Free lesson reward for referring ${profileData.parentName || profileData.fullName || 'a new family'}`,
+        freeLessons: 1,
+        coins: 100,
+        xp: 250,
+        referredAccountId: details.accountId,
+      })
+      await supabase
+        .from('profiles')
+        .update({
+          profile_data: {
+            ...referrerData,
+            paidLessonsBalance: referrerBalance + 1,
+            referralWallet: referrerWallet,
+            referralStats: {
+              ...(referrerData.referralStats || {}),
+              successfulReferrals: Number(referrerData.referralStats?.successfulReferrals || 0) + 1,
+              lastRewardAt: new Date().toISOString(),
+            },
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', referrer.id)
+      referralBonusCredits = 1
+      referralReward = { referrerId: referrer.id, code: referredByCode, creditsAwarded: 1 }
+    }
+  }
+
   const nextData = alreadyCredited
     ? { ...profileData, latestPayment: paymentRecord }
     : {
         ...profileData,
-        paidLessonsBalance: currentBalance + details.credits,
+        paidLessonsBalance: currentBalance + details.credits + referralBonusCredits,
         preferredWeeklySessions: details.sessions,
         preferredBillingPlan: details.billingPlan,
         latestPayment: paymentRecord,
+        referralRewardApplied: Boolean(profileData.referralRewardApplied || referralReward),
+        referralFirstPurchaseRewardedAt: referralReward ? new Date().toISOString() : profileData.referralFirstPurchaseRewardedAt,
+        referralReward,
+        referralWallet: referralReward
+          ? addWalletReward(profileData, {
+              type: 'free_lesson',
+              source: 'referral_new_parent',
+              description: 'Free lesson reward for joining through a referral and buying your first package',
+              freeLessons: 1,
+              coins: 50,
+              xp: 125,
+              referralCode: referredByCode,
+            })
+          : profileData.referralWallet,
         paymentTransactions: [...transactions, paymentRecord].slice(-50),
       }
   const { data: updated, error: updateError } = await supabase
@@ -189,7 +266,8 @@ export async function awardPaymentCredits(supabase, details) {
     paidLessonsBalance: nextData.paidLessonsBalance ?? currentBalance,
     preferredWeeklySessions: nextData.preferredWeeklySessions,
     preferredBillingPlan: nextData.preferredBillingPlan,
-    creditsAdded: alreadyCredited ? 0 : details.credits,
+    creditsAdded: alreadyCredited ? 0 : details.credits + referralBonusCredits,
+    referralReward,
     latestPayment: paymentRecord,
   }
 }

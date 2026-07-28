@@ -7472,3 +7472,40 @@
 .parent-feedback-chip-row i,.parent-feedback-resources a { border-radius:999px; padding:7px 10px; background:#ede9fe; color:#4c1d95; font-size:.74rem; font-style:normal; font-weight:900; text-decoration:none; }
 .parent-feedback-chip-row--grammar i { background:#dcfce7; color:#166534; }
 .parent-feedback-resources a { background:#eff6ff; color:#075985; }
+
+/* Referral & ambassador system */
+.referral-dashboard-view { display: grid; gap: 22px; }
+.referral-hero-card { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 280px); gap: 22px; align-items: center; border-radius: 30px; padding: clamp(22px, 4vw, 36px); background: radial-gradient(circle at 15% 5%, rgba(188,233,78,.22), transparent 34%), linear-gradient(135deg, #321568 0%, #7048df 55%, #090510 100%); color: #fff; box-shadow: 0 26px 75px rgba(49,21,104,.24); }
+.referral-hero-card .portal-kicker { color: #bce94e; }
+.referral-hero-card h1 { margin: 8px 0 10px; font-size: clamp(2rem, 4vw, 3.4rem); line-height: .95; letter-spacing: -.06em; }
+.referral-hero-card p { max-width: 760px; color: rgba(255,255,255,.78); line-height: 1.6; }
+.referral-hero-stats { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.referral-hero-stats span { border-radius:999px; padding:8px 12px; background: rgba(255,255,255,.12); color:#fff; font-size:.8rem; font-weight:850; }
+.referral-hero-stats strong { color:#bce94e; }
+.referral-qr-card { display:grid; justify-items:center; gap:10px; border-radius:24px; padding:18px; background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.16); backdrop-filter: blur(14px); }
+.referral-qr-card img { width: 180px; height: 180px; border-radius: 18px; background:#fff; padding:10px; }
+.referral-qr-card strong { font-size:1.25rem; letter-spacing:.12em; }
+.referral-qr-card button, .referral-copy-box button, .referral-share-buttons a { border:0; border-radius:999px; padding:8px 12px; background:#bce94e; color:#130a25; font-weight:950; text-decoration:none; }
+.referral-grid { display:grid; grid-template-columns: 1.25fr .9fr .85fr; gap:18px; }
+.referral-link-card, .referral-progress-card, .referral-wallet-card, .referral-activity-card { background: linear-gradient(135deg, #fff 0%, #f8fafc 100%); border:1px solid rgba(124,58,237,.12); }
+.referral-copy-box { display:flex; gap:10px; align-items:center; border:1px solid #e2e8f0; border-radius:16px; padding:10px; background:#f8fafc; }
+.referral-copy-box code { flex:1; overflow:hidden; text-overflow:ellipsis; color:#321568; font-weight:850; }
+.referral-copied { color:#166534; font-weight:900; }
+.referral-share-buttons { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
+.referral-share-buttons a { background:#ede9fe; color:#4c1d95; }
+.referral-progress i { display:block; height:14px; overflow:hidden; border-radius:999px; background:#ede9fe; }
+.referral-progress b { display:block; height:100%; border-radius:inherit; background: linear-gradient(90deg,#7048df,#bce94e); }
+.referral-progress span { display:block; margin-top:8px; color:#64748b; font-weight:900; }
+.referral-progress-card ul { display:grid; gap:8px; padding:0; margin:16px 0 0; list-style:none; }
+.referral-progress-card li { display:flex; align-items:center; gap:8px; color:#334155; font-weight:800; }
+.referral-wallet-card dl { display:grid; gap:10px; }
+.referral-wallet-card dl div { display:flex; justify-content:space-between; border-radius:14px; padding:11px 12px; background:#f8fafc; }
+.referral-wallet-card dt { color:#64748b; font-weight:800; }
+.referral-wallet-card dd { margin:0; color:#321568; font-weight:950; }
+.referral-activity-list { display:grid; gap:10px; }
+.referral-activity-list article { display:flex; gap:12px; align-items:center; border:1px solid #e2e8f0; border-radius:16px; padding:12px; background:#fff; }
+.referral-activity-list article > span { display:grid; place-items:center; width:38px; height:38px; border-radius:14px; background:#f5f3ff; }
+.referral-activity-list strong { display:block; color:#111827; }
+.referral-activity-list small { color:#64748b; }
+.referral-admin-table .admin-table__row { grid-template-columns: 1.2fr 1.3fr 1.1fr .65fr .65fr; }
+@media (max-width: 980px) { .referral-hero-card, .referral-grid { grid-template-columns: 1fr; } .referral-admin-table .admin-table__row { grid-template-columns: 1fr; } }

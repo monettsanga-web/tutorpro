@@ -63,6 +63,7 @@ export default function AuthModal({
   initialMode = 'register',
   selectedPlan = '',
   preferredTeacher = null,
+  referralCode = '',
   currentAccount,
   onClose,
   onAuthenticated,
@@ -144,7 +145,7 @@ export default function AuthModal({
     setIsSubmitting(true)
     setFormError('')
     try {
-      const account = await registerAccount({ ...form, selectedPlan, preferredTeacherId: preferredTeacher?.id || '' })
+      const account = await registerAccount({ ...form, selectedPlan, referralCode, preferredTeacherId: preferredTeacher?.id || '' })
       setCreatedAccount(account)
       onAuthenticated(account)
       setView('success')
