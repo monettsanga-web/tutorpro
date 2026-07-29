@@ -1109,6 +1109,38 @@ function FacebookMessengerContact() {
 }
 
 
+function ChinaMobileStudentPrompt({ currentAccount }) {
+  const [locale, setLocale] = useState(currentVisitorLocale)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches)
+  const [dismissed, setDismissed] = useState(() => {
+    try { return sessionStorage.getItem('tutorpro_cn_mobile_prompt') === '1' } catch { return false }
+  })
+
+  useEffect(() => subscribeToVisitorLocale(setLocale), [])
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)')
+    const update = () => setIsMobile(media.matches)
+    update()
+    media.addEventListener?.('change', update)
+    return () => media.removeEventListener?.('change', update)
+  }, [])
+
+  if (currentAccount || dismissed || !isMobile || !isChineseVisitor(locale) || window.location.pathname.startsWith('/cn')) return null
+
+  const close = () => {
+    setDismissed(true)
+    try { sessionStorage.setItem('tutorpro_cn_mobile_prompt', '1') } catch { /* ignore */ }
+  }
+
+  return (
+    <aside className="china-mobile-student-prompt" aria-label="Open China mobile student website">
+      <div><strong>中文学生手机版</strong><small>为中国家长优化：学生登录、免费试听、中文说明和 VooV 课堂指引。</small></div>
+      <a href="/cn/">打开</a>
+      <button type="button" onClick={close} aria-label="Close">×</button>
+    </aside>
+  )
+}
+
 function PWAInstallPrompt() {
   const [installPrompt, setInstallPrompt] = useState(null)
   const [installed, setInstalled] = useState(false)
@@ -1416,6 +1448,7 @@ export default function App() {
         </main>
       )}
       {currentAccount && <FacebookMessengerContact />}
+      <ChinaMobileStudentPrompt currentAccount={currentAccount} />
       <PWAInstallPrompt />
       <Footer
         onRegister={openRegistration}
