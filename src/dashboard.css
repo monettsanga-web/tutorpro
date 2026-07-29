@@ -7937,3 +7937,35 @@ a.feedback-resource-detail:hover strong {
   font-style: normal;
   font-weight: 900;
 }
+
+/* Booking calendar readability: taller rows and uppercase student names */
+.schedule-row {
+  min-height: 46px !important;
+}
+
+.schedule-cell {
+  min-height: 46px !important;
+}
+
+.schedule-time {
+  padding-top: 6px !important;
+}
+
+.schedule-cell.booked.booking-start > span {
+  justify-content: center !important;
+  padding: 5px 6px !important;
+}
+
+.schedule-cell.booked.booking-start > span > strong,
+.schedule-cell.booked.booking-start > span > .schedule-feedback-target,
+.teacher-booking-calendar .schedule-cell.booked.booking-start > span > strong,
+.admin-reserve-calendar-card .schedule-cell.booked.booking-start > span > strong {
+  text-transform: uppercase !important;
+  font-size: clamp(0.82rem, 1.05vw, 1.08rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.015em !important;
+}
+
+.booking-person-name {
+  text-transform: uppercase !important;
+}
