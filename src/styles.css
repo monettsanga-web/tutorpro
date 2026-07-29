@@ -5370,3 +5370,79 @@ body {
   color: #fff;
   font-size: 1.2rem;
 }
+
+/* Strong mobile registration/login scrolling fix */
+@media (max-width: 760px) {
+  body:has(.auth-backdrop) .mobile-guest-action-bar,
+  body:has(.role-access) .mobile-guest-action-bar,
+  body:has(.portal-dialog-backdrop) .mobile-guest-action-bar {
+    display: none !important;
+  }
+
+  .auth-backdrop {
+    display: block !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .auth-shell {
+    width: 100% !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 22px !important;
+    margin: 0 auto 18px !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .auth-story {
+    display: none !important;
+  }
+
+  .auth-panel {
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 58px 16px 26px !important;
+  }
+
+  .auth-form,
+  .auth-form--login {
+    gap: 14px !important;
+  }
+
+  .auth-form input,
+  .auth-form select,
+  .auth-form textarea,
+  .input-wrap input {
+    min-height: 48px !important;
+    font-size: 16px !important;
+  }
+
+  .auth-form .button,
+  .auth-submit {
+    min-height: 50px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .provider-picker > div,
+  .frequency-field > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  .auth-heading {
+    padding-right: 42px !important;
+  }
+
+  .auth-close {
+    position: fixed !important;
+    top: 14px !important;
+    right: 14px !important;
+  }
+}
