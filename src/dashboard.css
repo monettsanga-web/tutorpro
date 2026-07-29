@@ -7969,3 +7969,105 @@ a.feedback-resource-detail:hover strong {
 .booking-person-name {
   text-transform: uppercase !important;
 }
+
+/* Mobile-friendly dashboard and booking experience */
+@media (max-width: 760px) {
+  .portal-content {
+    padding: 14px 12px 92px !important;
+  }
+
+  .portal-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    min-height: 62px;
+  }
+
+  .portal-menu {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .family-student-switcher,
+  .portal-page-heading,
+  .teacher-bookings-heading {
+    gap: 12px !important;
+  }
+
+  .portal-page-heading {
+    grid-template-columns: 1fr !important;
+  }
+
+  .student-welcome,
+  .student-overview-grid,
+  .profile-layout,
+  .classroom-layout,
+  .teacher-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .booking-form-grid,
+  .admin-teacher-form__row,
+  .feedback-form > div:not(.portal-dialog__actions),
+  .feedback-practice-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .booking-confirm-bar {
+    position: sticky !important;
+    z-index: 25;
+    bottom: 8px;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    border-radius: 20px !important;
+    padding: 12px !important;
+    background: rgba(255, 255, 255, .98) !important;
+    box-shadow: 0 -10px 34px rgba(15, 23, 42, .16) !important;
+  }
+
+  .booking-confirm-bar input,
+  .booking-confirm-bar button,
+  .booking-form-grid input,
+  .booking-form-grid select,
+  .booking-form-grid button,
+  .compact-duration label {
+    min-height: 48px !important;
+    font-size: .95rem !important;
+  }
+
+  .multi-book-tip {
+    align-items: flex-start !important;
+    font-size: .82rem !important;
+  }
+
+  .schedule-scroll {
+    max-height: calc(100dvh - 245px) !important;
+    border-radius: 18px;
+    box-shadow: inset 0 0 0 1px rgba(124, 58, 237, .12);
+  }
+
+  .schedule-days,
+  .schedule-row {
+    min-width: 820px !important;
+    grid-template-columns: 58px repeat(7, minmax(108px, 1fr)) !important;
+  }
+
+  .schedule-row,
+  .schedule-cell {
+    min-height: 48px !important;
+  }
+
+  .schedule-cell.selectable > i {
+    opacity: 1 !important;
+    font-size: .62rem !important;
+  }
+
+  .portal-primary-button,
+  .portal-secondary-button,
+  .portal-text-button,
+  .lesson-action {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+}

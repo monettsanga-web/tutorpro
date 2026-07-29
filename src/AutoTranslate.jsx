@@ -114,6 +114,56 @@ function applyLanguagePreference(language, country = readVisitorCountry()) {
   window.dispatchEvent(new CustomEvent('tutorpro:language-change', { detail: { language, country } }))
 }
 
+function googleTranslateCode(language) {
+  if (!language || language === 'en') return ''
+  return language
+}
+
+function setGoogleTranslateCookie(language) {
+  const target = googleTranslateCode(language)
+  const value = target ? `/en/${target}` : ''
+  const maxAge = target ? '31536000' : '0'
+  document.cookie = `googtrans=${value};path=/;max-age=${maxAge};SameSite=Lax`
+  try {
+    const hostParts = window.location.hostname.split('.')
+    if (hostParts.length > 1) {
+      const rootDomain = `.${hostParts.slice(-2).join('.')}`
+      document.cookie = `googtrans=${value};path=/;domain=${rootDomain};max-age=${maxAge};SameSite=Lax`
+    }
+  } catch { /* Best effort cookie cleanup/apply. */ }
+}
+
+function loadGoogleTranslate(language) {
+  const target = googleTranslateCode(language)
+  setGoogleTranslateCookie(target)
+  if (!target) return
+  if (!document.getElementById('google_translate_element')) {
+    const mount = document.createElement('div')
+    mount.id = 'google_translate_element'
+    mount.style.position = 'fixed'
+    mount.style.left = '-9999px'
+    mount.style.top = '-9999px'
+    document.body.appendChild(mount)
+  }
+  window.googleTranslateElementInit = () => {
+    if (!window.google?.translate?.TranslateElement) return
+    new window.google.translate.TranslateElement({
+      pageLanguage: 'en',
+      includedLanguages: languages.map((item) => item.code).filter((code) => code !== 'en').join(','),
+      autoDisplay: false,
+    }, 'google_translate_element')
+  }
+  if (!document.getElementById('google-translate-script')) {
+    const script = document.createElement('script')
+    script.id = 'google-translate-script'
+    script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+    script.async = true
+    document.body.appendChild(script)
+  } else if (window.googleTranslateElementInit) {
+    window.googleTranslateElementInit()
+  }
+}
+
 export default function AutoTranslate() {
   const [language, setLanguage] = useState(() => readSavedLanguage() || 'en')
   const [automatic, setAutomatic] = useState(() => !readSavedLanguage())
@@ -121,12 +171,12 @@ export default function AutoTranslate() {
   useEffect(() => {
     let cancelled = false
     const initialise = async () => {
-      document.cookie = 'googtrans=;path=/;max-age=0;SameSite=Lax'
       const detected = await detectLocationLanguage()
       const targetLanguage = readSavedLanguage() || detected.language
       if (cancelled) return
       setLanguage(targetLanguage)
       applyLanguagePreference(targetLanguage, detected.country)
+      loadGoogleTranslate(targetLanguage)
     }
     initialise()
     return () => { cancelled = true }
@@ -140,12 +190,14 @@ export default function AutoTranslate() {
       const detected = await detectLocationLanguage()
       setLanguage(detected.language)
       applyLanguagePreference(detected.language, detected.country)
+      loadGoogleTranslate(detected.language)
       return
     }
     setLanguage(selection)
     setAutomatic(false)
     saveLanguage(selection)
     applyLanguagePreference(selection)
+    loadGoogleTranslate(selection)
   }
 
   const labels = languageControlLabels[language] || languageControlLabels.en

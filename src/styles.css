@@ -5252,3 +5252,68 @@ body {
     top: 8px;
   }
 }
+
+/* Mobile parent login/booking quick access */
+.mobile-guest-action-bar {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  body {
+    padding-bottom: 76px;
+  }
+
+  .mobile-guest-action-bar {
+    position: fixed;
+    z-index: 120;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 20px;
+    padding: 10px;
+    background: rgba(19, 9, 37, .94);
+    box-shadow: 0 20px 54px rgba(9, 5, 16, .34);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-guest-action-bar button {
+    min-height: 48px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 15px;
+    background: rgba(255,255,255,.09);
+    color: #fff;
+    font-weight: 950;
+    font-size: .9rem;
+  }
+
+  .mobile-guest-action-bar button.primary {
+    border-color: #bce94e;
+    background: #bce94e;
+    color: #160b2d;
+  }
+
+  .auth-backdrop,
+  .portal-dialog-backdrop {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+  }
+
+  .auth-modal,
+  .role-access,
+  .portal-dialog {
+    width: min(100%, 98vw) !important;
+    max-height: calc(100dvh - 20px) !important;
+    overflow-y: auto !important;
+    border-radius: 20px !important;
+  }
+
+  .header-actions > .button,
+  .header-actions > button:not(.account-link) {
+    min-height: 44px;
+  }
+}

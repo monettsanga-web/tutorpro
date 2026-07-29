@@ -1390,6 +1390,12 @@ export default function App() {
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
       />
+      {!currentAccount && (
+        <div className="mobile-guest-action-bar" aria-label="Student account actions">
+          <button type="button" onClick={openLogin}>Student login</button>
+          <button type="button" className="primary" onClick={() => openRegistration('Mobile quick registration')}>Book free class</button>
+        </div>
+      )}
       {showPublicTeachers ? (
         <main>
           <TeacherShowcase onChooseTeacher={chooseTeacher} onBack={() => { setShowPublicTeachers(false); window.scrollTo(0, 0); }} />
