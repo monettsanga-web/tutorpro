@@ -1247,10 +1247,11 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
                   return (
                     <div className="feedback-resource-item" key={`${link.url}-${index}`}>
                       <span className="feedback-resource-type">{typeOption.icon}</span>
-                      <div className="feedback-resource-detail">
+                      <a className="feedback-resource-detail" href={link.url} target="_blank" rel="noopener noreferrer" title={`Open ${link.title} in a new tab`}>
                         <strong>{link.title}</strong>
                         <small>{link.url}</small>
-                      </div>
+                        <em>Open link in new tab ↗</em>
+                      </a>
                       <button type="button" onClick={() => removeResourceLink(index)} aria-label={`Remove ${link.title}`}><X size={13} /></button>
                     </div>
                   )

@@ -7918,3 +7918,22 @@
     grid-column: 1 / -1 !important;
   }
 }
+
+/* Feedback resource links open in a new tab */
+a.feedback-resource-detail {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.feedback-resource-detail:hover strong {
+  color: #7048df;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.feedback-resource-detail em {
+  color: #7048df;
+  font-size: 0.54rem;
+  font-style: normal;
+  font-weight: 900;
+}
