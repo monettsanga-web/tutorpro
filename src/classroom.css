@@ -1660,3 +1660,30 @@ body.classroom-active .support-widget {
     align-content: start;
   }
 }
+
+.courseware-picker {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.courseware-picker select {
+  max-width: min(260px, 45vw);
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.95);
+  color: #160b2d;
+  font-size: 0.72rem;
+  font-weight: 900;
+  outline: none;
+}

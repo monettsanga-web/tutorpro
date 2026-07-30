@@ -54,8 +54,9 @@ import {
   X,
 } from 'lucide-react'
 import { getAccountById } from './auth.js'
-import { getClassroomAccess } from './bookings.js'
+import { getClassroomAccess, syncBookingNow, updateBooking } from './bookings.js'
 import { createClassroomTransport } from './classroomTransport.js'
+import { DEFAULT_COURSEWARE_TEMPLATE, coursewareSnapshot, getCoursewareTemplateById, getCoursewareTemplates, normalizeCoursewareTemplate } from './courseware.js'
 import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
@@ -109,15 +110,15 @@ function readFileAsDataUrl(file) {
   })
 }
 
-const CLASSROOM_COURSEWARE_SLIDES = [
-  { id: 'warmup', type: 'Warm-up', title: 'Hello, English Explorer!', objective: 'Build confidence and start speaking right away.', prompt: 'Say your name, your mood today, and one thing you can see around you.', teacherNote: 'Encourage full sentence answers: “I feel happy because…”', answer: 'My name is Mia. I feel excited today because I am ready for English class.', vocabulary: ['happy', 'excited', 'ready', 'today'] },
-  { id: 'vocab', type: 'Vocabulary', title: 'Power Words', objective: 'Learn and use new words in complete sentences.', prompt: 'Choose two words and make your own sentence.', teacherNote: 'Model pronunciation first, then ask the student to repeat and create.', answer: 'I am excited today. I am ready for class.', vocabulary: ['confident', 'practice', 'sentence', 'because'] },
-  { id: 'grammar', type: 'Grammar', title: 'Complete Sentence Builder', objective: 'Use complete sentences with a subject and verb.', prompt: 'Fix this answer: “Because happy.”', teacherNote: 'Guide the learner to add a subject and verb.', answer: 'I am happy because I can speak English.', vocabulary: ['I am', 'because', 'can', 'speak'] },
-  { id: 'reading', type: 'Reading', title: 'Read and Answer', objective: 'Read for meaning and answer in a full sentence.', prompt: 'Read: “Ben has a red book. He reads every night.” What does Ben have?', teacherNote: 'Ask the student to point to the answer and speak in a complete sentence.', answer: 'Ben has a red book.', vocabulary: ['red', 'book', 'reads', 'night'] },
-  { id: 'speaking', type: 'Speaking', title: 'Speak Like a Star', objective: 'Answer with details, not one-word answers.', prompt: 'What is your favorite animal? Tell me why.', teacherNote: 'Extend with follow-up: color, size, habitat, feeling.', answer: 'My favorite animal is a dog because it is friendly and playful.', vocabulary: ['favorite', 'animal', 'friendly', 'playful'] },
-  { id: 'wrapup', type: 'Wrap-up', title: 'Class Review Mission', objective: 'Review today’s words and set homework.', prompt: 'Say one new word and one sentence you learned today.', teacherNote: 'Give stars, summarize progress, and assign homework.', answer: 'Today I learned “confident.” I can say: “I am confident in English.”', vocabulary: ['review', 'learned', 'confident', 'homework'] },
-]
+function resolveBookingCoursewareTemplate(booking) {
+  if (booking?.coursewareTemplate?.slides?.length) return normalizeCoursewareTemplate(booking.coursewareTemplate)
+  if (booking?.coursewareTemplateId) return getCoursewareTemplateById(booking.coursewareTemplateId) || DEFAULT_COURSEWARE_TEMPLATE
+  return DEFAULT_COURSEWARE_TEMPLATE
+}
 
+function coursewareSlides(template) {
+  return template?.slides?.length ? template.slides : DEFAULT_COURSEWARE_TEMPLATE.slides
+}
 
 function hitTestAnnotation(path, point, width, height, threshold = 18) {
   if (path.tool === 'text' && path.point) {
@@ -332,9 +333,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const [canUndoClear, setCanUndoClear] = useState(false)
+  const [coursewareTemplate, setCoursewareTemplate] = useState(() => resolveBookingCoursewareTemplate(roomBooking))
+  const [availableCoursewareTemplates, setAvailableCoursewareTemplates] = useState(() => getCoursewareTemplates())
   const [coursewareSlideIndex, setCoursewareSlideIndex] = useState(0)
   const [coursewareShowAnswer, setCoursewareShowAnswer] = useState(false)
   const [classStars, setClassStars] = useState(0)
+  const activeCoursewareSlides = coursewareSlides(coursewareTemplate)
+  const coursewareTemplateChoices = availableCoursewareTemplates.some((template) => template.id === coursewareTemplate.id)
+    ? availableCoursewareTemplates
+    : [coursewareTemplate, ...availableCoursewareTemplates]
 
   const setVideoStream = (element, stream) => {
     if (element && element.srcObject !== stream) {
@@ -354,6 +361,22 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   useEffect(() => {
     selectedPathIdRef.current = selectedPathId
   }, [selectedPathId])
+
+  useEffect(() => {
+    const refreshCoursewareTemplates = () => setAvailableCoursewareTemplates(getCoursewareTemplates())
+    window.addEventListener('storage', refreshCoursewareTemplates)
+    window.addEventListener('tutorpro:courseware-change', refreshCoursewareTemplates)
+    return () => {
+      window.removeEventListener('storage', refreshCoursewareTemplates)
+      window.removeEventListener('tutorpro:courseware-change', refreshCoursewareTemplates)
+    }
+  }, [])
+
+  useEffect(() => {
+    setCoursewareTemplate(resolveBookingCoursewareTemplate(roomBooking))
+    setCoursewareSlideIndex(0)
+    setCoursewareShowAnswer(false)
+  }, [roomBooking.id, roomBooking.coursewareTemplateId, roomBooking.coursewareTemplate?.updatedAt])
 
   // Hide support widget while classroom is open
   useEffect(() => {
@@ -619,7 +642,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         return
       }
       if (message.type === 'courseware-state') {
-        setCoursewareSlideIndex(Math.max(0, Math.min(CLASSROOM_COURSEWARE_SLIDES.length - 1, Number(message.slideIndex) || 0)))
+        const incomingTemplate = message.template?.slides?.length
+          ? normalizeCoursewareTemplate(message.template)
+          : message.templateId
+            ? getCoursewareTemplateById(message.templateId)
+            : null
+        const slides = coursewareSlides(incomingTemplate || coursewareTemplate)
+        if (incomingTemplate) setCoursewareTemplate(incomingTemplate)
+        setCoursewareSlideIndex(Math.max(0, Math.min(slides.length - 1, Number(message.slideIndex) || 0)))
         setCoursewareShowAnswer(Boolean(message.showAnswer))
         if (message.clearPresentation) { setPresenterUrl(''); setPresentedFile(null); setRemoteScreenSharing(false) }
         return
@@ -1463,12 +1493,42 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     ? 'Both participants were found. TutorPro English is retrying the secure video handshake.'
     : 'Keep this classroom open while the other participant enters this exact booking.'
 
-  const broadcastCoursewareState = (slideIndex = coursewareSlideIndex, showAnswer = coursewareShowAnswer, clearPresentation = false) => {
-    transportRef.current?.send({ type: 'courseware-state', slideIndex, showAnswer, clearPresentation })
+  const broadcastCoursewareState = (slideIndex = coursewareSlideIndex, showAnswer = coursewareShowAnswer, clearPresentation = false, template = coursewareTemplate) => {
+    const snapshot = coursewareSnapshot(template)
+    transportRef.current?.send({ type: 'courseware-state', slideIndex, showAnswer, clearPresentation, templateId: snapshot.id, template: snapshot })
+  }
+
+  const persistCoursewareSelection = (template) => {
+    if (account.role !== 'teacher') return
+    try {
+      const snapshot = coursewareSnapshot(template)
+      const updated = updateBooking(roomBooking.id, {
+        coursewareTemplateId: snapshot.id,
+        coursewareTemplate: snapshot,
+        coursewareAssignedAt: new Date().toISOString(),
+        coursewareAssignedBy: account.id,
+      })
+      syncBookingNow(updated).catch(() => {})
+    } catch {
+      // The live signal still updates the current classroom if booking persistence is temporarily unavailable.
+    }
+  }
+
+  const chooseCoursewareTemplate = (templateId) => {
+    const template = getCoursewareTemplateById(templateId) || coursewareTemplateChoices.find((item) => item.id === templateId) || DEFAULT_COURSEWARE_TEMPLATE
+    const normalized = normalizeCoursewareTemplate(template)
+    setCoursewareTemplate(normalized)
+    setCoursewareSlideIndex(0)
+    setCoursewareShowAnswer(false)
+    setPresenterUrl('')
+    setPresentedFile(null)
+    setRemoteScreenSharing(false)
+    persistCoursewareSelection(normalized)
+    broadcastCoursewareState(0, false, true, normalized)
   }
 
   const goToCoursewareSlide = (nextIndex) => {
-    const index = Math.max(0, Math.min(CLASSROOM_COURSEWARE_SLIDES.length - 1, nextIndex))
+    const index = Math.max(0, Math.min(activeCoursewareSlides.length - 1, nextIndex))
     setCoursewareSlideIndex(index)
     setCoursewareShowAnswer(false)
     setPresenterUrl('')
@@ -1491,12 +1551,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const renderCoursewareSlide = () => {
-    const slide = CLASSROOM_COURSEWARE_SLIDES[coursewareSlideIndex] || CLASSROOM_COURSEWARE_SLIDES[0]
+    const slide = activeCoursewareSlides[coursewareSlideIndex] || activeCoursewareSlides[0] || DEFAULT_COURSEWARE_TEMPLATE.slides[0]
     return (
       <div className="classroom-courseware-stage">
         <div className="classroom-courseware-stage__bg" aria-hidden="true" />
         <div className="classroom-courseware-card">
-          <div className="classroom-courseware-card__top"><span>{slide.type}</span><small>Slide {coursewareSlideIndex + 1}/{CLASSROOM_COURSEWARE_SLIDES.length}</small></div>
+          <div className="classroom-courseware-card__top"><span>{slide.type}</span><small>{coursewareTemplate.title} · Slide {coursewareSlideIndex + 1}/{activeCoursewareSlides.length}</small></div>
           <h2>{slide.title}</h2>
           <p className="classroom-courseware-objective">{slide.objective}</p>
           <div className="classroom-courseware-prompt"><strong>Student task</strong><p>{slide.prompt}</p></div>
@@ -1836,7 +1896,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               <button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button>
             </div>}
             {screenSharing && <div className="screen-share-controls" role="toolbar" aria-label="Teacher screen sharing controls"><span><i /> You are presenting</span><button onClick={toggleScreenPause} title={screenPaused ? 'Resume screen sharing' : 'Pause screen sharing'}>{screenPaused ? <Play size={16} /> : <Pause size={16} />}<b>{screenPaused ? 'Resume' : 'Pause'}</b></button><button onClick={toggleScreenFit} title="Change screen fit"><MonitorUp size={16} /><b>{screenFit === 'fit' ? 'Fill' : 'Fit'}</b></button><button onClick={toggleStageFullscreen} title={stageFullscreen ? 'Exit full screen' : 'Open lesson board full screen'}>{stageFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<b>{stageFullscreen ? 'Exit' : 'Full screen'}</b></button><button className="stop" onClick={stopScreenShare} title="Stop screen sharing"><X size={16} /><b>Stop</b></button></div>}
-            {!screenSharing && !remoteScreenSharing && !presenterUrl && !presentedFile && account.role === 'teacher' && <div className="courseware-controls" role="toolbar" aria-label="Courseware controls"><button onClick={() => goToCoursewareSlide(coursewareSlideIndex - 1)} disabled={coursewareSlideIndex === 0}><ArrowLeft size={15} /> Prev</button><button onClick={() => goToCoursewareSlide(coursewareSlideIndex + 1)} disabled={coursewareSlideIndex >= CLASSROOM_COURSEWARE_SLIDES.length - 1}>Next <ArrowLeftRight size={15} /></button><button onClick={toggleCoursewareAnswer}>{coursewareShowAnswer ? 'Hide answer' : 'Show answer'}</button><button onClick={rewardStudent}><Award size={15} /> Give star</button><button onClick={toggleStageFullscreen}>{stageFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />} Board</button></div>}
+            {!screenSharing && !remoteScreenSharing && !presenterUrl && !presentedFile && account.role === 'teacher' && <div className="courseware-controls" role="toolbar" aria-label="Courseware controls"><label className="courseware-picker"><span>Lesson</span><select value={coursewareTemplate.id} onChange={(event) => chooseCoursewareTemplate(event.target.value)}>{coursewareTemplateChoices.map((template) => <option key={template.id} value={template.id}>{template.title}</option>)}</select></label><button onClick={() => goToCoursewareSlide(coursewareSlideIndex - 1)} disabled={coursewareSlideIndex === 0}><ArrowLeft size={15} /> Prev</button><button onClick={() => goToCoursewareSlide(coursewareSlideIndex + 1)} disabled={coursewareSlideIndex >= activeCoursewareSlides.length - 1}>Next <ArrowLeftRight size={15} /></button><button onClick={toggleCoursewareAnswer}>{coursewareShowAnswer ? 'Hide answer' : 'Show answer'}</button><button onClick={rewardStudent}><Award size={15} /> Give star</button><button onClick={toggleStageFullscreen}>{stageFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />} Board</button></div>}
             <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
           </div>
         </section>

@@ -75,6 +75,7 @@ import { downloadBookingCalendar } from './bookingCalendar.js'
 import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import OnlineClassroom from './OnlineClassroom.jsx'
+import CoursewareManager from './CoursewareManager.jsx'
 import { isTencentClassroomConfigured } from './tencentClassroom.js'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
@@ -3072,6 +3073,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'bookings', label: 'Bookings', icon: ClipboardCheck, badge: pending },
     { id: 'classroom', label: 'Classroom', icon: Video },
+    { id: 'courseware', label: 'Courseware', icon: BookOpen },
     { id: 'schedule', label: 'Availability', icon: CalendarDays },
     { id: 'support', label: 'Support & Chat', icon: MessageSquareText },
     { id: 'referrals', label: 'Teacher referrals', icon: Award },
@@ -3216,6 +3218,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       )}
 
       {active === 'referrals' && <ReferralDashboardPanel account={account} role="teacher" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
+
+      {active === 'courseware' && <CoursewareManager account={account} mode="teacher" />}
 
       {active === 'homework' && <TeacherHomeworkPanel account={account} />}
 
@@ -4955,6 +4959,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'referrals', label: 'Referral growth', icon: Award },
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
+    { id: 'courseware', label: 'Courseware', icon: BookOpen },
     { id: 'payments', label: 'Payments', icon: Coins },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'homework', label: 'Homework', icon: BookOpen },
@@ -5187,6 +5192,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'payments' && <AdminPaymentsPanel />}
 
       {active === 'analytics' && <AdminAnalyticsPanel />}
+
+      {active === 'courseware' && <CoursewareManager account={account} mode="admin" />}
 
       {active === 'homework' && <AdminHomeworkPanel />}
 
