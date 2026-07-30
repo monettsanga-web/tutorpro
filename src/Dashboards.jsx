@@ -1433,6 +1433,172 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
   )
 }
 
+
+function AdminPaymentsPanel() {
+  const [version, setVersion] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const students = getAccounts('student')
+  const studentRows = students.flatMap((student) => {
+    const learners = student.children?.length ? student.children : student.child ? [student.child] : []
+    return (learners.length ? learners : [{ id: student.id, name: student.parentName || 'Student', incomplete: true }]).map((learner) => ({ student, learner }))
+  })
+  const [form, setForm] = useState(() => ({
+    studentId: students[0]?.id || '',
+    method: 'GCash QR',
+    credits: '1',
+    amount: '',
+    currency: 'USD',
+    packageName: 'Manual verified payment',
+    reference: '',
+    note: '',
+  }))
+  const selectedStudent = students.find((student) => student.id === form.studentId) || students[0] || null
+  const paymentRows = students.map((student) => {
+    const transactions = Array.isArray(student.paymentTransactions) ? student.paymentTransactions : []
+    const latest = student.latestPayment || transactions[transactions.length - 1] || null
+    const credits = typeof student.paidLessonsBalance === 'number' ? student.paidLessonsBalance : 0
+    return { student, transactions, latest, credits }
+  })
+  const allTransactions = paymentRows.flatMap((row) => row.transactions.map((transaction) => ({ ...transaction, student: row.student })))
+  const uniquePaymentKeys = new Set()
+  const totalRevenue = allTransactions.reduce((sum, transaction) => {
+    const key = transaction.orderId || transaction.captureId || transaction.reference || `${transaction.student.id}-${transaction.paidAt || transaction.createdAt || Math.random()}`
+    if (uniquePaymentKeys.has(key)) return sum
+    uniquePaymentKeys.add(key)
+    return sum + Number(transaction.amount || 0)
+  }, 0)
+  const paidStudents = paymentRows.filter((row) => row.credits > 0).length
+  const zeroCreditStudents = paymentRows.filter((row) => row.credits <= 0).length
+  const manualVerifiedCount = allTransactions.filter((transaction) => transaction.provider === 'manual-admin').length
+
+  const update = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({ ...current, [name]: value }))
+    setError('')
+    setMessage('')
+  }
+
+  const verifyManualPayment = async (event) => {
+    event.preventDefault()
+    if (!selectedStudent) {
+      setError('Select a student account first.')
+      return
+    }
+    const credits = Number(form.credits)
+    const amount = Number(form.amount || 0)
+    if (!Number.isFinite(credits) || credits <= 0) {
+      setError('Enter a valid number of credits to add.')
+      return
+    }
+    if (amount < 0) {
+      setError('Amount cannot be negative.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    setMessage('')
+    try {
+      const currentCredits = typeof selectedStudent.paidLessonsBalance === 'number' ? selectedStudent.paidLessonsBalance : 0
+      const transactions = Array.isArray(selectedStudent.paymentTransactions) ? selectedStudent.paymentTransactions : []
+      const paymentRecord = {
+        provider: 'manual-admin',
+        method: form.method,
+        packageName: form.packageName || 'Manual verified payment',
+        reference: form.reference.trim(),
+        note: form.note.trim(),
+        amount,
+        currency: form.currency || 'USD',
+        credits,
+        status: 'VERIFIED',
+        verifiedBy: 'admin',
+        paidAt: new Date().toISOString(),
+      }
+      const updated = updateAccount(selectedStudent.id, {
+        paidLessonsBalance: currentCredits + credits,
+        latestPayment: paymentRecord,
+        paymentTransactions: [...transactions, paymentRecord].slice(-80),
+      })
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      setMessage(`${displayName(selectedStudent)} credited with ${credits} lesson credit${credits > 1 ? 's' : ''}.`)
+      setForm((current) => ({ ...current, credits: '1', amount: '', reference: '', note: '' }))
+      setVersion((value) => value + 1)
+    } catch (verifyError) {
+      setError(verifyError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const exportPayments = () => {
+    const header = ['Parent', 'Login', 'Credits', 'Last Method', 'Last Amount', 'Currency', 'Last Paid At', 'Transactions'].join(',')
+    const body = paymentRows.map(({ student, latest, credits, transactions }) => [
+      displayName(student),
+      student.loginId || student.email || '',
+      credits,
+      latest?.method || latest?.provider || '',
+      latest?.amount || '',
+      latest?.currency || '',
+      latest?.paidAt || latest?.createdAt || '',
+      transactions.length,
+    ].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([`${header}\n${body}`], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `tutorpro-payments-${today()}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  void version
+
+  return (
+    <div className="portal-view admin-payments-view">
+      <div className="portal-page-heading">
+        <div><span className="portal-kicker">Payment command center</span><h1>Payments, credits and QR verification</h1><p>Track PayPal revenue, manually verify GCash/AUB/WeChat QR receipts, and manage student lesson credits.</p></div>
+        <button className="portal-primary-button" onClick={exportPayments}><Download size={16} /> Export payments</button>
+      </div>
+
+      <div className="portal-stat-grid">
+        <article><span className="stat-icon stat-icon--green"><Coins size={21} /></span><div><small>Tracked revenue</small><strong>${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong><em>PayPal + manual records</em></div></article>
+        <article><span className="stat-icon stat-icon--blue"><UserCheck size={21} /></span><div><small>Students with credits</small><strong>{paidStudents}</strong><em>Can book lessons</em></div></article>
+        <article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Zero-credit accounts</small><strong>{zeroCreditStudents}</strong><em>Need payment or reward</em></div></article>
+        <article><span className="stat-icon stat-icon--gold"><CheckCircle2 size={21} /></span><div><small>Manual verifications</small><strong>{manualVerifiedCount}</strong><em>QR/receipt credits</em></div></article>
+      </div>
+
+      <section className="portal-card admin-manual-payment-card">
+        <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Manual QR verification</span><h2>Add credits after receipt review</h2><p>Use this for GCash, AUB PayMate, WeChat Pay or special admin adjustments.</p></div></div>
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        {message && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Payment verified</strong><span>{message}</span></div></div>}
+        <form className="admin-manual-payment-form" onSubmit={verifyManualPayment}>
+          <label><span>Student account</span><select name="studentId" value={selectedStudent?.id || ''} onChange={update}>{students.map((student) => <option key={student.id} value={student.id}>{displayName(student)} · {student.loginId || student.email || 'no login'}</option>)}</select></label>
+          <label><span>Payment method</span><select name="method" value={form.method} onChange={update}><option>GCash QR</option><option>AUB PayMate QR</option><option>WeChat Pay QR</option><option>PayPal manual check</option><option>Referral reward</option><option>Admin adjustment</option></select></label>
+          <label><span>Credits to add</span><input name="credits" type="number" min="1" max="200" value={form.credits} onChange={update} /></label>
+          <label><span>Amount</span><input name="amount" type="number" min="0" step="0.01" value={form.amount} onChange={update} placeholder="0.00" /></label>
+          <label><span>Currency</span><select name="currency" value={form.currency} onChange={update}><option>USD</option><option>PHP</option><option>RMB</option></select></label>
+          <label><span>Package / reason</span><input name="packageName" value={form.packageName} onChange={update} placeholder="Monthly package / QR payment" /></label>
+          <label><span>Reference / receipt ID</span><input name="reference" value={form.reference} onChange={update} placeholder="Receipt number or screenshot note" /></label>
+          <label className="admin-manual-payment-form__wide"><span>Admin note</span><input name="note" value={form.note} onChange={update} placeholder="Optional note for this payment verification" /></label>
+          <button className="portal-primary-button" type="submit" disabled={saving || !students.length}>{saving ? 'Saving…' : 'Verify payment & add credits'} <Check size={16} /></button>
+        </form>
+      </section>
+
+      <section className="portal-card admin-payments-table-card">
+        <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Student payment status</span><h2>Credits and latest payments</h2></div></div>
+        <div className="admin-payments-table">
+          <div className="admin-payments-table__head"><span>Family / student</span><span>Credits</span><span>Latest payment</span><span>Transactions</span><span>Status</span></div>
+          {paymentRows.map(({ student, latest, transactions, credits }) => {
+            const learners = (student.children?.length ? student.children : student.child ? [student.child] : []).map((learner) => learner.name).join(', ')
+            return <div className="admin-payments-table__row" key={student.id}><div><strong>{displayName(student)}</strong><small>{learners || student.loginId || student.email}</small></div><div><strong>{credits}</strong><small>booking credits</small></div><div><strong>{latest ? `${latest.method || latest.provider || 'Payment'} ${latest.amount ? `· ${latest.currency || 'USD'} ${latest.amount}` : ''}` : 'No payment yet'}</strong><small>{latest?.paidAt ? new Date(latest.paidAt).toLocaleString('en') : latest?.createdAt ? new Date(latest.createdAt).toLocaleString('en') : 'Awaiting verification'}</small></div><div><strong>{transactions.length}</strong><small>records</small></div><div><StatusBadge status={credits > 0 ? 'active' : 'pending'} /></div></div>
+          })}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function AdminReferralDashboard() {
   const accounts = getAccounts()
   const participants = accounts.filter((account) => ['student', 'teacher'].includes(account.role))
@@ -4509,6 +4675,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'referrals', label: 'Referral growth', icon: Award },
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
+    { id: 'payments', label: 'Payments', icon: Coins },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
 
@@ -4733,6 +4900,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
           </div>
         )
       )}
+
+      {active === 'payments' && <AdminPaymentsPanel />}
 
       {active === 'support' && (
         <div className="portal-view parent-support-view">

@@ -8248,3 +8248,22 @@ a.feedback-resource-detail:hover strong {
     display: grid;
   }
 }
+
+/* Admin payment system upgrade */
+.admin-payments-view { display: grid; gap: 22px; }
+.admin-manual-payment-card, .admin-payments-table-card { background: linear-gradient(135deg, #fff 0%, #f8fafc 52%, #f5f3ff 100%); border: 1px solid rgba(124,58,237,.12); }
+.admin-manual-payment-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.admin-manual-payment-form label { display: grid; gap: 6px; min-width: 0; }
+.admin-manual-payment-form label span { color: #5b21b6; font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; }
+.admin-manual-payment-form input, .admin-manual-payment-form select { width: 100%; min-height: 44px; border: 1px solid #cbd5e1; border-radius: 13px; padding: 9px 11px; background: #fff; color: #111827; outline: none; }
+.admin-manual-payment-form input:focus, .admin-manual-payment-form select:focus { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,.12); }
+.admin-manual-payment-form__wide { grid-column: span 3; }
+.admin-manual-payment-form .portal-primary-button { min-height: 44px; justify-content: center; }
+.admin-payments-table { display: grid; overflow-x: auto; }
+.admin-payments-table__head, .admin-payments-table__row { display: grid; grid-template-columns: minmax(220px, 1.2fr) 110px minmax(240px, 1.25fr) 120px 110px; gap: 12px; align-items: center; min-width: 860px; }
+.admin-payments-table__head { border-bottom: 1px solid #e2e8f0; padding: 0 0 10px; color: #64748b; font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; }
+.admin-payments-table__row { border-bottom: 1px solid #e2e8f0; padding: 13px 0; }
+.admin-payments-table__row strong { display: block; color: #111827; }
+.admin-payments-table__row small { display: block; margin-top: 3px; color: #64748b; font-size: .74rem; }
+@media (max-width: 960px) { .admin-manual-payment-form { grid-template-columns: 1fr 1fr; } .admin-manual-payment-form__wide { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .admin-manual-payment-form { grid-template-columns: 1fr; } }
