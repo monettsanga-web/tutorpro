@@ -4003,6 +4003,64 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const bookingLearner = bookingProfile?.learner || null
   const selectedCalendarTeacher = teachers.find((teacher) => teacher.id === selectedCalendarTeacherId) || teachers[0] || null
   const selectedTeacherBookings = selectedCalendarTeacher ? bookings.filter((booking) => booking.teacherId === selectedCalendarTeacher.id) : []
+  const paymentTransactions = students.flatMap((student) => {
+    const transactions = Array.isArray(student.paymentTransactions) ? student.paymentTransactions : student.latestPayment ? [student.latestPayment] : []
+    return transactions.map((transaction) => ({ ...transaction, student }))
+  })
+  const uniquePaidOrders = new Set()
+  const verifiedRevenue = paymentTransactions.reduce((sum, transaction) => {
+    const key = transaction.orderId || transaction.captureId || `${transaction.student.id}-${transaction.paidAt || transaction.createdAt || Math.random()}`
+    if (uniquePaidOrders.has(key)) return sum
+    uniquePaidOrders.add(key)
+    return sum + Number(transaction.amount || 0)
+  }, 0)
+  const studentsWithCredits = students.filter((student) => (student.paidLessonsBalance || 0) > 0)
+  const studentsWithoutCredits = students.filter((student) => (student.paidLessonsBalance || 0) <= 0)
+  const missingFeedbackBookings = bookings.filter((booking) => booking.status === 'completed' && !booking.teacherFeedback?.summary?.trim())
+  const trialBookingsNeedingReview = bookings.filter((booking) => booking.isTrialClass && booking.status === 'completed' && !booking.trialEnrolled)
+  const referralRows = [...students, ...teachers].map((profile) => ({ profile, stats: getReferralStats(profile, [...students, ...teachers]) }))
+  const referralSuccessful = referralRows.reduce((sum, row) => sum + row.stats.successfulReferrals, 0)
+  const referralPending = referralRows.reduce((sum, row) => sum + row.stats.pendingReferrals, 0)
+  const teacherPayoutRows = teachers.map((teacher) => {
+    const teacherBookings = bookings.filter((booking) => teacher.id === booking.teacherId)
+    const rate = Number(teacher.teacher?.pesoRate || 350)
+    const regularCompleted = teacherBookings.filter((booking) => !booking.isTrialClass && ['completed', 'absent'].includes(booking.status))
+    const regularSlots = regularCompleted.reduce((total, booking) => total + ((Number(booking.duration) || 25) / 25), 0)
+    const trialCompleted = teacherBookings.filter((booking) => booking.isTrialClass && ['completed', 'absent'].includes(booking.status))
+    const trialEnrolled = trialCompleted.filter((booking) => booking.trialEnrolled).length
+    const trialNotEnrolled = trialCompleted.filter((booking) => !booking.trialEnrolled).length
+    const payout = (regularSlots * rate) + (trialEnrolled * 100) + (trialNotEnrolled * 40)
+    return { teacher, payout, regularSlots, trialEnrolled, trialNotEnrolled }
+  }).sort((a, b) => b.payout - a.payout)
+  const estimatedTeacherPayout = teacherPayoutRows.reduce((sum, row) => sum + row.payout, 0)
+  const adminActionItems = [
+    { id: 'zero-credits', label: 'Students with 0 credits', count: studentsWithoutCredits.length, action: () => setActive('students'), tone: 'orange' },
+    { id: 'missing-feedback', label: 'Completed classes missing feedback', count: missingFeedbackBookings.length, action: () => setActive('bookings'), tone: 'pink' },
+    { id: 'trial-review', label: 'Trials not marked enrolled', count: trialBookingsNeedingReview.length, action: () => setActive('bookings'), tone: 'gold' },
+    { id: 'pending-bookings', label: 'Pending bookings', count: bookingStats.pending, action: () => setActive('bookings'), tone: 'blue' },
+  ]
+
+  const exportAdminCommandCenterCsv = () => {
+    const lines = [
+      ['Metric', 'Value'],
+      ['Verified revenue USD', verifiedRevenue.toFixed(2)],
+      ['Estimated teacher payout PHP', estimatedTeacherPayout.toFixed(2)],
+      ['Students with credits', studentsWithCredits.length],
+      ['Students with zero credits', studentsWithoutCredits.length],
+      ['Successful referrals', referralSuccessful],
+      ['Pending referrals', referralPending],
+      ['Missing feedback bookings', missingFeedbackBookings.length],
+      ['Trial bookings needing review', trialBookingsNeedingReview.length],
+    ]
+    const csv = lines.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `tutorpro-admin-command-center-${today()}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   useEffect(() => {
     if (teachers.length && !selectedCalendarTeacherId) {
@@ -4503,6 +4561,30 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             <article><span className="stat-icon stat-icon--gold"><CalendarDays size={21} /></span><div><small>Total bookings</small><strong>{bookingStats.total}</strong><em>{bookingStats.pending} pending</em></div></article>
             <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro English</em></div></article>
           </div>
+
+          <section className="admin-command-center">
+            <div className="admin-command-center__header">
+              <div><span className="portal-kicker">Command center</span><h2>Growth, revenue and action priorities</h2><p>High-priority operational signals for payments, referrals, teacher payouts, feedback and student credits.</p></div>
+              <button className="portal-secondary-button" onClick={exportAdminCommandCenterCsv}><Download size={16} /> Export report</button>
+            </div>
+            <div className="admin-command-center__metrics">
+              <article><span>Revenue</span><strong>${verifiedRevenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong><small>Verified PayPal payments</small></article>
+              <article><span>Teacher payout</span><strong>₱{estimatedTeacherPayout.toLocaleString()}</strong><small>Estimated completed/absent classes</small></article>
+              <article><span>Paid students</span><strong>{studentsWithCredits.length}</strong><small>{studentsWithoutCredits.length} need credits</small></article>
+              <article><span>Referrals</span><strong>{referralSuccessful}</strong><small>{referralPending} pending first package</small></article>
+            </div>
+            <div className="admin-command-center__body">
+              <div className="admin-action-stack">
+                {adminActionItems.map((item) => <button key={item.id} className={`admin-action-stack__item admin-action-stack__item--${item.tone}`} onClick={item.action}><strong>{item.count}</strong><span>{item.label}</span><ChevronRight size={16} /></button>)}
+              </div>
+              <div className="admin-payout-mini-list">
+                <div><span className="portal-kicker">Teacher payout preview</span><h3>Top estimated payouts</h3></div>
+                {teacherPayoutRows.slice(0, 4).map((row) => <article key={row.teacher.id}><span>{initials(row.teacher.fullName)}</span><div><strong>{row.teacher.fullName}</strong><small>{row.regularSlots} regular slots · {row.trialEnrolled} enrolled trials · {row.trialNotEnrolled} trials</small></div><b>₱{row.payout.toLocaleString()}</b></article>)}
+                {!teacherPayoutRows.length && <small>No teacher payout data yet.</small>}
+              </div>
+            </div>
+          </section>
+
           <div className="admin-overview-grid">
             <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button type="button" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id}><Check size={15} /> {processingAccountId === teacher.id ? 'Saving…' : 'Approve'}</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
             <section className="portal-card admin-health-card"><span className="portal-kicker">Platform health</span><h2>Booking flow</h2><div className="health-donut" style={{ '--health': bookingStats.total ? `${Math.round((bookingStats.completed / bookingStats.total) * 100)}%` : '0%' }}><span><strong>{bookingStats.total ? Math.round((bookingStats.completed / bookingStats.total) * 100) : 0}%</strong><small>completed</small></span></div><dl><div><dt><i className="dot dot--orange" />Pending</dt><dd>{bookingStats.pending}</dd></div><div><dt><i className="dot dot--blue" />Confirmed</dt><dd>{bookingStats.confirmed}</dd></div><div><dt><i className="dot dot--green" />Completed</dt><dd>{bookingStats.completed}</dd></div></dl></section>
