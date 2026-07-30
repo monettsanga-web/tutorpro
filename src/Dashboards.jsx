@@ -84,6 +84,7 @@ import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinut
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
+import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES, searchLibraryResources, toggleLibraryBookmark } from './library.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { supabase } from './supabaseClient.js'
 import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferralLink, getReferralStats, getShareTargets, referralActivity } from './referrals.js'
@@ -1458,6 +1459,48 @@ function AdminHomeworkPanel() {
   return <div className="portal-view homework-view"><div className="portal-page-heading"><div><span className="portal-kicker">Homework operations</span><h1>Homework Center</h1><p>Monitor teacher assignments, student completion and overdue practice.</p></div><button className="portal-primary-button" onClick={exportCsv}><Download size={16} /> Export CSV</button></div><div className="portal-stat-grid"><article><span className="stat-icon stat-icon--blue"><BookOpen size={21} /></span><div><small>Total homework</small><strong>{stats.total}</strong><em>All assignments</em></div></article><article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Completed</small><strong>{stats.completed}</strong><em>Submitted/reviewed</em></div></article><article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Overdue</small><strong>{stats.overdue}</strong><em>Needs follow-up</em></div></article></div><section className="homework-list">{allHomework.length ? allHomework.map((item) => <article className="portal-card homework-card" key={item.id}><div className="homework-card__head"><div><span className="portal-kicker">{item.type}</span><h2>{item.title}</h2><p>{item.learnerName} · {item.teacherName} · {item.dueDate || 'No due date'}</p></div><HomeworkStatusBadge status={item.status} /></div><p className="homework-card__instructions">{item.instructions}</p>{item.resourceUrl && <a className="homework-resource-link" href={item.resourceUrl} target="_blank" rel="noreferrer">Open resource <ExternalLink size={14} /></a>}</article>) : <EmptyState icon={BookOpen} title="No homework yet" text="Teacher assignments will appear here." />}</section></div>
 }
 
+
+function LibraryResourceCard({ resource, bookmarked, onToggle }) {
+  return (
+    <article className="portal-card library-resource-card">
+      <div className="library-resource-card__top"><span>{resource.type}</span><button type="button" onClick={() => onToggle(resource.id)}>{bookmarked ? '★ Saved' : '☆ Save'}</button></div>
+      <h2>{resource.title}</h2>
+      <p>{resource.description}</p>
+      <div className="library-resource-card__meta"><span>{resource.category}</span><span>{resource.level}</span>{resource.featured && <span>Featured</span>}</div>
+      <div className="library-resource-card__tags">{resource.tags.map((tag) => <i key={tag}>{tag}</i>)}</div>
+      <a className="portal-primary-button" href={resource.url} target="_blank" rel="noreferrer">Open resource <ExternalLink size={15} /></a>
+    </article>
+  )
+}
+
+function DigitalLibraryPanel({ account, learner = null, role = 'student' }) {
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState('All')
+  const [bookmarks, setBookmarks] = useState(() => getLibraryBookmarks(account?.id))
+  const learnerHomework = learner ? getHomework({ studentId: account.id, learnerId: learner.id }) : []
+  const learnerBookings = learner ? getBookings({ studentId: account.id }).filter((booking) => booking.learnerId === learner.id || !booking.learnerId) : []
+  const recommended = getRecommendedLibraryResources({ learner, homework: learnerHomework, feedback: learnerBookings })
+  const results = searchLibraryResources(query, category)
+
+  useEffect(() => {
+    const refresh = () => setBookmarks(getLibraryBookmarks(account?.id))
+    window.addEventListener('tutorpro:library-change', refresh)
+    return () => window.removeEventListener('tutorpro:library-change', refresh)
+  }, [account?.id])
+
+  const toggle = (resourceId) => setBookmarks(toggleLibraryBookmark(account?.id, resourceId))
+
+  return (
+    <div className="portal-view digital-library-view">
+      <div className="portal-page-heading"><div><span className="portal-kicker">Digital library</span><h1>{role === 'teacher' ? 'Teaching resource library' : learner ? `${learner.name}'s learning library` : 'TutorPro resource library'}</h1><p>Reading, grammar, phonics, vocabulary, speaking and classroom resources for TutorPro learners.</p></div><span className="support-inbox-live"><i /> {bookmarks.length} saved</span></div>
+      <section className="library-hero-card"><div><span className="portal-kicker">AI-style recommendations</span><h2>Suggested for current learning goals</h2><p>Resources are recommended from goals, homework and teacher feedback keywords.</p></div><div className="library-recommendation-row">{recommended.map((resource) => <a key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><strong>{resource.title}</strong><span>{resource.category}</span></a>)}</div></section>
+      <section className="portal-card library-filter-card"><div><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search reading, grammar, phonics, speaking…" /><select value={category} onChange={(event) => setCategory(event.target.value)}><option>All</option>{LIBRARY_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></div></section>
+      <section className="library-grid">{results.map((resource) => <LibraryResourceCard key={resource.id} resource={resource} bookmarked={bookmarks.includes(resource.id)} onToggle={toggle} />)}</section>
+      {!results.length && <EmptyState icon={BookOpen} title="No resources found" text="Try another keyword or category." />}
+    </div>
+  )
+}
+
 function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
   const [copied, setCopied] = useState('')
   const [posterReady, setPosterReady] = useState(false)
@@ -2323,6 +2366,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'games', label: 'English games', icon: Gamepad2 },
     { id: 'referrals', label: 'Referrals', icon: Award },
     { id: 'homework', label: 'Homework', icon: BookOpen },
+    { id: 'library', label: 'Library', icon: BookOpen },
     { id: 'support', label: 'Parent support', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
@@ -2403,6 +2447,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'referrals' && <ReferralDashboardPanel account={account} role="parent" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'homework' && <StudentHomeworkPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
+
+      {active === 'library' && <DigitalLibraryPanel account={account} learner={learner} role="student" />}
 
       {active === 'curriculum' && (
         <div className="portal-view">
@@ -2898,6 +2944,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'support', label: 'Support & Chat', icon: MessageSquareText },
     { id: 'referrals', label: 'Teacher referrals', icon: Award },
     { id: 'homework', label: 'Homework', icon: BookOpen },
+    { id: 'library', label: 'Library', icon: BookOpen },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -3039,6 +3086,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'referrals' && <ReferralDashboardPanel account={account} role="teacher" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'homework' && <TeacherHomeworkPanel account={account} />}
+
+      {active === 'library' && <DigitalLibraryPanel account={account} role="teacher" />}
 
       {active === 'profile' && (
         <div className="portal-view">
@@ -4820,6 +4869,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'payments', label: 'Payments', icon: Coins },
     { id: 'homework', label: 'Homework', icon: BookOpen },
+    { id: 'library', label: 'Library', icon: BookOpen },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
 
