@@ -8397,3 +8397,22 @@ a.feedback-resource-detail:hover strong {
 .ai-feedback-timeline p { color:#334155; line-height:1.65; white-space:pre-wrap; }
 .ai-feedback-timeline small { color:#64748b; }
 @media(max-width:900px){ .ai-report-hero,.ai-report-grid { grid-template-columns:1fr; } }
+
+/* Marketing automation MVP */
+.marketing-view { display: grid; gap: 22px; }
+.marketing-template-card, .marketing-compose-card, .marketing-log-card { background: linear-gradient(135deg, #fff 0%, #f8fafc 55%, #f5f3ff 100%); border: 1px solid rgba(124,58,237,.14); }
+.marketing-template-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 12px; }
+.marketing-template-grid button { border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; background:#fff; text-align:left; }
+.marketing-template-grid button.active { border-color:#7c3aed; background:#f5f3ff; box-shadow: 0 12px 28px rgba(124,58,237,.12); }
+.marketing-template-grid strong { display:block; color:#111827; }
+.marketing-template-grid span { display:inline-flex; margin-top:6px; border-radius:999px; padding:5px 8px; background:#ede9fe; color:#5b21b6; font-size:.68rem; font-weight:950; }
+.marketing-compose-card form { display:grid; gap: 14px; }
+.marketing-compose-card label { display:grid; gap:6px; }
+.marketing-compose-card label span { color:#5b21b6; font-size:.72rem; font-weight:950; text-transform:uppercase; letter-spacing:.05em; }
+.marketing-compose-card input, .marketing-compose-card select, .marketing-compose-card textarea { width:100%; min-height:46px; border:1px solid #cbd5e1; border-radius:14px; padding:10px 12px; background:#fff; color:#111827; }
+.marketing-compose-card textarea { min-height:220px; resize:vertical; line-height:1.55; }
+.marketing-log-list { display:grid; gap:10px; }
+.marketing-log-list article { display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center; border:1px solid #e2e8f0; border-radius:16px; padding:12px; background:#fff; }
+.marketing-log-list article > span { display:grid; place-items:center; width:38px; height:38px; border-radius:14px; background:#f0fdf4; }
+.marketing-log-list strong { display:block; color:#111827; }
+.marketing-log-list small { color:#64748b; }

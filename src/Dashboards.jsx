@@ -4231,17 +4231,31 @@ export function AdminTeacherBookingGroups({ bookings, teachers, onStatusChange, 
 
 
 export function AdminAnnouncementsPanel() {
-  const [target, setTarget] = useState('ALL') // ALL, TEACHER, STUDENT
+  const [target, setTarget] = useState('ALL')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [campaignLog, setCampaignLog] = useState(readCampaignLog)
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const stats = campaignStats(campaignLog)
+
+  const applyMarketingTemplate = (templateId) => {
+    setSelectedTemplateId(templateId)
+    const template = MARKETING_TEMPLATES.find((item) => item.id === templateId)
+    if (!template) return
+    setTarget(template.audience)
+    setSubject(template.subject)
+    setBody(template.body)
+    setError('')
+    setMessage('')
+  }
 
   const handleSendAnnouncement = async (e) => {
     e.preventDefault()
     if (!subject.trim() || !body.trim()) {
-      setError("Please fill out both the subject and the announcement body!")
+      setError('Please fill out both the subject and the announcement body!')
       return
     }
     setSending(true)
@@ -4253,15 +4267,16 @@ export function AdminAnnouncementsPanel() {
         body: {
           subject: subject.trim(),
           body: body.trim(),
-          targetRole: target
-        }
+          targetRole: target,
+        },
       })
-      if (invokeError || data?.error) {
-        throw new Error(invokeError?.message || data?.error || 'Failed to send bulk announcement')
-      }
-      setMessage(`🎉 Successfully sent announcement to ${data.recipients} active registered emails!`)
+      if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send bulk announcement')
+      const recipients = data?.recipients || 0
+      setMessage(`🎉 Successfully sent campaign to ${recipients} active registered emails!`)
+      setCampaignLog(saveCampaignLog({ target, subject: subject.trim(), templateId: selectedTemplateId, recipients, status: 'sent' }))
       setSubject('')
       setBody('')
+      setSelectedTemplateId('')
     } catch (err) {
       setError(err.message || 'Announcement broadcast failed')
     } finally {
@@ -4270,80 +4285,21 @@ export function AdminAnnouncementsPanel() {
   }
 
   return (
-    <div className="portal-view">
-      <div className="portal-page-heading">
-        <div>
-          <span className="portal-kicker">Global Broadcaster</span>
-          <h1>Registered Users Announcement</h1>
-          <p>Send secure, automated email announcements to parents, students, or teachers globally via Resend.</p>
-        </div>
-      </div>
-      
-      <section className="portal-card" style={{ maxWidth: '640px', background: '#130a25', border: '1px solid rgba(188,233,78,0.15)', borderRadius: '16px', padding: '24px' }}>
-        <form onSubmit={handleSendAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7' }}>Target Audience</span>
-            <select 
-              value={target} 
-              onChange={(e) => setTarget(e.target.value)}
-              style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: '#fff', outline: 'none' }}
-            >
-              <option value="ALL">All Registered Emails (Teachers & Parents)</option>
-              <option value="TEACHER">Teachers Only</option>
-              <option value="STUDENT">Students/Parents Only</option>
-            </select>
-          </label>
-
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7' }}>Email Subject</span>
-            <input 
-              type="text" 
-              value={subject} 
-              onChange={(e) => setSubject(e.target.value)} 
-              placeholder="e.g. TutorPro English Holiday Schedule Update"
-              style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: '#fff', outline: 'none' }}
-            />
-          </label>
-
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7' }}>Announcement Body (HTML or Plain Text)</span>
-            <textarea 
-              value={body} 
-              onChange={(e) => setBody(e.target.value)} 
-              placeholder="Write your email announcement details here..."
-              style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', color: '#fff', minHeight: '180px', outline: 'none', resize: 'vertical' }}
-            />
-          </label>
-
-          {error && <div style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 'bold' }}>⚠️ {error}</div>}
-          {message && <div style={{ color: '#bce94e', fontSize: '0.75rem', fontWeight: 'bold' }}>{message}</div>}
-
-          <button 
-            type="submit" 
-            disabled={sending}
-            style={{
-              background: sending ? 'rgba(255,255,255,0.05)' : '#bce94e',
-              color: sending ? '#b9adc7' : '#090510',
-              fontWeight: '850',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '12px',
-              cursor: sending ? 'not-allowed' : 'pointer',
-              fontSize: '0.8rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              marginTop: '8px'
-            }}
-          >
-            {sending ? <RotateCcw className="animate-spin w-4 h-4" /> : <Bell style={{ width: '15px', height: '15px' }} />}
-            <span>{sending ? 'Broadcasting Emails...' : 'Send Mass Announcement Email'}</span>
-          </button>
-
+    <div className="portal-view marketing-view">
+      <div className="portal-page-heading"><div><span className="portal-kicker">Marketing automation</span><h1>Email campaigns & announcements</h1><p>Use ready-made campaign templates for booking reminders, payments, homework, referrals, feedback and reactivation.</p></div></div>
+      <div className="portal-stat-grid marketing-stat-grid"><article><span className="stat-icon stat-icon--blue"><Bell size={21} /></span><div><small>Total campaigns</small><strong>{stats.total}</strong><em>Logged locally</em></div></article><article><span className="stat-icon stat-icon--green"><GraduationCap size={21} /></span><div><small>Parent/student</small><strong>{stats.student}</strong><em>Student audience</em></div></article><article><span className="stat-icon stat-icon--orange"><UserCheck size={21} /></span><div><small>Teacher</small><strong>{stats.teacher}</strong><em>Teacher audience</em></div></article><article><span className="stat-icon stat-icon--gold"><Users size={21} /></span><div><small>All users</small><strong>{stats.all}</strong><em>Whole community</em></div></article></div>
+      <section className="portal-card marketing-template-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Campaign templates</span><h2>Choose a ready-made automation message</h2></div></div><div className="marketing-template-grid">{MARKETING_TEMPLATES.map((template) => <button key={template.id} type="button" className={selectedTemplateId === template.id ? 'active' : ''} onClick={() => applyMarketingTemplate(template.id)}><strong>{template.name}</strong><span>{template.audience}</span></button>)}</div></section>
+      <section className="portal-card marketing-compose-card">
+        <form onSubmit={handleSendAnnouncement}>
+          <label><span>Target audience</span><select value={target} onChange={(e) => setTarget(e.target.value)}><option value="ALL">All Registered Emails (Teachers & Parents)</option><option value="TEACHER">Teachers Only</option><option value="STUDENT">Students/Parents Only</option></select></label>
+          <label><span>Email subject</span><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. TutorPro English Holiday Schedule Update" /></label>
+          <label><span>Campaign body</span><textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write your campaign details here..." /></label>
+          {error && <div className="portal-error" role="alert">{error}</div>}
+          {message && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Campaign sent</strong><span>{message}</span></div></div>}
+          <button className="portal-primary-button" type="submit" disabled={sending}>{sending ? <RotateCcw className="animate-spin w-4 h-4" /> : <Bell size={15} />} {sending ? 'Broadcasting emails...' : 'Send campaign email'}</button>
         </form>
       </section>
+      <section className="portal-card marketing-log-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Recent campaigns</span><h2>Campaign history</h2></div></div>{campaignLog.length ? <div className="marketing-log-list">{campaignLog.slice(0, 10).map((entry) => <article key={entry.id}><span>{entry.status === 'sent' ? '✅' : '✉️'}</span><div><strong>{entry.subject}</strong><small>{entry.target} · {entry.recipients || 0} recipients · {new Date(entry.createdAt).toLocaleString('en')}</small></div></article>)}</div> : <EmptyState icon={Bell} title="No campaigns sent yet" text="Choose a template and send your first announcement." />}</section>
     </div>
   )
 }
