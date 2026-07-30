@@ -324,3 +324,120 @@ body.support-embedded-open .support-widget:not(.support-widget--embedded) { disp
     padding: 8px;
   }
 }
+
+/* AI support assistant */
+.support-ai-card {
+  display: grid;
+  gap: 11px;
+  border: 1px solid rgba(0, 132, 255, 0.18);
+  border-radius: 20px;
+  padding: 13px;
+  background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
+  box-shadow: 0 10px 24px rgba(0, 132, 255, 0.08);
+}
+
+.support-ai-card strong {
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.support-ai-card small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.support-ai-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.support-ai-topics button,
+.support-ai-question button,
+.support-ai-answer button {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #0084ff;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.support-ai-topics button {
+  background: #e8f2ff;
+  color: #075985;
+}
+
+.support-ai-question {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+}
+
+.support-ai-question input {
+  min-height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.support-ai-question input:focus {
+  border-color: #0084ff;
+  box-shadow: 0 0 0 4px rgba(0,132,255,.12);
+}
+
+.support-ai-answer {
+  display: grid;
+  gap: 7px;
+  border-radius: 16px;
+  padding: 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.support-ai-answer b {
+  color: #111827;
+  font-size: 0.85rem;
+}
+
+.support-ai-answer p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.support-ai-answer small {
+  color: #64748b;
+}
+
+.support-ai-answer button {
+  width: fit-content;
+}
+
+.support-ai-thread-helper {
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: #eff6ff;
+}
+
+.support-ai-thread-helper summary {
+  cursor: pointer;
+  color: #075985;
+  font-size: 0.75rem;
+  font-weight: 950;
+}
+
+.support-ai-thread-helper .support-ai-topics {
+  margin-top: 8px;
+}

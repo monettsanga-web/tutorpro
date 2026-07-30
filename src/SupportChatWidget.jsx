@@ -12,6 +12,7 @@ import {
 } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
+import { SUPPORT_TOPICS, composeEscalationMessage, getSupportAnswer } from './supportKnowledge.js'
 
 function accountEmail(account) {
   const candidate = account?.email || account?.loginId || ''
@@ -34,6 +35,8 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
   const [translations, setTranslations] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiAnswer, setAiAnswer] = useState(() => getSupportAnswer('booking'))
   const messagesRef = useRef(null)
   const attachmentInputRef = useRef(null)
   const creatingRef = useRef(false)
@@ -245,6 +248,19 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
     }
   }
 
+  const askAssistant = (topicOrQuestion = aiQuestion) => {
+    const answer = getSupportAnswer(topicOrQuestion)
+    setAiAnswer(answer)
+    return answer
+  }
+
+  const useAssistantAnswer = () => {
+    const answer = aiAnswer || askAssistant()
+    const message = composeEscalationMessage(answer, aiQuestion)
+    if (credentials) setDraft(message)
+    else setForm((current) => ({ ...current, message }))
+  }
+
   return (
     <div className={`support-widget ${embedded ? 'support-widget--embedded' : ''} ${open ? 'support-widget--open' : ''}`}>
       {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
@@ -254,6 +270,12 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
 
         {!credentials && autoStartForAccount && account ? <div className="support-loading">{loading ? (chinese ? '正在打开对话…' : 'Opening your support chat…') : (error || (chinese ? '无法自动打开对话。' : 'Unable to open chat automatically.'))}</div> : !credentials ? <form className="support-start" onSubmit={beginConversation}>
           <div className="support-language-note"><Languages size={15} /><span>{chinese ? '您可以使用中文留言。管理员的回复会保存在这里。' : 'Write in English or Chinese. Replies stay in this private conversation.'}</span></div>
+          <div className="support-ai-card">
+            <div><strong>{chinese ? 'AI 客服助手' : 'AI Support Assistant'}</strong><small>{chinese ? '选择问题类型，或输入您的问题。需要人工帮助时可发送给管理员。' : 'Choose a topic or type your question. If you still need help, send it to admin.'}</small></div>
+            <div className="support-ai-topics">{SUPPORT_TOPICS.map((topic) => <button type="button" key={topic.id} onClick={() => { setAiQuestion(topic.label); askAssistant(topic.id) }}>{topic.label}</button>)}</div>
+            <form className="support-ai-question" onSubmit={(event) => { event.preventDefault(); askAssistant() }}><input value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} placeholder={chinese ? '输入问题…' : 'Ask about booking, payment, classroom…'} /><button type="submit">Ask</button></form>
+            {aiAnswer && <div className="support-ai-answer"><b>{aiAnswer.title}</b><p>{aiAnswer.body}</p><small>{aiAnswer.escalate}</small><button type="button" onClick={useAssistantAnswer}>{chinese ? '发送给管理员' : 'Send this to admin'}</button></div>}
+          </div>
           {account?.role === 'student' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为注册家长账户' : 'Registered family account identified'}</div>}
           {account?.role === 'teacher' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为教师账户' : 'Registered teacher account identified'}</div>}
           <label><span>{chinese ? '家长姓名' : 'Parent name'}</span><input value={form.parentName} onChange={(event) => setForm((current) => ({ ...current, parentName: event.target.value }))} placeholder={chinese ? '请输入您的姓名' : 'Your name'} maxLength="100" /></label>
@@ -264,6 +286,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
           <p><ShieldCheck size={13} /> {chinese ? '此对话仅对您和 TutorPro 管理员可见。' : 'Private between you and the TutorPro administrator.'}</p>
         </form> : <div className="support-thread">
           <div className="support-thread-meta"><span className={`support-thread-status support-thread-status--${thread?.status || 'open'}`}>{thread?.status === 'closed' ? (chinese ? '已结束' : 'Closed') : (chinese ? '客服对话' : 'Support conversation')}</span><button onClick={startAgain}><RotateCcw size={13} /> {credentials?.accountMode ? (chinese ? '刷新' : 'Refresh') : (chinese ? '新对话' : 'New')}</button></div>
+          <details className="support-ai-thread-helper"><summary>{chinese ? 'AI 快速帮助' : 'AI quick help'}</summary><div className="support-ai-topics">{SUPPORT_TOPICS.slice(0, 5).map((topic) => <button type="button" key={topic.id} onClick={() => { const answer = askAssistant(topic.id); setDraft(composeEscalationMessage(answer, topic.label)) }}>{topic.label}</button>)}</div></details>
           <div className="support-messages" ref={messagesRef}>{thread?.messages?.length ? thread.messages.map((message) => <div className={`support-message support-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? (chinese ? 'TutorPro 管理员' : 'TutorPro Admin') : (chinese ? '您' : 'You')}</small><p>{message.body}</p>{translations[message.id] && <p className="support-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleTimeString(supportLanguage || 'en', { hour: 'numeric', minute: '2-digit' })}</time></div>) : <div className="support-loading">{chinese ? '正在加载对话…' : 'Loading conversation…'}</div>}</div>
           {error && <div className="support-error">{error}</div>}
           <form className="support-reply" onSubmit={sendMessage}>{attachment && <div className="support-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (attachmentInputRef.current) attachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-file-button" title={chinese ? '上传文件' : 'Upload file'}><FileUp size={17} /><input ref={attachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => submitOnEnter(event, sendMessage)} placeholder={thread?.status === 'closed' ? (chinese ? '发送消息将重新开启对话' : 'A new message will reopen this conversation') : (chinese ? '输入消息…' : 'Write a message…')} maxLength="1000" /><button type="submit" disabled={loading || (!draft.trim() && !attachment)} aria-label="Send message"><Send size={17} /></button></form>
