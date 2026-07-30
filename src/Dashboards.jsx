@@ -21,6 +21,7 @@ import {
   Coins,
   Download,
   Eye,
+  ExternalLink,
   FileUp,
   Film,
   Flame,
