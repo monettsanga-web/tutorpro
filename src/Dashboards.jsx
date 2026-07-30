@@ -83,6 +83,7 @@ import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToC
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
+import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { supabase } from './supabaseClient.js'
 import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferralLink, getReferralStats, getShareTargets, referralActivity } from './referrals.js'
@@ -1321,6 +1322,142 @@ function AddStudentDialog({ account, onClose, onAdded }) {
 }
 
 
+function HomeworkStatusBadge({ status }) {
+  return <span className={`homework-status homework-status--${status || 'assigned'}`}>{status || 'assigned'}</span>
+}
+
+function StudentHomeworkPanel({ account, learner, onAccountChange }) {
+  const [version, setVersion] = useState(0)
+  const [note, setNote] = useState({})
+  const homework = getHomework({ studentId: account.id, learnerId: learner.id })
+  const stats = homeworkStats(homework)
+
+  useEffect(() => {
+    const refresh = () => setVersion((value) => value + 1)
+    window.addEventListener('tutorpro:homework-change', refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('tutorpro:homework-change', refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
+  void version
+
+  const markComplete = (item) => {
+    updateHomework(item.id, { status: 'completed', studentNote: note[item.id] || '', completedAt: new Date().toISOString() })
+    const latest = getAccountById(account.id)
+    const currentLearner = latest?.children?.find((entry) => entry.id === learner.id) || learner
+    const updated = updateStudentProfile(account.id, {
+      gameStars: (currentLearner.gameStars || 0) + 1,
+      achievements: [...new Set([...(currentLearner.achievements || []), 'Homework hero'])],
+    }, learner.id)
+    onAccountChange?.(updated)
+    setVersion((value) => value + 1)
+  }
+
+  return (
+    <div className="portal-view homework-view">
+      <div className="portal-page-heading"><div><span className="portal-kicker">Homework center</span><h1>{learner.name}'s homework</h1><p>Complete teacher assignments, open resources, and earn stars for submitted practice.</p></div><span className="support-inbox-live"><i /> {stats.completed}/{stats.total} completed</span></div>
+      <div className="portal-stat-grid"><article><span className="stat-icon stat-icon--blue"><BookOpen size={21} /></span><div><small>Assigned</small><strong>{stats.assigned}</strong><em>Open tasks</em></div></article><article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Completed</small><strong>{stats.completed}</strong><em>Great work</em></div></article><article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Overdue</small><strong>{stats.overdue}</strong><em>Needs attention</em></div></article></div>
+      <section className="homework-list">
+        {homework.length ? homework.map((item) => <article className="portal-card homework-card" key={item.id}><div className="homework-card__head"><div><span className="portal-kicker">{item.type}</span><h2>{item.title}</h2><p>{item.teacherName} · {item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00`).toLocaleDateString('en', { month: 'short', day: 'numeric' })}` : 'No due date'}</p></div><HomeworkStatusBadge status={item.status} /></div><p className="homework-card__instructions">{item.instructions}</p>{item.resourceUrl && <a className="homework-resource-link" href={item.resourceUrl} target="_blank" rel="noreferrer">Open practice resource <ExternalLink size={14} /></a>}{['assigned'].includes(item.status) ? <div className="homework-submit-box"><textarea value={note[item.id] || ''} onChange={(event) => setNote((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="Optional note for your teacher…" maxLength="600" /><button className="portal-primary-button" onClick={() => markComplete(item)}>Mark complete <Check size={16} /></button></div> : <div className="homework-complete-note"><CheckCircle2 size={16} /> Submitted {item.completedAt ? new Date(item.completedAt).toLocaleDateString('en') : 'recently'}{item.teacherReview && <span> · Teacher: {item.teacherReview}</span>}</div>}</article>) : <EmptyState icon={BookOpen} title="No homework yet" text="Your teacher assignments will appear here after class." />}
+      </section>
+    </div>
+  )
+}
+
+function TeacherHomeworkPanel({ account }) {
+  const [version, setVersion] = useState(0)
+  const bookings = getBookings({ teacherId: account.id })
+  const studentOptions = [...new Map(bookings.map((booking) => [`${booking.studentId}-${booking.learnerId}`, booking])).values()]
+  const teacherHomework = getHomework({ teacherId: account.id })
+  const stats = homeworkStats(teacherHomework)
+  const [form, setForm] = useState(() => ({
+    studentKey: studentOptions[0] ? `${studentOptions[0].studentId}-${studentOptions[0].learnerId}` : '',
+    type: 'Reading',
+    title: '',
+    instructions: '',
+    resourceUrl: '',
+    dueDate: '',
+  }))
+  const selectedBooking = studentOptions.find((booking) => `${booking.studentId}-${booking.learnerId}` === form.studentKey)
+
+  useEffect(() => {
+    const refresh = () => setVersion((value) => value + 1)
+    window.addEventListener('tutorpro:homework-change', refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('tutorpro:homework-change', refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
+  void version
+
+  const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+
+  const assign = (event) => {
+    event.preventDefault()
+    try {
+      if (!selectedBooking) throw new Error('Choose a student from your bookings first.')
+      createHomework({
+        teacherId: account.id,
+        teacherName: account.fullName,
+        studentId: selectedBooking.studentId,
+        learnerId: selectedBooking.learnerId,
+        learnerName: selectedBooking.learnerName,
+        type: form.type,
+        title: form.title,
+        instructions: form.instructions,
+        resourceUrl: form.resourceUrl,
+        dueDate: form.dueDate,
+      })
+      setForm((current) => ({ ...current, title: '', instructions: '', resourceUrl: '' }))
+      setVersion((value) => value + 1)
+    } catch (error) {
+      alert(error.message)
+    }
+  }
+
+  const review = (item, text = 'Reviewed by teacher') => {
+    updateHomework(item.id, { status: 'reviewed', teacherReview: text, reviewedAt: new Date().toISOString() })
+    setVersion((value) => value + 1)
+  }
+
+  return (
+    <div className="portal-view homework-view">
+      <div className="portal-page-heading"><div><span className="portal-kicker">Homework center</span><h1>Assign student practice</h1><p>Create homework from your booked learners and review completed submissions.</p></div></div>
+      <div className="portal-stat-grid"><article><span className="stat-icon stat-icon--blue"><BookOpen size={21} /></span><div><small>Total</small><strong>{stats.total}</strong><em>Assigned tasks</em></div></article><article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Completed</small><strong>{stats.completed}</strong><em>Submitted/reviewed</em></div></article><article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Overdue</small><strong>{stats.overdue}</strong><em>Open tasks</em></div></article></div>
+      <section className="portal-card homework-assignment-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">New homework</span><h2>Create assignment</h2></div></div><form className="homework-assignment-form" onSubmit={assign}><label><span>Student</span><select name="studentKey" value={form.studentKey} onChange={update}>{studentOptions.map((booking) => <option value={`${booking.studentId}-${booking.learnerId}`} key={`${booking.studentId}-${booking.learnerId}`}>{booking.learnerName}</option>)}</select></label><label><span>Type</span><select name="type" value={form.type} onChange={update}>{HOMEWORK_TYPES.map((type) => <option key={type}>{type}</option>)}</select></label><label><span>Due date</span><input type="date" name="dueDate" value={form.dueDate} onChange={update} /></label><label><span>Title</span><input name="title" value={form.title} onChange={update} placeholder="e.g. Past tense speaking practice" /></label><label className="homework-assignment-form__wide"><span>Instructions</span><textarea name="instructions" value={form.instructions} onChange={update} placeholder="Tell the student exactly what to practise…" maxLength="4000" /></label><label className="homework-assignment-form__wide"><span>Resource link</span><input name="resourceUrl" value={form.resourceUrl} onChange={update} placeholder="https://… optional" /></label><button className="portal-primary-button" type="submit">Assign homework <Send size={16} /></button></form></section>
+      <section className="homework-list">{teacherHomework.length ? teacherHomework.map((item) => <article className="portal-card homework-card" key={item.id}><div className="homework-card__head"><div><span className="portal-kicker">{item.type}</span><h2>{item.title}</h2><p>{item.learnerName} · {item.dueDate || 'No due date'}</p></div><HomeworkStatusBadge status={item.status} /></div><p className="homework-card__instructions">{item.instructions}</p>{item.resourceUrl && <a className="homework-resource-link" href={item.resourceUrl} target="_blank" rel="noreferrer">Open resource <ExternalLink size={14} /></a>}{item.studentNote && <div className="homework-complete-note">Student note: {item.studentNote}</div>}{item.status === 'completed' && <button className="portal-secondary-button" onClick={() => review(item)}>Mark reviewed</button>}<button className="portal-text-button" onClick={() => { removeHomework(item.id); setVersion((value) => value + 1) }}>Remove</button></article>) : <EmptyState icon={BookOpen} title="No homework assigned" text="Create your first assignment above." />}</section>
+    </div>
+  )
+}
+
+function AdminHomeworkPanel() {
+  const [version, setVersion] = useState(0)
+  const allHomework = getHomework()
+  const stats = homeworkStats(allHomework)
+  useEffect(() => {
+    const refresh = () => setVersion((value) => value + 1)
+    window.addEventListener('tutorpro:homework-change', refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('tutorpro:homework-change', refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
+  void version
+  const exportCsv = () => {
+    const header = 'Student,Teacher,Type,Title,Status,Due Date\n'
+    const body = allHomework.map((item) => [item.learnerName, item.teacherName, item.type, item.title, item.status, item.dueDate].map((value) => `"${String(value || '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([header + body], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `tutorpro-homework-${today()}.csv`; a.click(); URL.revokeObjectURL(url)
+  }
+  return <div className="portal-view homework-view"><div className="portal-page-heading"><div><span className="portal-kicker">Homework operations</span><h1>Homework Center</h1><p>Monitor teacher assignments, student completion and overdue practice.</p></div><button className="portal-primary-button" onClick={exportCsv}><Download size={16} /> Export CSV</button></div><div className="portal-stat-grid"><article><span className="stat-icon stat-icon--blue"><BookOpen size={21} /></span><div><small>Total homework</small><strong>{stats.total}</strong><em>All assignments</em></div></article><article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Completed</small><strong>{stats.completed}</strong><em>Submitted/reviewed</em></div></article><article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Overdue</small><strong>{stats.overdue}</strong><em>Needs follow-up</em></div></article></div><section className="homework-list">{allHomework.length ? allHomework.map((item) => <article className="portal-card homework-card" key={item.id}><div className="homework-card__head"><div><span className="portal-kicker">{item.type}</span><h2>{item.title}</h2><p>{item.learnerName} · {item.teacherName} · {item.dueDate || 'No due date'}</p></div><HomeworkStatusBadge status={item.status} /></div><p className="homework-card__instructions">{item.instructions}</p>{item.resourceUrl && <a className="homework-resource-link" href={item.resourceUrl} target="_blank" rel="noreferrer">Open resource <ExternalLink size={14} /></a>}</article>) : <EmptyState icon={BookOpen} title="No homework yet" text="Teacher assignments will appear here." />}</section></div>
+}
+
 function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
   const [copied, setCopied] = useState('')
   const [posterReady, setPosterReady] = useState(false)
@@ -2185,6 +2322,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'curriculum', label: 'Curriculum Framework', icon: BookOpen },
     { id: 'games', label: 'English games', icon: Gamepad2 },
     { id: 'referrals', label: 'Referrals', icon: Award },
+    { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'support', label: 'Parent support', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
@@ -2263,6 +2401,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'games' && <Suspense fallback={<div className="game-loading"><i /><strong>Launching 3D English Game Zone…</strong><span>Preparing the world for {learner.name}</span></div>}><StudentGames key={learner.id} learner={learner} onEarnStars={earnGameStars} /></Suspense>}
 
       {active === 'referrals' && <ReferralDashboardPanel account={account} role="parent" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
+
+      {active === 'homework' && <StudentHomeworkPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'curriculum' && (
         <div className="portal-view">
@@ -2757,6 +2897,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'schedule', label: 'Availability', icon: CalendarDays },
     { id: 'support', label: 'Support & Chat', icon: MessageSquareText },
     { id: 'referrals', label: 'Teacher referrals', icon: Award },
+    { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -2896,6 +3037,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       )}
 
       {active === 'referrals' && <ReferralDashboardPanel account={account} role="teacher" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
+
+      {active === 'homework' && <TeacherHomeworkPanel account={account} />}
 
       {active === 'profile' && (
         <div className="portal-view">
@@ -4676,6 +4819,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'payments', label: 'Payments', icon: Coins },
+    { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
 
@@ -4902,6 +5046,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'payments' && <AdminPaymentsPanel />}
+
+      {active === 'homework' && <AdminHomeworkPanel />}
 
       {active === 'support' && (
         <div className="portal-view parent-support-view">
