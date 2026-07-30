@@ -5446,3 +5446,49 @@ body {
     right: 14px !important;
   }
 }
+
+/* Full public teacher profile page */
+.public-teacher-profile-detail-section { background: linear-gradient(180deg, #110925 0%, #090510 100%); padding-top: 70px; }
+.teacher-profile-detail-back { display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(188,233,78,.25); border-radius:999px; padding:9px 14px; background:rgba(188,233,78,.08); color:#bce94e; font-weight:950; margin-bottom:22px; }
+.public-teacher-profile-detail { overflow:hidden; border-radius:34px; background:#f8fafc; box-shadow:0 34px 100px rgba(0,0,0,.38); }
+.public-teacher-profile-detail__cover { min-height:220px; display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:26px; background: radial-gradient(circle at 16% 12%, rgba(188,233,78,.3), transparent 28%), linear-gradient(135deg,#3b0764 0%,#7048df 50%,#0ea5e9 100%); color:#fff; }
+.public-teacher-profile-detail__cover span { border-radius:999px; padding:8px 12px; background:rgba(255,255,255,.18); font-weight:950; text-transform:uppercase; font-size:.72rem; letter-spacing:.07em; }
+.public-teacher-profile-detail__identity { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:20px; align-items:end; padding:0 30px 24px; margin-top:-68px; }
+.public-teacher-profile-detail__photo { width:150px!important; height:150px!important; border:7px solid #fff!important; box-shadow:0 20px 45px rgba(15,23,42,.18); }
+.public-teacher-profile-detail__name { display:flex; gap:9px; align-items:center; }
+.public-teacher-profile-detail__name h1 { margin:0; color:#111827; font-size:clamp(2rem,4vw,3.3rem); letter-spacing:-.07em; line-height:.95; }
+.public-teacher-profile-detail__identity p { margin:8px 0 12px; color:#64748b; }
+.public-teacher-profile-detail__badges { display:flex; flex-wrap:wrap; gap:8px; }
+.public-teacher-profile-detail__badges span { border-radius:999px; padding:7px 10px; background:#ede9fe; color:#5b21b6; font-size:.75rem; font-weight:900; }
+.public-teacher-profile-detail__rating { display:grid; justify-items:center; border-radius:22px; padding:16px; background:#fff; border:1px solid #e2e8f0; min-width:120px; }
+.public-teacher-profile-detail__rating strong { color:#111827; font-size:2rem; line-height:1; }
+.public-teacher-profile-detail__rating small { color:#64748b; }
+.public-teacher-profile-detail__grid { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr); gap:20px; padding:0 30px 30px; }
+.public-teacher-profile-detail__grid main, .public-teacher-profile-detail__grid aside { display:grid; gap:18px; align-content:start; }
+.public-teacher-profile-panel { border:1px solid #e2e8f0; border-radius:26px; padding:22px; background:#fff; box-shadow:0 16px 38px rgba(15,23,42,.06); }
+.public-teacher-profile-panel h2 { margin:8px 0 12px; color:#111827; font-size:1.5rem; letter-spacing:-.04em; }
+.public-teacher-profile-detail__bio, .public-teacher-profile-panel p { color:#475569; line-height:1.75; }
+.public-teacher-profile-panel__tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+.public-teacher-profile-panel__tabs button { border:1px solid #e2e8f0; border-radius:999px; padding:10px 14px; background:#fff; color:#64748b; font-weight:950; }
+.public-teacher-profile-panel__tabs button.active { border-color:#7c3aed; background:#f5f3ff; color:#6d28d9; }
+.public-teacher-profile-panel__media .profile-intro-video, .public-teacher-profile-panel__media .video-iframe-container, .public-teacher-profile-panel__media .profile-video-placeholder { height:320px!important; }
+.public-teacher-profile-schedule { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+.public-teacher-profile-schedule div, .public-teacher-profile-resume div { border:1px solid #e2e8f0; border-radius:16px; padding:13px; background:#f8fafc; }
+.public-teacher-profile-schedule strong, .public-teacher-profile-resume strong { display:block; color:#111827; }
+.public-teacher-profile-schedule span, .public-teacher-profile-resume span { display:block; margin-top:5px; color:#64748b; font-size:.82rem; }
+.public-teacher-profile-resume { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.public-teacher-profile-resume .kicker, .public-teacher-profile-resume h2 { grid-column:1/-1; }
+.public-teacher-profile-review-box > div:first-child { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.public-teacher-profile-review-box > strong { display:block; margin:14px 0 4px; color:#111827; font-size:2.8rem; letter-spacing:-.07em; }
+.public-teacher-profile-cta { background:linear-gradient(135deg,#321568,#7048df); color:#fff; }
+.public-teacher-profile-cta h2 { color:#fff; }
+.public-teacher-profile-cta p { color:rgba(255,255,255,.78); }
+.public-teacher-profile-reviews-list { margin:0 30px 30px; }
+.public-teacher-profile-reviews-list blockquote { margin:12px 0 0; border:1px solid #e2e8f0; border-radius:18px; padding:16px; background:#f8fafc; }
+.public-teacher-profile-reviews-list blockquote span { color:#facc15; }
+.public-teacher-profile-reviews-list blockquote p { color:#334155; }
+.public-teacher-profile-reviews-list blockquote small { color:#64748b; }
+.public-teacher-profile-empty { min-height:180px; display:grid; place-content:center; text-align:center; color:#64748b; }
+.teacher-dashboard-profile-card__actions { display:grid; grid-template-columns:1fr; gap:10px; margin-top:18px; }
+.teacher-dashboard-profile-card__view { min-height:46px; border:1px solid #dbeafe; border-radius:14px; background:#eff6ff; color:#1d4ed8; font-weight:950; }
+@media(max-width:900px){.public-teacher-profile-detail__identity,.public-teacher-profile-detail__grid{grid-template-columns:1fr}.public-teacher-profile-detail__rating{justify-items:start}.public-teacher-profile-resume{grid-template-columns:1fr}.public-teacher-profile-reviews-list{margin:0 18px 18px}.public-teacher-profile-detail__identity,.public-teacher-profile-detail__grid{padding-left:18px;padding-right:18px}}

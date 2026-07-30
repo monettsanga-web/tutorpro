@@ -761,7 +761,7 @@ function HowItWorks({ onBook }) {
   )
 }
 
-function PublicTeacherCard({ teacher, onChooseTeacher }) {
+function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
   const [activeMedia, setActiveMedia] = useState('schedule')
   const profile = teacher.teacher || {}
   const reviews = getBookings({ teacherId: teacher.id })
@@ -830,9 +830,14 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
           {activeMedia === 'lessons' && <div className="teacher-dashboard-profile-card__lesson-panel"><IntroVideo accountId={teacher.id} compact={false} /><SampleClassPlayer url={profile.sampleClassUrl} /></div>}
         </div>
 
-        <button className="teacher-dashboard-profile-card__cta" onClick={() => onChooseTeacher(teacher)}>
-          Book Free Trial with {firstName} <ArrowRight size={16} />
-        </button>
+        <div className="teacher-dashboard-profile-card__actions">
+          <button className="teacher-dashboard-profile-card__view" type="button" onClick={() => onViewProfile?.(teacher)}>
+            View full profile <ArrowUpRight size={16} />
+          </button>
+          <button className="teacher-dashboard-profile-card__cta" onClick={() => onChooseTeacher(teacher)}>
+            Book Free Trial with {firstName} <ArrowRight size={16} />
+          </button>
+        </div>
       </div>
 
       <aside className="teacher-dashboard-profile-card__side">
@@ -871,8 +876,108 @@ function PublicTeacherCard({ teacher, onChooseTeacher }) {
   )
 }
 
+
+function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
+  const [activeMedia, setActiveMedia] = useState('intro')
+  const profile = teacher.teacher || {}
+  const reviews = getBookings({ teacherId: teacher.id })
+    .filter((booking) => booking.studentRating?.score)
+    .sort((a, b) => (b.studentRating?.createdAt || '').localeCompare(a.studentRating?.createdAt || ''))
+  const average = reviews.length
+    ? Math.round((reviews.reduce((sum, booking) => sum + Number(booking.studentRating.score || 0), 0) / reviews.length) * 10) / 10
+    : (profile.rating || 0)
+  const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
+  const availabilityByDay = WEEKDAYS.map((day, dayIndex) => ({
+    day,
+    times: availabilitySlots
+      .filter((slot) => String(slot).startsWith(`${dayIndex}-`))
+      .map((slot) => String(slot).split('-').slice(1).join('-'))
+      .sort(),
+  })).filter((item) => item.times.length)
+  const firstName = teacher.fullName?.split(' ')[0] || 'Teacher'
+
+  return (
+    <section className="section public-teacher-profile-detail-section">
+      <div className="container">
+        <button className="teacher-profile-detail-back" onClick={onBack}><ChevronLeft size={16} /> Back to teachers</button>
+        <article className="public-teacher-profile-detail">
+          <div className="public-teacher-profile-detail__cover">
+            <span>TutorPro English Teacher</span>
+            <button className="button button--primary" onClick={() => onChooseTeacher(teacher)}>Book Free Trial <ArrowRight size={16} /></button>
+          </div>
+          <div className="public-teacher-profile-detail__identity">
+            <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="public-teacher-profile-detail__photo" />
+            <div>
+              <div className="public-teacher-profile-detail__name"><h1>{teacher.fullName}</h1><BadgeCheck size={24} fill="#1877f2" color="#1877f2" /></div>
+              <p>{profile.specialization || 'Professional English Teacher'} · {profile.languages || 'English'}</p>
+              <div className="public-teacher-profile-detail__badges"><span>1-to-1 classes</span><span>{Number(profile.experience || 0)} years experience</span><span>{profile.education || 'Education verified'}</span></div>
+            </div>
+            <div className="public-teacher-profile-detail__rating"><Star size={20} fill="#facc15" color="#facc15" /><strong>{average || 'New'}</strong><small>{reviews.length || profile.ratingCount || 0} reviews</small></div>
+          </div>
+
+          <div className="public-teacher-profile-detail__grid">
+            <main>
+              <section className="public-teacher-profile-panel">
+                <div className="public-teacher-profile-panel__tabs">
+                  <button className={activeMedia === 'intro' ? 'active' : ''} onClick={() => setActiveMedia('intro')}>Intro video</button>
+                  <button className={activeMedia === 'sample' ? 'active' : ''} onClick={() => setActiveMedia('sample')}>Sample class</button>
+                  <button className={activeMedia === 'schedule' ? 'active' : ''} onClick={() => setActiveMedia('schedule')}>Schedule</button>
+                </div>
+                <div className="public-teacher-profile-panel__media">
+                  {activeMedia === 'intro' && <IntroVideo accountId={teacher.id} compact={false} />}
+                  {activeMedia === 'sample' && <SampleClassPlayer url={profile.sampleClassUrl} />}
+                  {activeMedia === 'schedule' && (availabilityByDay.length ? <div className="public-teacher-profile-schedule">{availabilityByDay.map((item) => <div key={item.day}><strong>{item.day}</strong><span>{item.times.slice(0, 8).join(' · ')}{item.times.length > 8 ? ' +' : ''}</span></div>)}</div> : <div className="public-teacher-profile-empty"><strong>Schedule being prepared</strong><span>This teacher’s available times will appear after approval and setup.</span></div>)}
+                </div>
+              </section>
+
+              <section className="public-teacher-profile-panel">
+                <span className="kicker">About the teacher</span>
+                <h2>Teaching introduction</h2>
+                <p className="public-teacher-profile-detail__bio">{profile.bio || 'A warm TutorPro English teacher ready to help your child build speaking confidence, grammar accuracy and reading fluency.'}</p>
+              </section>
+
+              <section className="public-teacher-profile-panel public-teacher-profile-resume">
+                <span className="kicker">Resume</span>
+                <h2>Qualifications and experience</h2>
+                <div><span>Education</span><strong>{profile.education || 'To be updated'}</strong></div>
+                <div><span>Experience</span><strong>{Number(profile.experience || 0)} year{Number(profile.experience || 0) === 1 ? '' : 's'}</strong></div>
+                <div><span>Languages</span><strong>{profile.languages || 'English'}</strong></div>
+                <div><span>Credentials</span><strong>{profile.credentials?.length || 0} submitted</strong></div>
+              </section>
+            </main>
+
+            <aside>
+              <section className="public-teacher-profile-panel public-teacher-profile-review-box">
+                <div><span className="kicker">Parent reviews</span><a href="#teacher-reviews">View all</a></div>
+                <strong>{average || 'New'}</strong>
+                <p>{reviews.length ? `${reviews.length} parent review${reviews.length === 1 ? '' : 's'} from completed classes` : 'Reviews from completed classes will appear here.'}</p>
+                {['Qualification', 'Expertise', 'Communication', 'Value'].map((label, index) => <div className="teacher-dashboard-profile-card__bar" key={label}><span>{label}</span><i><b style={{ width: `${Math.max(70, 95 - index * 7)}%` }} /></i><em>{(4.9 - index * 0.15).toFixed(1)}</em></div>)}
+              </section>
+
+              <section className="public-teacher-profile-panel public-teacher-profile-cta">
+                <h2>Ready to meet {firstName}?</h2>
+                <p>Book a free first class and see if this teacher is the right match for your child.</p>
+                <button className="button button--primary button--full" onClick={() => onChooseTeacher(teacher)}>Book Free Trial <ArrowRight size={16} /></button>
+              </section>
+            </aside>
+          </div>
+
+          <section id="teacher-reviews" className="public-teacher-profile-panel public-teacher-profile-reviews-list">
+            <span className="kicker">What parents say</span>
+            <h2>Class reviews</h2>
+            {reviews.length ? reviews.map((booking) => <blockquote key={booking.id}><span>{'★'.repeat(Number(booking.studentRating.score || 0))}{'☆'.repeat(5 - Number(booking.studentRating.score || 0))}</span><p>{booking.studentRating.comment || `Parent rated this class ${booking.studentRating.score}/5.`}</p><small>{booking.learnerName || 'TutorPro learner'} · {booking.studentRating.createdAt ? new Date(booking.studentRating.createdAt).toLocaleDateString('en') : 'recently'}</small></blockquote>) : <div className="public-teacher-profile-empty"><strong>No published reviews yet</strong><span>Parent reviews will appear after completed and rated lessons.</span></div>}
+          </section>
+        </article>
+      </div>
+    </section>
+  )
+}
+
 function TeacherShowcase({ onChooseTeacher, onBack }) {
   const teachers = getApprovedTeachers()
+  const [selectedTeacherProfile, setSelectedTeacherProfile] = useState(null)
+
+  if (selectedTeacherProfile) return <PublicTeacherProfileDetail teacher={selectedTeacherProfile} onBack={() => setSelectedTeacherProfile(null)} onChooseTeacher={onChooseTeacher} />
 
   return (
     <section className="section public-teachers" id="teachers" style={{ background: 'linear-gradient(180deg, #110925 0%, #090510 100%)', padding: '80px 0' }}>
@@ -914,7 +1019,7 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
         </div>
         <div className="public-teacher-grid public-teacher-grid--dashboard">
           {teachers.length ? teachers.map((teacher) => (
-            <PublicTeacherCard key={teacher.id} teacher={teacher} onChooseTeacher={onChooseTeacher} />
+            <PublicTeacherCard key={teacher.id} teacher={teacher} onChooseTeacher={onChooseTeacher} onViewProfile={setSelectedTeacherProfile} />
           )) : <div className="public-teachers-empty" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.08)' }}>
             <span style={{ display: 'inline-block', padding: '16px', background: 'rgba(120, 80, 201, 0.1)', color: '#bce94e', borderRadius: '50%', marginBottom: '12px' }}><Users size={32} /></span>
             <div>
