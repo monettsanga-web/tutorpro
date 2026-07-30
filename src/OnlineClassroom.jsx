@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import confetti from 'canvas-confetti'
 import {
   ArrowLeft,
   ArrowLeftRight,
+  Award,
   Camera,
   CameraOff,
   Check,
@@ -38,6 +40,8 @@ import {
   Send,
   ShieldCheck,
   Smartphone,
+  Sparkles,
+  Star,
   Trash2,
   Type,
   Undo2,
@@ -104,6 +108,16 @@ function readFileAsDataUrl(file) {
     reader.readAsDataURL(file)
   })
 }
+
+const CLASSROOM_COURSEWARE_SLIDES = [
+  { id: 'warmup', type: 'Warm-up', title: 'Hello, English Explorer!', objective: 'Build confidence and start speaking right away.', prompt: 'Say your name, your mood today, and one thing you can see around you.', teacherNote: 'Encourage full sentence answers: “I feel happy because…”', answer: 'My name is Mia. I feel excited today because I am ready for English class.', vocabulary: ['happy', 'excited', 'ready', 'today'] },
+  { id: 'vocab', type: 'Vocabulary', title: 'Power Words', objective: 'Learn and use new words in complete sentences.', prompt: 'Choose two words and make your own sentence.', teacherNote: 'Model pronunciation first, then ask the student to repeat and create.', answer: 'I am excited today. I am ready for class.', vocabulary: ['confident', 'practice', 'sentence', 'because'] },
+  { id: 'grammar', type: 'Grammar', title: 'Complete Sentence Builder', objective: 'Use complete sentences with a subject and verb.', prompt: 'Fix this answer: “Because happy.”', teacherNote: 'Guide the learner to add a subject and verb.', answer: 'I am happy because I can speak English.', vocabulary: ['I am', 'because', 'can', 'speak'] },
+  { id: 'reading', type: 'Reading', title: 'Read and Answer', objective: 'Read for meaning and answer in a full sentence.', prompt: 'Read: “Ben has a red book. He reads every night.” What does Ben have?', teacherNote: 'Ask the student to point to the answer and speak in a complete sentence.', answer: 'Ben has a red book.', vocabulary: ['red', 'book', 'reads', 'night'] },
+  { id: 'speaking', type: 'Speaking', title: 'Speak Like a Star', objective: 'Answer with details, not one-word answers.', prompt: 'What is your favorite animal? Tell me why.', teacherNote: 'Extend with follow-up: color, size, habitat, feeling.', answer: 'My favorite animal is a dog because it is friendly and playful.', vocabulary: ['favorite', 'animal', 'friendly', 'playful'] },
+  { id: 'wrapup', type: 'Wrap-up', title: 'Class Review Mission', objective: 'Review today’s words and set homework.', prompt: 'Say one new word and one sentence you learned today.', teacherNote: 'Give stars, summarize progress, and assign homework.', answer: 'Today I learned “confident.” I can say: “I am confident in English.”', vocabulary: ['review', 'learned', 'confident', 'homework'] },
+]
+
 
 function hitTestAnnotation(path, point, width, height, threshold = 18) {
   if (path.tool === 'text' && path.point) {
@@ -318,6 +332,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const [canUndoClear, setCanUndoClear] = useState(false)
+  const [coursewareSlideIndex, setCoursewareSlideIndex] = useState(0)
+  const [coursewareShowAnswer, setCoursewareShowAnswer] = useState(false)
+  const [classStars, setClassStars] = useState(0)
 
   const setVideoStream = (element, stream) => {
     if (element && element.srcObject !== stream) {
@@ -599,6 +616,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         setRemoteScreenPaused(Boolean(message.active && message.paused))
         if (['fit', 'fill'].includes(message.fit)) setRemoteScreenFit(message.fit)
         if (message.active) setPresentedFile(null)
+        return
+      }
+      if (message.type === 'courseware-state') {
+        setCoursewareSlideIndex(Math.max(0, Math.min(CLASSROOM_COURSEWARE_SLIDES.length - 1, Number(message.slideIndex) || 0)))
+        setCoursewareShowAnswer(Boolean(message.showAnswer))
+        if (message.clearPresentation) { setPresenterUrl(''); setPresentedFile(null); setRemoteScreenSharing(false) }
+        return
+      }
+      if (message.type === 'courseware-reward') {
+        setClassStars(Number(message.stars) || 0)
+        confetti({ particleCount: 55, spread: 65, origin: { y: 0.72 }, colors: ['#bce94e', '#7048df', '#ff4f87'] })
         return
       }
       if (message.type === 'presentation-file') {
@@ -1435,6 +1463,51 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     ? 'Both participants were found. TutorPro English is retrying the secure video handshake.'
     : 'Keep this classroom open while the other participant enters this exact booking.'
 
+  const broadcastCoursewareState = (slideIndex = coursewareSlideIndex, showAnswer = coursewareShowAnswer, clearPresentation = false) => {
+    transportRef.current?.send({ type: 'courseware-state', slideIndex, showAnswer, clearPresentation })
+  }
+
+  const goToCoursewareSlide = (nextIndex) => {
+    const index = Math.max(0, Math.min(CLASSROOM_COURSEWARE_SLIDES.length - 1, nextIndex))
+    setCoursewareSlideIndex(index)
+    setCoursewareShowAnswer(false)
+    setPresenterUrl('')
+    setPresentedFile(null)
+    setRemoteScreenSharing(false)
+    broadcastCoursewareState(index, false, true)
+  }
+
+  const toggleCoursewareAnswer = () => {
+    const next = !coursewareShowAnswer
+    setCoursewareShowAnswer(next)
+    broadcastCoursewareState(coursewareSlideIndex, next, true)
+  }
+
+  const rewardStudent = () => {
+    const next = classStars + 1
+    setClassStars(next)
+    transportRef.current?.send({ type: 'courseware-reward', stars: next })
+    confetti({ particleCount: 75, spread: 70, origin: { y: 0.7 }, colors: ['#bce94e', '#7048df', '#ff4f87'] })
+  }
+
+  const renderCoursewareSlide = () => {
+    const slide = CLASSROOM_COURSEWARE_SLIDES[coursewareSlideIndex] || CLASSROOM_COURSEWARE_SLIDES[0]
+    return (
+      <div className="classroom-courseware-stage">
+        <div className="classroom-courseware-stage__bg" aria-hidden="true" />
+        <div className="classroom-courseware-card">
+          <div className="classroom-courseware-card__top"><span>{slide.type}</span><small>Slide {coursewareSlideIndex + 1}/{CLASSROOM_COURSEWARE_SLIDES.length}</small></div>
+          <h2>{slide.title}</h2>
+          <p className="classroom-courseware-objective">{slide.objective}</p>
+          <div className="classroom-courseware-prompt"><strong>Student task</strong><p>{slide.prompt}</p></div>
+          {coursewareShowAnswer && <div className="classroom-courseware-answer"><strong>Suggested answer</strong><p>{slide.answer}</p></div>}
+          <div className="classroom-courseware-vocab">{slide.vocabulary.map((word) => <i key={word}>{word}</i>)}</div>
+        </div>
+        <aside className="classroom-courseware-notes"><span><Sparkles size={17} /> Teacher notes</span><p>{slide.teacherNote}</p><div><Star size={16} fill="currentColor" /> {classStars} class star{classStars === 1 ? '' : 's'}</div></aside>
+      </div>
+    )
+  }
+
   const isEdbFile = (file) => /\.edb$/i.test(file.name)
   const isEpubFile = (file) => /\.epub$/i.test(file.name)
 
@@ -1733,7 +1806,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
                   <span>Sharing Screen (Active Preview)</span>
                 </div>
               </div>
-            ) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteScreenVideoRef} autoPlay playsInline muted={false} />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : <div className="classroom-lesson-placeholder"><span><Presentation size={49} /></span><small>Interactive lesson workspace</small><h2>{roomBooking.focus}</h2><p>The teacher can share a browser tab, present a website, or share an uploaded lesson file here. Annotation tools work directly on this board.</p><div><i>ABC</i><i>Vocabulary</i><i>Grammar</i><i>Speaking</i></div></div>}
+            ) : remoteScreenSharing ? (useTencentClassroom ? <div className={`tencent-video-view tencent-screen-view classroom-presentation-video--${remoteScreenFit}`} ref={remoteTencentScreenRef} /> : <video className={`classroom-presentation-video classroom-presentation-video--${remoteScreenFit}`} ref={remoteScreenVideoRef} autoPlay playsInline muted={false} />) : presenterUrl ? renderEmbeddedWebsite() : presentedFile ? renderPresentedFile(presentedFile) : renderCoursewareSlide()}
             {remoteScreenSharing && remoteScreenPaused && <div className="screen-share-paused"><Pause size={26} /><strong>Screen sharing is paused</strong><span>The teacher can resume it from the classroom controls.</span></div>}
             <canvas
               ref={annotationCanvasRef}
@@ -1763,6 +1836,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               <button onClick={() => setAnnotationMode(false)} title="Close annotation"><X size={17} /></button>
             </div>}
             {screenSharing && <div className="screen-share-controls" role="toolbar" aria-label="Teacher screen sharing controls"><span><i /> You are presenting</span><button onClick={toggleScreenPause} title={screenPaused ? 'Resume screen sharing' : 'Pause screen sharing'}>{screenPaused ? <Play size={16} /> : <Pause size={16} />}<b>{screenPaused ? 'Resume' : 'Pause'}</b></button><button onClick={toggleScreenFit} title="Change screen fit"><MonitorUp size={16} /><b>{screenFit === 'fit' ? 'Fill' : 'Fit'}</b></button><button onClick={toggleStageFullscreen} title={stageFullscreen ? 'Exit full screen' : 'Open lesson board full screen'}>{stageFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<b>{stageFullscreen ? 'Exit' : 'Full screen'}</b></button><button className="stop" onClick={stopScreenShare} title="Stop screen sharing"><X size={16} /><b>Stop</b></button></div>}
+            {!screenSharing && !remoteScreenSharing && !presenterUrl && !presentedFile && account.role === 'teacher' && <div className="courseware-controls" role="toolbar" aria-label="Courseware controls"><button onClick={() => goToCoursewareSlide(coursewareSlideIndex - 1)} disabled={coursewareSlideIndex === 0}><ArrowLeft size={15} /> Prev</button><button onClick={() => goToCoursewareSlide(coursewareSlideIndex + 1)} disabled={coursewareSlideIndex >= CLASSROOM_COURSEWARE_SLIDES.length - 1}>Next <ArrowLeftRight size={15} /></button><button onClick={toggleCoursewareAnswer}>{coursewareShowAnswer ? 'Hide answer' : 'Show answer'}</button><button onClick={rewardStudent}><Award size={15} /> Give star</button><button onClick={toggleStageFullscreen}>{stageFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />} Board</button></div>}
             <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
           </div>
         </section>

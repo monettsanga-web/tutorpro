@@ -1450,3 +1450,213 @@ body.classroom-active .support-widget {
     flex: 1;
   }
 }
+
+/* TutorPro Classroom Pro courseware MVP */
+.classroom-courseware-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.36fr);
+  gap: 18px;
+  padding: clamp(18px, 3vw, 34px);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(188, 233, 78, 0.18), transparent 32%),
+    linear-gradient(135deg, #fff 0%, #f7f4ff 58%, #eaf6ff 100%);
+}
+
+.classroom-courseware-stage__bg {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(112,72,223,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(112,72,223,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+.classroom-courseware-card,
+.classroom-courseware-notes {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(112, 72, 223, 0.16);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 24px 70px rgba(49, 21, 104, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+.classroom-courseware-card {
+  display: grid;
+  gap: 18px;
+  align-content: center;
+  padding: clamp(22px, 4vw, 46px);
+}
+
+.classroom-courseware-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.classroom-courseware-card__top span,
+.classroom-courseware-card__top small {
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.classroom-courseware-card h2 {
+  margin: 0;
+  color: #241042;
+  font-size: clamp(2.1rem, 5vw, 4.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.075em;
+}
+
+.classroom-courseware-objective {
+  margin: 0;
+  color: #475569;
+  font-size: clamp(1rem, 1.45vw, 1.25rem);
+  line-height: 1.55;
+}
+
+.classroom-courseware-prompt,
+.classroom-courseware-answer {
+  border-radius: 22px;
+  padding: 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.classroom-courseware-prompt strong,
+.classroom-courseware-answer strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #6d28d9;
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.classroom-courseware-prompt p,
+.classroom-courseware-answer p {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(1.08rem, 2.2vw, 1.7rem);
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.classroom-courseware-answer {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.classroom-courseware-vocab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.classroom-courseware-vocab i {
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: #321568;
+  color: #fff;
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.classroom-courseware-notes {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  padding: 20px;
+}
+
+.classroom-courseware-notes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #6d28d9;
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.classroom-courseware-notes p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.classroom-courseware-notes div {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-weight: 950;
+}
+
+.courseware-controls {
+  position: absolute;
+  z-index: 20;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  padding: 8px;
+  background: rgba(19,9,37,0.92);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.32);
+  backdrop-filter: blur(12px);
+}
+
+.courseware-controls button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: rgba(255,255,255,0.09);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.courseware-controls button:hover:not(:disabled) {
+  background: #7048df;
+}
+
+.courseware-controls button:disabled {
+  opacity: 0.42;
+}
+
+@media (max-width: 860px) {
+  .classroom-courseware-stage {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .classroom-courseware-notes {
+    align-content: start;
+  }
+}
