@@ -1325,6 +1325,42 @@ function AddStudentDialog({ account, onClose, onAdded }) {
 
 
 
+function StudentAiReportPanel({ account, learner, onOpenLibrary }) {
+  const bookings = getBookings({ studentId: account.id }).filter((booking) => booking.learnerId ? booking.learnerId === learner.id : true)
+  const homework = getHomework({ studentId: account.id, learnerId: learner.id })
+  const report = buildLearningReport({ learner, bookings, homework })
+  const suggestedResources = getRecommendedLibraryResources({ learner, homework, feedback: bookings }).slice(0, 4)
+  const scoreEntries = Object.entries(report.scores)
+
+  return (
+    <div className="portal-view ai-report-view">
+      <section className="ai-report-hero">
+        <div>
+          <span className="portal-kicker">AI learning report</span>
+          <h1>{learner.name}'s progress snapshot</h1>
+          <p>{report.summary} This report uses class history, teacher feedback, homework status and learning goals to recommend the next best practice steps.</p>
+          <div className="ai-report-hero__stats"><span><strong>{report.completedLessons}</strong> completed lessons</span><span><strong>{report.attendanceRate}%</strong> attendance</span><span><strong>{report.homeworkRate}%</strong> homework</span></div>
+        </div>
+        <div className="ai-report-score-card"><small>Overall momentum</small><strong>{Math.round((report.scores.speaking + report.scores.reading + report.scores.grammar + report.scores.vocabulary) / 4)}%</strong><span>Updated {new Date(report.generatedAt).toLocaleDateString('en')}</span></div>
+      </section>
+
+      <section className="portal-card ai-report-scores-card">
+        <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Skill map</span><h2>Learning scores</h2></div></div>
+        <div className="ai-skill-grid">{scoreEntries.map(([key, value]) => <div key={key}><span>{skillLabel(key)}</span><i><b style={{ width: `${value}%` }} /></i><strong>{value}%</strong></div>)}</div>
+      </section>
+
+      <div className="ai-report-grid">
+        <section className="portal-card ai-recommendations-card"><span className="portal-kicker">Next best actions</span><h2>AI recommendations</h2>{report.recommendations.map((item) => <article key={item.title}><span>{item.type}</span><div><strong>{item.title}</strong><p>{item.action}</p></div></article>)}</section>
+        <section className="portal-card ai-practice-card"><span className="portal-kicker">Practice focus</span><h2>Words & grammar</h2>{report.practiceWords.length ? <div className="ai-chip-row"><b>Words</b>{report.practiceWords.map((word) => <i key={word}>{word}</i>)}</div> : <p>No practice words yet. They will appear after teacher feedback.</p>}{report.grammarFocus.length ? <div className="ai-chip-row ai-chip-row--grammar"><b>Grammar</b>{report.grammarFocus.map((focus) => <i key={focus}>{focus}</i>)}</div> : <p>Grammar focus will appear after class feedback.</p>}</section>
+      </div>
+
+      <section className="portal-card ai-resource-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Recommended library</span><h2>Suggested practice resources</h2></div><button className="portal-text-button" onClick={onOpenLibrary}>Open Library <ChevronRight size={15} /></button></div><div className="ai-resource-list">{suggestedResources.map((resource) => <a key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><strong>{resource.title}</strong><span>{resource.category} · {resource.level}</span></a>)}</div></section>
+
+      <section className="portal-card ai-feedback-timeline"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Recent feedback</span><h2>Teacher notes used in this report</h2></div></div>{report.recentFeedback.length ? report.recentFeedback.map((booking) => <article key={booking.id}><strong>{formatLessonDate(booking.date, booking.time)}</strong><p>{booking.teacherFeedback.summary}</p>{booking.teacherFeedback.nextStep && <small>Next: {booking.teacherFeedback.nextStep}</small>}</article>) : <EmptyState icon={MessageSquareText} title="No teacher feedback yet" text="AI insights become richer after completed lessons with feedback." />}</section>
+    </div>
+  )
+}
+
 function StudentRewardsPanel({ account, learner, onAccountChange }) {
   const [version, setVersion] = useState(0)
   const syncedProfile = deriveAutomaticBadges(learner)
@@ -2408,6 +2444,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'library', label: 'Library', icon: BookOpen },
     { id: 'rewards', label: 'Rewards', icon: Award },
+    { id: 'ai-report', label: 'AI report', icon: Bot },
     { id: 'support', label: 'Parent support', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
@@ -2492,6 +2529,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'library' && <DigitalLibraryPanel account={account} learner={learner} role="student" />}
 
       {active === 'rewards' && <StudentRewardsPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
+
+      {active === 'ai-report' && <StudentAiReportPanel account={account} learner={learner} onOpenLibrary={() => setActive('library')} />}
 
       {active === 'curriculum' && (
         <div className="portal-view">

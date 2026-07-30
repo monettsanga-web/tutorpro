@@ -8356,3 +8356,44 @@ a.feedback-resource-detail:hover strong {
 .rewards-history-list small, .rewards-history-list time { color:#64748b; }
 .rewards-admin-table .admin-table__row { grid-template-columns: 1.2fr 1.2fr 1.1fr .5fr .5fr; }
 @media(max-width:900px){.rewards-hero-card,.rewards-grid{grid-template-columns:1fr}.rewards-admin-table .admin-table__row{grid-template-columns:1fr}}
+
+/* AI learning report MVP */
+.ai-report-view { display: grid; gap: 22px; }
+.ai-report-hero { display: grid; grid-template-columns: minmax(0,1fr) minmax(240px,.45fr); gap: 20px; align-items: center; border-radius: 30px; padding: clamp(22px,4vw,36px); background: radial-gradient(circle at 12% 0%, rgba(188,233,78,.18), transparent 34%), linear-gradient(135deg,#321568 0%,#7048df 55%,#090510 100%); color: #fff; box-shadow: 0 26px 75px rgba(49,21,104,.22); }
+.ai-report-hero .portal-kicker { color: #bce94e; }
+.ai-report-hero h1 { margin: 7px 0 10px; font-size: clamp(2rem,4vw,3.4rem); line-height: .95; letter-spacing: -.06em; }
+.ai-report-hero p { color: rgba(255,255,255,.78); line-height: 1.65; }
+.ai-report-hero__stats { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.ai-report-hero__stats span { border-radius:999px; padding:8px 12px; background:rgba(255,255,255,.12); font-weight:850; }
+.ai-report-hero__stats strong { color:#bce94e; }
+.ai-report-score-card { display:grid; gap:8px; border:1px solid rgba(255,255,255,.16); border-radius:24px; padding:18px; background:rgba(255,255,255,.12); backdrop-filter: blur(12px); }
+.ai-report-score-card small { color:#d8cceb; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+.ai-report-score-card strong { color:#fff; font-size:3rem; line-height:1; }
+.ai-report-score-card span { color:#d8cceb; }
+.ai-report-scores-card, .ai-recommendations-card, .ai-practice-card, .ai-resource-card, .ai-feedback-timeline { background: linear-gradient(135deg,#fff 0%,#f8fafc 55%,#f5f3ff 100%); border:1px solid rgba(124,58,237,.14); }
+.ai-skill-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.ai-skill-grid div { display:grid; gap:7px; border:1px solid #e2e8f0; border-radius:16px; padding:13px; background:#fff; }
+.ai-skill-grid span { color:#475569; font-weight:900; }
+.ai-skill-grid i { overflow:hidden; height:10px; border-radius:999px; background:#ede9fe; }
+.ai-skill-grid b { display:block; height:100%; background:linear-gradient(90deg,#7048df,#bce94e); border-radius:inherit; }
+.ai-skill-grid strong { color:#241042; }
+.ai-report-grid { display:grid; grid-template-columns: minmax(0,1fr) minmax(280px,.8fr); gap:18px; }
+.ai-recommendations-card, .ai-practice-card { display:grid; gap:12px; }
+.ai-recommendations-card article { display:grid; grid-template-columns:auto 1fr; gap:12px; border:1px solid #e2e8f0; border-radius:16px; padding:13px; background:#fff; }
+.ai-recommendations-card article > span { border-radius:999px; padding:7px 10px; background:#f5f3ff; color:#5b21b6; font-size:.72rem; font-weight:950; }
+.ai-recommendations-card strong { color:#111827; }
+.ai-recommendations-card p, .ai-practice-card p { margin:4px 0 0; color:#64748b; line-height:1.5; }
+.ai-chip-row { display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+.ai-chip-row b { color:#241042; }
+.ai-chip-row i { border-radius:999px; padding:7px 10px; background:#ede9fe; color:#4c1d95; font-size:.74rem; font-style:normal; font-weight:900; }
+.ai-chip-row--grammar i { background:#dcfce7; color:#166534; }
+.ai-resource-list { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.ai-resource-list a { border:1px solid #e2e8f0; border-radius:16px; padding:13px; background:#fff; text-decoration:none; }
+.ai-resource-list strong { display:block; color:#111827; }
+.ai-resource-list span { display:block; margin-top:4px; color:#64748b; font-size:.78rem; }
+.ai-feedback-timeline { display:grid; gap:12px; }
+.ai-feedback-timeline article { border:1px solid #e2e8f0; border-radius:16px; padding:13px; background:#fff; }
+.ai-feedback-timeline strong { color:#241042; }
+.ai-feedback-timeline p { color:#334155; line-height:1.65; white-space:pre-wrap; }
+.ai-feedback-timeline small { color:#64748b; }
+@media(max-width:900px){ .ai-report-hero,.ai-report-grid { grid-template-columns:1fr; } }
