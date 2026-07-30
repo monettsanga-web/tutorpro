@@ -89,6 +89,9 @@ import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { supabase } from './supabaseClient.js'
 import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferralLink, getReferralStats, getShareTargets, referralActivity } from './referrals.js'
+import { BADGE_CATALOG, DAILY_MISSIONS, canClaimMission, claimMission, deriveAutomaticBadges, getRewardProfile, rewardProgress } from './rewards.js'
+import { buildLearningReport, skillLabel } from './learningReports.js'
+import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
