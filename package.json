@@ -20,7 +20,8 @@
     "classroom:server": "node server/classroom-signaling.mjs",
     "desktop:dev": "concurrently -k \"npm run dev -- --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env NODE_ENV=development electron .\"",
     "desktop:pack": "npm run build && electron-builder --dir",
-    "desktop:dist": "npm run build && electron-builder"
+    "desktop:dist": "npm run build && electron-builder",
+    "seo:automation": "node scripts/seo-automation.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

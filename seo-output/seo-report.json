@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-07-30T02:41:45.884Z",
+  "reviewRequired": true,
+  "articleIdeas": [
+    {
+      "slug": "online-english-classes-for-kids",
+      "title": "Online English Classes for Kids: What Parents Should Look For",
+      "keyword": "online English classes for kids",
+      "intent": "commercial investigation",
+      "coverageScore": 100,
+      "priority": "medium",
+      "suggestedUrl": "https://www.tutorpro.site/online-english-classes-for-kids.html"
+    },
+    {
+      "slug": "novakid-alternative",
+      "title": "Novakid Alternative: A More Personal 1-to-1 English Option",
+      "keyword": "Novakid alternative",
+      "intent": "comparison",
+      "coverageScore": 100,
+      "priority": "medium",
+      "suggestedUrl": "https://www.tutorpro.site/novakid-alternative.html"
+    },
+    {
+      "slug": "51talk-alternative",
+      "title": "51Talk Alternative for Kids: Flexible Online English Lessons",
+      "keyword": "51Talk alternative",
+      "intent": "comparison",
+      "coverageScore": 100,
+      "priority": "medium",
+      "suggestedUrl": "https://www.tutorpro.site/51talk-alternative.html"
+    },
+    {
+      "slug": "preply-alternative-for-kids",
+      "title": "Preply Alternative for Kids: Guided Online English Tutoring",
+      "keyword": "Preply alternative for kids",
+      "intent": "comparison",
+      "coverageScore": 100,
+      "priority": "medium",
+      "suggestedUrl": "https://www.tutorpro.site/preply-alternative-for-kids.html"
+    },
+    {
+      "slug": "cambridge-english-tutor-online",
+      "title": "Cambridge English Tutor Online for Primary and Secondary Learners",
+      "keyword": "Cambridge English tutor online",
+      "intent": "service page",
+      "coverageScore": 100,
+      "priority": "medium",
+      "suggestedUrl": "https://www.tutorpro.site/cambridge-english-tutor-online.html"
+    },
+    {
+      "slug": "english-classes-for-chinese-students",
+      "title": "Online English Classes for Chinese Students: VooV-Friendly Learning",
+      "keyword": "English classes for Chinese students",
+      "intent": "geo-specific service page",
+      "coverageScore": 100,
+      "priority": "medium",
+      "suggestedUrl": "https://www.tutorpro.site/english-classes-for-chinese-students.html"
+    }
+  ],
+  "contentGaps": [],
+  "recommendedInternalLinks": [
+    {
+      "from": "/",
+      "to": "/online-english-alternatives.html",
+      "anchor": "Novakid, 51Talk and Preply alternative"
+    },
+    {
+      "from": "/",
+      "to": "/cn/",
+      "anchor": "Chinese mobile student version"
+    },
+    {
+      "from": "/online-english-alternatives.html",
+      "to": "/",
+      "anchor": "online English classes for kids"
+    },
+    {
+      "from": "/online-english-alternatives.html",
+      "to": "/cn/",
+      "anchor": "English classes for Chinese students"
+    }
+  ],
+  "keywordRankingMonitorTemplate": [
+    {
+      "keyword": "online English classes for kids",
+      "targetUrl": "https://www.tutorpro.site",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "Novakid alternative",
+      "targetUrl": "https://www.tutorpro.site/online-english-alternatives.html",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "51Talk alternative",
+      "targetUrl": "https://www.tutorpro.site/online-english-alternatives.html",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "Preply alternative for kids",
+      "targetUrl": "https://www.tutorpro.site/online-english-alternatives.html",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "Cambridge English tutor online",
+      "targetUrl": "https://www.tutorpro.site",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "Oxford English classes online",
+      "targetUrl": "https://www.tutorpro.site",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "English speaking class for children",
+      "targetUrl": "https://www.tutorpro.site",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "online ESL tutor for kids",
+      "targetUrl": "https://www.tutorpro.site",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "English classes for Chinese students",
+      "targetUrl": "https://www.tutorpro.site/cn/",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    },
+    {
+      "keyword": "one to one English lessons for kids",
+      "targetUrl": "https://www.tutorpro.site",
+      "currentRank": null,
+      "previousRank": null,
+      "note": "Connect Google Search Console API or manually update until API credentials are configured."
+    }
+  ]
+}
