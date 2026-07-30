@@ -1324,6 +1324,45 @@ function AddStudentDialog({ account, onClose, onAdded }) {
 }
 
 
+
+function StudentRewardsPanel({ account, learner, onAccountChange }) {
+  const [version, setVersion] = useState(0)
+  const syncedProfile = deriveAutomaticBadges(learner)
+  const profile = syncedProfile
+  const progress = rewardProgress(profile.xp)
+  const saveRewardProfile = (nextProfile) => {
+    const updated = updateStudentProfile(account.id, {
+      rewardProfile: nextProfile,
+      gameStars: nextProfile.stars,
+      achievements: [...new Set([...(learner.achievements || []), ...BADGE_CATALOG.filter((badge) => nextProfile.badges.includes(badge.id)).map((badge) => badge.title)])],
+    }, learner.id)
+    onAccountChange?.(updated)
+    setVersion((value) => value + 1)
+  }
+  useEffect(() => {
+    if (JSON.stringify(learner.rewardProfile || {}) !== JSON.stringify(syncedProfile)) saveRewardProfile(syncedProfile)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  void version
+  const claim = (mission) => {
+    if (!canClaimMission(profile, mission.id)) return
+    saveRewardProfile(claimMission(profile, mission))
+  }
+  return (
+    <div className="portal-view rewards-view"><section className="rewards-hero-card"><div><span className="portal-kicker">Reward system</span><h1>{progress.current.emoji} {progress.current.title}</h1><p>Earn XP, coins, stars and badges by completing homework, lessons, games and daily missions.</p><div className="rewards-hero-stats"><span><strong>{profile.xp}</strong> XP</span><span><strong>{profile.coins}</strong> coins</span><span><strong>{profile.stars}</strong> stars</span><span><strong>{profile.badges.length}</strong> badges</span></div></div><div className="rewards-level-card"><small>Next level</small><strong>{progress.next ? progress.next.title : 'Top level reached'}</strong><i><b style={{ width: `${progress.percent}%` }} /></i><span>{progress.next ? `${progress.remaining} XP to go` : 'You unlocked every level!'}</span></div></section><section className="rewards-grid"><article className="portal-card rewards-missions-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Daily missions</span><h2>Claim today’s rewards</h2></div></div>{DAILY_MISSIONS.map((mission) => { const available = canClaimMission(profile, mission.id); return <button key={mission.id} className={available ? '' : 'claimed'} onClick={() => claim(mission)} disabled={!available}><span>{available ? '✨' : '✅'}</span><div><strong>{mission.title}</strong><small>+{mission.reward.xp} XP · +{mission.reward.coins} coins · +{mission.reward.stars} star</small></div></button> })}</article><article className="portal-card rewards-wallet-card"><span className="portal-kicker">Reward wallet</span><h2>Student balance</h2><dl><div><dt>XP</dt><dd>{profile.xp}</dd></div><div><dt>Coins</dt><dd>{profile.coins}</dd></div><div><dt>Stars</dt><dd>{profile.stars}</dd></div><div><dt>Level</dt><dd>{progress.current.level}</dd></div></dl></article></section><section className="portal-card rewards-badge-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Achievements</span><h2>Badges and certificates</h2></div></div><div className="rewards-badge-grid">{BADGE_CATALOG.map((badge) => <article key={badge.id} className={profile.badges.includes(badge.id) ? 'earned' : 'locked'}><span>{badge.emoji}</span><strong>{badge.title}</strong><small>{badge.description}</small></article>)}</div></section><section className="portal-card rewards-history-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Reward history</span><h2>Recent earnings</h2></div></div>{profile.transactions.length ? <div className="rewards-history-list">{profile.transactions.slice(0, 12).map((item) => <article key={item.id}><span>🎁</span><div><strong>{item.reason}</strong><small>+{item.xp} XP · +{item.coins} coins · +{item.stars} stars</small></div><time>{new Date(item.createdAt).toLocaleDateString('en')}</time></article>)}</div> : <EmptyState icon={Award} title="No rewards yet" text="Complete a mission or homework to earn your first reward." />}</section></div>
+  )
+}
+
+function AdminRewardsPanel() {
+  const students = getAccounts('student')
+  const learners = students.flatMap((student) => (student.children?.length ? student.children : student.child ? [student.child] : []).map((learner) => ({ student, learner, profile: getRewardProfile(learner) })))
+  const totalXp = learners.reduce((sum, item) => sum + item.profile.xp, 0)
+  const totalCoins = learners.reduce((sum, item) => sum + item.profile.coins, 0)
+  const totalBadges = learners.reduce((sum, item) => sum + item.profile.badges.length, 0)
+  const topLearners = [...learners].sort((a, b) => b.profile.xp - a.profile.xp).slice(0, 20)
+  return <div className="portal-view rewards-view"><div className="portal-page-heading"><div><span className="portal-kicker">Student rewards</span><h1>Rewards, XP and badges</h1><p>Monitor student engagement across homework, games, lessons and missions.</p></div></div><div className="portal-stat-grid"><article><span className="stat-icon stat-icon--blue"><Award size={21} /></span><div><small>Total XP</small><strong>{totalXp}</strong><em>All learners</em></div></article><article><span className="stat-icon stat-icon--gold"><Coins size={21} /></span><div><small>Coins issued</small><strong>{totalCoins}</strong><em>Student wallet</em></div></article><article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Badges earned</small><strong>{totalBadges}</strong><em>Achievements</em></div></article></div><section className="portal-card rewards-admin-table"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Leaderboard</span><h2>Top students by XP</h2></div></div><div className="admin-table"><div className="admin-table__head"><span>Student</span><span>Family</span><span>Level</span><span>XP</span><span>Badges</span></div>{topLearners.map(({ student, learner, profile }) => { const progress = rewardProgress(profile.xp); return <div className="admin-table__row" key={`${student.id}-${learner.id}`}><div><strong>{learner.name}</strong><small>{learner.curriculum} · {learner.year}</small></div><div><strong>{displayName(student)}</strong><small>{student.loginId || student.email}</small></div><div><strong>{progress.current.emoji} {progress.current.title}</strong><small>Level {progress.current.level}</small></div><div><strong>{profile.xp}</strong></div><div><strong>{profile.badges.length}</strong></div></div> })}</div></section></div>
+}
+
 function HomeworkStatusBadge({ status }) {
   return <span className={`homework-status homework-status--${status || 'assigned'}`}>{status || 'assigned'}</span>
 }
@@ -2368,6 +2407,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'referrals', label: 'Referrals', icon: Award },
     { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'library', label: 'Library', icon: BookOpen },
+    { id: 'rewards', label: 'Rewards', icon: Award },
     { id: 'support', label: 'Parent support', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
@@ -2450,6 +2490,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'homework' && <StudentHomeworkPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'library' && <DigitalLibraryPanel account={account} learner={learner} role="student" />}
+
+      {active === 'rewards' && <StudentRewardsPanel account={account} learner={learner} onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
       {active === 'curriculum' && (
         <div className="portal-view">

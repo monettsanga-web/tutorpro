@@ -8317,3 +8317,42 @@ a.feedback-resource-detail:hover strong {
 .library-resource-card__tags i { border-radius: 999px; padding: 5px 8px; background: #ecfdf5; color: #166534; font-size: .68rem; font-style: normal; font-weight: 850; }
 .library-resource-card .portal-primary-button { justify-content: center; text-decoration: none; }
 @media (max-width: 760px) { .library-hero-card, .library-filter-card > div, .library-recommendation-row { grid-template-columns: 1fr; } }
+
+/* Reward System MVP */
+.rewards-view { display: grid; gap: 22px; }
+.rewards-hero-card { display: grid; grid-template-columns: minmax(0,1fr) minmax(240px,.55fr); gap: 20px; align-items: center; border-radius: 30px; padding: clamp(22px,4vw,36px); background: radial-gradient(circle at 12% 0%, rgba(188,233,78,.18), transparent 34%), linear-gradient(135deg,#321568 0%,#7048df 55%,#090510 100%); color: #fff; box-shadow: 0 26px 75px rgba(49,21,104,.22); }
+.rewards-hero-card .portal-kicker { color: #bce94e; }
+.rewards-hero-card h1 { margin: 7px 0 10px; font-size: clamp(2rem,4vw,3.4rem); line-height: .95; letter-spacing: -.06em; }
+.rewards-hero-card p { color: rgba(255,255,255,.78); line-height: 1.6; }
+.rewards-hero-stats { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.rewards-hero-stats span { border-radius:999px; padding:8px 12px; background: rgba(255,255,255,.12); font-weight:850; }
+.rewards-hero-stats strong { color:#bce94e; }
+.rewards-level-card { display:grid; gap:8px; border:1px solid rgba(255,255,255,.16); border-radius:24px; padding:18px; background:rgba(255,255,255,.12); backdrop-filter: blur(12px); }
+.rewards-level-card small { color:#d8cceb; text-transform:uppercase; font-weight:900; letter-spacing:.06em; }
+.rewards-level-card strong { color:#fff; font-size:1.2rem; }
+.rewards-level-card i { display:block; overflow:hidden; height:13px; border-radius:999px; background:rgba(255,255,255,.18); }
+.rewards-level-card b { display:block; height:100%; border-radius:inherit; background:#bce94e; }
+.rewards-grid { display:grid; grid-template-columns: minmax(0,1.2fr) minmax(280px,.8fr); gap:18px; }
+.rewards-missions-card, .rewards-wallet-card, .rewards-badge-card, .rewards-history-card { background: linear-gradient(135deg,#fff 0%,#f8fafc 55%,#f5f3ff 100%); border:1px solid rgba(124,58,237,.14); }
+.rewards-missions-card { display:grid; gap:10px; }
+.rewards-missions-card button { display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center; border:1px solid #e2e8f0; border-radius:18px; padding:13px; background:#fff; text-align:left; }
+.rewards-missions-card button.claimed { opacity:.62; }
+.rewards-missions-card button > span { display:grid; place-items:center; width:40px; height:40px; border-radius:14px; background:#f5f3ff; }
+.rewards-missions-card strong { display:block; color:#111827; }
+.rewards-missions-card small { color:#64748b; }
+.rewards-wallet-card dl { display:grid; gap:10px; }
+.rewards-wallet-card dl div { display:flex; justify-content:space-between; border-radius:14px; padding:12px; background:#fff; border:1px solid #e2e8f0; }
+.rewards-wallet-card dt { color:#64748b; font-weight:850; }
+.rewards-wallet-card dd { margin:0; color:#321568; font-weight:950; }
+.rewards-badge-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+.rewards-badge-grid article { border:1px solid #e2e8f0; border-radius:18px; padding:14px; background:#fff; }
+.rewards-badge-grid article.locked { filter: grayscale(.75); opacity:.55; }
+.rewards-badge-grid span { font-size:1.8rem; }
+.rewards-badge-grid strong { display:block; color:#111827; margin:5px 0; }
+.rewards-badge-grid small { color:#64748b; line-height:1.45; }
+.rewards-history-list { display:grid; gap:10px; }
+.rewards-history-list article { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; border:1px solid #e2e8f0; border-radius:16px; padding:12px; background:#fff; }
+.rewards-history-list strong { color:#111827; }
+.rewards-history-list small, .rewards-history-list time { color:#64748b; }
+.rewards-admin-table .admin-table__row { grid-template-columns: 1.2fr 1.2fr 1.1fr .5fr .5fr; }
+@media(max-width:900px){.rewards-hero-card,.rewards-grid{grid-template-columns:1fr}.rewards-admin-table .admin-table__row{grid-template-columns:1fr}}
