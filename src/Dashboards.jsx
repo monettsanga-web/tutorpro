@@ -1693,6 +1693,53 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
 }
 
 
+
+function AdminAnalyticsPanel() {
+  const students = getAccounts('student')
+  const teachers = getAccounts('teacher')
+  const allBookings = getBookings()
+  const allHomework = getHomework()
+  const allProfiles = [...students, ...teachers]
+  const paymentTransactions = students.flatMap((student) => {
+    const transactions = Array.isArray(student.paymentTransactions) ? student.paymentTransactions : student.latestPayment ? [student.latestPayment] : []
+    return transactions.map((transaction) => ({ ...transaction, student }))
+  })
+  const revenue = paymentTransactions.reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0)
+  const completedBookings = allBookings.filter((booking) => booking.status === 'completed')
+  const referralRows = allProfiles.map((profile) => ({ profile, stats: getReferralStats(profile, allProfiles) }))
+  const referralSuccess = referralRows.reduce((sum, row) => sum + row.stats.successfulReferrals, 0)
+  const referralPending = referralRows.reduce((sum, row) => sum + row.stats.pendingReferrals, 0)
+  const homework = homeworkStats(allHomework)
+  const conversionRate = allBookings.length ? Math.round((completedBookings.length / allBookings.length) * 100) : 0
+  const lastEightWeeks = Array.from({ length: 8 }, (_, index) => {
+    const start = new Date(); start.setHours(0,0,0,0); start.setDate(start.getDate() - ((7 - index) * 7))
+    const end = new Date(start); end.setDate(start.getDate() + 6)
+    const startKey = formatDateKey(start); const endKey = formatDateKey(end)
+    const weekBookings = allBookings.filter((booking) => booking.date >= startKey && booking.date <= endKey)
+    return { label: `${start.toLocaleDateString('en', { month: 'short', day: 'numeric' })}`, total: weekBookings.length, completed: weekBookings.filter((booking) => booking.status === 'completed').length }
+  })
+  const maxWeek = Math.max(1, ...lastEightWeeks.map((week) => week.total))
+  const revenueByMonth = paymentTransactions.reduce((groups, transaction) => {
+    const date = new Date(transaction.paidAt || transaction.createdAt || Date.now())
+    const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`
+    groups[key] = (groups[key] || 0) + Number(transaction.amount || 0)
+    return groups
+  }, {})
+  const revenueRows = Object.entries(revenueByMonth).sort(([a],[b]) => a.localeCompare(b)).slice(-6)
+  const maxRevenue = Math.max(1, ...revenueRows.map(([, value]) => value))
+  const teacherRows = teachers.map((teacher) => {
+    const teacherBookings = allBookings.filter((booking) => booking.teacherId === teacher.id)
+    const completed = teacherBookings.filter((booking) => booking.status === 'completed').length
+    const feedbackMissing = teacherBookings.filter((booking) => booking.status === 'completed' && !booking.teacherFeedback?.summary?.trim()).length
+    const ratings = teacherBookings.filter((booking) => booking.studentRating?.score).map((booking) => Number(booking.studentRating.score))
+    const rating = ratings.length ? Math.round((ratings.reduce((sum, score) => sum + score, 0) / ratings.length) * 10) / 10 : 0
+    return { teacher, total: teacherBookings.length, completed, feedbackMissing, rating }
+  }).sort((a,b) => b.completed - a.completed).slice(0,8)
+  return (
+    <div className="portal-view admin-analytics-view"><div className="portal-page-heading"><div><span className="portal-kicker">Analytics center</span><h1>Platform analytics</h1><p>Track revenue, bookings, referral growth, teacher performance and homework engagement.</p></div></div><div className="portal-stat-grid"><article><span className="stat-icon stat-icon--green"><Coins size={21} /></span><div><small>Tracked revenue</small><strong>${revenue.toLocaleString(undefined,{maximumFractionDigits:2})}</strong><em>{paymentTransactions.length} payment records</em></div></article><article><span className="stat-icon stat-icon--blue"><CalendarCheck2 size={21} /></span><div><small>Booking conversion</small><strong>{conversionRate}%</strong><em>{completedBookings.length}/{allBookings.length} completed</em></div></article><article><span className="stat-icon stat-icon--gold"><Award size={21} /></span><div><small>Referral success</small><strong>{referralSuccess}</strong><em>{referralPending} pending</em></div></article><article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Homework completion</small><strong>{homework.completed}</strong><em>{homework.overdue} overdue</em></div></article></div><div className="admin-analytics-grid"><section className="portal-card admin-chart-card"><div><span className="portal-kicker">Bookings</span><h2>Last 8 weeks</h2></div><div className="admin-bar-chart">{lastEightWeeks.map((week) => <div key={week.label}><i style={{ height: `${Math.max(8, (week.total / maxWeek) * 100)}%` }}><b style={{ height: `${week.total ? (week.completed / week.total) * 100 : 0}%` }} /></i><span>{week.label}</span><small>{week.total}</small></div>)}</div><p><b /> Completed portion · total bookings shown below each week.</p></section><section className="portal-card admin-chart-card"><div><span className="portal-kicker">Revenue</span><h2>Monthly tracked payments</h2></div>{revenueRows.length ? <div className="admin-revenue-list">{revenueRows.map(([month, value]) => <article key={month}><span>{month}</span><i><b style={{ width: `${(value / maxRevenue) * 100}%` }} /></i><strong>${value.toLocaleString(undefined,{maximumFractionDigits:2})}</strong></article>)}</div> : <EmptyState icon={Coins} title="No payment records yet" text="Verified PayPal and manual payment records will appear here." />}</section></div><section className="portal-card admin-analytics-table-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Teacher performance</span><h2>Completed lessons, ratings and feedback gaps</h2></div></div><div className="admin-analytics-table"><div className="admin-analytics-table__head"><span>Teacher</span><span>Total</span><span>Completed</span><span>Rating</span><span>Missing feedback</span></div>{teacherRows.map((row) => <div className="admin-analytics-table__row" key={row.teacher.id}><div className="table-person"><ProfilePhoto accountId={row.teacher.id} name={row.teacher.fullName} className="learner-tab-photo" /><div><strong>{row.teacher.fullName}</strong><small>{row.teacher.teacher?.specialization}</small></div></div><strong>{row.total}</strong><strong>{row.completed}</strong><strong>{row.rating || 'New'}</strong><strong className={row.feedbackMissing ? 'needs-attention' : ''}>{row.feedbackMissing}</strong></div>)}</div></section></div>
+  )
+}
+
 function AdminPaymentsPanel() {
   const [version, setVersion] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -4909,6 +4956,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'payments', label: 'Payments', icon: Coins },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'library', label: 'Library', icon: BookOpen },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
@@ -5137,6 +5185,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'payments' && <AdminPaymentsPanel />}
+
+      {active === 'analytics' && <AdminAnalyticsPanel />}
 
       {active === 'homework' && <AdminHomeworkPanel />}
 

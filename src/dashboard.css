@@ -8416,3 +8416,30 @@ a.feedback-resource-detail:hover strong {
 .marketing-log-list article > span { display:grid; place-items:center; width:38px; height:38px; border-radius:14px; background:#f0fdf4; }
 .marketing-log-list strong { display:block; color:#111827; }
 .marketing-log-list small { color:#64748b; }
+
+/* Admin Analytics Dashboard MVP */
+.admin-analytics-view { display: grid; gap: 22px; }
+.admin-analytics-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(320px,.9fr); gap: 18px; }
+.admin-chart-card, .admin-analytics-table-card { background: linear-gradient(135deg,#fff 0%,#f8fafc 55%,#f5f3ff 100%); border: 1px solid rgba(124,58,237,.14); }
+.admin-chart-card h2 { margin: 4px 0 14px; color: #241042; }
+.admin-bar-chart { display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap: 10px; align-items: end; height: 240px; }
+.admin-bar-chart > div { display: grid; grid-template-rows: 1fr auto auto; gap: 6px; height: 100%; text-align: center; }
+.admin-bar-chart i { align-self: end; display: block; overflow: hidden; border-radius: 12px 12px 5px 5px; background: #ede9fe; position: relative; min-height: 8px; }
+.admin-bar-chart i b { position: absolute; right: 0; bottom: 0; left: 0; display: block; background: linear-gradient(180deg,#7048df,#321568); }
+.admin-bar-chart span { color: #64748b; font-size: .68rem; font-weight: 800; }
+.admin-bar-chart small { color: #111827; font-weight: 950; }
+.admin-chart-card p { color: #64748b; font-size: .78rem; }
+.admin-chart-card p b { display:inline-block; width:10px; height:10px; border-radius:50%; background:#7048df; margin-right:6px; }
+.admin-revenue-list { display: grid; gap: 12px; }
+.admin-revenue-list article { display: grid; grid-template-columns: 80px 1fr auto; gap: 10px; align-items: center; }
+.admin-revenue-list span { color: #475569; font-weight: 850; }
+.admin-revenue-list i { overflow: hidden; height: 12px; border-radius: 999px; background: #ede9fe; }
+.admin-revenue-list b { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#7048df,#bce94e); }
+.admin-revenue-list strong { color: #111827; }
+.admin-analytics-table { display: grid; overflow-x: auto; }
+.admin-analytics-table__head, .admin-analytics-table__row { display: grid; grid-template-columns: minmax(240px,1.3fr) .45fr .55fr .45fr .75fr; gap: 12px; align-items: center; min-width: 840px; }
+.admin-analytics-table__head { padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; }
+.admin-analytics-table__row { padding: 13px 0; border-bottom: 1px solid #e2e8f0; }
+.admin-analytics-table__row strong { color: #111827; }
+.admin-analytics-table__row .needs-attention { color: #be185d; }
+@media(max-width:960px){ .admin-analytics-grid { grid-template-columns: 1fr; } }
