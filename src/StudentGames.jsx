@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
-import { ArrowLeft, CheckCircle2, ExternalLink, Gamepad2, RotateCcw, ShieldCheck, Sparkles, Star, Trophy, Zap } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, CheckCircle2, ExternalLink, Gamepad2, RotateCcw, ShieldCheck, Sparkles, Trophy, Zap } from 'lucide-react'
+import confetti from 'canvas-confetti'
 
 const ARTICLE_ARCADE_URL = 'https://article-arcade-za96106rp-tutor-pro.vercel.app/'
 const ARTICLE_ARCADE_COVER = `${import.meta.env.BASE_URL}assets/article-arcade-cover-hd.png`
@@ -23,12 +24,19 @@ function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5)
 }
 
+function celebrateGameWin() {
+  confetti({ particleCount: 90, spread: 70, origin: { y: 0.72 }, colors: ['#bce94e', '#7048df', '#ff4f87', '#38e0c4', '#ffd23f'] })
+  window.setTimeout(() => confetti({ particleCount: 55, spread: 90, origin: { x: 0.15, y: 0.65 } }), 120)
+  window.setTimeout(() => confetti({ particleCount: 55, spread: 90, origin: { x: 0.85, y: 0.65 } }), 220)
+}
+
 function GameShell({ title, subtitle, onBack, children }) {
   return (
     <div className="portal-view game-center-play-view">
       <button className="portal-secondary-button game-back-button" onClick={onBack}><ArrowLeft size={16} /> Back to games</button>
       <section className="game-play-shell">
-        <div className="game-play-shell__header"><span><Gamepad2 size={22} /></span><div><small>Now playing</small><h1>{title}</h1><p>{subtitle}</p></div></div>
+        <div className="game-play-shell__ambient" aria-hidden="true" />
+        <div className="game-play-shell__header"><span><Gamepad2 size={22} /></span><div><small>Now playing</small><h1>{title}</h1><p>{subtitle}</p></div><b>XP MODE</b></div>
         {children}
       </section>
     </div>
@@ -43,6 +51,8 @@ function MemoryMatchGame({ onBack, onEarnStars }) {
   const [open, setOpen] = useState([])
   const [matched, setMatched] = useState([])
   const [won, setWon] = useState(false)
+
+  useEffect(() => { if (won) celebrateGameWin() }, [won])
 
   const choose = (card) => {
     if (open.some((item) => item.id === card.id) || matched.includes(card.pair) || open.length >= 2) return
@@ -70,6 +80,8 @@ function WordQuizGame({ onBack, onEarnStars }) {
   const [done, setDone] = useState(false)
   const item = VOCABULARY[index]
   const choices = useMemo(() => shuffle(VOCABULARY.map((entry) => entry.word)).slice(0, 4).includes(item.word) ? shuffle(VOCABULARY.map((entry) => entry.word)).slice(0, 4) : shuffle([item.word, ...shuffle(VOCABULARY.filter((entry) => entry.word !== item.word)).slice(0, 3).map((entry) => entry.word)]), [item.word])
+  useEffect(() => { if (done) celebrateGameWin() }, [done])
+
   const answer = (choice) => {
     const correct = choice === item.word
     const nextScore = score + (correct ? 1 : 0)
@@ -88,6 +100,7 @@ function SentenceBuilderGame({ onBack, onEarnStars }) {
   const [pool, setPool] = useState(() => shuffle(SENTENCES[0].words))
   const [completed, setCompleted] = useState(0)
   const sentence = SENTENCES[index]
+  useEffect(() => { if (completed === SENTENCES.length) celebrateGameWin() }, [completed])
   const pick = (word) => { setPicked([...picked, word]); setPool(pool.filter((item, itemIndex) => itemIndex !== pool.indexOf(word))) }
   const reset = () => { setPicked([]); setPool(shuffle(sentence.words)) }
   const check = () => {
@@ -106,6 +119,7 @@ function GrammarRaceGame({ onBack, onEarnStars }) {
   const [score, setScore] = useState(0)
   const [done, setDone] = useState(false)
   const item = VOCABULARY[index]
+  useEffect(() => { if (done) celebrateGameWin() }, [done])
   const answer = (article) => {
     const nextScore = score + (article === item.article ? 1 : 0)
     setScore(nextScore)
