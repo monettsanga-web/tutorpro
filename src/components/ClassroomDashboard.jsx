@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { CosCloudIcon } from './CosCloudIcon.jsx';
 import { WhiteboardSlides } from './WhiteboardSlides.jsx';
 import { SafeSlidesErrorBoundary } from './WhiteboardSlides.jsx';
-import { Mic, Clock, MessageSquare, Monitor, Wifi, Send, Award, Video, VideoOff, Users, ArrowLeft, Shield } from 'lucide-react';
+import { Mic, Clock, MessageSquare, Monitor, Wifi, Send, Award, Video, VideoOff, Users, ArrowLeft, Shield, FileUp } from 'lucide-react';
 
 export const ClassroomDashboard = ({ onExit }) => {
   const [activeSharedFile, setActiveSharedFile] = useState(null);
@@ -15,8 +14,6 @@ export const ClassroomDashboard = ({ onExit }) => {
   const [isTeacher, setIsTeacher] = useState(true);
 
   const bookingId = 'BK-10492';
-  const supabaseUrl = 'https://losmkvvwzijipqrlelyt.supabase.co';
-  const supabaseToken = 'mock-jwt-token';
 
   const handleShareDocument = (file) => {
     setActiveSharedFile(file);
@@ -28,6 +25,20 @@ export const ClassroomDashboard = ({ onExit }) => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     setChatMessages(prev => [...prev, newMsg]);
+  };
+
+  const handleDemoFileUpload = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    handleShareDocument({
+      id: `${Date.now()}-${file.name}`,
+      name: file.name,
+      size: file.size,
+      type: file.type || 'application/octet-stream',
+      url: URL.createObjectURL(file),
+      source: 'supabase-demo'
+    });
   };
 
   const handleSendChat = () => {
@@ -206,18 +217,15 @@ export const ClassroomDashboard = ({ onExit }) => {
                   </div>
                   <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff', margin: '0 0 8px 0' }}>Welcome to your Google Classroom!</h2>
                   <p style={{ fontSize: '0.78rem', color: '#b9adc7', maxWidth: '380px', lineHeight: '1.4', margin: '0 0 24px 0' }}>
-                    whiteboard workspace is currently empty. Open the COS cloud files browser below to select courseware, slides, or workbook PDFs to present on screen!
+                    Whiteboard workspace is currently empty. Upload a lesson PDF, slide deck, document or image to show it on the classroom screen.
                   </p>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%' }}>
-                    <CosCloudIcon
-                      bookingId={bookingId}
-                      supabaseToken={supabaseToken}
-                      supabaseUrl={supabaseUrl}
-                      onShareDocument={handleShareDocument}
-                      isTeacher={isTeacher}
-                    />
-                    <span style={{ fontSize: '0.62rem', color: '#b9adc7' }}>Tencent COS Cloud integration</span>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(188,233,78,0.32)', borderRadius: '999px', padding: '10px 16px', color: '#bce94e', background: 'rgba(188,233,78,0.1)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: '900' }}>
+                      <FileUp style={{ width: '16px', height: '16px' }} /> Upload classroom file
+                      <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,image/*" onChange={handleDemoFileUpload} style={{ display: 'none' }} />
+                    </label>
+                    <span style={{ fontSize: '0.62rem', color: '#b9adc7' }}>Supabase classroom storage preview</span>
                   </div>
                 </div>
               )}
@@ -236,13 +244,10 @@ export const ClassroomDashboard = ({ onExit }) => {
                 zIndex: 30
               }}>
                 <span style={{ fontSize: '0.68rem', color: '#b9adc7', fontWeight: 'bold' }}>Active Courseware: {activeSharedFile.name}</span>
-                <CosCloudIcon
-                  bookingId={bookingId}
-                  supabaseToken={supabaseToken}
-                  supabaseUrl={supabaseUrl}
-                  onShareDocument={handleShareDocument}
-                  isTeacher={isTeacher}
-                />
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(188,233,78,0.24)', borderRadius: '999px', padding: '8px 12px', color: '#bce94e', background: 'rgba(188,233,78,0.08)', cursor: 'pointer', fontSize: '0.68rem', fontWeight: '900' }}>
+                  <FileUp style={{ width: '14px', height: '14px' }} /> Change file
+                  <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,image/*" onChange={handleDemoFileUpload} style={{ display: 'none' }} />
+                </label>
               </div>
             )}
 

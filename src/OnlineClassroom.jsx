@@ -60,7 +60,6 @@ import { DEFAULT_COURSEWARE_TEMPLATE, coursewareSnapshot, getCoursewareTemplateB
 import { fetchTencentClassroomCredentials, isTencentClassroomConfigured } from './tencentClassroom.js'
 import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
-import { CosCloudIcon } from './components/CosCloudIcon.jsx'
 import { WhiteboardSlides, SafeSlidesErrorBoundary } from './components/WhiteboardSlides.jsx'
 import { ClassroomDashboard } from './components/ClassroomDashboard.jsx'
 import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
@@ -660,7 +659,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         return
       }
       if (message.type === 'presentation-file') {
-        setPresentedFile(message.file || null)
+        const incomingFile = message.file || null
+        if (incomingFile?.storagePath && !incomingFile.dataUrl) {
+          const fileUrl = await getClassroomFileUrl(incomingFile.storagePath)
+          setPresentedFile({ ...incomingFile, dataUrl: fileUrl || '' })
+        } else setPresentedFile(incomingFile)
         return
       }
       if (message.type === 'slide-page') {
@@ -1379,8 +1382,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         return
       }
 
-      setUploadStatus('Uploading…')
-      if (isClassroomStorageAvailable() && file.size > MAX_INLINE_SIZE) {
+      setUploadStatus(isClassroomStorageAvailable() ? 'Uploading to Supabase classroom storage…' : 'Preparing secure classroom file…')
+      if (isClassroomStorageAvailable()) {
         const stored = await uploadClassroomFile(roomBooking.id, file)
         const signedUrl = await getClassroomFileUrl(stored.storagePath)
         const entry = {
@@ -1394,7 +1397,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           sender: participantName,
         }
         setFiles((current) => [...current, entry])
-        transportRef.current?.send({ type: 'classroom-file-storage', file: { id: stored.id, name: stored.name, size: stored.size, type: stored.type, storagePath: stored.storagePath, source: 'supabase', sender: participantName } })
+        transportRef.current?.send({ type: 'classroom-file-storage', file: entry })
         if (account.role === 'teacher') {
           setPresentedFile(entry)
           transportRef.current?.send({ type: 'presentation-file', file: entry })
@@ -1433,9 +1436,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     return ''
   }
 
-  const presentFile = (file) => {
-    setPresentedFile(file)
-    transportRef.current?.send({ type: 'presentation-file', file })
+  const presentFile = async (file) => {
+    const fileUrl = await resolveFileUrl(file)
+    const entry = fileUrl ? { ...file, dataUrl: fileUrl } : file
+    if (file.storagePath && !fileUrl) {
+      setFileError('Could not create a Supabase viewing link for this file. Please try uploading it again.')
+      return
+    }
+    setPresentedFile(entry)
+    transportRef.current?.send({ type: 'presentation-file', file: entry })
   }
 
   const sendChatMessage = (event) => {
@@ -1572,14 +1581,21 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const isEpubFile = (file) => /\.epub$/i.test(file.name)
 
   const renderPresentedFile = (file) => {
-    if (file.source === 'cos' || (file.key || '').includes('classrooms/')) {
+    const fileUrl = file.dataUrl || file.url || ''
+    const lowerName = String(file.name || '').toLowerCase()
+    const boardPreviewSupported = fileUrl && (
+      file.type?.startsWith('image/')
+      || file.type === 'application/pdf'
+      || ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ppt', '.pptx', '.doc', '.docx'].some((extension) => lowerName.endsWith(extension))
+    )
+    if (boardPreviewSupported) {
       return (
         <div className="classroom-file-presentation" style={{ width: '100%', height: '100%', padding: '0' }}>
           <SafeSlidesErrorBoundary>
             <WhiteboardSlides
               fileId={file.id}
               fileName={file.name}
-              fileUrl={file.dataUrl || file.url}
+              fileUrl={fileUrl}
               isTeacher={account.role === 'teacher'}
               currentPage={cosSlidePage}
               onPageChange={(newPage) => {
@@ -1594,7 +1610,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     if (isEdbFile(file)) {
       return (
         <div className="classroom-file-presentation">
-          <div><Presentation size={54} /><strong>{file.name}</strong><span>ClassIn EDB files can be downloaded and opened in ClassIn.</span><a href={file.dataUrl || '#'} download={file.name}>Download EDB file</a></div>
+          <div><Presentation size={54} /><strong>{file.name}</strong><span>ClassIn EDB files can be downloaded and opened in ClassIn.</span><a href={fileUrl || '#'} download={file.name}>Download EDB file</a></div>
           <small><Paperclip size={13} /> {file.name}</small>
         </div>
       )
@@ -1602,16 +1618,16 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     if (isEpubFile(file)) {
       return (
         <div className="classroom-file-presentation">
-          <div><Presentation size={54} /><strong>{file.name}</strong><span>EPUB books can be downloaded and opened in your e-reader.</span><a href={file.dataUrl || '#'} download={file.name}>Download EPUB</a></div>
+          <div><Presentation size={54} /><strong>{file.name}</strong><span>EPUB books can be downloaded and opened in your e-reader.</span><a href={fileUrl || '#'} download={file.name}>Download EPUB</a></div>
           <small><Paperclip size={13} /> {file.name}</small>
         </div>
       )
     }
     return (
       <div className="classroom-file-presentation">
-        {file.type?.startsWith('image/') ? <img src={file.dataUrl} alt={file.name} /> :
-         file.type === 'application/pdf' ? <object data={file.dataUrl} type="application/pdf" aria-label={file.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{file.name}</strong><span>This browser cannot embed the PDF.</span><a href={file.dataUrl} download={file.name}>Open PDF</a></div></object> :
-         <div><Presentation size={54} /><strong>{file.name}</strong><span>Use the download button to open this lesson file.</span></div>}
+        {file.type?.startsWith('image/') ? <img src={fileUrl} alt={file.name} /> :
+         file.type === 'application/pdf' ? <object data={fileUrl} type="application/pdf" aria-label={file.name}><div className="pdf-fallback"><Presentation size={42} /><strong>{file.name}</strong><span>This browser cannot embed the PDF.</span><a href={fileUrl} download={file.name}>Open PDF</a></div></object> :
+         <div><Presentation size={54} /><strong>{file.name}</strong><span>{file.storagePath ? 'Preparing the Supabase viewing link…' : 'Use the download button to open this lesson file.'}</span></div>}
         <small><Paperclip size={13} /> {file.name}</small>
       </div>
     )
@@ -1912,32 +1928,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <form className="classroom-chat-form" onSubmit={sendChatMessage}><input value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Write a message…" maxLength="500" /><button type="submit" disabled={!chatDraft.trim()}><Send size={17} /></button></form>
           </div> : <div className="classroom-files-panel">
             <div className="flex gap-2 mb-3">
-              <label className="classroom-file-upload flex-1"><FileUp size={22} /><strong>Upload lesson material</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
-              <div className="flex flex-col justify-center">
-                <CosCloudIcon
-                  bookingId={roomBooking.id}
-                  supabaseToken={roomBooking.classroomToken || ''}
-                  supabaseUrl={import.meta.env.VITE_SUPABASE_URL || 'https://losmkvvwzijipqrlelyt.supabase.co'}
-                  onShareDocument={(file) => {
-                    const entry = {
-                      id: file.id,
-                      name: file.name,
-                      size: file.size,
-                      type: file.type || 'application/octet-stream',
-                      dataUrl: file.url,
-                      source: 'cos',
-                      sender: participantName,
-                    };
-                    setFiles((current) => [...current, entry]);
-                    transportRef.current?.send({ type: 'classroom-file', file: entry });
-                    if (account.role === 'teacher') {
-                      setPresentedFile(entry);
-                      transportRef.current?.send({ type: 'presentation-file', file: entry });
-                    }
-                  }}
-                  isTeacher={account.role === 'teacher'}
-                />
-              </div>
+              <label className="classroom-file-upload flex-1"><FileUp size={22} /><strong>Upload to Supabase classroom storage</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB · visible on the lesson board</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
             </div>
             {fileError && <div className="classroom-file-error">{fileError}</div>}
             {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> {uploadStatus || 'Uploading…'}</div>}

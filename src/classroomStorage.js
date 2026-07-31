@@ -74,7 +74,7 @@ export async function getClassroomFileUrl(storagePath) {
   if (!supabase) return null
   const { data, error } = await supabase.storage
     .from(CLASSROOM_BUCKET)
-    .createSignedUrl(storagePath, 3600)
+    .createSignedUrl(storagePath, 21600)
 
   if (error) return null
   return data?.signedUrl || null
