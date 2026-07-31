@@ -1,19 +1,146 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileImage, Shield } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-function buildPdfViewerUrl(fileUrl, currentPage) {
-  if (!fileUrl) return '';
-  const [baseUrl] = String(fileUrl).split('#');
-  const params = new URLSearchParams({
-    page: String(currentPage || 1),
-    zoom: 'page-width',
-    view: 'FitH',
-    toolbar: '0',
-    navpanes: '0',
-    scrollbar: '1',
-    pagemode: 'none',
-  });
-  return `${baseUrl}#${params.toString()}`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+function CustomPdfBoard({ fileUrl, fileName, currentPage, onPageCount }) {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const pdfRef = useRef(null);
+  const renderTaskRef = useRef(null);
+  const [status, setStatus] = useState('Loading PDF…');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setStatus('Loading PDF…');
+    setError('');
+    pdfRef.current = null;
+
+    const loadPdf = async () => {
+      try {
+        const loadingTask = pdfjsLib.getDocument({
+          url: fileUrl,
+          withCredentials: false,
+          disableAutoFetch: false,
+          disableStream: false,
+        });
+        const pdf = await loadingTask.promise;
+        if (!active) {
+          await pdf.destroy?.();
+          return;
+        }
+        pdfRef.current = pdf;
+        onPageCount?.(pdf.numPages || 1);
+        setStatus('');
+      } catch (loadError) {
+        if (!active) return;
+        setError(loadError?.message || 'PDF could not be loaded.');
+        setStatus('');
+      }
+    };
+
+    loadPdf();
+    return () => {
+      active = false;
+      renderTaskRef.current?.cancel?.();
+      renderTaskRef.current = null;
+      pdfRef.current?.destroy?.();
+      pdfRef.current = null;
+    };
+  }, [fileUrl, onPageCount]);
+
+  useEffect(() => {
+    let active = true;
+
+    const renderPage = async () => {
+      const pdf = pdfRef.current;
+      const container = containerRef.current;
+      const canvas = canvasRef.current;
+      if (!pdf || !container || !canvas) return;
+
+      try {
+        renderTaskRef.current?.cancel?.();
+        const pageNumber = Math.max(1, Math.min(Number(currentPage) || 1, pdf.numPages || 1));
+        const page = await pdf.getPage(pageNumber);
+        if (!active) return;
+
+        const baseViewport = page.getViewport({ scale: 1 });
+        const availableWidth = Math.max(320, container.clientWidth - 22);
+        const scale = Math.max(0.4, availableWidth / baseViewport.width);
+        const viewport = page.getViewport({ scale });
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const context = canvas.getContext('2d', { alpha: false });
+
+        canvas.width = Math.floor(viewport.width * pixelRatio);
+        canvas.height = Math.floor(viewport.height * pixelRatio);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, viewport.width, viewport.height);
+
+        const renderTask = page.render({ canvasContext: context, viewport });
+        renderTaskRef.current = renderTask;
+        await renderTask.promise;
+        if (active) setStatus('');
+      } catch (renderError) {
+        if (renderError?.name === 'RenderingCancelledException') return;
+        if (!active) return;
+        setError(renderError?.message || 'PDF page could not be rendered.');
+        setStatus('');
+      }
+    };
+
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => renderPage())
+      : null;
+    if (containerRef.current && resizeObserver) resizeObserver.observe(containerRef.current);
+    renderPage();
+
+    return () => {
+      active = false;
+      resizeObserver?.disconnect();
+      renderTaskRef.current?.cancel?.();
+    };
+  }, [currentPage, status]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'auto',
+        background: '#1b1524',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '10px',
+        boxSizing: 'border-box',
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        aria-label={fileName}
+        style={{
+          display: error || status ? 'none' : 'block',
+          maxWidth: 'none',
+          background: '#fff',
+          boxShadow: '0 14px 35px rgba(0,0,0,0.38)',
+        }}
+      />
+      {(status || error) && (
+        <div style={{ margin: 'auto', textAlign: 'center', color: error ? '#fca5a5' : '#e7f8c1', fontSize: '0.8rem', fontWeight: 800 }}>
+          <FileImage style={{ width: '42px', height: '42px', marginBottom: '10px' }} />
+          <p style={{ margin: 0 }}>{error || status}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Inline defensive Error Boundary to catch any child-level rendering errors 
@@ -74,10 +201,17 @@ export const WhiteboardSlides = ({
   currentPage = 1,
   onPageChange,
 }) => {
+  const [pdfPageCount, setPdfPageCount] = useState(totalSlides);
   const lowerName = fileName?.toLowerCase() || '';
-  const isPdf = lowerName.endsWith('.pdf') || (fileUrl?.toLowerCase() || '').includes('.pdf');
-  const isImage = lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.gif');
+  const lowerUrl = fileUrl?.toLowerCase() || '';
+  const isPdf = lowerName.endsWith('.pdf') || lowerUrl.includes('.pdf');
+  const isImage = lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.gif') || lowerName.endsWith('.webp');
   const isOfficeDoc = lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt') || lowerName.endsWith('.docx') || lowerName.endsWith('.doc');
+  const pageTotal = isPdf ? (pdfPageCount || totalSlides) : totalSlides;
+
+  useEffect(() => {
+    setPdfPageCount(totalSlides);
+  }, [fileId, fileUrl, totalSlides]);
 
   return (
     <div style={{
@@ -97,37 +231,40 @@ export const WhiteboardSlides = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 16px',
+        gap: '10px',
+        padding: '8px 12px',
         background: '#150f29',
-        borderBottom: '1px solid rgba(255,255,255,0.08)'
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        flex: '0 0 auto',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: '8px' }}>
           <div style={{ padding: '6px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', borderRadius: '6px', display: 'flex' }}>
             <FileImage style={{ width: '16px', height: '16px' }} />
           </div>
-          <div>
-            <h2 style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '0' }}>
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.78rem', fontWeight: 'bold', margin: '0' }}>
               {fileName}
             </h2>
-            <p style={{ fontSize: '0.6rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
-              {isPdf ? 'Secure PDF Reader' : isOfficeDoc ? 'Microsoft Web PowerPoint' : 'Shared Courseware'}
+            <p style={{ fontSize: '0.58rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
+              {isPdf ? 'Fit-to-board PDF classroom viewer' : isOfficeDoc ? 'Microsoft Web PowerPoint' : 'Shared Courseware'}
             </p>
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', color: '#b9adc7' }}>
+        <div style={{ display: 'flex', flex: '0 0 auto', alignItems: 'center', gap: '6px', fontSize: '0.62rem', color: '#b9adc7' }}>
           <Shield style={{ width: '12px', height: '12px', color: '#bce94e' }} />
           <span>Protected Preview</span>
         </div>
       </div>
 
       {/* Main viewport */}
-      <div style={{ flex: 1, position: 'relative', background: '#090510', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#090510', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', overflow: 'hidden' }}>
         {isPdf && (
-          <iframe
-            src={buildPdfViewerUrl(fileUrl, currentPage)}
-            style={{ display: 'block', width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', background: '#fff' }}
-            title="PDF View"
+          <CustomPdfBoard
+            fileUrl={fileUrl}
+            fileName={fileName}
+            currentPage={currentPage}
+            onPageCount={setPdfPageCount}
           />
         )}
         
@@ -142,13 +279,13 @@ export const WhiteboardSlides = ({
         {isImage && (
           <img
             src={fileUrl}
-            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             alt="Courseware View"
           />
         )}
 
         {!isPdf && !isOfficeDoc && !isImage && (
-          <div style={{ textAlign: 'center', padding: '24px' }}>
+          <div style={{ margin: 'auto', textAlign: 'center', padding: '24px' }}>
             <FileImage style={{ width: '48px', height: '48px', color: '#bce94e', marginBottom: '10px' }} />
             <p style={{ fontSize: '0.8rem', margin: '0' }}>Shared lesson courseware is loading...</p>
           </div>
@@ -158,9 +295,10 @@ export const WhiteboardSlides = ({
       {/* Footer toolbar */}
       <div style={{
         display: 'flex',
+        flex: '0 0 auto',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '10px 16px',
+        padding: '8px 12px',
         background: '#150f29',
         borderTop: '1px solid rgba(255,255,255,0.08)',
         gap: '12px'
@@ -188,12 +326,12 @@ export const WhiteboardSlides = ({
         </button>
 
         <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: '#090510', padding: '4px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          Page {currentPage} / {totalSlides}
+          Page {currentPage} / {pageTotal}
         </span>
 
         <button
-          onClick={() => currentPage < totalSlides && onPageChange?.(currentPage + 1)}
-          disabled={currentPage >= totalSlides}
+          onClick={() => currentPage < pageTotal && onPageChange?.(currentPage + 1)}
+          disabled={currentPage >= pageTotal}
           style={{
             padding: '6px 12px',
             background: 'rgba(255,255,255,0.05)',
@@ -201,7 +339,7 @@ export const WhiteboardSlides = ({
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
-            opacity: currentPage >= totalSlides ? '0.4' : '1',
+            opacity: currentPage >= pageTotal ? '0.4' : '1',
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
