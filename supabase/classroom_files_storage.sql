@@ -8,7 +8,7 @@ VALUES (
   'classroom-files',
   'classroom-files',
   false,
-  209715200, -- 200 MB
+  524288000, -- 500 MB
   ARRAY[
     'image/jpeg',
     'image/png',
@@ -27,7 +27,7 @@ VALUES (
   ]
 ) ON CONFLICT (id) DO UPDATE SET
   public = false,
-  file_size_limit = 209715200,
+  file_size_limit = 524288000,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- The TutorPro app uses its own parent/teacher/admin login plus the Supabase publishable key.
