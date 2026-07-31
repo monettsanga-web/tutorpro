@@ -500,6 +500,8 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   const classroom = teacher?.teacher?.classroom || {}
   const meetingPlatform = classroom.platform === 'voov' ? 'VooV' : 'Zoom'
   const meetingLink = classroom.platform === 'voov' ? classroom.voovLink : classroom.zoomLink
+  const session = booking.classroomSummary
+  const sessionMinutes = session?.elapsedSeconds ? Math.max(1, Math.round(session.elapsedSeconds / 60)) : 0
 
   return (
     <article 
@@ -565,6 +567,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
+        {session && <div className="booking-classroom-summary"><Video size={14} /><div><strong>Classroom recap saved</strong><span>{sessionMinutes ? `${sessionMinutes} min · ` : ''}⭐ {session.classStars || 0} · {session.coursewareTitle || 'Courseware'}{session.presentedFileName ? ` · ${session.presentedFileName}` : ''}{session.lastStudentReaction?.label ? ` · ${session.lastStudentReaction.emoji || ''} ${session.lastStudentReaction.label}` : ''}</span></div></div>}
         <div className="booking-utility-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
           {onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}
 

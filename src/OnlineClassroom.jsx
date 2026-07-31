@@ -285,6 +285,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const liveTextPathRef = useRef(null)
   const selectedPathIdRef = useRef(null)
   const dragOffsetRef = useRef(null)
+  const classJoinedAtRef = useRef(null)
   const [joined, setJoined] = useState(false)
   const [mediaReady, setMediaReady] = useState(false)
   const [mediaError, setMediaError] = useState('')
@@ -942,6 +943,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const joinClass = async () => {
     const stream = localStreamRef.current || await requestMedia()
     if (!stream) return
+    if (!classJoinedAtRef.current) classJoinedAtRef.current = new Date().toISOString()
     setJoined(true)
   }
 
@@ -1086,7 +1088,57 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
   }
 
+  const saveClassroomSessionSummary = () => {
+    if (account.role !== 'teacher' || !roomBooking?.id || !joined) return
+    const endedAt = new Date().toISOString()
+    const startedAt = classJoinedAtRef.current || new Date(Date.now() - (elapsed * 1000)).toISOString()
+    const currentSlide = activeCoursewareSlides[coursewareSlideIndex] || null
+    const summary = {
+      startedAt,
+      endedAt,
+      elapsedSeconds: elapsed,
+      teacherId: account.id,
+      teacherName: account.fullName || teacher?.fullName || 'TutorPro Teacher',
+      learnerName: learner?.name || roomBooking.learnerName || 'Student',
+      coursewareTitle: coursewareTemplate?.title || '',
+      coursewareSlideNumber: coursewareSlideIndex + 1,
+      coursewareSlideTitle: currentSlide?.title || '',
+      classStars,
+      lastStudentReaction: latestStudentReaction ? {
+        label: latestStudentReaction.label,
+        emoji: latestStudentReaction.emoji,
+        studentName: latestStudentReaction.studentName,
+        createdAt: latestStudentReaction.createdAt,
+      } : null,
+      presentedFileName: presentedFile?.name || '',
+      presentedFileSource: presentedFile?.source || '',
+      websiteUrl: presenterUrl || '',
+      documentPage: cosSlidePage,
+      documentViewMode,
+      documentZoom,
+      sharedFileCount: files.length,
+      sharedFiles: files.slice(-10).map((file) => ({ name: file.name, size: file.size, source: file.source || 'inline' })),
+      chatMessageCount: chatMessages.length,
+      annotationCount: pathsRef.current.length,
+      participantCount,
+      connectionStatus,
+      savedAt: endedAt,
+    }
+    try {
+      const updated = updateBooking(roomBooking.id, {
+        classroomSummary: summary,
+        classEndedAt: endedAt,
+        classStars,
+        lastClassroomActivityAt: endedAt,
+      })
+      syncBookingNow(updated).catch(() => {})
+    } catch {
+      // Session recap is best-effort and should not block leaving the classroom.
+    }
+  }
+
   const leaveClass = () => {
+    saveClassroomSessionSummary()
     localStreamRef.current?.getTracks().forEach((track) => track.stop())
     cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
     screenStreamRef.current?.getTracks().forEach((track) => track.stop())

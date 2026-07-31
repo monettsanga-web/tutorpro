@@ -8939,3 +8939,38 @@ a.feedback-resource-detail:hover strong {
     position: static;
   }
 }
+
+.booking-classroom-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 9px;
+  align-items: start;
+  margin-top: 10px;
+  border: 1px solid rgba(112,72,223,.16);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(112,72,223,.08), rgba(188,233,78,.08));
+}
+
+.booking-classroom-summary > svg {
+  color: #7048df;
+  margin-top: 2px;
+}
+
+.booking-classroom-summary div {
+  display: grid;
+  gap: 3px;
+}
+
+.booking-classroom-summary strong {
+  color: #321568;
+  font-size: .78rem;
+  font-weight: 950;
+}
+
+.booking-classroom-summary span {
+  color: #6b5d78;
+  font-size: .72rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
