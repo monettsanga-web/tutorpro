@@ -1818,3 +1818,172 @@ body.classroom-active .support-widget {
     display: none;
   }
 }
+
+.student-reaction-alert {
+  position: absolute;
+  z-index: 22;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-width: min(330px, calc(100% - 28px));
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 18px;
+  padding: 10px 12px;
+  background: rgba(19,10,37,0.93);
+  color: #fff;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.34);
+  animation: studentReactionPop 260ms cubic-bezier(.2,1.35,.4,1) both;
+  backdrop-filter: blur(12px);
+}
+
+.student-reaction-alert > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(188,233,78,0.14);
+  font-size: 1.35rem;
+}
+
+.student-reaction-alert div {
+  display: grid;
+  gap: 2px;
+}
+
+.student-reaction-alert strong {
+  color: #bce94e;
+  font-size: 0.68rem;
+}
+
+.student-reaction-alert small {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.student-reaction-alert button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.student-reaction-alert--pink { border-color: rgba(255,79,135,0.42); }
+.student-reaction-alert--orange { border-color: rgba(255,178,91,0.42); }
+.student-reaction-alert--green { border-color: rgba(188,233,78,0.42); }
+.student-reaction-alert--blue { border-color: rgba(91,184,255,0.42); }
+
+.student-reaction-pad {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  margin-top: 10px;
+  border: 1px solid rgba(188,233,78,0.14);
+  border-radius: 14px;
+  padding: 10px !important;
+  background: rgba(188,233,78,0.06);
+}
+
+.student-reaction-pad > strong {
+  color: #e4f7b8;
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.student-reaction-pad > div {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px !important;
+}
+
+.student-reaction-pad button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 10px;
+  padding: 6px 7px;
+  background: rgba(255,255,255,0.08);
+  color: #f5f0ff;
+  font-size: 0.52rem;
+  font-weight: 900;
+}
+
+.student-reaction-pad button.sent {
+  background: #bce94e;
+  color: #24133c;
+}
+
+.teacher-reaction-card {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-top: 10px;
+  border: 1px solid rgba(188,233,78,0.18);
+  border-radius: 13px;
+  padding: 9px !important;
+  background: rgba(188,233,78,0.07);
+}
+
+.teacher-reaction-card > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.08);
+  font-size: 1.1rem;
+}
+
+.teacher-reaction-card div {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 2px !important;
+}
+
+.teacher-reaction-card strong {
+  color: #fff;
+  font-size: 0.64rem;
+}
+
+.teacher-reaction-card small {
+  color: #a997ba;
+  font-size: 0.48rem;
+}
+
+.teacher-reaction-card button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: #7048df;
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 950;
+}
+
+@keyframes studentReactionPop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 760px) {
+  .student-reaction-alert {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: 0;
+  }
+}

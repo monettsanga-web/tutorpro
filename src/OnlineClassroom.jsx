@@ -119,6 +119,14 @@ function coursewareSlides(template) {
   return template?.slides?.length ? template.slides : DEFAULT_COURSEWARE_TEMPLATE.slides
 }
 
+const STUDENT_REACTIONS = [
+  { id: 'understand', emoji: '✅', label: 'I understand', tone: 'green' },
+  { id: 'help', emoji: '❓', label: 'I need help', tone: 'pink' },
+  { id: 'repeat', emoji: '🔁', label: 'Please repeat', tone: 'orange' },
+  { id: 'done', emoji: '🌟', label: 'I am done', tone: 'purple' },
+  { id: 'hand', emoji: '✋', label: 'Raise hand', tone: 'blue' },
+]
+
 function hitTestAnnotation(path, point, width, height, threshold = 18) {
   if (path.tool === 'text' && path.point) {
     const dx = point.x - path.point.x
@@ -323,6 +331,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [unmuteRequested, setUnmuteRequested] = useState(false)
   const [remoteMuted, setRemoteMuted] = useState(false)
   const [studentPointerAllowed, setStudentPointerAllowed] = useState(false)
+  const [latestStudentReaction, setLatestStudentReaction] = useState(null)
+  const [sentReactionId, setSentReactionId] = useState('')
   const [remotePointerPosition, setRemotePointerPosition] = useState(null)
   const [selectedPathId, setSelectedPathId] = useState(null)
   const [presenterUrl, setPresenterUrl] = useState('')
@@ -659,6 +669,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (message.type === 'courseware-reward') {
         setClassStars(Number(message.stars) || 0)
         confetti({ particleCount: 55, spread: 65, origin: { y: 0.72 }, colors: ['#bce94e', '#7048df', '#ff4f87'] })
+        return
+      }
+      if (message.type === 'student-reaction') {
+        setLatestStudentReaction(message.reaction || null)
+        if (account.role === 'teacher' && message.reaction) {
+          setSidebarOpen(true)
+        }
+        return
+      }
+      if (message.type === 'student-reaction-clear') {
+        setLatestStudentReaction(null)
         return
       }
       if (message.type === 'presentation-file') {
@@ -1283,6 +1304,29 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     pointerPermissionRef.current = allowed
     setStudentPointerAllowed(allowed)
     transportRef.current?.send({ type: 'pointer-permission', allowed })
+  }
+
+  const sendStudentReaction = (reactionId) => {
+    if (account.role !== 'student') return
+    const option = STUDENT_REACTIONS.find((item) => item.id === reactionId)
+    if (!option) return
+    const reaction = {
+      ...option,
+      id: `${reactionId}-${Date.now()}`,
+      reactionId,
+      studentName: learner?.name || participantName || 'Student',
+      createdAt: new Date().toISOString(),
+    }
+    setLatestStudentReaction(reaction)
+    setSentReactionId(reactionId)
+    transportRef.current?.send({ type: 'student-reaction', reaction })
+    window.setTimeout(() => setSentReactionId(''), 2200)
+  }
+
+  const clearStudentReaction = () => {
+    if (account.role !== 'teacher') return
+    setLatestStudentReaction(null)
+    transportRef.current?.send({ type: 'student-reaction-clear' })
   }
 
   const toggleStudentMute = () => {
@@ -1962,6 +2006,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             </div>}
             {screenSharing && <div className="screen-share-controls" role="toolbar" aria-label="Teacher screen sharing controls"><span><i /> You are presenting</span><button onClick={toggleScreenPause} title={screenPaused ? 'Resume screen sharing' : 'Pause screen sharing'}>{screenPaused ? <Play size={16} /> : <Pause size={16} />}<b>{screenPaused ? 'Resume' : 'Pause'}</b></button><button onClick={toggleScreenFit} title="Change screen fit"><MonitorUp size={16} /><b>{screenFit === 'fit' ? 'Fill' : 'Fit'}</b></button><button onClick={toggleStageFullscreen} title={stageFullscreen ? 'Exit full screen' : 'Open lesson board full screen'}>{stageFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<b>{stageFullscreen ? 'Exit' : 'Full screen'}</b></button><button className="stop" onClick={stopScreenShare} title="Stop screen sharing"><X size={16} /><b>Stop</b></button></div>}
             {!screenSharing && !remoteScreenSharing && !presenterUrl && !presentedFile && account.role === 'teacher' && <div className="courseware-controls" role="toolbar" aria-label="Courseware controls"><label className="courseware-picker"><span>Lesson</span><select value={coursewareTemplate.id} onChange={(event) => chooseCoursewareTemplate(event.target.value)}>{coursewareTemplateChoices.map((template) => <option key={template.id} value={template.id}>{template.title}</option>)}</select></label><button onClick={() => goToCoursewareSlide(coursewareSlideIndex - 1)} disabled={coursewareSlideIndex === 0}><ArrowLeft size={15} /> Prev</button><button onClick={() => goToCoursewareSlide(coursewareSlideIndex + 1)} disabled={coursewareSlideIndex >= activeCoursewareSlides.length - 1}>Next <ArrowLeftRight size={15} /></button><button onClick={toggleCoursewareAnswer}>{coursewareShowAnswer ? 'Hide answer' : 'Show answer'}</button><button onClick={rewardStudent}><Award size={15} /> Give star</button><button onClick={toggleStageFullscreen}>{stageFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />} Board</button></div>}
+            {account.role === 'teacher' && latestStudentReaction && <div className={`student-reaction-alert student-reaction-alert--${latestStudentReaction.tone || 'purple'}`}><span>{latestStudentReaction.emoji}</span><div><strong>{latestStudentReaction.studentName || learner?.name || 'Student'}</strong><small>{latestStudentReaction.label}</small></div><button onClick={clearStudentReaction}><X size={14} /></button></div>}
             <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
           </div>
         </section>
@@ -1988,7 +2033,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <button className={`classroom-people-pointer ${studentPointerAllowed ? 'allowed' : ''}`} onClick={toggleStudentPointerPermission}><Pointer size={15} />{studentPointerAllowed ? 'Student can use pointer' : 'Allow student pointer'}</button>
             <button className={`classroom-people-mute ${studentMuted ? 'muted' : ''}`} onClick={toggleStudentMute}>{studentMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}{studentMuted ? 'Student is muted' : 'Mute student'}</button>
             {studentMuted && !unmuteRequested && <button className="classroom-people-unmute-request" onClick={sendUnmuteRequest}><Volume2 size={15} /> Ask student to unmute</button>}
+            {latestStudentReaction && <div className={`teacher-reaction-card teacher-reaction-card--${latestStudentReaction.tone || 'purple'}`}><span>{latestStudentReaction.emoji}</span><div><strong>{latestStudentReaction.label}</strong><small>{latestStudentReaction.studentName || learner?.name || 'Student'} · {new Date(latestStudentReaction.createdAt).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}</small></div><button onClick={clearStudentReaction}>Clear</button></div>}
           </>}{account.role === 'student' && <>
+            <div className="student-reaction-pad"><strong>Quick answer to teacher</strong><div>{STUDENT_REACTIONS.map((reaction) => <button key={reaction.id} className={sentReactionId === reaction.id ? 'sent' : ''} onClick={() => sendStudentReaction(reaction.id)}><span>{reaction.emoji}</span>{sentReactionId === reaction.id ? 'Sent' : reaction.label}</button>)}</div></div>
             <div className="student-annotation-state">{studentAnnotationAllowed ? <Unlock size={14} /> : <Lock size={14} />}<span>{studentAnnotationAllowed ? 'Teacher allowed annotation' : 'Annotation requires teacher permission'}</span></div>
             <div className="student-pointer-state">{studentPointerAllowed ? <Pointer size={14} /> : <MousePointer2 size={14} />}<span>{studentPointerAllowed ? 'You can use the pointer tool' : 'Pointer tool requires teacher permission'}</span></div>
             {remoteMuted && <div className="student-muted-state"><VolumeX size={14} /><span>The teacher muted your microphone</span></div>}
