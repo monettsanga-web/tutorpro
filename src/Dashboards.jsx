@@ -1588,7 +1588,7 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
   const stats = getReferralStats(account, allAccounts)
   const code = stats.code
   const link = stats.link
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=png&ecc=M&margin=10&data=${encodeURIComponent(link)}`
   const nextLabel = stats.nextLevel ? `${stats.nextLevel.label} at ${stats.nextLevel.min} successful referrals` : 'Top ambassador level unlocked'
   const shareText = role === 'teacher'
     ? `Join TutorPro English PH through my teacher referral link and start learning online English.`

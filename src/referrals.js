@@ -14,7 +14,7 @@ export function normalizeReferralCode(code = '') {
 export function referralSeed(name = '', id = '') {
   const prefix = String(name || 'TP').replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase().padEnd(3, 'X')
   let hash = 0
-  const source = `${name}:${id}:${Date.now()}`
+  const source = `${name}:${id || 'TUTORPRO'}`
   for (let index = 0; index < source.length; index += 1) hash = ((hash << 5) - hash) + source.charCodeAt(index)
   const suffix = Math.abs(hash).toString(36).toUpperCase().slice(0, 5).padEnd(5, '0')
   return normalizeReferralCode(`${prefix}${suffix}`)
@@ -25,7 +25,8 @@ export function getReferralCode(account) {
 }
 
 export function getReferralLink(account) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.tutorpro.site'
+  const configuredOrigin = import.meta.env?.VITE_PUBLIC_SITE_URL || 'https://www.tutorpro.site'
+  const origin = String(configuredOrigin).replace(/\/$/, '')
   return `${origin}/?ref=${encodeURIComponent(getReferralCode(account))}`
 }
 
