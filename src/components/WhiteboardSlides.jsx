@@ -1,6 +1,21 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, FileImage, Shield } from 'lucide-react';
 
+function buildPdfViewerUrl(fileUrl, currentPage) {
+  if (!fileUrl) return '';
+  const [baseUrl] = String(fileUrl).split('#');
+  const params = new URLSearchParams({
+    page: String(currentPage || 1),
+    zoom: 'page-width',
+    view: 'FitH',
+    toolbar: '0',
+    navpanes: '0',
+    scrollbar: '1',
+    pagemode: 'none',
+  });
+  return `${baseUrl}#${params.toString()}`;
+}
+
 // Inline defensive Error Boundary to catch any child-level rendering errors 
 // and print the exact JS exception on the whiteboard screen!
 export class SafeSlidesErrorBoundary extends React.Component {
@@ -107,11 +122,11 @@ export const WhiteboardSlides = ({
       </div>
 
       {/* Main viewport */}
-      <div style={{ flex: 1, position: 'relative', background: '#090510', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ flex: 1, position: 'relative', background: '#090510', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', overflow: 'hidden' }}>
         {isPdf && (
           <iframe
-            src={`${fileUrl}#page=${currentPage}&toolbar=0&navpanes=0`}
-            style={{ width: '100%', height: '100%', border: 'none' }}
+            src={buildPdfViewerUrl(fileUrl, currentPage)}
+            style={{ display: 'block', width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', background: '#fff' }}
             title="PDF View"
           />
         )}
