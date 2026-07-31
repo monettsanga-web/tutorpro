@@ -214,9 +214,10 @@ export const WhiteboardSlides = ({
   }, [fileId, fileUrl, totalSlides]);
 
   return (
-    <div style={{
+    <div className="whiteboard-slides" style={{
       display: 'flex',
       flexDirection: 'column',
+      alignItems: 'stretch',
       background: '#0c071a',
       borderRadius: '12px',
       overflow: 'hidden',
@@ -271,7 +272,7 @@ export const WhiteboardSlides = ({
         {isOfficeDoc && (
           <iframe
             src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`}
-            style={{ width: '100%', height: '100%', border: 'none' }}
+            style={{ display: 'block', width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', background: '#05020a' }}
             title="Office View"
           />
         )}

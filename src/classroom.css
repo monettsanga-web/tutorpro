@@ -1687,3 +1687,15 @@ body.classroom-active .support-widget {
   font-weight: 900;
   outline: none;
 }
+
+.classroom-file-presentation > .whiteboard-slides,
+.classroom-file-presentation .whiteboard-slides {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  color: #fff !important;
+}
