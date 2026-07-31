@@ -6,7 +6,7 @@ const DURABLE_SIGNAL_TYPES = new Set([
   'join-request', 'offer', 'answer', 'ice', 'annotation-permission', 'screen-state',
   'mute-student', 'unmute-request', 'annotation-undo', 'annotation-redo',
   'annotation-undo-clear', 'pointer-permission', 'object-select', 'presenter-url',
-  'classroom-file-storage', 'courseware-state', 'courseware-reward',
+  'classroom-file-storage', 'courseware-state', 'courseware-reward', 'document-view-state',
 ])
 
 function channelKey(roomId, token) {

@@ -5,7 +5,7 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-function CustomPdfBoard({ fileUrl, fileName, currentPage, onPageCount }) {
+function CustomPdfBoard({ fileUrl, fileName, currentPage, viewMode = 'fit-width', zoom = 1, onPageCount }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const pdfRef = useRef(null);
@@ -69,7 +69,11 @@ function CustomPdfBoard({ fileUrl, fileName, currentPage, onPageCount }) {
 
         const baseViewport = page.getViewport({ scale: 1 });
         const availableWidth = Math.max(320, container.clientWidth - 22);
-        const scale = Math.max(0.4, availableWidth / baseViewport.width);
+        const availableHeight = Math.max(240, container.clientHeight - 22);
+        const fitWidthScale = availableWidth / baseViewport.width;
+        const fitPageScale = Math.min(fitWidthScale, availableHeight / baseViewport.height);
+        const baseScale = viewMode === 'fit-page' ? fitPageScale : fitWidthScale;
+        const scale = Math.max(0.35, Math.min(5, baseScale * (Number(zoom) || 1)));
         const viewport = page.getViewport({ scale });
         const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
         const context = canvas.getContext('2d', { alpha: false });
@@ -106,7 +110,7 @@ function CustomPdfBoard({ fileUrl, fileName, currentPage, onPageCount }) {
       resizeObserver?.disconnect();
       renderTaskRef.current?.cancel?.();
     };
-  }, [currentPage, status]);
+  }, [currentPage, status, viewMode, zoom]);
 
   return (
     <div
@@ -117,7 +121,7 @@ function CustomPdfBoard({ fileUrl, fileName, currentPage, onPageCount }) {
         overflow: 'auto',
         background: '#1b1524',
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: viewMode === 'fit-page' ? 'center' : 'flex-start',
         justifyContent: 'center',
         padding: '10px',
         boxSizing: 'border-box',
@@ -200,6 +204,9 @@ export const WhiteboardSlides = ({
   isTeacher,
   currentPage = 1,
   onPageChange,
+  viewMode = 'fit-width',
+  zoom = 1,
+  onViewChange,
 }) => {
   const [pdfPageCount, setPdfPageCount] = useState(totalSlides);
   const lowerName = fileName?.toLowerCase() || '';
@@ -208,6 +215,9 @@ export const WhiteboardSlides = ({
   const isImage = lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.gif') || lowerName.endsWith('.webp');
   const isOfficeDoc = lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt') || lowerName.endsWith('.docx') || lowerName.endsWith('.doc');
   const pageTotal = isPdf ? (pdfPageCount || totalSlides) : totalSlides;
+  const canControl = Boolean(isTeacher);
+  const currentZoom = Number(zoom) || 1;
+  const updateView = (changes) => onViewChange?.({ viewMode, zoom: currentZoom, ...changes });
 
   useEffect(() => {
     setPdfPageCount(totalSlides);
@@ -265,6 +275,8 @@ export const WhiteboardSlides = ({
             fileUrl={fileUrl}
             fileName={fileName}
             currentPage={currentPage}
+            viewMode={viewMode}
+            zoom={currentZoom}
             onPageCount={setPdfPageCount}
           />
         )}
@@ -306,15 +318,15 @@ export const WhiteboardSlides = ({
       }}>
         <button
           onClick={() => currentPage > 1 && onPageChange?.(currentPage - 1)}
-          disabled={currentPage <= 1}
+          disabled={!canControl || currentPage <= 1}
           style={{
             padding: '6px 12px',
             background: 'rgba(255,255,255,0.05)',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
-            cursor: 'pointer',
-            opacity: currentPage <= 1 ? '0.4' : '1',
+            cursor: canControl && currentPage > 1 ? 'pointer' : 'not-allowed',
+            opacity: !canControl || currentPage <= 1 ? '0.4' : '1',
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
@@ -326,21 +338,31 @@ export const WhiteboardSlides = ({
           Prev Page
         </button>
 
-        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: '#090510', padding: '4px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          Page {currentPage} / {pageTotal}
-        </span>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 'bold', background: '#090510', padding: '4px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          Page
+          <input
+            type="number"
+            min="1"
+            max={pageTotal}
+            value={currentPage}
+            onChange={(event) => canControl && onPageChange?.(Math.max(1, Math.min(pageTotal, Number(event.target.value) || 1)))}
+            readOnly={!canControl}
+            style={{ width: '54px', border: '0', borderRadius: '5px', padding: '4px 5px', background: '#211339', color: '#fff', fontSize: '0.68rem', fontWeight: '900', textAlign: 'center' }}
+          />
+          / {pageTotal}
+        </label>
 
         <button
           onClick={() => currentPage < pageTotal && onPageChange?.(currentPage + 1)}
-          disabled={currentPage >= pageTotal}
+          disabled={!canControl || currentPage >= pageTotal}
           style={{
             padding: '6px 12px',
             background: 'rgba(255,255,255,0.05)',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
-            cursor: 'pointer',
-            opacity: currentPage >= pageTotal ? '0.4' : '1',
+            cursor: canControl && currentPage < pageTotal ? 'pointer' : 'not-allowed',
+            opacity: !canControl || currentPage >= pageTotal ? '0.4' : '1',
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
@@ -351,6 +373,30 @@ export const WhiteboardSlides = ({
           Next Page
           <ChevronRight style={{ width: '14px', height: '14px' }} />
         </button>
+
+        {isPdf && <>
+          <button
+            onClick={() => updateView({ viewMode: 'fit-width', zoom: 1 })}
+            disabled={!canControl}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: viewMode === 'fit-width' ? '#7048df' : 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+          >Fit width</button>
+          <button
+            onClick={() => updateView({ viewMode: 'fit-page', zoom: 1 })}
+            disabled={!canControl}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: viewMode === 'fit-page' ? '#7048df' : 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+          >Fit page</button>
+          <button
+            onClick={() => updateView({ zoom: Math.max(0.5, Math.round((currentZoom - 0.15) * 100) / 100) })}
+            disabled={!canControl}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+          >−</button>
+          <span style={{ minWidth: '42px', textAlign: 'center', color: '#bce94e', fontSize: '0.66rem', fontWeight: '950' }}>{Math.round(currentZoom * 100)}%</span>
+          <button
+            onClick={() => updateView({ zoom: Math.min(2.5, Math.round((currentZoom + 0.15) * 100) / 100) })}
+            disabled={!canControl}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+          >+</button>
+        </>}
       </div>
     </div>
   );

@@ -304,6 +304,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [textDraft, setTextDraft] = useState('')
   const [files, setFiles] = useState([])
   const [cosSlidePage, setCosSlidePage] = useState(1)
+  const [documentViewMode, setDocumentViewMode] = useState('fit-width')
+  const [documentZoom, setDocumentZoom] = useState(1)
   const [useGoogleClassroomMode, setUseGoogleClassroomMode] = useState(false)
   const [sidebarTab, setSidebarTab] = useState('chat')
   const chinaConnection = isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: studentAccount?.registrationCountry })
@@ -669,6 +671,13 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'slide-page') {
         setCosSlidePage(Number(message.page) || 1)
+        return
+      }
+      if (message.type === 'document-view-state') {
+        setCosSlidePage(Number(message.page) || 1)
+        if (['fit-width', 'fit-page'].includes(message.viewMode)) setDocumentViewMode(message.viewMode)
+        const incomingZoom = Number(message.zoom)
+        if (Number.isFinite(incomingZoom)) setDocumentZoom(Math.max(0.5, Math.min(2.5, incomingZoom)))
         return
       }
       if (message.type === 'annotation-path' && message.path) {
@@ -1414,10 +1423,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         setFiles((current) => [...current, entry])
         transportRef.current?.send({ type: 'classroom-file-storage', file: entry })
-        if (account.role === 'teacher') {
-          setPresentedFile(entry)
-          transportRef.current?.send({ type: 'presentation-file', file: entry })
-        }
+        if (account.role === 'teacher') await presentFile(entry)
       } else {
         const dataUrl = await readFileAsDataUrl(file)
         const entry = {
@@ -1430,10 +1436,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         setFiles((current) => [...current, entry])
         transportRef.current?.send({ type: 'classroom-file', file: entry })
-        if (account.role === 'teacher') {
-          setPresentedFile(entry)
-          transportRef.current?.send({ type: 'presentation-file', file: entry })
-        }
+        if (account.role === 'teacher') await presentFile(entry)
       }
     } catch (error) {
       setFileError(error.message || 'File upload failed.')
@@ -1460,7 +1463,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       return
     }
     setPresentedFile(entry)
+    setCosSlidePage(1)
+    setDocumentViewMode('fit-width')
+    setDocumentZoom(1)
     transportRef.current?.send({ type: 'presentation-file', file: entry })
+    transportRef.current?.send({ type: 'document-view-state', page: 1, viewMode: 'fit-width', zoom: 1 })
   }
 
   const sendChatMessage = (event) => {
@@ -1596,6 +1603,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const isEdbFile = (file) => /\.edb$/i.test(file.name)
   const isEpubFile = (file) => /\.epub$/i.test(file.name)
 
+  const syncDocumentViewState = (changes = {}) => {
+    const nextPage = Math.max(1, Number(changes.page ?? cosSlidePage) || 1)
+    const nextMode = ['fit-width', 'fit-page'].includes(changes.viewMode) ? changes.viewMode : documentViewMode
+    const nextZoom = Math.max(0.5, Math.min(2.5, Number(changes.zoom ?? documentZoom) || 1))
+    setCosSlidePage(nextPage)
+    setDocumentViewMode(nextMode)
+    setDocumentZoom(nextZoom)
+    transportRef.current?.send({ type: 'document-view-state', page: nextPage, viewMode: nextMode, zoom: nextZoom })
+    transportRef.current?.send({ type: 'slide-page', page: nextPage })
+  }
+
   const renderPresentedFile = (file) => {
     const fileUrl = file.dataUrl || file.url || ''
     const lowerName = String(file.name || '').toLowerCase()
@@ -1614,10 +1632,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               fileUrl={fileUrl}
               isTeacher={account.role === 'teacher'}
               currentPage={cosSlidePage}
-              onPageChange={(newPage) => {
-                setCosSlidePage(newPage)
-                transportRef.current?.send({ type: 'slide-page', page: newPage })
-              }}
+              viewMode={documentViewMode}
+              zoom={documentZoom}
+              onPageChange={(newPage) => syncDocumentViewState({ page: newPage })}
+              onViewChange={(viewState) => syncDocumentViewState(viewState)}
             />
           </SafeSlidesErrorBoundary>
         </div>
