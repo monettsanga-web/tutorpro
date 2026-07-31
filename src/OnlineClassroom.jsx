@@ -62,7 +62,7 @@ import { chatLanguages, translateChatText } from './chatTranslation.js'
 import { compressPDF } from './compressPDF.js'
 import { WhiteboardSlides, SafeSlidesErrorBoundary } from './components/WhiteboardSlides.jsx'
 import { ClassroomDashboard } from './components/ClassroomDashboard.jsx'
-import { isAllowlistedTutorProUrl, validateAndFormatHttpsUrl } from './websitePresenter.js'
+import { validateAndFormatHttpsUrl } from './websitePresenter.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import {
   CLASSROOM_FILE_ACCEPT,
@@ -326,6 +326,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [presenterUrl, setPresenterUrl] = useState('')
   const [presenterUrlInput, setPresenterUrlInput] = useState('')
   const [presenterUrlDraft, setPresenterUrlDraft] = useState('')
+  const [websiteFrameKey, setWebsiteFrameKey] = useState(0)
   const [embedError, setEmbedError] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -718,6 +719,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (message.type === 'presenter-url' && message.url !== undefined) {
         setPresenterUrl(message.url)
         setPresenterUrlInput(message.url)
+        setPresenterUrlDraft('')
+        setEmbedError('')
+        setWebsiteFrameKey(Number(message.reloadKey) || Date.now())
+        if (message.url) { setPresentedFile(null); setRemoteScreenSharing(false) }
         return
       }
       if (message.type === 'classroom-file' && message.file) {
@@ -1303,19 +1308,22 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
     setEmbedError('')
     const finalUrl = result.url
+    const reloadKey = Date.now()
     setPresenterUrl(finalUrl)
     setPresenterUrlInput(finalUrl)
-    transportRef.current?.send({ type: 'presenter-url', url: finalUrl })
+    setPresentedFile(null)
+    setRemoteScreenSharing(false)
+    setWebsiteFrameKey(reloadKey)
+    transportRef.current?.send({ type: 'presenter-url', url: finalUrl, reloadKey })
     setPresenterUrlDraft('')
-    if (account.role === 'teacher') {
-      window.open(finalUrl, '_blank', 'noopener,noreferrer')
-    }
   }
 
   const stopWebsiteEmbed = () => {
     setPresenterUrl('')
     setPresenterUrlInput('')
-    transportRef.current?.send({ type: 'presenter-url', url: '' })
+    setEmbedError('')
+    setWebsiteFrameKey(Date.now())
+    transportRef.current?.send({ type: 'presenter-url', url: '', reloadKey: Date.now() })
   }
 
   const handleOpenWebsite = (urlToOpen) => {
@@ -1344,6 +1352,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
   const handleUpdatePresenterUrl = () => {
     openPresenterUrl(presenterUrlInput)
+  }
+
+  const reloadEmbeddedWebsite = () => {
+    if (!presenterUrl) return
+    const reloadKey = Date.now()
+    setWebsiteFrameKey(reloadKey)
+    setEmbedError('')
+    transportRef.current?.send({ type: 'presenter-url', url: presenterUrl, reloadKey })
   }
 
   const uploadFile = async (event) => {
@@ -1739,27 +1755,42 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
   const renderEmbeddedWebsite = () => {
     if (!presenterUrl) return null
-    if (!isAllowlistedTutorProUrl(presenterUrl)) {
-      return renderWebsitePresenterCard()
-    }
     const displayUrl = presenterUrl.replace(/^https?:\/\//, '')
     return (
-      <div className="classroom-website-embed">
-        <div className="website-embed-header">
+      <div className="classroom-website-embed classroom-website-embed--browser">
+        <div className="website-embed-header website-embed-header--browser">
           <Globe size={18} />
-          <span>TutorPro Resource: {displayUrl}</span>
-          <button onClick={stopWebsiteEmbed} title="Stop presenting website"><X size={16} /></button>
+          <label className="website-embed-address" aria-label="Classroom website address">
+            <span>URL</span>
+            <input
+              type="url"
+              value={presenterUrlInput}
+              onChange={(event) => setPresenterUrlInput(event.target.value)}
+              onKeyDown={(event) => { if (event.key === 'Enter' && account.role === 'teacher') handleUpdatePresenterUrl() }}
+              readOnly={account.role === 'student'}
+            />
+          </label>
+          {account.role === 'teacher' && <button onClick={handleUpdatePresenterUrl} title="Go to this website"><ArrowRight size={16} /></button>}
+          <button onClick={reloadEmbeddedWebsite} title="Refresh website"><RefreshCw size={16} /></button>
+          <button onClick={() => handleOpenWebsite(presenterUrl)} title="Open in a new tab"><ExternalLink size={16} /></button>
+          {account.role === 'teacher' && <button onClick={stopWebsiteEmbed} title="Close website presenter"><X size={16} /></button>}
         </div>
         {embedError && <div className="website-embed-error"><WifiOff size={16} /> {embedError}</div>}
         <iframe
+          key={`${presenterUrl}:${websiteFrameKey}`}
           src={presenterUrl}
           className="website-embed-frame"
-          title={`Embedded website: ${displayUrl}`}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
+          title={`Classroom website browser: ${displayUrl}`}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-presentation"
           referrerPolicy="no-referrer-when-downgrade"
+          allow="fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; picture-in-picture"
           onLoad={() => setEmbedError('')}
-          onError={() => setEmbedError('This resource cannot be embedded directly.')}
+          onError={() => setEmbedError('This website blocked classroom embedding. Open it in a new tab or use screen share backup.')}
         />
+        <div className="website-embed-help">
+          <span><ShieldCheck size={13} /> In-class web presenter</span>
+          <p>If this website stays blank, it blocks embedded classroom browsers. Use <button onClick={() => handleOpenWebsite(presenterUrl)}>Open tab</button>{account.role === 'teacher' ? <> or <button onClick={handleStartTabShare}>screen share backup</button></> : null}.</p>
+        </div>
       </div>
     )
   }

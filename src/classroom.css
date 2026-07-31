@@ -1699,3 +1699,122 @@ body.classroom-active .support-widget {
   gap: 0 !important;
   color: #fff !important;
 }
+
+.classroom-website-embed--browser {
+  background: #05020a;
+}
+
+.website-embed-header--browser {
+  min-height: 48px;
+  gap: 7px;
+  background: #130a25;
+  color: #e8ddf5;
+}
+
+.website-embed-address {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: rgba(255,255,255,0.06);
+}
+
+.website-embed-address span {
+  flex: 0 0 auto;
+  color: #bce94e;
+  font-size: 0.52rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.website-embed-address input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.website-embed-address input[readonly] {
+  color: #c7bbd6;
+}
+
+.website-embed-header--browser button {
+  background: rgba(255,255,255,0.08);
+  color: #e8ddf5;
+}
+
+.website-embed-header--browser button:hover {
+  background: #7048df;
+  color: #fff;
+}
+
+.website-embed-frame {
+  min-height: 0;
+}
+
+.website-embed-help {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 4;
+  display: grid;
+  max-width: min(430px, calc(100% - 24px));
+  gap: 4px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 9px 11px;
+  background: rgba(19,10,37,0.84);
+  color: #d9cce8;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  backdrop-filter: blur(10px);
+}
+
+.website-embed-help span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #bce94e;
+  font-size: 0.55rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.website-embed-help p {
+  margin: 0;
+  color: #d9cce8;
+  font-size: 0.55rem;
+  line-height: 1.45;
+}
+
+.website-embed-help button {
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #bce94e;
+  color: #221238;
+  font-size: 0.52rem;
+  font-weight: 950;
+}
+
+@media (max-width: 760px) {
+  .website-embed-header--browser {
+    flex-wrap: wrap;
+  }
+  .website-embed-address {
+    flex-basis: 100%;
+    order: 2;
+  }
+  .website-embed-help {
+    display: none;
+  }
+}
