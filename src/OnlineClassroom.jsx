@@ -1928,7 +1928,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <form className="classroom-chat-form" onSubmit={sendChatMessage}><input value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Write a message…" maxLength="500" /><button type="submit" disabled={!chatDraft.trim()}><Send size={17} /></button></form>
           </div> : <div className="classroom-files-panel">
             <div className="flex gap-2 mb-3">
-              <label className="classroom-file-upload flex-1"><FileUp size={22} /><strong>Upload to Supabase classroom storage</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {isClassroomStorageAvailable() ? '50' : '8'} MB · visible on the lesson board</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
+              <label className="classroom-file-upload flex-1"><FileUp size={22} /><strong>Upload to Supabase classroom storage</strong><span>PDF, PPT, PPTX, DOC, images, EPUB, EDB · max {Math.round((isClassroomStorageAvailable() ? MAX_STORAGE_SIZE : MAX_INLINE_SIZE) / 1024 / 1024)} MB · visible on the lesson board</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label>
             </div>
             {fileError && <div className="classroom-file-error">{fileError}</div>}
             {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> {uploadStatus || 'Uploading…'}</div>}

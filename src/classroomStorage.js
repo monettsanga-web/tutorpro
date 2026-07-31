@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 
 const CLASSROOM_BUCKET = 'classroom-files'
-const MAX_STORAGE_SIZE = 50 * 1024 * 1024 // 50 MB
+const MAX_STORAGE_SIZE = 200 * 1024 * 1024 // 200 MB
 
 const ALLOWED_EXTENSIONS = new Set([
   'pdf', 'ppt', 'pptx', 'doc', 'docx', 'txt', 'epub', 'edb',
