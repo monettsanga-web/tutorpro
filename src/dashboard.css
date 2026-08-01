@@ -8459,6 +8459,26 @@ a.feedback-resource-detail:hover strong {
 .game-center-card small { color:#6d28d9; font-weight:900; }
 .game-center-card a, .game-center-card button { justify-content:center; text-decoration:none; }
 .game-back-button { width:fit-content; }
+
+/* Partner learning websites (PBS Kids, Article Arcade, etc.) */
+.partner-games-section { display:grid; gap:16px; border-radius:30px; padding:clamp(18px,3vw,28px); background:linear-gradient(135deg,#f8fafc 0%,#f5f3ff 60%,#eef2ff 100%); border:1px solid rgba(124,58,237,.14); }
+.partner-games-header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+.partner-games-header h2 { margin:6px 0 6px; color:#241042; font-size:clamp(1.3rem,2.4vw,1.9rem); letter-spacing:-.03em; }
+.partner-games-header p { margin:0; max-width:640px; color:#64748b; line-height:1.55; }
+.partner-games-safe { display:inline-flex; align-items:center; gap:7px; border-radius:999px; padding:9px 14px; background:#241042; color:#bce94e; font-size:.76rem; font-weight:900; white-space:nowrap; }
+.partner-games-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+.partner-game-card { display:grid; align-content:start; gap:10px; background:#fff; border:1px solid rgba(124,58,237,.14); }
+.partner-game-card__top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.partner-game-card__icon { font-size:2.2rem; line-height:1; }
+.partner-game-card__top b { border-radius:999px; padding:5px 10px; background:rgba(112,72,223,.1); color:#6d28d9; font-size:.68rem; font-weight:950; text-transform:uppercase; letter-spacing:.05em; }
+.partner-game-card h3 { margin:0; color:#241042; font-size:1.15rem; }
+.partner-game-card p { margin:0; color:#64748b; line-height:1.5; font-size:.92rem; }
+.partner-game-card__skills { display:flex; flex-wrap:wrap; gap:6px; }
+.partner-game-card__skills span { border-radius:999px; padding:5px 10px; background:#f1f5f9; color:#334155; font-size:.72rem; font-weight:800; }
+.partner-game-card__skills .partner-game-card__ages { background:rgba(188,233,78,.24); color:#3f6212; }
+.partner-game-card a { justify-content:center; text-decoration:none; }
+.partner-game-card__host { color:#94a3b8; font-size:.74rem; font-weight:700; text-align:center; }
+@media(max-width:760px){ .partner-games-header { flex-direction:column; align-items:flex-start; } }
 .game-play-shell { border-radius:30px; padding:clamp(18px,3vw,30px); background:linear-gradient(135deg,#fff 0%,#f8fafc 55%,#f5f3ff 100%); border:1px solid rgba(124,58,237,.14); box-shadow:0 26px 75px rgba(49,21,104,.12); }
 .game-play-shell__header { display:flex; gap:14px; align-items:center; margin-bottom:18px; }
 .game-play-shell__header > span { display:grid; place-items:center; width:56px; height:56px; border-radius:20px; background:#321568; color:#bce94e; }

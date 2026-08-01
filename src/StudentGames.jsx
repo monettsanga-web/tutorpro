@@ -5,6 +5,31 @@ import confetti from 'canvas-confetti'
 const ARTICLE_ARCADE_URL = 'https://article-arcade-za96106rp-tutor-pro.vercel.app/'
 const ARTICLE_ARCADE_COVER = `${import.meta.env.BASE_URL}assets/article-arcade-cover-hd.png`
 
+// Trusted partner learning sites. These open in a new tab because the partners
+// block iframe embedding (X-Frame-Options / CSP frame-ancestors).
+export const PARTNER_GAME_SITES = [
+  {
+    id: 'article-arcade',
+    title: 'Article Arcade',
+    url: ARTICLE_ARCADE_URL,
+    icon: '🎮',
+    tag: 'TutorPro original',
+    text: 'Premium A / An arcade built by TutorPro English.',
+    skills: ['Grammar', 'Articles', 'Speed drills'],
+    ages: 'Ages 5–12',
+  },
+  {
+    id: 'pbs-kids',
+    title: 'PBS Kids Games',
+    url: 'https://pbskids.org/',
+    icon: '🐾',
+    tag: 'Partner site',
+    text: 'Hundreds of free educational games with favourite PBS Kids characters — reading, phonics, maths and problem solving.',
+    skills: ['Reading', 'Phonics', 'Listening'],
+    ages: 'Ages 2–10',
+  },
+]
+
 const VOCABULARY = [
   { word: 'apple', emoji: '🍎', article: 'an', meaning: 'a red or green fruit' },
   { word: 'banana', emoji: '🍌', article: 'a', meaning: 'a long yellow fruit' },
@@ -136,7 +161,6 @@ export default function StudentGames({ learner, onEarnStars }) {
     { id: 'quiz', title: 'Picture Quiz', text: 'Choose the correct word.', icon: '🖼️', stars: '+1–3' },
     { id: 'sentence', title: 'Sentence Builder', text: 'Put words in order.', icon: '✍️', stars: '+4' },
     { id: 'grammar', title: 'Grammar Race', text: 'Pick A or AN quickly.', icon: '🏁', stars: '+1–3' },
-    { id: 'arcade', title: 'Article Arcade', text: 'Open the premium A/An arcade.', icon: '🎮', stars: 'external' },
   ]
   if (activeGame === 'memory') return <MemoryMatchGame onBack={() => setActiveGame('hub')} onEarnStars={onEarnStars} />
   if (activeGame === 'quiz') return <WordQuizGame onBack={() => setActiveGame('hub')} onEarnStars={onEarnStars} />
@@ -145,7 +169,36 @@ export default function StudentGames({ learner, onEarnStars }) {
   return (
     <div className="portal-view game-center-view">
       <section className="game-center-hero"><div><span className="portal-kicker">Educational game center</span><h1>{learner?.name ? `${learner.name}'s Game World` : 'Game World'}</h1><p>Play quick English games to practise vocabulary, grammar, reading and sentence building. Stars earned here also support the rewards dashboard.</p><div className="external-game-zone__badges"><span><Gamepad2 size={14} /> Vocabulary</span><span><Sparkles size={14} /> Grammar</span><span><ShieldCheck size={14} /> Rewards ready</span></div></div><img src={ARTICLE_ARCADE_COVER} alt="Article Arcade cover" /></section>
-      <section className="game-center-grid">{games.map((game) => <article className="portal-card game-center-card" key={game.id}><span>{game.icon}</span><h2>{game.title}</h2><p>{game.text}</p><small>{game.stars} stars</small>{game.id === 'arcade' ? <a className="portal-primary-button" href={ARTICLE_ARCADE_URL} target="_blank" rel="noreferrer">Launch Arcade <ExternalLink size={15} /></a> : <button className="portal-primary-button" onClick={() => setActiveGame(game.id)}>Play now <Zap size={15} /></button>}</article>)}</section>
+      <section className="game-center-grid">{games.map((game) => <article className="portal-card game-center-card" key={game.id}><span>{game.icon}</span><h2>{game.title}</h2><p>{game.text}</p><small>{game.stars} stars</small><button className="portal-primary-button" onClick={() => setActiveGame(game.id)}>Play now <Zap size={15} /></button></article>)}</section>
+
+      <section className="partner-games-section">
+        <header className="partner-games-header">
+          <div>
+            <span className="portal-kicker">Partner game zone</span>
+            <h2>Safe learning websites</h2>
+            <p>Hand-picked, kid-safe websites that open in a new tab. Ask a parent before playing and come back to TutorPro for your lesson.</p>
+          </div>
+          <span className="partner-games-safe"><ShieldCheck size={15} /> Parent-approved links</span>
+        </header>
+        <div className="partner-games-grid">
+          {PARTNER_GAME_SITES.map((site) => (
+            <article className="portal-card partner-game-card" key={site.id}>
+              <div className="partner-game-card__top">
+                <span className="partner-game-card__icon">{site.icon}</span>
+                <b>{site.tag}</b>
+              </div>
+              <h3>{site.title}</h3>
+              <p>{site.text}</p>
+              <div className="partner-game-card__skills">
+                {site.skills.map((skill) => <span key={skill}>{skill}</span>)}
+                <span className="partner-game-card__ages">{site.ages}</span>
+              </div>
+              <a className="portal-primary-button" href={site.url} target="_blank" rel="noopener noreferrer">Open {site.title} <ExternalLink size={15} /></a>
+              <small className="partner-game-card__host">{new URL(site.url).hostname.replace(/^www\./, '')}</small>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
