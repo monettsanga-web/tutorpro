@@ -211,6 +211,7 @@ export function ScheduleCalendar({
   onSelect,
   onBookingOpen,
   onBookingFeedback,
+  onBookingCancel,
   showInactiveBookings = false,
   duration = 25,
   multiSelect = false,
@@ -219,6 +220,53 @@ export function ScheduleCalendar({
   const available = new Set(availabilitySlots)
   const dragState = useRef(null)
   const scrollRef = useRef(null)
+  const [nameMenu, setNameMenu] = useState(null)
+  const [menuBusy, setMenuBusy] = useState(false)
+  const [menuError, setMenuError] = useState('')
+  const [confirmUnbook, setConfirmUnbook] = useState(false)
+
+  const closeNameMenu = () => { setNameMenu(null); setConfirmUnbook(false); setMenuError(''); setMenuBusy(false) }
+
+  useEffect(() => {
+    if (!nameMenu) return undefined
+    const dismiss = (event) => { if (!event.target.closest?.('.schedule-name-menu')) closeNameMenu() }
+    const onKey = (event) => { if (event.key === 'Escape') closeNameMenu() }
+    document.addEventListener('mousedown', dismiss)
+    document.addEventListener('keydown', onKey)
+    window.addEventListener('resize', closeNameMenu)
+    return () => {
+      document.removeEventListener('mousedown', dismiss)
+      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('resize', closeNameMenu)
+    }
+  }, [nameMenu])
+
+  const openNameMenu = (event, booking, studentName) => {
+    event.stopPropagation()
+    event.preventDefault()
+    const rect = event.currentTarget.getBoundingClientRect()
+    setConfirmUnbook(false)
+    setMenuError('')
+    setNameMenu({
+      booking,
+      studentName,
+      top: Math.min(rect.bottom + 6, window.innerHeight - 210),
+      left: Math.min(Math.max(12, rect.left), window.innerWidth - 262),
+    })
+  }
+
+  const runUnbook = async () => {
+    if (!nameMenu || !onBookingCancel) return
+    setMenuBusy(true)
+    setMenuError('')
+    try {
+      await onBookingCancel(nameMenu.booking)
+      closeNameMenu()
+    } catch (cancelError) {
+      setMenuError(cancelError?.message || 'Could not cancel this booking. Please try again.')
+      setMenuBusy(false)
+    }
+  }
   const inactiveCalendarStatuses = new Set(['cancelled', 'declined', 'absent'])
   const releasedCalendarStatuses = new Set(['cancelled', 'declined'])
   const calendarBookings = bookings.filter((booking) => !releasedCalendarStatuses.has(booking.status))
@@ -386,7 +434,26 @@ export function ScheduleCalendar({
                       if (!editable && multiSelect && event.detail === 0 && (selectable || selectedOwner)) onSelect(selectedOwner || { date: dateKey, time }, selectedOwner ? 'remove' : 'add')
                     }}
                   >
-                    {bookingCell?.isStart && <span><strong className={feedbackAvailable ? 'schedule-feedback-target' : ''} title={feedbackAvailable ? `Write feedback for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : undefined} onPointerDown={(event) => { if (feedbackAvailable) event.stopPropagation() }} onClick={(event) => { if (feedbackAvailable) { event.stopPropagation(); onBookingFeedback(bookingCell.booking) } }}>{bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson'}</strong>{feedbackAvailable && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}{bookingCell.booking.slotComment && <em>Comment</em>}</span>}
+                    {bookingCell?.isStart && (() => {
+                      const cellName = bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson'
+                      const nameActions = Boolean(onBookingCancel)
+                      const nameInteractive = nameActions || feedbackAvailable
+                      return (
+                        <span>
+                          <strong
+                            className={`${feedbackAvailable ? 'schedule-feedback-target' : ''} ${nameActions ? 'schedule-name-action' : ''}`.trim()}
+                            title={nameActions ? `Open options for ${cellName}` : feedbackAvailable ? `Write feedback for ${cellName}` : undefined}
+                            onPointerDown={(event) => { if (nameInteractive) event.stopPropagation() }}
+                            onClick={(event) => {
+                              if (nameActions) { openNameMenu(event, bookingCell.booking, cellName); return }
+                              if (feedbackAvailable) { event.stopPropagation(); onBookingFeedback(bookingCell.booking) }
+                            }}
+                          >{cellName}</strong>
+                          {feedbackAvailable && !nameActions && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}
+                          {bookingCell.booking.slotComment && <em>Comment</em>}
+                        </span>
+                      )
+                    })()}
                     {!editable && selectable && !bookingCell && <i>Available</i>}
                   </button>
                 )
@@ -395,6 +462,38 @@ export function ScheduleCalendar({
           ))}
         </div>
       </div>
+      {nameMenu && (() => {
+        const menuBooking = nameMenu.booking
+        const alreadyReleased = ['cancelled', 'declined'].includes(menuBooking.status)
+        const unbookable = !['completed', 'cancelled', 'declined'].includes(menuBooking.status)
+        const canFeedback = Boolean(onBookingFeedback) && ['confirmed', 'ongoing', 'completed'].includes(menuBooking.status)
+        return (
+          <div className="schedule-name-menu" style={{ top: `${nameMenu.top}px`, left: `${nameMenu.left}px` }} role="dialog" aria-label={`Options for ${nameMenu.studentName}`}>
+            <div className="schedule-name-menu__head">
+              <div><strong>{nameMenu.studentName}</strong><small>{formatLessonDate(menuBooking.date, menuBooking.time, true)} · {formatTime(menuBooking.time)} · {menuBooking.duration} min</small></div>
+              <button type="button" onClick={closeNameMenu} aria-label="Close options"><X size={15} /></button>
+            </div>
+            {menuError && <p className="schedule-name-menu__error" role="alert">{menuError}</p>}
+            {confirmUnbook ? (
+              <div className="schedule-name-menu__confirm">
+                <p>Unbook this class and free the slot?</p>
+                <div>
+                  <button type="button" onClick={() => setConfirmUnbook(false)} disabled={menuBusy}>Keep</button>
+                  <button type="button" className="danger" onClick={runUnbook} disabled={menuBusy}>{menuBusy ? 'Cancelling…' : 'Yes, unbook'}</button>
+                </div>
+              </div>
+            ) : (
+              <div className="schedule-name-menu__actions">
+                {onBookingOpen && <button type="button" onClick={() => { const target = menuBooking; closeNameMenu(); onBookingOpen(target) }}><CalendarCheck2 size={14} /> View booking details</button>}
+                {canFeedback && <button type="button" onClick={() => { const target = menuBooking; closeNameMenu(); onBookingFeedback(target) }}><MessageSquareText size={14} /> {menuBooking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</button>}
+                {onBookingCancel && unbookable && <button type="button" className="danger" onClick={() => setConfirmUnbook(true)}><XCircle size={14} /> Unbook / cancel class</button>}
+                {alreadyReleased && <p className="schedule-name-menu__note">This class is already cancelled.</p>}
+                {!unbookable && !alreadyReleased && <p className="schedule-name-menu__note">Completed classes cannot be unbooked.</p>}
+              </div>
+            )}
+          </div>
+        )
+      })()}
       <div className="schedule-legend">
         {showInactiveBookings ? <><span><i className="legend-dot legend-dot--booked" />Confirmed</span><span><i className="legend-dot legend-dot--ongoing" />Ongoing</span><span><i className="legend-dot legend-dot--completed" />Completed</span><span><i className="legend-dot legend-dot--absent" />Absent</span><span><i className="legend-dot legend-dot--cancelled" />Cancelled / declined</span></> : <><span><i className="legend-dot legend-dot--available" />Available</span><span><i className="legend-dot legend-dot--selected" />Selected</span><span><i className="legend-dot legend-dot--booked" />Booked</span><span><i className="legend-dot legend-dot--unavailable" />Unavailable</span></>}
       </div>
@@ -3019,6 +3118,14 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     refresh()
   }
 
+  const unbookCalendarClass = async (booking) => {
+    const updated = updateBooking(booking.id, { status: 'cancelled', cancelledBy: 'teacher', cancelledAt: new Date().toISOString() })
+    refresh()
+    if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the cancellation in time.')
+    void notifyBookingParticipants(updated, 'cancelled')
+    return updated
+  }
+
   const openTeacherClassroom = (booking) => {
     const activeClassroomBooking = booking.status === 'confirmed'
       ? updateBooking(booking.id, { status: 'ongoing', classStartedAt: new Date().toISOString() })
@@ -3150,7 +3257,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               if (booking.status === 'absent') actions = <button className="lesson-action lesson-action--wide lesson-action--restore" onClick={() => changeStatus(booking.id, 'confirmed')}><RotateCcw size={13} /> Restore booking</button>
               return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={actions} />
             }) : <EmptyState title={`No ${bookingStatusFilter === 'all' ? '' : `${bookingStatusFilter} `}bookings`} text="Choose another class status to see matching teacher bookings." />}
-          </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Separated calendar statuses</strong><small>Calendar colours distinguish ongoing, completed, absent and cancelled classes. Point to a confirmed, ongoing or completed student name to write feedback.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={filteredBookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} showInactiveBookings /></section>}
+          </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Separated calendar statuses</strong><small>Calendar colours distinguish ongoing, completed, absent and cancelled classes. Click a student name to write feedback, view details or unbook the class.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={filteredBookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} onBookingCancel={unbookCalendarClass} showInactiveBookings /></section>}
         </div>
       )}
 
@@ -4954,6 +5061,14 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
+  const unbookCalendarClass = async (booking) => {
+    const updated = updateBooking(booking.id, { status: 'cancelled', cancelledBy: 'admin', cancelledAt: new Date().toISOString() })
+    refresh()
+    if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'The shared booking database did not confirm the cancellation in time.')
+    void notifyBookingParticipants(updated, 'cancelled')
+    return updated
+  }
+
   const nav = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
@@ -5160,7 +5275,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                   <span><CalendarCheck2 size={18} /></span>
                   <div>
                     <strong>Reserve a slot for {selectedCalendarTeacher?.fullName || 'selected teacher'}</strong>
-                    <small>Choose a student, click any available teacher slot, then reserve it as a confirmed class.</small>
+                    <small>Choose a student, click any available teacher slot, then reserve it as a confirmed class. Click a booked student name to view details or unbook the class.</small>
                   </div>
                 </div>
 
@@ -5184,6 +5299,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                   selectedLessons={adminReserveSlot ? [{ ...adminReserveSlot, duration: Number(adminReserveDuration) }] : []}
                   onSelect={(slot) => { setAdminReserveSlot({ date: slot.date, time: slot.time, duration: Number(adminReserveDuration) }); setAdminReserveError(''); setAdminReserveMessage('') }}
                   onBookingOpen={setManagedBooking} 
+                  onBookingCancel={unbookCalendarClass}
                   showInactiveBookings 
                 />
               </section>
