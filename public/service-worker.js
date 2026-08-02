@@ -1,10 +1,12 @@
-const CACHE_NAME = 'tutorpro-classroom-shell-v1'
+const CACHE_NAME = 'tutorpro-classroom-shell-v2'
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
   '/assets/tutorpro-panda-logo.webp',
   '/assets/pwa-icon-192.png',
-  '/assets/pwa-icon-512.png'
+  '/assets/pwa-icon-512.png',
+  '/favicon.ico',
+  '/favicon.png'
 ]
 
 self.addEventListener('install', (event) => {

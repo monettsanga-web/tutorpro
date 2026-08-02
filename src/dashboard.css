@@ -58,9 +58,11 @@
   width: 57px;
   height: 57px;
   flex: 0 0 auto;
+  padding: 3px;
   border: 3px solid rgba(255, 255, 255, 0.88);
   border-radius: 17px;
-  object-fit: cover;
+  background: #fff;
+  object-fit: contain;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
@@ -1060,8 +1062,12 @@
   right: -35px;
   bottom: -45px;
   width: 205px;
+  height: 205px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.9);
   border: 8px solid rgba(255, 255, 255, 0.85);
   border-radius: 48%;
+  object-fit: contain;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
   transform: rotate(4deg);
 }
@@ -5348,7 +5354,8 @@
 .role-access__logo img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  padding: 6px;
+  object-fit: contain;
 }
 
 .role-access__story h2 {
