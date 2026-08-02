@@ -9127,3 +9127,20 @@ a.feedback-resource-detail:hover strong {
     -webkit-line-clamp: 2;
   }
 }
+
+/* Tap-to-unbook: make the whole booked cell an obvious tap target */
+.schedule-cell.booked.manageable { cursor: pointer !important; touch-action: manipulation; }
+.schedule-cell.booked.manageable > span,
+.schedule-cell.booked.manageable > span > strong,
+.schedule-cell.booked.manageable > span > b,
+.schedule-cell.booked.manageable > span > em { pointer-events: none !important; }
+.schedule-cell.booked.manageable:active { filter: brightness(0.96); }
+.schedule-name-action { cursor: pointer; }
+.schedule-tap-prompt { color: #6d5aa8 !important; }
+.schedule-cell.booked.manageable:hover .schedule-tap-prompt { opacity: 1; transform: translateY(0); }
+
+/* Larger touch targets on phones/tablets */
+@media (max-width: 900px), (pointer: coarse) {
+  .schedule-cell.booked.manageable { min-height: 52px !important; }
+  .schedule-tap-prompt { display: none !important; }
+}

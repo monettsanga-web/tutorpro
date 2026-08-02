@@ -1,4 +1,5 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   ArrowRight,
   AudioLines,
@@ -34,6 +35,7 @@ import {
   LogOut,
   Menu,
   MessageSquareText,
+  MoreHorizontal,
   Paperclip,
   Plus,
   RotateCcw,
@@ -231,13 +233,16 @@ export function ScheduleCalendar({
     if (!nameMenu) return undefined
     const dismiss = (event) => { if (!event.target.closest?.('.schedule-name-menu')) closeNameMenu() }
     const onKey = (event) => { if (event.key === 'Escape') closeNameMenu() }
-    document.addEventListener('mousedown', dismiss)
+    document.addEventListener('pointerdown', dismiss)
     document.addEventListener('keydown', onKey)
     window.addEventListener('resize', closeNameMenu)
+    const scroller = scrollRef.current
+    scroller?.addEventListener('scroll', closeNameMenu, { passive: true })
     return () => {
-      document.removeEventListener('mousedown', dismiss)
+      document.removeEventListener('pointerdown', dismiss)
       document.removeEventListener('keydown', onKey)
       window.removeEventListener('resize', closeNameMenu)
+      scroller?.removeEventListener('scroll', closeNameMenu)
     }
   }, [nameMenu])
 
@@ -245,14 +250,14 @@ export function ScheduleCalendar({
     event.stopPropagation()
     event.preventDefault()
     const rect = event.currentTarget.getBoundingClientRect()
+    const menuWidth = 250
+    const menuHeight = 230
+    let top = rect.bottom + 6
+    if (top + menuHeight > window.innerHeight - 8) top = Math.max(8, rect.top - menuHeight - 6)
+    const left = Math.min(Math.max(10, rect.left), Math.max(10, window.innerWidth - menuWidth - 10))
     setConfirmUnbook(false)
     setMenuError('')
-    setNameMenu({
-      booking,
-      studentName,
-      top: Math.min(rect.bottom + 6, window.innerHeight - 210),
-      left: Math.min(Math.max(12, rect.left), window.innerWidth - 262),
-    })
+    setNameMenu({ booking, studentName, top, left })
   }
 
   const runUnbook = async () => {
@@ -408,7 +413,7 @@ export function ScheduleCalendar({
                   bookingCell ? 'booked' : '',
                   bookingCell && bookingCell.booking.isTrialClass ? 'booking-status-trial' : '',
                   bookingCell ? `booking-status-${bookingCell.booking.status}` : '',
-                  bookingCell && onBookingOpen ? 'manageable' : '',
+                  bookingCell && (onBookingOpen || onBookingCancel) ? 'manageable' : '',
                   bookingCell?.isStart ? 'booking-start' : '',
                   selectable ? 'selectable' : '',
                   isSelected ? 'selected' : '',
@@ -421,10 +426,14 @@ export function ScheduleCalendar({
                     key={`${dateKey}-${time}`}
                     aria-label={`${date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${time}${bookingCell ? `, booked for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : isAvailable ? ', available' : ', unavailable'}`}
                     aria-pressed={editable ? isAvailable : isSelected}
-                    disabled={bookingCell ? !onBookingOpen : !editable && !selectable && !isSelected}
+                    disabled={bookingCell ? !(onBookingOpen || onBookingCancel) : !editable && !selectable && !isSelected}
                     onPointerDown={(event) => { startPaint(event, slotKey, Boolean(bookingCell)); startBookingSelection(event, dateKey, time, selectable, selectedOwner) }}
                     onPointerEnter={() => { continuePaint(slotKey, Boolean(bookingCell)); continueBookingSelection(dateKey, time, selectable, selectedOwner) }}
                     onClick={(event) => {
+                      if (bookingCell && onBookingCancel) {
+                        openNameMenu(event, bookingCell.booking, bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson')
+                        return
+                      }
                       if (bookingCell && onBookingOpen) {
                         onBookingOpen(bookingCell.booking)
                         return
@@ -437,19 +446,11 @@ export function ScheduleCalendar({
                     {bookingCell?.isStart && (() => {
                       const cellName = bookedLearner?.name || bookingCell.booking.learnerName || 'Booked lesson'
                       const nameActions = Boolean(onBookingCancel)
-                      const nameInteractive = nameActions || feedbackAvailable
                       return (
-                        <span>
-                          <strong
-                            className={`${feedbackAvailable ? 'schedule-feedback-target' : ''} ${nameActions ? 'schedule-name-action' : ''}`.trim()}
-                            title={nameActions ? `Open options for ${cellName}` : feedbackAvailable ? `Write feedback for ${cellName}` : undefined}
-                            onPointerDown={(event) => { if (nameInteractive) event.stopPropagation() }}
-                            onClick={(event) => {
-                              if (nameActions) { openNameMenu(event, bookingCell.booking, cellName); return }
-                              if (feedbackAvailable) { event.stopPropagation(); onBookingFeedback(bookingCell.booking) }
-                            }}
-                          >{cellName}</strong>
-                          {feedbackAvailable && !nameActions && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}
+                        <span className="schedule-booking-label">
+                          <strong className={nameActions ? 'schedule-name-action' : feedbackAvailable ? 'schedule-feedback-target' : ''}>{cellName}</strong>
+                          {nameActions && <b className="schedule-feedback-prompt schedule-tap-prompt"><MoreHorizontal size={9} /> Tap for options</b>}
+                          {!nameActions && feedbackAvailable && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}
                           {bookingCell.booking.slotComment && <em>Comment</em>}
                         </span>
                       )
@@ -467,7 +468,7 @@ export function ScheduleCalendar({
         const alreadyReleased = ['cancelled', 'declined'].includes(menuBooking.status)
         const unbookable = !['completed', 'cancelled', 'declined'].includes(menuBooking.status)
         const canFeedback = Boolean(onBookingFeedback) && ['confirmed', 'ongoing', 'completed'].includes(menuBooking.status)
-        return (
+        return createPortal((
           <div className="schedule-name-menu" style={{ top: `${nameMenu.top}px`, left: `${nameMenu.left}px` }} role="dialog" aria-label={`Options for ${nameMenu.studentName}`}>
             <div className="schedule-name-menu__head">
               <div><strong>{nameMenu.studentName}</strong><small>{formatLessonDate(menuBooking.date, menuBooking.time, true)} · {formatTime(menuBooking.time)} · {menuBooking.duration} min</small></div>
@@ -492,7 +493,7 @@ export function ScheduleCalendar({
               </div>
             )}
           </div>
-        )
+        ), document.body)
       })()}
       <div className="schedule-legend">
         {showInactiveBookings ? <><span><i className="legend-dot legend-dot--booked" />Confirmed</span><span><i className="legend-dot legend-dot--ongoing" />Ongoing</span><span><i className="legend-dot legend-dot--completed" />Completed</span><span><i className="legend-dot legend-dot--absent" />Absent</span><span><i className="legend-dot legend-dot--cancelled" />Cancelled / declined</span></> : <><span><i className="legend-dot legend-dot--available" />Available</span><span><i className="legend-dot legend-dot--selected" />Selected</span><span><i className="legend-dot legend-dot--booked" />Booked</span><span><i className="legend-dot legend-dot--unavailable" />Unavailable</span></>}
