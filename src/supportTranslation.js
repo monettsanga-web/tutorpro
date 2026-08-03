@@ -14,6 +14,7 @@ const languageMap = {
   ar: 'ar',
   vi: 'vi',
   th: 'th',
+  pl: 'pl',
 }
 
 function detectSourceLanguage(text) {

@@ -9538,3 +9538,45 @@ a.feedback-resource-detail:hover strong {
   .announcement-banner { grid-template-columns: auto minmax(0, 1fr); }
   .announcement-banner > button { grid-column: 2; justify-self: end; }
 }
+
+/* Timezone switcher in the calendar toolbar */
+.schedule-timezone-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 3px;
+  border: 1px solid #dce3ee;
+  border-radius: 11px;
+  background: #f8fafc;
+  color: #64748b;
+}
+.schedule-timezone-switch > svg { margin: 0 3px; color: #7048df; }
+.schedule-timezone-switch button {
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  color: #52657e;
+  font-size: .7rem;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.schedule-timezone-switch button:hover { background: #eef2f7; }
+.schedule-timezone-switch button.active { background: #7048df; color: #fff; }
+.schedule-timezone-switch + .schedule-fullscreen-button { margin-left: 8px; }
+
+/* Approximate local-currency hint beside USD prices */
+.price-local-hint {
+  display: block;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-size: .72rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .schedule-timezone-switch { display: none; }
+}

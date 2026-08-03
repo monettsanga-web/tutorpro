@@ -10,26 +10,27 @@ export const COUNTRY_LANGUAGES = {
   ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
   FR: 'fr', DE: 'de', AT: 'de', BR: 'pt', PT: 'pt',
   SA: 'ar', AE: 'ar', QA: 'ar', EG: 'ar', VN: 'vi', TH: 'th',
+  PL: 'pl',
 }
 
 export const LANGUAGE_LABELS = {
   en: 'English', tl: 'Filipino', ko: '한국어', 'zh-CN': '简体中文', 'zh-TW': '繁體中文',
   ja: '日本語', es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português',
-  ar: 'العربية', vi: 'Tiếng Việt', th: 'ไทย',
+  ar: 'العربية', vi: 'Tiếng Việt', th: 'ไทย', pl: 'Polski',
 }
 
 /** "Announcement" heading in each supported language. */
 const ANNOUNCEMENT_LABELS = {
   en: 'Announcement', tl: 'Anunsyo', ko: '공지사항', 'zh-CN': '公告', 'zh-TW': '公告',
   ja: 'お知らせ', es: 'Anuncio', fr: 'Annonce', de: 'Ankündigung', pt: 'Aviso',
-  ar: 'إعلان', vi: 'Thông báo', th: 'ประกาศ',
+  ar: 'إعلان', vi: 'Thông báo', th: 'ประกาศ', pl: 'Ogłoszenie',
 }
 
 const ORIGINAL_LABELS = {
   en: 'Original (English)', tl: 'Orihinal (Ingles)', ko: '원문 (영어)', 'zh-CN': '原文（英文）',
   'zh-TW': '原文（英文）', ja: '原文（英語）', es: 'Original (inglés)', fr: 'Original (anglais)',
   de: 'Original (Englisch)', pt: 'Original (inglês)', ar: '‏النص الأصلي (الإنجليزية)',
-  vi: 'Bản gốc (tiếng Anh)', th: 'ต้นฉบับ (ภาษาอังกฤษ)',
+  vi: 'Bản gốc (tiếng Anh)', th: 'ต้นฉบับ (ภาษาอังกฤษ)', pl: 'Oryginał (angielski)',
 }
 
 export function announcementLabel(language) {

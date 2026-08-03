@@ -16,6 +16,7 @@ const languages = [
   { code: 'ar', label: 'العربية' },
   { code: 'vi', label: 'Tiếng Việt' },
   { code: 'th', label: 'ไทย' },
+  { code: 'pl', label: 'Polski' },
 ]
 
 const languageControlLabels = {
@@ -32,6 +33,7 @@ const languageControlLabels = {
   ar: { choose: 'اختر اللغة', auto: 'اكتشاف تلقائي' },
   vi: { choose: 'Chọn ngôn ngữ', auto: 'Tự động phát hiện' },
   th: { choose: 'เลือกภาษา', auto: 'ตรวจหาอัตโนมัติ' },
+  pl: { choose: 'Wybierz język', auto: 'Wykryj automatycznie' },
 }
 
 const pageTitles = {
@@ -48,6 +50,7 @@ const pageTitles = {
   ar: 'TutorPro English — الثقة في الإنجليزية، درسًا بعد درس',
   vi: 'TutorPro English — Tự tin tiếng Anh qua từng bài học',
   th: 'TutorPro English — สร้างความมั่นใจภาษาอังกฤษทีละบทเรียน',
+  pl: 'TutorPro English — Pewność w angielskim, lekcja po lekcji',
 }
 
 const countryLanguages = {
@@ -55,6 +58,7 @@ const countryLanguages = {
   ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
   FR: 'fr', DE: 'de', AT: 'de', BR: 'pt', PT: 'pt',
   SA: 'ar', AE: 'ar', QA: 'ar', EG: 'ar', VN: 'vi', TH: 'th',
+  PL: 'pl',
 }
 
 function readSavedLanguage() {

@@ -81,6 +81,7 @@ import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
 import AnnouncementBanner from './AnnouncementBanner.jsx'
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
+import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import CoursewareManager from './CoursewareManager.jsx'
 import { isTencentClassroomConfigured } from './tencentClassroom.js'
@@ -138,6 +139,26 @@ const planCreditCount = (billingPlan, sessions) => Number(sessions) * (billingPl
 const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
 const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)
 const formatUsd = (amount) => `$${Number(amount).toFixed(2)} USD`
+
+/**
+ * Approximate local-currency reference shown beside the USD price so parents
+ * outside the US can judge the cost instantly. PayPal is still charged in USD;
+ * this is a display hint only, which is why it is labelled "approx".
+ */
+const LOCAL_PRICE_HINTS = {
+  PL: { code: 'PLN', symbol: 'zł', perUsd: 4.0, suffix: true },
+  EU: { code: 'EUR', symbol: '€', perUsd: 0.92 },
+  GB: { code: 'GBP', symbol: '£', perUsd: 0.79 },
+}
+const EURO_COUNTRIES = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'PT', 'IE', 'FI', 'GR', 'SK', 'SI', 'LT', 'LV', 'EE', 'LU', 'CY', 'MT', 'HR']
+
+function localPriceHint(amount, country) {
+  const code = String(country || '').toUpperCase()
+  const hint = LOCAL_PRICE_HINTS[code] || (EURO_COUNTRIES.includes(code) ? LOCAL_PRICE_HINTS.EU : null)
+  if (!hint) return ''
+  const converted = Math.round(Number(amount) * hint.perUsd)
+  return hint.suffix ? `≈ ${converted} ${hint.symbol}` : `≈ ${hint.symbol}${converted}`
+}
 const CHINA_TUITION_PER_25_MINUTES = 25
 const CHINA_PROCESSING_FEE_PER_SESSION = 5
 const chinaSessionTotal = (sessions, billingPlan = 'weekly') => planCreditCount(billingPlan, sessions) * (CHINA_TUITION_PER_25_MINUTES + CHINA_PROCESSING_FEE_PER_SESSION)
@@ -229,6 +250,10 @@ export function ScheduleCalendar({
   const scrollRef = useRef(null)
   const calendarRef = useRef(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [timezoneMode, setTimezoneMode] = useState(readTimezoneMode)
+  const viewerZone = visitorTimeZone()
+  // Lesson times are stored in Manila time; convert for display only.
+  const showLocalTimes = timezoneMode === 'local' && viewerNeedsConversion(viewerZone)
   const [nameMenu, setNameMenu] = useState(null)
   const [menuBusy, setMenuBusy] = useState(false)
   const [menuError, setMenuError] = useState('')
@@ -323,6 +348,12 @@ export function ScheduleCalendar({
   }, [])
 
   useEffect(() => {
+    const syncMode = () => setTimezoneMode(readTimezoneMode())
+    window.addEventListener('tutorpro:timezone-change', syncMode)
+    return () => window.removeEventListener('tutorpro:timezone-change', syncMode)
+  }, [])
+
+  useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === calendarRef.current)
     document.addEventListener('fullscreenchange', syncFullscreen)
     return () => document.removeEventListener('fullscreenchange', syncFullscreen)
@@ -412,11 +443,18 @@ export function ScheduleCalendar({
         <strong>{rangeLabel}</strong>
         <button className="schedule-today" onClick={() => onWeekOffset(0)}>Today</button>
         <div className="schedule-view-tabs"><span className="active">Week</span><span>30 min slots</span></div>
+        {viewerNeedsConversion(viewerZone) && (
+          <div className="schedule-timezone-switch" role="group" aria-label="Choose which timezone lesson times are shown in">
+            <Globe2 size={14} />
+            <button type="button" className={timezoneMode === 'local' ? 'active' : ''} onClick={() => { saveTimezoneMode('local'); setTimezoneMode('local') }}>My time ({timezoneLabel(viewerZone)})</button>
+            <button type="button" className={timezoneMode === 'school' ? 'active' : ''} onClick={() => { saveTimezoneMode('school'); setTimezoneMode('school') }}>Manila (UTC+8)</button>
+          </div>
+        )}
         <button type="button" className="schedule-fullscreen-button" onClick={toggleCalendarFullscreen} title={isFullscreen ? 'Exit full screen' : 'View calendar full screen'}>{isFullscreen ? <><Minimize2 size={14} /> Exit full screen</> : <><Maximize2 size={14} /> Full screen</>}</button>
       </div>
       <div className="schedule-scroll" ref={scrollRef}>
         <div className="schedule-days">
-          <div className="schedule-time-heading">UTC+8</div>
+          <div className="schedule-time-heading" title={showLocalTimes ? `Times shown in your local time (${timezoneCity(viewerZone)})` : 'Times shown in Manila school time'}>{showLocalTimes ? timezoneLabel(viewerZone) : 'UTC+8'}</div>
           {dates.map((date) => {
             const dateKey = formatDateKey(date)
             const current = dateKey === today()
@@ -426,7 +464,7 @@ export function ScheduleCalendar({
         <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''} ${multiSelect ? 'schedule-body--multi' : ''}`}>
           {HALF_HOUR_TIMES.map((time) => (
             <div className="schedule-row" key={time}>
-              <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{time}</div>
+              <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{showLocalTimes ? toViewerTime(time, formatDateKey(dates[0]), viewerZone).time : time}</div>
               {dates.map((date, dayIndex) => {
                 const dateKey = formatDateKey(date)
                 const slotKey = makeSlotKey(dayIndex, time)
@@ -2349,9 +2387,9 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               ) : (
                 <>
                   <div><span>Package</span><strong>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'}</strong></div>
-                  <div><span>Rate</span><strong>{formatUsd(sessionRate)} / class</strong></div>
+                  <div><span>Rate</span><strong>{formatUsd(sessionRate)} / class{localPriceHint(sessionRate, account.registrationCountry) && <em className="price-local-hint">{localPriceHint(sessionRate, account.registrationCountry)}</em>}</strong></div>
                   <div><span>Credits included</span><strong>{creditCount}</strong></div>
-                  <div className="student-payment-pro__summary-total"><span>Total PayPal payment</span><strong>{formatUsd(weeklyTotal)}</strong></div>
+                  <div className="student-payment-pro__summary-total"><span>Total PayPal payment</span><strong>{formatUsd(weeklyTotal)}{localPriceHint(weeklyTotal, account.registrationCountry) && <em className="price-local-hint">{localPriceHint(weeklyTotal, account.registrationCountry)}</em>}</strong></div>
                 </>
               )}
             </div>
