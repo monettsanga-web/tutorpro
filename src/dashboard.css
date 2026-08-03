@@ -9266,3 +9266,130 @@ a.feedback-resource-detail:hover strong {
     padding: 22px 22px 40px;
   }
 }
+
+/* ==========================================================================
+   Pronunciation practice for teacher feedback words
+   ========================================================================== */
+.practice-word-speaker {
+  display: grid;
+  gap: 11px;
+  border: 1px solid rgba(124, 58, 237, .16);
+  border-radius: 18px;
+  padding: 14px;
+  background: linear-gradient(135deg, #faf8ff 0%, #f4f8ff 60%, #f2fbf5 100%);
+}
+
+.practice-word-speaker__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.practice-word-speaker__head b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #241042;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.practice-word-speaker__head small {
+  display: block;
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: .72rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.practice-word-speaker__controls { display: flex; gap: 7px; }
+
+.practice-word-speaker__controls button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #fff;
+  color: #5b21b6;
+  font-size: .74rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.practice-word-speaker__controls button:hover { border-color: #a78bfa; background: #f5f3ff; }
+.practice-word-speaker__controls button.active { border-color: #7048df; background: #7048df; color: #fff; }
+
+.practice-word-speaker__list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.practice-word-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  padding: 0 15px;
+  background: #fff;
+  color: #4c1d95;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+.practice-word-button:hover { border-color: #a78bfa; background: #f5f3ff; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(112, 72, 223, .16); }
+.practice-word-button:active { transform: translateY(0); }
+.practice-word-button:disabled { opacity: .6; cursor: not-allowed; }
+.practice-word-button.is-speaking {
+  border-color: #7048df;
+  background: #7048df;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(112, 72, 223, .18);
+}
+.practice-word-button__spin { animation: practice-word-spin 900ms linear infinite; }
+@keyframes practice-word-spin { to { transform: rotate(360deg); } }
+
+/* Compact inline chip (AI report card) */
+.practice-word-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  padding: 6px 11px;
+  background: #ede9fe;
+  color: #4c1d95;
+  font-size: .74rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.practice-word-chip:hover { border-color: #a78bfa; background: #ddd6fe; }
+.practice-word-chip.is-speaking { border-color: #7048df; background: #7048df; color: #fff; }
+.ai-chip-row--speak { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+
+/* Teacher feedback dialog: small speaker button on each chip */
+.feedback-chip-list--speak > span { padding-left: 4px; }
+.feedback-chip-speak {
+  display: grid !important;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(79, 116, 24, .16) !important;
+  color: #3f5d13 !important;
+  cursor: pointer;
+}
+.feedback-chip-speak:hover { background: rgba(79, 116, 24, .3) !important; }
+
+@media (max-width: 620px) {
+  .practice-word-speaker__head { flex-direction: column; align-items: flex-start; }
+  .practice-word-button { min-height: 46px; font-size: .92rem; }
+}
