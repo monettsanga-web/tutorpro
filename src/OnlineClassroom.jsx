@@ -74,6 +74,7 @@ import {
 } from './classroomStorage.js'
 import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailable, isRecordingSupported, startClassroomRecording, uploadClassroomRecording } from './classroomRecording.js'
 
+import SpeechCoachPanel from './SpeechCoachPanel.jsx'
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
 const turnServer = import.meta.env.VITE_CLASSROOM_TURN_URL
@@ -326,6 +327,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [documentZoom, setDocumentZoom] = useState(1)
   const [useGoogleClassroomMode, setUseGoogleClassroomMode] = useState(false)
   const [sidebarTab, setSidebarTab] = useState('chat')
+  const [speechSummary, setSpeechSummary] = useState(null)
+  // Practice words come from the teacher's most recent feedback on this booking,
+  // falling back to the current courseware slide's vocabulary.
+  const speechPracticeWords = Array.isArray(roomBooking?.teacherFeedback?.practiceWords)
+    ? roomBooking.teacherFeedback.practiceWords
+    : []
   const chinaConnection = isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: studentAccount?.registrationCountry })
   const [chatMessages, setChatMessages] = useState([])
   const [chatDraft, setChatDraft] = useState('')
@@ -1221,6 +1228,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       documentZoom,
       sharedFileCount: files.length,
       sharedFiles: files.slice(-10).map((file) => ({ name: file.name, size: file.size, source: file.source || 'inline' })),
+      speechSummary: speechSummary ? {
+        summary: speechSummary.summary,
+        averageScore: speechSummary.averageScore,
+        wordCount: speechSummary.stats?.wordCount || 0,
+        uniqueCount: speechSummary.stats?.uniqueCount || 0,
+        practiceWords: speechSummary.practiceWords || [],
+        strongWords: speechSummary.strongWords || [],
+        homework: speechSummary.homework || [],
+      } : null,
       chatMessageCount: chatMessages.length,
       annotationCount: pathsRef.current.length,
       participantCount,
@@ -2172,8 +2188,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
         {sidebarOpen && <aside className="classroom-sidebar">
           <div className="classroom-sidebar__heading"><div><MessageCircle size={18} /><span><strong>Classroom panel</strong><small>Chat, translation and lesson files</small></span></div><button onClick={() => setSidebarOpen(false)}><X size={17} /></button></div>
-          <div className="classroom-sidebar-tabs"><button className={sidebarTab === 'chat' ? 'active' : ''} onClick={() => setSidebarTab('chat')}><MessageCircle size={15} /> Chat</button><button className={sidebarTab === 'files' ? 'active' : ''} onClick={() => setSidebarTab('files')}><Paperclip size={15} /> Files <i>{files.length}</i></button></div>
-          {sidebarTab === 'chat' ? <div className="classroom-chat">
+          <div className="classroom-sidebar-tabs"><button className={sidebarTab === 'chat' ? 'active' : ''} onClick={() => setSidebarTab('chat')}><MessageCircle size={15} /> Chat</button><button className={sidebarTab === 'files' ? 'active' : ''} onClick={() => setSidebarTab('files')}><Paperclip size={15} /> Files <i>{files.length}</i></button><button className={sidebarTab === 'coach' ? 'active' : ''} onClick={() => setSidebarTab('coach')} title="AI speech coach"><Sparkles size={15} /> Coach</button></div>
+          {sidebarTab === 'coach' ? <SpeechCoachPanel role={account.role} studentName={learner?.name || roomBooking.learnerName || 'Student'} practiceWords={speechPracticeWords} onSummary={setSpeechSummary} /> : sidebarTab === 'chat' ? <div className="classroom-chat">
             <div className="chat-translation-bar"><Languages size={15} /><span>Translate to</span><select value={chatLanguage} onChange={(event) => setChatLanguage(event.target.value)}>{chatLanguages.map((language) => <option value={language.code} key={language.code}>{language.label}</option>)}</select></div>
             <div className="classroom-chat-messages">{chatMessages.length ? chatMessages.map((message) => { const translationKey = `${message.id}:${chatLanguage}`; const translated = chatTranslations[translationKey]; const own = message.sender === participantName; return <div className={own ? 'chat-message own' : 'chat-message'} key={message.id}><div><strong>{message.sender}</strong><small>{new Date(message.createdAt).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}</small></div><p>{message.text}</p>{translated && <p className="chat-translation"><Languages size={12} /> {translated}</p>}{chatLanguage !== 'en' && !own && <button onClick={() => translateMessage(message)} disabled={translatingMessageId === message.id}>{translatingMessageId === message.id ? 'Translating…' : 'Translate'}</button>}</div> }) : <div className="chat-empty"><MessageCircle size={27} /><strong>Class chat is ready</strong><span>Messages are private to this booked classroom.</span></div>}</div>
             {chatError && <div className="classroom-file-error">{chatError}</div>}

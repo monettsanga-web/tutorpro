@@ -2065,3 +2065,83 @@ body.classroom-active .support-widget {
 @media (max-width: 760px) {
   .classroom-recording-badge small { display: none; }
 }
+
+/* ---------------- AI speech coach ---------------- */
+.speech-coach { display: grid; gap: 12px; padding: 14px; overflow-y: auto; }
+.speech-coach__head { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+.speech-coach__head b { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-size: .84rem; font-weight: 900; }
+.speech-coach__head small { display: block; margin-top: 4px; color: rgba(255,255,255,.62); font-size: .7rem; line-height: 1.45; }
+.speech-coach__mic {
+  display: inline-flex; min-height: 36px; flex: 0 0 auto; align-items: center; gap: 6px;
+  border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 0 14px;
+  background: rgba(255,255,255,.1); color: #fff; font-size: .76rem; font-weight: 800; cursor: pointer;
+}
+.speech-coach__mic:hover { background: rgba(255,255,255,.18); }
+.speech-coach__mic:disabled { opacity: .5; cursor: not-allowed; }
+.speech-coach__mic.is-live { border-color: #dc2626; background: #dc2626; animation: recording-pulse 1.8s ease-in-out infinite; }
+.speech-coach__error { margin: 0; border-radius: 9px; padding: 8px 10px; background: rgba(190,24,60,.24); color: #fecdd3; font-size: .74rem; }
+
+.speech-coach__targets { display: grid; gap: 7px; }
+.speech-coach__targets > span,
+.speech-coach__transcript > span,
+.speech-coach__grammar > span,
+.speech-coach__history > span { color: rgba(255,255,255,.55); font-size: .66rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.speech-coach__targets > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.speech-coach__targets button {
+  border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 6px 11px;
+  background: rgba(255,255,255,.07); color: #e2e8f0; font-size: .76rem; font-weight: 700; cursor: pointer;
+}
+.speech-coach__targets button.active { border-color: #bce94e; background: rgba(188,233,78,.2); color: #eaffb8; }
+.speech-coach__hear {
+  display: inline-flex; width: fit-content; align-items: center; gap: 5px;
+  border: 0; border-radius: 999px; padding: 6px 11px;
+  background: rgba(112,72,223,.35); color: #ddd6fe; font-size: .72rem; font-weight: 800; cursor: pointer;
+}
+
+.speech-coach__score { display: flex; gap: 12px; align-items: center; border-radius: 14px; padding: 12px 14px; background: rgba(255,255,255,.07); }
+.speech-coach__score strong { font-size: 1.5rem; font-weight: 900; color: #fff; }
+.speech-coach__score b { display: block; color: #fff; font-size: .82rem; }
+.speech-coach__score small { display: block; margin-top: 2px; color: rgba(255,255,255,.68); font-size: .72rem; line-height: 1.4; }
+.speech-coach__score--green { background: rgba(34,197,94,.2); }
+.speech-coach__score--blue { background: rgba(59,130,246,.2); }
+.speech-coach__score--orange { background: rgba(249,115,22,.2); }
+.speech-coach__score--pink { background: rgba(236,72,153,.2); }
+
+.speech-coach__transcript { display: grid; gap: 5px; }
+.speech-coach__transcript p {
+  margin: 0; max-height: 130px; overflow-y: auto; border-radius: 11px; padding: 10px 12px;
+  background: rgba(0,0,0,.28); color: #e2e8f0; font-size: .8rem; line-height: 1.5;
+}
+.speech-coach__transcript i { color: rgba(255,255,255,.45); font-style: normal; }
+
+.speech-coach__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.speech-coach__stats > div { border-radius: 11px; padding: 9px 6px; background: rgba(255,255,255,.07); text-align: center; }
+.speech-coach__stats strong { display: block; color: #bce94e; font-size: 1rem; font-weight: 900; }
+.speech-coach__stats span { color: rgba(255,255,255,.55); font-size: .62rem; font-weight: 700; }
+
+.speech-coach__balance { margin: 0; border-radius: 10px; padding: 8px 11px; background: rgba(249,115,22,.18); color: #fed7aa; font-size: .74rem; font-weight: 650; }
+.speech-coach__balance.is-good { background: rgba(34,197,94,.18); color: #bbf7d0; }
+
+.speech-coach__grammar { display: grid; gap: 7px; }
+.speech-coach__grammar > div { border-radius: 10px; padding: 9px 11px; background: rgba(255,255,255,.07); font-size: .76rem; color: #e2e8f0; }
+.speech-coach__grammar b { color: #fda4af; font-weight: 800; }
+.speech-coach__grammar em { color: #bbf7d0; font-style: normal; font-weight: 800; }
+.speech-coach__grammar small { display: block; margin-top: 3px; color: rgba(255,255,255,.6); font-size: .7rem; }
+
+.speech-coach__history > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.speech-coach__history i {
+  border-radius: 999px; padding: 4px 9px; font-size: .68rem; font-style: normal; font-weight: 800;
+  background: rgba(255,255,255,.1); color: #e2e8f0;
+}
+.speech-coach__history i.tone-green { background: rgba(34,197,94,.25); color: #bbf7d0; }
+.speech-coach__history i.tone-blue { background: rgba(59,130,246,.25); color: #bfdbfe; }
+.speech-coach__history i.tone-orange { background: rgba(249,115,22,.25); color: #fed7aa; }
+.speech-coach__history i.tone-pink { background: rgba(236,72,153,.25); color: #fbcfe8; }
+
+.speech-coach__actions { display: flex; gap: 7px; }
+.speech-coach__actions button {
+  display: inline-flex; min-height: 36px; flex: 1 1 auto; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid rgba(255,255,255,.2); border-radius: 10px;
+  background: rgba(255,255,255,.07); color: #e2e8f0; font-size: .76rem; font-weight: 800; cursor: pointer;
+}
+.speech-coach__actions button.primary { border-color: #bce94e; background: rgba(188,233,78,.22); color: #eaffb8; }
