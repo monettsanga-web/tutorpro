@@ -33,7 +33,9 @@ import {
   Languages,
   LayoutDashboard,
   LogOut,
+  Maximize2,
   Menu,
+  Minimize2,
   MessageSquareText,
   MoreHorizontal,
   Paperclip,
@@ -222,6 +224,8 @@ export function ScheduleCalendar({
   const available = new Set(availabilitySlots)
   const dragState = useRef(null)
   const scrollRef = useRef(null)
+  const calendarRef = useRef(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [nameMenu, setNameMenu] = useState(null)
   const [menuBusy, setMenuBusy] = useState(false)
   const [menuError, setMenuError] = useState('')
@@ -315,11 +319,35 @@ export function ScheduleCalendar({
     }
   }, [])
 
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === calendarRef.current)
+    document.addEventListener('fullscreenchange', syncFullscreen)
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen)
+  }, [])
+
+  // Let the calendar page use the full monitor width. CSS :has() handles this
+  // on modern browsers; this keeps older desktop browsers working too.
+  useEffect(() => {
+    const host = calendarRef.current?.closest('.portal-content')
+    if (!host) return undefined
+    host.classList.add('portal-content--wide-calendar')
+    return () => {
+      if (!host.querySelector('.schedule-calendar')) host.classList.remove('portal-content--wide-calendar')
+    }
+  }, [])
+
   const weekStart = dates[0]
   const weekEnd = dates[6]
   const rangeLabel = weekStart.getMonth() === weekEnd.getMonth()
     ? `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`
     : `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${weekEnd.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`
+
+  const toggleCalendarFullscreen = () => {
+    const node = calendarRef.current
+    if (!node) return
+    if (document.fullscreenElement) document.exitFullscreen?.()
+    else node.requestFullscreen?.().catch(() => {})
+  }
 
   const applyPaint = (slotKey, shouldAdd) => {
     if (!editable || !onPaint) return
@@ -372,7 +400,7 @@ export function ScheduleCalendar({
   }
 
   return (
-    <div className="schedule-calendar">
+    <div className="schedule-calendar" ref={calendarRef}>
       <div className="schedule-toolbar">
         <div className="schedule-toolbar__arrows">
           <button onClick={() => onWeekOffset(weekOffset - 1)} aria-label="Previous week"><ChevronLeft size={19} /></button>
@@ -381,6 +409,7 @@ export function ScheduleCalendar({
         <strong>{rangeLabel}</strong>
         <button className="schedule-today" onClick={() => onWeekOffset(0)}>Today</button>
         <div className="schedule-view-tabs"><span className="active">Week</span><span>30 min slots</span></div>
+        <button type="button" className="schedule-fullscreen-button" onClick={toggleCalendarFullscreen} title={isFullscreen ? 'Exit full screen' : 'View calendar full screen'}>{isFullscreen ? <><Minimize2 size={14} /> Exit full screen</> : <><Maximize2 size={14} /> Full screen</>}</button>
       </div>
       <div className="schedule-scroll" ref={scrollRef}>
         <div className="schedule-days">

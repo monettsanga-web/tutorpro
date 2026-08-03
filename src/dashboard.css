@@ -9144,3 +9144,125 @@ a.feedback-resource-detail:hover strong {
   .schedule-cell.booked.manageable { min-height: 52px !important; }
   .schedule-tap-prompt { display: none !important; }
 }
+
+/* ==========================================================================
+   Desktop calendar: use the full screen width/height and larger student names
+   ========================================================================== */
+@media (min-width: 901px) {
+  /* Let any page holding a schedule calendar break out of the 1320px column */
+  .portal-content:has(.booking-calendar-card),
+  .portal-content:has(.availability-calendar-card),
+  .portal-content:has(.student-schedule-card) {
+    width: 100%;
+    max-width: none;
+    padding: 22px 22px 40px;
+  }
+
+  .booking-calendar-card,
+  .availability-calendar-card,
+  .student-schedule-card {
+    width: 100%;
+    padding: 14px;
+  }
+
+  /* Taller board so the week fills the monitor */
+  .schedule-scroll {
+    max-height: calc(100dvh - 270px);
+    min-height: 560px;
+  }
+
+  /* Wider day columns now that we have the whole screen */
+  .schedule-days,
+  .schedule-row {
+    min-width: 100%;
+    grid-template-columns: 74px repeat(7, minmax(0, 1fr));
+  }
+
+  .schedule-row,
+  .schedule-cell {
+    min-height: 54px !important;
+  }
+
+  .schedule-day-heading { font-size: 0.8rem; }
+  .schedule-day-heading strong { font-size: 1rem; }
+  .schedule-time-heading { font-size: 0.62rem; }
+  .schedule-time { font-size: 0.72rem !important; }
+}
+
+@media (min-width: 1600px) {
+  .schedule-row,
+  .schedule-cell { min-height: 60px !important; }
+  .schedule-scroll { max-height: calc(100dvh - 250px); }
+}
+
+/* Bigger, clearly readable student names (still unbold) */
+.schedule-cell > span strong,
+.schedule-cell.booked.booking-start > span > strong,
+.schedule-cell.booked.booking-start > span > .schedule-feedback-target,
+.schedule-cell.booking-start > span > strong,
+.teacher-booking-calendar .schedule-cell.booked.booking-start > span > strong,
+.admin-reserve-calendar-card .schedule-cell.booked.booking-start > span > strong {
+  font-size: clamp(0.86rem, 0.95vw, 1.06rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.22 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  -webkit-line-clamp: 2;
+}
+
+@media (min-width: 1600px) {
+  .schedule-cell.booked.booking-start > span > strong {
+    font-size: clamp(1rem, 0.86vw, 1.18rem) !important;
+  }
+}
+
+/* Fullscreen toggle in the calendar toolbar */
+.schedule-fullscreen-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dce3ee;
+  border-radius: 10px;
+  padding: 0 11px;
+  background: #fff;
+  color: #52657e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.schedule-fullscreen-button:hover { border-color: #b9a6ef; background: #f7f4ff; color: #4c2f9e; }
+@media (max-width: 900px) { .schedule-fullscreen-button { display: none; } }
+
+/* True fullscreen: calendar owns the whole display */
+.schedule-calendar:fullscreen {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  flex-direction: column;
+  border-radius: 0;
+  background: #fff;
+}
+.schedule-calendar:fullscreen .schedule-scroll {
+  max-height: none;
+  flex: 1 1 auto;
+}
+.schedule-calendar:fullscreen .schedule-row,
+.schedule-calendar:fullscreen .schedule-cell { min-height: 58px !important; }
+.schedule-calendar:fullscreen .schedule-cell.booked.booking-start > span > strong {
+  font-size: clamp(0.95rem, 0.9vw, 1.2rem) !important;
+}
+
+/* Fullscreen button sits at the far right of the toolbar */
+.schedule-toolbar .schedule-fullscreen-button { margin-left: auto; }
+@media (max-width: 900px) { .schedule-view-tabs + .schedule-fullscreen-button { display: none; } }
+
+/* JS-applied fallback for browsers without :has() support */
+@media (min-width: 901px) {
+  .portal-content.portal-content--wide-calendar {
+    width: 100%;
+    max-width: none;
+    padding: 22px 22px 40px;
+  }
+}
