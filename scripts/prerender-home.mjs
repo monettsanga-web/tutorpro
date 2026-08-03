@@ -116,6 +116,7 @@ ${faqItems}
       </section>
       <footer>
         <p>TutorPro English — online English classes for kids and teens worldwide. Cambridge and Oxford aligned tutors, flexible scheduling, free first class.</p>
+        <p><a href="/about.html">About us</a> · <a href="/contact.html">Contact</a> · <a href="/privacy-policy.html">Privacy policy</a> · <a href="/terms.html">Terms of service</a> · <a href="/refund-policy.html">Refund policy</a></p>
       </footer>
     </div>`
 }

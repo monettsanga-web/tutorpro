@@ -1325,6 +1325,14 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <button onClick={onTeacherAccess}>Teacher portal</button>
               <button onClick={onAdminAccess}>Admin portal</button>
             </div>
+            <div>
+              <h3>Company</h3>
+              <a href="/about.html">About us</a>
+              <a href="/contact.html">Contact</a>
+              <a href="/privacy-policy.html">Privacy policy</a>
+              <a href="/terms.html">Terms of service</a>
+              <a href="/refund-policy.html">Refund policy</a>
+            </div>
             <div className="footer__contact">
               <h3>Contact us</h3>
               <a href="mailto:sejongenglish@yahoo.com"><Mail size={15} /> <span>sejongenglish@yahoo.com</span></a>
