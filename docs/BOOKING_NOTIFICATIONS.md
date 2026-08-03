@@ -1,6 +1,6 @@
-# TutorPro English booking email and phone-calendar notifications
+# TutorPro Online English booking email and phone-calendar notifications
 
-TutorPro English includes a Supabase Edge Function that emails both the parent/student account and assigned teacher whenever a lesson is requested, confirmed, cancelled, or restored. Each email includes an `.ics` phone-calendar attachment with reminders 30 minutes and 10 minutes before class.
+TutorPro Online English includes a Supabase Edge Function that emails both the parent/student account and assigned teacher whenever a lesson is requested, confirmed, cancelled, or restored. Each email includes an `.ics` phone-calendar attachment with reminders 30 minutes and 10 minutes before class.
 
 ## 1. Create a Resend account
 
@@ -11,11 +11,11 @@ TutorPro English includes a Supabase Edge Function that emails both the parent/s
 
 ## 2. Configure Supabase Edge Function secrets
 
-Using the Supabase CLI while linked to the TutorPro English project:
+Using the Supabase CLI while linked to the TutorPro Online English project:
 
 ```bash
 supabase secrets set RESEND_API_KEY=YOUR_RESEND_API_KEY
-supabase secrets set BOOKING_FROM_EMAIL="TutorPro English <notifications@tutorpro.site>"
+supabase secrets set BOOKING_FROM_EMAIL="TutorPro Online English <notifications@tutorpro.site>"
 ```
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are supplied automatically inside a deployed Supabase Edge Function. Never share the service-role key in chat or add it to the website repository.
@@ -34,7 +34,7 @@ The function source is located at:
 supabase/functions/booking-notification/index.ts
 ```
 
-Keep JWT verification enabled. The function verifies that the caller is the booked student, assigned teacher, or an authorized TutorPro English administrator before reading participant emails.
+Keep JWT verification enabled. The function verifies that the caller is the booked student, assigned teacher, or an authorized TutorPro Online English administrator before reading participant emails.
 
 ## 4. Test
 

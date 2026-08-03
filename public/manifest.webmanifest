@@ -1,7 +1,7 @@
 {
-  "name": "TutorPro English Classroom",
+  "name": "TutorPro Online English Classroom",
   "short_name": "TutorPro Classroom",
-  "description": "TutorPro English classroom and dashboard app for online English lessons.",
+  "description": "TutorPro Online English classroom and dashboard app for online English lessons.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

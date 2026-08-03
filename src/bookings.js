@@ -91,7 +91,7 @@ export function createBooking(details) {
       ? 'This family account is suspended. Contact the administrator before booking.'
       : 'The student profile could not be verified. Log out, log in again, and retry the booking.')
   }
-  if (learner.accessStatus === 'suspended') throw new Error(`${learner.name}’s student profile is suspended. Contact the TutorPro English administrator before booking.`)
+  if (learner.accessStatus === 'suspended') throw new Error(`${learner.name}’s student profile is suspended. Contact the TutorPro Online English administrator before booking.`)
   if (![25, 50].includes(Number(details.duration))) throw new Error('Choose a valid 25 or 50-minute lesson.')
   if (!details.focus?.trim()) throw new Error('Choose a lesson focus before booking.')
   const lessonDate = new Date(`${details.date}T${details.time}:00`)

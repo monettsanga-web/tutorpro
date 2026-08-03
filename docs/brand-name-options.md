@@ -22,7 +22,7 @@ now throws that away and restarts the clock — right when it finally started ti
 
 ### The honest recommendation
 
-**Keep TutorPro English.** Nothing in the Google AI response criticised your *name*. It
+**Keep TutorPro Online English.** Nothing in the Google AI response criticised your *name*. It
 criticised missing legal pages (now fixed) and missing reviews (needs real customers).
 A new name fixes neither and costs you your only SEO history.
 
@@ -40,7 +40,7 @@ parents, and that may be quietly costing you trust.
 
 ## Option A — Keep the name, upgrade the domain (lowest risk)
 
-Stay **TutorPro English**, but move to a stronger domain if one is free.
+Stay **TutorPro Online English**, but move to a stronger domain if one is free.
 Only the display domain changes; brand, logo and Facebook page all survive.
 Set a 301 redirect from `tutorpro.site` so existing SEO carries over.
 

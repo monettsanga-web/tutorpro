@@ -159,8 +159,8 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
       <section className={`role-access role-access--${mode}`} role="dialog" aria-modal="true" aria-labelledby="role-access-title">
         <button className="auth-close" onClick={onClose} aria-label="Close"><X size={21} /></button>
         <aside className="role-access__story">
-          <div className="role-access__logo"><img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda logo" /></div>
-          <span className="kicker kicker--light">{isAdmin ? 'TutorPro English control centre' : 'Teach with TutorPro English'}</span>
+          <div className="role-access__logo"><img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro Online English panda logo" /></div>
+          <span className="kicker kicker--light">{isAdmin ? 'TutorPro Online English control centre' : 'Teach with TutorPro Online English'}</span>
           <h2>{isAdmin ? 'Lead every learning journey with clarity.' : 'Your expertise can unlock a child’s confidence.'}</h2>
           <p>{isAdmin ? 'One secure dashboard for teacher approvals, student access and every lesson booking.' : 'Build your profile, set your schedule and manage one-to-one lessons from a focused teacher studio.'}</p>
           <ul>{(isAdmin ? ['Approve and manage teacher access', 'Oversee students and learning profiles', 'Control every booking status'] : ['Flexible weekly availability', 'Clear booking management', 'Cambridge and Oxford learners']).map((item) => <li key={item}><span><Check size={14} /></span>{item}</li>)}</ul>
@@ -193,14 +193,14 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
                   <div className="auth-form__actions"><button className="button button--outline" type="button" onClick={() => setStep(1)}><ArrowLeft size={16} /> Back</button><button className="button button--primary" type="submit">Continue to AI interview <ArrowRight size={17} /></button></div>
                 </form>
               ) : (
-                <Suspense fallback={<div className="teacher-interview-loading"><i /><strong>Preparing TutorPro English Hiring Assistant…</strong></div>}><TeacherAIInterview applicant={form} onBack={() => setStep(2)} onComplete={completeInterview} submitting={submitting} /></Suspense>
+                <Suspense fallback={<div className="teacher-interview-loading"><i /><strong>Preparing TutorPro Online English Hiring Assistant…</strong></div>}><TeacherAIInterview applicant={form} onBack={() => setStep(2)} onComplete={completeInterview} submitting={submitting} /></Suspense>
               )}
               <p className="auth-switch">Already registered? <button onClick={() => { setView('login'); setStep(1); setError('') }}>Teacher login</button></p>
             </>
           )}
 
           {!isAdmin && view === 'login' && (
-            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch">New to TutorPro English? <button onClick={() => { setView('register'); setError('') }}>Apply as a teacher</button></p></>
+            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch">New to TutorPro Online English? <button onClick={() => { setView('register'); setError('') }}>Apply as a teacher</button></p></>
           )}
 
           {!isAdmin && view === 'reset-request' && (

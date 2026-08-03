@@ -119,7 +119,7 @@ const faqs = [
 
 function Logo({ light = false }) {
   return (
-    <a className={`logo ${light ? 'logo--light' : ''}`} href="#top" aria-label="TutorPro English home">
+    <a className={`logo ${light ? 'logo--light' : ''}`} href="#top" aria-label="TutorPro Online English home">
       <span className="logo__mark" aria-hidden="true">
         <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="" />
       </span>
@@ -132,7 +132,7 @@ function Logo({ light = false }) {
 
 function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro English user'
+  const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro Online English user'
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
 
   const closeMenu = () => setMenuOpen(false)
@@ -217,7 +217,7 @@ function Hero({ onBook }) {
               Explore programmes
             </a>
           </div>
-          <div className="hero__proof" aria-label="TutorPro English benefits">
+          <div className="hero__proof" aria-label="TutorPro Online English benefits">
             <span><Check size={15} /> No commitment</span>
             <span><Check size={15} /> From $8 per class</span>
             <span><Check size={15} /> Flexible times</span>
@@ -293,7 +293,7 @@ function Stats() {
   ]
 
   return (
-    <section className="stats" aria-label="TutorPro English at a glance">
+    <section className="stats" aria-label="TutorPro Online English at a glance">
       <div className="container stats__inner">
         <p>Trusted by growing learners</p>
         <div className="stats__items">
@@ -314,7 +314,7 @@ function CurriculumCover({ slide, compact = false }) {
         <i aria-hidden="true">Aa</i>
         <strong>{slide.title}</strong>
         <small>{slide.level}</small>
-        <em>TutorPro English materials</em>
+        <em>TutorPro Online English materials</em>
       </div>
       {!compact && <><div className="curriculum-book-cover__book curriculum-book-cover__book--back"><span>{shortPublisher}</span><strong>{slide.title}</strong></div><div className="curriculum-cover-shapes" aria-hidden="true"><i /><i /><i /></div></>}
     </div>
@@ -401,7 +401,7 @@ function WhyTutorPro() {
       <div className="container">
         <div className="section-heading section-heading--split">
           <div>
-            <span className="kicker">Why TutorPro English</span>
+            <span className="kicker">Why TutorPro Online English</span>
             <h2>Less pressure. More progress.</h2>
           </div>
           <p>Support that meets your child where they are—and gives them a clear path to where they want to be.</p>
@@ -902,7 +902,7 @@ function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
         <button className="teacher-profile-detail-back" onClick={onBack}><ChevronLeft size={16} /> Back to teachers</button>
         <article className="public-teacher-profile-detail">
           <div className="public-teacher-profile-detail__cover">
-            <span>TutorPro English Teacher</span>
+            <span>TutorPro Online English Teacher</span>
             <button className="button button--primary" onClick={() => onChooseTeacher(teacher)}>Book Free Trial <ArrowRight size={16} /></button>
           </div>
           <div className="public-teacher-profile-detail__identity">
@@ -933,7 +933,7 @@ function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
               <section className="public-teacher-profile-panel">
                 <span className="kicker">About the teacher</span>
                 <h2>Teaching introduction</h2>
-                <p className="public-teacher-profile-detail__bio">{profile.bio || 'A warm TutorPro English teacher ready to help your child build speaking confidence, grammar accuracy and reading fluency.'}</p>
+                <p className="public-teacher-profile-detail__bio">{profile.bio || 'A warm TutorPro Online English teacher ready to help your child build speaking confidence, grammar accuracy and reading fluency.'}</p>
               </section>
 
               <section className="public-teacher-profile-panel public-teacher-profile-resume">
@@ -1024,7 +1024,7 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
             <span style={{ display: 'inline-block', padding: '16px', background: 'rgba(120, 80, 201, 0.1)', color: '#bce94e', borderRadius: '50%', marginBottom: '12px' }}><Users size={32} /></span>
             <div>
               <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '6px' }}>Teacher profiles are being prepared.</h3>
-              <p style={{ color: '#b9adc7', fontSize: '0.85rem' }}>Approved TutorPro English teachers will appear here as soon as their profiles are ready.</p>
+              <p style={{ color: '#b9adc7', fontSize: '0.85rem' }}>Approved TutorPro Online English teachers will appear here as soon as their profiles are ready.</p>
             </div>
           </div>}
         </div>
@@ -1048,7 +1048,7 @@ function GlobalDiscovery({ onBook }) {
           <span className="kicker">Global online English classes</span>
           <h2>Looking for a Novakid, 51Talk or Preply alternative?</h2>
           <p>
-            TutorPro English helps families around the world find personalised online English classes for children,
+            TutorPro Online English helps families around the world find personalised online English classes for children,
             with friendly 1-to-1 tutoring, school-aligned support and transparent lesson packages.
           </p>
           <ul>
@@ -1061,7 +1061,7 @@ function GlobalDiscovery({ onBook }) {
             <a className="button button--outline" href="/online-english-alternatives.html">Compare alternatives <ArrowUpRight size={17} /></a>
           </div>
         </div>
-        <div className="global-discovery__panel" aria-label="Popular search terms TutorPro English supports">
+        <div className="global-discovery__panel" aria-label="Popular search terms TutorPro Online English supports">
           <span>Popular searches</span>
           {[
             'online English classes for kids',
@@ -1206,7 +1206,7 @@ function FacebookMessengerContact() {
   }
 
   return (
-    <a className="messenger-float" href="https://m.me/526047974195321" target="_blank" rel="noreferrer" aria-label="Message TutorPro English on Facebook Messenger">
+    <a className="messenger-float" href="https://m.me/526047974195321" target="_blank" rel="noreferrer" aria-label="Message TutorPro Online English on Facebook Messenger">
       <MessageCircle size={21} />
       <span><strong>Need help?</strong><small>Open Messenger</small></span>
     </a>
@@ -1285,7 +1285,7 @@ function PWAInstallPrompt() {
   if (!installPrompt || installed || dismissed) return null
 
   return (
-    <aside className="pwa-install-card" aria-label="Install TutorPro English Classroom app">
+    <aside className="pwa-install-card" aria-label="Install TutorPro Online English Classroom app">
       <div><span>📱</span><strong>Install TutorPro Classroom</strong><small>Add the website as an app on your laptop or phone.</small></div>
       <button type="button" onClick={install}>Install app</button>
       <button type="button" className="pwa-install-card__close" onClick={dismiss} aria-label="Dismiss install prompt">×</button>
@@ -1306,7 +1306,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
           <div className="footer__links">
             <div>
               <h3>Explore</h3>
-              <a href="#why">Why TutorPro English</a>
+              <a href="#why">Why TutorPro Online English</a>
               <a href="#programmes">Programmes</a>
               <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>
               <a href="#journey">How it works</a>
@@ -1344,7 +1344,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
           </div>
         </div>
         <div className="footer__bottom">
-          <span>© {new Date().getFullYear()} TutorPro English</span>
+          <span>© {new Date().getFullYear()} TutorPro Online English</span>
           <a className="footer__credit" href="https://www.pexels.com/photo/7014777/">Learning photo via Pexels</a>
         </div>
       </div>

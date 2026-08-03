@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, shell, session, desktopCapturer, ipcMain } = r
 const path = require('path')
 const fs = require('fs')
 
-const APP_NAME = 'TutorPro English Classroom'
+const APP_NAME = 'TutorPro Online English Classroom'
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || 'http://127.0.0.1:5173'
 const PRODUCTION_APP_URL = process.env.TUTORPRO_APP_URL || 'https://www.tutorpro.site'
 const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_RENDERER_URL
@@ -95,7 +95,7 @@ function createMenu() {
     {
       label: APP_NAME,
       submenu: [
-        { label: 'About TutorPro English Classroom', role: 'about' },
+        { label: 'About TutorPro Online English Classroom', role: 'about' },
         { type: 'separator' },
         { label: 'Quit', accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q', role: 'quit' },
       ],

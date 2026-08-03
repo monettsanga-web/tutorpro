@@ -1,4 +1,4 @@
-# TutorPro English PH — World-Class Platform Upgrade Audit & Roadmap
+# TutorPro Online English PH — World-Class Platform Upgrade Audit & Roadmap
 
 **Audit date:** 2026-07-30  
 **Repository:** `monettsanga-web/tutorpro`  
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-TutorPro English PH is already a broad online English learning platform with:
+TutorPro Online English PH is already a broad online English learning platform with:
 
 - Public marketing website
 - Parent/student dashboard
@@ -50,7 +50,7 @@ The next stage should **not** rebuild the app. It should modularize carefully wh
 | `supabase/` | SQL schema and setup scripts |
 | `public/` | Public static pages/assets, sitemap, PWA manifest, China page |
 | `docs/` | Setup and system documentation |
-| `electron/` | Desktop app wrapper for TutorPro English Classroom |
+| `electron/` | Desktop app wrapper for TutorPro Online English Classroom |
 | `.github/workflows/` | GitHub Actions desktop build workflow |
 | `scripts/` | Test scripts, SEO automation, image sync |
 | `server/` | Optional WebSocket classroom signaling server |
@@ -139,7 +139,7 @@ The next stage should **not** rebuild the app. It should modularize carefully wh
 
 ### Desktop/PWA
 
-- Electron desktop wrapper: `TutorPro English Classroom`
+- Electron desktop wrapper: `TutorPro Online English Classroom`
 - GitHub Actions Windows installer build
 - PWA install prompt
 

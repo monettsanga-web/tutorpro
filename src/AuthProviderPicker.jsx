@@ -21,7 +21,7 @@ export default function AuthProviderPicker({ value, onSelect }) {
 
   return (
     <fieldset className="provider-picker provider-picker--branded">
-      <legend>{chineseVisitor ? '选择注册邮箱 / Choose how to create your account' : 'Choose how to create your TutorPro English account'}</legend>
+      <legend>{chineseVisitor ? '选择注册邮箱 / Choose how to create your account' : 'Choose how to create your TutorPro Online English account'}</legend>
       {chineseVisitor && <div className="china-email-guide" lang="zh-CN"><CircleAlert size={19} /><div><strong>中国家长注册提示</strong><p>请点击 <b>“其他邮箱 / Other email”</b>，并使用可在中国正常接收邮件的邮箱，例如 QQ 邮箱、163 邮箱、126 邮箱、Outlook 或 Yahoo。请不要使用 Gmail，因为 Gmail 在中国大陆可能无法正常打开或接收验证邮件。</p><small>Chinese parents: choose Other email and use an email service available in mainland China.</small></div></div>}
       <div>
         {authProviderOptions.map(({ id, label, action, Icon }) => {
@@ -44,7 +44,7 @@ export default function AuthProviderPicker({ value, onSelect }) {
           )
         })}
       </div>
-      <p>{chineseVisitor ? '账户将在 TutorPro English 内直接创建，不会跳转到其他网站。' : 'Your account is created directly on TutorPro English. Selecting a method will not send you to another website.'}</p>
+      <p>{chineseVisitor ? '账户将在 TutorPro Online English 内直接创建，不会跳转到其他网站。' : 'Your account is created directly on TutorPro Online English. Selecting a method will not send you to another website.'}</p>
     </fieldset>
   )
 }

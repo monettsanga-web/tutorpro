@@ -1,6 +1,6 @@
-# TutorPro English Classroom Desktop App
+# TutorPro Online English Classroom Desktop App
 
-Desktop wrapper for the TutorPro English classroom experience. The production app loads https://www.tutorpro.site so student/teacher accounts, bookings and classroom access stay synchronized with the live website and Supabase.
+Desktop wrapper for the TutorPro Online English classroom experience. The production app loads https://www.tutorpro.site so student/teacher accounts, bookings and classroom access stay synchronized with the live website and Supabase.
 
 ## Development
 

@@ -1738,7 +1738,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           : 'Waiting for participant'
   const showConnectionHelp = connectionStatus !== 'connected' && elapsed >= 6
   const connectionHelpText = participantCount > 1
-    ? 'Both participants were found. TutorPro English is retrying the secure video handshake.'
+    ? 'Both participants were found. TutorPro Online English is retrying the secure video handshake.'
     : 'Keep this classroom open while the other participant enters this exact booking.'
 
   const broadcastCoursewareState = (slideIndex = coursewareSlideIndex, showAnswer = coursewareShowAnswer, clearPresentation = false, template = coursewareTemplate) => {
@@ -2040,7 +2040,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <div className="prejoin-preview__controls"><button className={micOn ? 'active' : ''} onClick={toggleMic} disabled={!mediaReady}>{micOn ? <Mic size={19} /> : <MicOff size={19} />}</button><button className={cameraOn ? 'active' : ''} onClick={toggleCamera} disabled={!mediaReady}>{cameraOn ? <Camera size={19} /> : <CameraOff size={19} />}</button></div>
           </section>
           <section className="prejoin-details">
-            <span className="classroom-brand"><Presentation size={20} /> TutorPro English Classroom</span>
+            <span className="classroom-brand"><Presentation size={20} /> TutorPro Online English Classroom</span>
             {useTencentClassroom && <span className="tencent-provider-badge"><Video size={14} /> Embedded VooV / Tencent RTC</span>}
             {chinaConnection && <div className="china-classroom-connect-card"><div><Globe size={17} /><strong>China connection mode</strong></div><p>For China networks, Chrome/Edge plus Tencent/VooV gives the best class connection. If video does not connect, open the VooV backup link.</p><div><button type="button" onClick={() => setLowBandwidthMode((value) => !value)}>{lowBandwidthMode ? 'Standard video' : 'Low-bandwidth mode'}</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer">Open VooV backup</a>}</div></div>}
             <small>{account.role === 'teacher' ? 'Teacher room' : account.role === 'admin' ? 'Administrator access' : 'Booked student room'}</small>
@@ -2063,7 +2063,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   return (
     <main className={`online-classroom ${sidebarOpen ? 'sidebar-open' : ''}`}>
       <header className="classroom-topbar">
-        <div className="classroom-topbar__brand"><span><Presentation size={21} /></span><div><strong>TutorPro English Classroom</strong><small>{roomBooking.classroomId}</small></div></div>
+        <div className="classroom-topbar__brand"><span><Presentation size={21} /></span><div><strong>TutorPro Online English Classroom</strong><small>{roomBooking.classroomId}</small></div></div>
         <div className="classroom-session-state"><i className={connectionStatus === 'connected' ? 'live' : ''} /><span>{connectionLabel}</span><strong>{formatElapsed()}</strong></div>
         <div className="classroom-topbar__actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button 

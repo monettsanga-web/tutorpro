@@ -1,10 +1,10 @@
-# TutorPro English — Supabase shared registration setup
+# TutorPro Online English — Supabase shared registration setup
 
 This connection makes student and teacher registrations visible to the administrator across different browsers and devices. Browser storage remains as an offline fallback.
 
 ## 1. Create the free project
 
-1. Open <https://supabase.com/dashboard> and create a project named **TutorPro English**.
+1. Open <https://supabase.com/dashboard> and create a project named **TutorPro Online English**.
 2. Wait for the database to finish provisioning.
 3. Open **Project Settings → Data API** and copy:
    - Project URL
@@ -40,7 +40,7 @@ WeChat ID registration can be mirrored to Admin through an anonymous Supabase pr
 ## 4. Create and authorize the administrator
 
 1. Open **Authentication → Users → Add user**.
-2. Create the TutorPro English administrator using the private administrator email and password.
+2. Create the TutorPro Online English administrator using the private administrator email and password.
 3. Open **SQL Editor → New query**.
 4. Paste and run the complete contents of [`supabase/admin_access_fix.sql`](../supabase/admin_access_fix.sql).
 
@@ -78,7 +78,7 @@ Follow [`docs/BOOKING_NOTIFICATIONS.md`](BOOKING_NOTIFICATIONS.md) to deploy the
 
 The classroom now uses the booking’s secret room token with **Supabase Realtime Broadcast** for WebRTC signaling, so the teacher and student can connect from different devices without a separate signaling server. Supabase Realtime must remain enabled for the project. A separately hosted `wss://` signaling server can still be selected with `VITE_CLASSROOM_SIGNALING_URL`.
 
-## 5. Configure TutorPro English
+## 5. Configure TutorPro Online English
 
 Copy `.env.example` to `.env.local` and add the browser-safe values:
 

@@ -22,20 +22,20 @@ function endTime(booking) {
 }
 
 export function createBookingCalendar(booking, { teacherName = '', learnerName = '' } = {}) {
-  const title = `TutorPro English: ${booking.focus || 'English lesson'}`
+  const title = `TutorPro Online English: ${booking.focus || 'English lesson'}`
   const details = [
     learnerName ? `Student: ${learnerName}` : '',
     teacherName ? `Teacher: ${teacherName}` : '',
     `Lesson length: ${booking.duration || 25} minutes`,
     booking.classroomId ? `Private classroom ID: ${booking.classroomId}` : '',
     booking.slotComment ? `Lesson comment: ${booking.slotComment}` : '',
-    `Open TutorPro English: ${calendarOrigin}`,
+    `Open TutorPro Online English: ${calendarOrigin}`,
   ].filter(Boolean).join('\n')
   const createdAt = new Date(booking.createdAt || Date.now()).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//TutorPro English//Lesson Calendar//EN',
+    'PRODID:-//TutorPro Online English//Lesson Calendar//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
@@ -45,17 +45,17 @@ export function createBookingCalendar(booking, { teacherName = '', learnerName =
     `DTEND:${endTime(booking)}`,
     `SUMMARY:${escapeCalendarText(title)}`,
     `DESCRIPTION:${escapeCalendarText(details)}`,
-    `LOCATION:${escapeCalendarText('TutorPro English Private Online Classroom')}`,
+    `LOCATION:${escapeCalendarText('TutorPro Online English Private Online Classroom')}`,
     `STATUS:${['confirmed', 'ongoing', 'completed'].includes(booking.status) ? 'CONFIRMED' : booking.status === 'cancelled' ? 'CANCELLED' : 'TENTATIVE'}`,
     'BEGIN:VALARM',
     'TRIGGER:-PT30M',
     'ACTION:DISPLAY',
-    'DESCRIPTION:TutorPro English lesson begins in 30 minutes',
+    'DESCRIPTION:TutorPro Online English lesson begins in 30 minutes',
     'END:VALARM',
     'BEGIN:VALARM',
     'TRIGGER:-PT10M',
     'ACTION:DISPLAY',
-    'DESCRIPTION:TutorPro English lesson begins in 10 minutes',
+    'DESCRIPTION:TutorPro Online English lesson begins in 10 minutes',
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',

@@ -21,7 +21,7 @@ export default class ErrorBoundary extends Component {
       <main className="fatal-error" role="alert">
         <div className="fatal-error__card">
           <span><ShieldAlert size={34} /></span>
-          <small>TutorPro English recovery</small>
+          <small>TutorPro Online English recovery</small>
           <h1>Something didn’t load correctly.</h1>
           <p>Your account data has not been deleted. Refresh the page to try again, or return to the homepage.</p>
           <div>

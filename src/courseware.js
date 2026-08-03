@@ -20,7 +20,7 @@ export const DEFAULT_COURSEWARE_TEMPLATE = {
   goal: 'Build confidence, vocabulary and complete-sentence speaking in a 25-minute class.',
   tags: ['speaking', 'vocabulary', 'grammar', 'kids'],
   isDefault: true,
-  createdBy: 'TutorPro English PH',
+  createdBy: 'TutorPro Online English PH',
   updatedAt: '2026-07-30T00:00:00.000Z',
   slides: [
     { id: 'warmup', type: 'Warm-up', title: 'Hello, English Explorer!', objective: 'Build confidence and start speaking right away.', prompt: 'Say your name, your mood today, and one thing you can see around you.', teacherNote: 'Encourage full sentence answers: “I feel happy because…”', answer: 'My name is Mia. I feel excited today because I am ready for English class.', vocabulary: ['happy', 'excited', 'ready', 'today'] },
@@ -41,7 +41,7 @@ const BUILT_IN_COURSEWARE_TEMPLATES = [
     goal: 'Practice short vowel sounds, blending and speaking in short sentences.',
     tags: ['phonics', 'reading', 'vowels'],
     isDefault: true,
-    createdBy: 'TutorPro English PH',
+    createdBy: 'TutorPro Online English PH',
     updatedAt: '2026-07-30T00:00:00.000Z',
     slides: [
       { id: 'phonics-warmup', type: 'Warm-up', title: 'Sound Detective', objective: 'Listen for short vowel sounds.', prompt: 'Say: cat, bed, pig, dog, sun. Which sound is in the middle?', teacherNote: 'Model the mouth shape and have the student repeat each word twice.', answer: 'cat has /a/, bed has /e/, pig has /i/, dog has /o/, sun has /u/.', vocabulary: ['cat', 'bed', 'pig', 'dog', 'sun'] },
@@ -59,7 +59,7 @@ const BUILT_IN_COURSEWARE_TEMPLATES = [
     goal: 'Practice picture description, reasons and longer speaking answers.',
     tags: ['cambridge', 'speaking', 'picture description'],
     isDefault: true,
-    createdBy: 'TutorPro English PH',
+    createdBy: 'TutorPro Online English PH',
     updatedAt: '2026-07-30T00:00:00.000Z',
     slides: [
       { id: 'cam-warmup', type: 'Warm-up', title: 'Question Ladder', objective: 'Answer familiar questions with confidence.', prompt: 'Answer: What do you like doing after school? Why?', teacherNote: 'Ask two follow-up questions to extend the answer.', answer: 'I like playing football after school because it is fun and healthy.', vocabulary: ['after school', 'because', 'fun', 'healthy'] },
@@ -131,7 +131,7 @@ export function normalizeCoursewareTemplate(template = {}) {
     goal: cleanText(template.goal, 'Help the learner speak English with confidence.', 500),
     tags: cleanVocabulary(template.tags),
     isDefault: Boolean(template.isDefault),
-    createdBy: cleanText(template.createdBy, 'TutorPro English', 120),
+    createdBy: cleanText(template.createdBy, 'TutorPro Online English', 120),
     createdAt: template.createdAt || new Date().toISOString(),
     updatedAt: template.updatedAt || new Date().toISOString(),
     slides: normalizedSlides,

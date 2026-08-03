@@ -1,4 +1,4 @@
-# TutorPro English recorded AI teacher applicant interview
+# TutorPro Online English recorded AI teacher applicant interview
 
 Teacher applicants must complete a 14-question recorded interview before their application can be submitted. A fictional, AI-generated English male interviewer uses synchronized photorealistic speaking frames while reading one question at a time. All fixed questions and randomized micro-demo variants include a consistent prerecorded masculine native-English voice with British delivery. Applicants can:
 
@@ -23,7 +23,7 @@ supabase/teacher_interview_recordings.sql
 Expected result:
 
 ```text
-TutorPro English recorded teacher interviews are ready
+TutorPro Online English recorded teacher interviews are ready
 ```
 
 The SQL creates:
@@ -45,7 +45,7 @@ The production question library contains 16 compact prerecorded male-voice clips
 
 ## Optional AI evaluation setup
 
-The structured interview works without an external model. If the AI evaluator is unavailable, TutorPro English stores a conservative structured fallback recommendation for mandatory human review.
+The structured interview works without an external model. If the AI evaluator is unavailable, TutorPro Online English stores a conservative structured fallback recommendation for mandatory human review.
 
 The included Supabase Edge Function can use any OpenAI-compatible chat-completions provider.
 

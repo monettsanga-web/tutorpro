@@ -34,7 +34,7 @@ const HERO = {
 const SECTIONS = [
   {
     heading: 'Great lessons start with brilliant materials.',
-    body: 'Every TutorPro English class uses structured courseware aligned to Cambridge and Oxford English, with reading, speaking, grammar and vocabulary built into each lesson.',
+    body: 'Every TutorPro class uses structured courseware aligned to Cambridge and Oxford English, with reading, speaking, grammar and vocabulary built into each lesson.',
   },
   {
     heading: 'Less pressure. More progress.',
@@ -46,7 +46,7 @@ const SECTIONS = [
   },
   {
     heading: 'Looking for a Novakid, 51Talk or Preply alternative?',
-    body: 'Families comparing online English schools choose TutorPro English for genuine one-to-one lessons, Cambridge and Oxford aligned courseware, transparent pricing from $8 per 25-minute class, and a free first class with no commitment.',
+    body: 'Families comparing online English schools choose TutorPro Online English for genuine one-to-one lessons, Cambridge and Oxford aligned courseware, transparent pricing from $8 per 25-minute class, and a free first class with no commitment.',
   },
   {
     heading: 'Choose your child’s rhythm.',
@@ -115,7 +115,7 @@ ${sections}
 ${faqItems}
       </section>
       <footer>
-        <p>TutorPro English — online English classes for kids and teens worldwide. Cambridge and Oxford aligned tutors, flexible scheduling, free first class.</p>
+        <p>TutorPro Online English — online English classes for kids and teens worldwide. Cambridge and Oxford aligned tutors, flexible scheduling, free first class.</p>
         <p><a href="/about.html">About us</a> · <a href="/contact.html">Contact</a> · <a href="/privacy-policy.html">Privacy policy</a> · <a href="/terms.html">Terms of service</a> · <a href="/refund-policy.html">Refund policy</a></p>
       </footer>
     </div>`

@@ -37,20 +37,20 @@ const languageControlLabels = {
 }
 
 const pageTitles = {
-  en: 'TutorPro English — English confidence, built one lesson at a time',
-  tl: 'TutorPro English — Kumpiyansa sa Ingles, isang aralin sa bawat pagkakataon',
-  ko: 'TutorPro English — 한 수업씩 키우는 영어 자신감',
-  'zh-CN': 'TutorPro English — 一课一步，建立英语自信',
-  'zh-TW': 'TutorPro English — 一課一步，建立英語自信',
-  ja: 'TutorPro English — 一つひとつのレッスンで英語に自信を',
-  es: 'TutorPro English — Confianza en inglés, una clase a la vez',
-  fr: 'TutorPro English — La confiance en anglais, une leçon à la fois',
-  de: 'TutorPro English — Englisch-Selbstvertrauen, Lektion für Lektion',
-  pt: 'TutorPro English — Confiança em inglês, uma aula de cada vez',
-  ar: 'TutorPro English — الثقة في الإنجليزية، درسًا بعد درس',
-  vi: 'TutorPro English — Tự tin tiếng Anh qua từng bài học',
-  th: 'TutorPro English — สร้างความมั่นใจภาษาอังกฤษทีละบทเรียน',
-  pl: 'TutorPro English — Pewność w angielskim, lekcja po lekcji',
+  en: 'TutorPro Online English — English confidence, built one lesson at a time',
+  tl: 'TutorPro Online English — Kumpiyansa sa Ingles, isang aralin sa bawat pagkakataon',
+  ko: 'TutorPro Online English — 한 수업씩 키우는 영어 자신감',
+  'zh-CN': 'TutorPro Online English — 一课一步，建立英语自信',
+  'zh-TW': 'TutorPro Online English — 一課一步，建立英語自信',
+  ja: 'TutorPro Online English — 一つひとつのレッスンで英語に自信を',
+  es: 'TutorPro Online English — Confianza en inglés, una clase a la vez',
+  fr: 'TutorPro Online English — La confiance en anglais, une leçon à la fois',
+  de: 'TutorPro Online English — Englisch-Selbstvertrauen, Lektion für Lektion',
+  pt: 'TutorPro Online English — Confiança em inglês, uma aula de cada vez',
+  ar: 'TutorPro Online English — الثقة في الإنجليزية، درسًا بعد درس',
+  vi: 'TutorPro Online English — Tự tin tiếng Anh qua từng bài học',
+  th: 'TutorPro Online English — สร้างความมั่นใจภาษาอังกฤษทีละบทเรียน',
+  pl: 'TutorPro Online English — Pewność w angielskim, lekcja po lekcji',
 }
 
 const countryLanguages = {

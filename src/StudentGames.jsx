@@ -14,7 +14,7 @@ export const PARTNER_GAME_SITES = [
     url: ARTICLE_ARCADE_URL,
     icon: '🎮',
     tag: 'TutorPro original',
-    text: 'Premium A / An arcade built by TutorPro English.',
+    text: 'Premium A / An arcade built by TutorPro Online English.',
     skills: ['Grammar', 'Articles', 'Speed drills'],
     ages: 'Ages 5–12',
   },

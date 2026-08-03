@@ -106,7 +106,7 @@ import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
-const displayName = (account) => account.parentName || account.fullName || 'TutorPro English user'
+const displayName = (account) => account.parentName || account.fullName || 'TutorPro Online English user'
 const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
 const COUNTRY_NAMES = typeof Intl !== 'undefined' && Intl.DisplayNames
   ? new Intl.DisplayNames(['en'], { type: 'region' })
@@ -593,7 +593,7 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
       )}
       <aside className={`portal-sidebar ${mobileOpen ? 'portal-sidebar--open' : ''}`}>
         <div className="portal-brand">
-          <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
+          <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro Online English panda mascot" />
           <div><strong>Tutor<span>Pro</span> English</strong><small>{roleLabels[role]}</small></div>
         </div>
         <nav className="portal-nav" aria-label={`${roleLabels[role]} navigation`}>
@@ -1133,7 +1133,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     return (
       <div className="portal-view">
         <div className="portal-page-heading"><div><span className="portal-kicker">Family account access</span><h1>Account suspended</h1><p>All student profiles in this family account are temporarily paused.</p></div></div>
-        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Family account · Suspended</small><h2>{learner.name} cannot book while this account is suspended.</h2><p>Contact the TutorPro English administrator to restore access.</p>{adminBooking && <button className="portal-primary-button" onClick={() => { updateAccount(account.id, { status: 'active' }); onBooked() }}>Restore family account <UserCheck size={16} /></button>}</div></section>
+        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Family account · Suspended</small><h2>{learner.name} cannot book while this account is suspended.</h2><p>Contact the TutorPro Online English administrator to restore access.</p>{adminBooking && <button className="portal-primary-button" onClick={() => { updateAccount(account.id, { status: 'active' }); onBooked() }}>Restore family account <UserCheck size={16} /></button>}</div></section>
       </div>
     )
   }
@@ -1142,7 +1142,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     return (
       <div className="portal-view">
         <div className="portal-page-heading"><div><span className="portal-kicker">Student access</span><h1>Profile suspended</h1><p>This learner cannot schedule or enter new classes while suspended.</p></div></div>
-        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Student status · Suspended</small><h2>{learner.name}’s learning profile is paused.</h2><p>Please contact the TutorPro English administrator to restore booking and classroom access.</p>{adminBooking && <button className="portal-primary-button" onClick={() => { updateLearnerAccess(account.id, learner.id, 'active'); onBooked() }}>Restore {learner.name} <UserCheck size={16} /></button>}</div></section>
+        <section className="student-suspended-card"><span><Ban size={30} /></span><div><small>Student status · Suspended</small><h2>{learner.name}’s learning profile is paused.</h2><p>Please contact the TutorPro Online English administrator to restore booking and classroom access.</p>{adminBooking && <button className="portal-primary-button" onClick={() => { updateLearnerAccess(account.id, learner.id, 'active'); onBooked() }}>Restore {learner.name} <UserCheck size={16} /></button>}</div></section>
       </div>
     )
   }
@@ -1215,7 +1215,7 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
         <span className="rating-dialog__icon"><Star size={29} fill="currentColor" /></span>
         <span className="portal-kicker">Class complete</span>
         <h2 id="rating-title">How was the lesson with {teacher?.fullName || 'your teacher'}?</h2>
-        <p>Your rating helps families choose the right teacher and helps TutorPro English keep every class excellent.</p>
+        <p>Your rating helps families choose the right teacher and helps TutorPro Online English keep every class excellent.</p>
         {error && <div className="portal-error" role="alert">{error}</div>}
         <form onSubmit={submit}>
           <div className="rating-stars" role="group" aria-label="Lesson rating">{[1, 2, 3, 4, 5].map((score) => <button type="button" className={score <= rating ? 'active' : ''} onClick={() => setRating(score)} key={score} aria-label={`${score} star${score > 1 ? 's' : ''}`}><Star size={30} fill={score <= rating ? 'currentColor' : 'none'} /></button>)}</div>
@@ -1478,7 +1478,7 @@ function AddStudentDialog({ account, onClose, onAdded }) {
       onAdded(synchronized || profileToSync, learnerId)
     } catch (addError) {
       setError(profileToSync
-        ? `${addError.message} The additional student is saved on this device and TutorPro English will keep retrying cloud synchronization. Confirm the parent email, then select “Retry shared sync”—do not add the student again.`
+        ? `${addError.message} The additional student is saved on this device and TutorPro Online English will keep retrying cloud synchronization. Confirm the parent email, then select “Retry shared sync”—do not add the student again.`
         : addError.message)
     } finally {
       setSyncing(false)
@@ -1766,8 +1766,8 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=png&ecc=M&margin=10&data=${encodeURIComponent(link)}`
   const nextLabel = stats.nextLevel ? `${stats.nextLevel.label} at ${stats.nextLevel.min} successful referrals` : 'Top ambassador level unlocked'
   const shareText = role === 'teacher'
-    ? `Join TutorPro English PH through my teacher referral link and start learning online English.`
-    : `Try TutorPro English PH for online English classes. Use my referral link and we both earn a free lesson after your first package.`
+    ? `Join TutorPro Online English PH through my teacher referral link and start learning online English.`
+    : `Try TutorPro Online English PH for online English classes. Use my referral link and we both earn a free lesson after your first package.`
   const shareTargets = getShareTargets(link, shareText)
   const recent = referralActivity(account, allAccounts).slice(0, 8)
 
@@ -1803,7 +1803,7 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
     ctx.beginPath(); ctx.arc(910, 130, 240, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#bce94e'
     ctx.font = '900 48px sans-serif'
-    ctx.fillText('TutorPro English PH', 70, 115)
+    ctx.fillText('TutorPro Online English PH', 70, 115)
     ctx.fillStyle = '#ffffff'
     ctx.font = '900 88px sans-serif'
     ctx.fillText('Invite a friend.', 70, 260)
@@ -1851,7 +1851,7 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
         <div>
           <span className="portal-kicker">Referral & ambassador programme</span>
           <h1>{stats.level.emoji} {stats.level.label}</h1>
-          <p>Share TutorPro English PH and earn free lessons automatically when your friend registers and purchases their first package.</p>
+          <p>Share TutorPro Online English PH and earn free lessons automatically when your friend registers and purchases their first package.</p>
           <div className="referral-hero-stats"><span><strong>{stats.successfulReferrals}</strong> successful</span><span><strong>{stats.pendingReferrals}</strong> pending</span><span><strong>{stats.wallet.freeLessons}</strong> wallet lessons</span></div>
         </div>
         <div className="referral-qr-card"><img src={qrUrl} alt="Referral QR code" /><strong>{code}</strong><button onClick={() => copy(code, 'Code copied')}>Copy code</button></div>
@@ -2705,7 +2705,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               <div className="progress-ring" style={{ '--progress': `${learner.progress || 18}%` }}><span><strong>{learner.progress || 18}%</strong><small>term goal</small></span></div>
               <div><span>Current pathway</span><strong>{learner.curriculum} · {learner.year}</strong><small>{learner.level || 'Building foundations'}</small></div>
             </div>
-            <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro English panda mascot" />
+            <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro Online English panda mascot" />
           </section>
 
           <StudentPaymentGateway account={account} adminPreview={adminPreview} onPaymentComplete={completeStudentPayment} />
@@ -2864,7 +2864,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           </div>
           {!parentChinaSupport && (
             <section className="portal-card parent-support-channel-card">
-              <div><span className="portal-kicker">Messenger available</span><h2>Prefer Facebook Messenger?</h2><p>Parents outside China can message TutorPro English directly on Facebook Messenger. If Messenger is unavailable, use the secure website chat below.</p></div>
+              <div><span className="portal-kicker">Messenger available</span><h2>Prefer Facebook Messenger?</h2><p>Parents outside China can message TutorPro Online English directly on Facebook Messenger. If Messenger is unavailable, use the secure website chat below.</p></div>
               <a className="portal-primary-button" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Chat on Messenger</a>
             </section>
           )}
@@ -2886,7 +2886,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <div className="profile-layout">
             <section className="portal-card profile-edit-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Learning preferences</span><h2>Shape the learning path</h2></div>{profileSaved && <span className="saved-label"><Check size={14} /> Saved</span>}</div>
-              <div className="admin-managed-goal"><span>Main Learning Goal <em><ShieldCheck size={12} /> Admin managed</em></span><strong>{learner.goal || 'Not provided'}</strong><small>Parents can view this goal. Only the TutorPro English administrator can type or change it.</small></div>
+              <div className="admin-managed-goal"><span>Main Learning Goal <em><ShieldCheck size={12} /> Admin managed</em></span><strong>{learner.goal || 'Not provided'}</strong><small>Parents can view this goal. Only the TutorPro Online English administrator can type or change it.</small></div>
               <label><span>Preferred lesson rhythm</span><select value={profile.frequency} onChange={(event) => setProfile((value) => ({ ...value, frequency: event.target.value }))}><option>1–2 weekly</option><option>4–5 weekly</option><option>Not sure</option></select></label>
               <div className="profile-info-row"><div><span>Parent / guardian</span><strong>{account.parentName}</strong></div><div><span>Account login</span><strong>{account.loginId || account.email}</strong></div></div>
               <button className="portal-primary-button" onClick={saveProfile}>Save profile changes</button>
@@ -3270,7 +3270,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
-      {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro English administrator if you need help.'}</span></div></div>}
+      {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro Online English administrator if you need help.'}</span></div></div>}
 
       {active === 'overview' && (
         <div className="portal-view">
@@ -3344,7 +3344,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             <section className="portal-card classroom-settings">
               <div className="platform-choice">
                 <button className={classroom.platform === 'zoom' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'zoom' })); setClassroomError('') }}><span className="platform-logo platform-logo--zoom">Z</span><div><strong>Zoom</strong><small>Use Zoom for upcoming classes</small></div><i>{classroom.platform === 'zoom' && <Check size={14} />}</i></button>
-                <button className={classroom.platform === 'voov' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'voov' })); setClassroomError('') }}><span className="platform-logo platform-logo--voov">V</span><div><strong>VooV / Tencent RTC</strong><small>{tencentClassroomReady ? 'Embedded securely inside TutorPro English' : 'Add a VooV fallback meeting link'}</small></div><i>{classroom.platform === 'voov' && <Check size={14} />}</i></button>
+                <button className={classroom.platform === 'voov' ? 'active' : ''} onClick={() => { setClassroom((current) => ({ ...current, platform: 'voov' })); setClassroomError('') }}><span className="platform-logo platform-logo--voov">V</span><div><strong>VooV / Tencent RTC</strong><small>{tencentClassroomReady ? 'Embedded securely inside TutorPro Online English' : 'Add a VooV fallback meeting link'}</small></div><i>{classroom.platform === 'voov' && <Check size={14} />}</i></button>
               </div>
               <div className="classroom-link-fields">
                 <label><span>Zoom meeting link</span><div><Video size={17} /><input type="url" value={classroom.zoomLink || ''} onChange={(event) => setClassroom((current) => ({ ...current, zoomLink: event.target.value }))} placeholder="https://zoom.us/j/…" /></div></label>
@@ -3905,7 +3905,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
       <div className="role-error-card" style={{ padding: '30px', background: '#110925', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', margin: '20px' }}>
         <h2 style={{ fontSize: '1.5rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Layout Evaluation Exception</h2>
         <p style={{ color: '#b9adc7', fontSize: '0.9rem', marginBottom: '15px' }}>
-          TutorPro English was unable to compile the teacher profile layout. Detail description:
+          TutorPro Online English was unable to compile the teacher profile layout. Detail description:
         </p>
         <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', fontSize: '0.8rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap' }}>
           {renderError.stack || renderError.message}
@@ -4284,7 +4284,7 @@ export function SupportInbox({ onUnreadChange }) {
 
   return (
     <div className="portal-view support-inbox-view">
-      <div className="portal-page-heading"><div><span className="portal-kicker">Parents & Teachers Care</span><h1>Parents/Teachers support inbox</h1><p>Reply to parents and teachers directly from TutorPro English.</p></div><span className="support-inbox-live"><i /> Live inbox</span></div>
+      <div className="portal-page-heading"><div><span className="portal-kicker">Parents & Teachers Care</span><h1>Parents/Teachers support inbox</h1><p>Reply to parents and teachers directly from TutorPro Online English.</p></div><span className="support-inbox-live"><i /> Live inbox</span></div>
       {error && <div className="portal-error" role="alert">{error}</div>}
       <section className="support-inbox">
         <aside className="support-conversation-list">
@@ -4381,7 +4381,7 @@ function RemoveTeacherDialog({ teacher, onClose, onConfirm }) {
         <span className="remove-student-dialog__icon"><Trash2 size={28} /></span>
         <span className="portal-kicker">Permanent administrator action</span>
         <h2 id="remove-teacher-title">Delete {teacherName}’s teacher profile?</h2>
-        <p>This removes the teacher from TutorPro English and revokes dashboard access. This action cannot be undone.</p>
+        <p>This removes the teacher from TutorPro Online English and revokes dashboard access. This action cannot be undone.</p>
         <ul><li><Trash2 size={14} /> Teacher profile, photo and introduction video</li><li><Trash2 size={14} /> Assigned bookings and private classrooms</li><li><Trash2 size={14} /> Teacher dashboard access</li></ul>
         {error && <div className="portal-error" role="alert">{error}</div>}
         <label><span>Type <strong>{teacherName}</strong> to confirm</span><input autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder={teacherName} /></label>
@@ -4566,7 +4566,7 @@ export function AdminAnnouncementsPanel() {
       <section className="portal-card marketing-compose-card">
         <form onSubmit={handleSendAnnouncement}>
           <label><span>Target audience</span><select value={target} onChange={(e) => setTarget(e.target.value)}><option value="ALL">All Registered Emails (Teachers & Parents)</option><option value="TEACHER">Teachers Only</option><option value="STUDENT">Students/Parents Only</option></select></label>
-          <label><span>Email subject</span><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. TutorPro English Holiday Schedule Update" /></label>
+          <label><span>Email subject</span><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. TutorPro Online English Holiday Schedule Update" /></label>
           <label><span>Campaign body</span><textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write your campaign details here..." /></label>
           <label className="announcement-translate-toggle"><input type="checkbox" checked={autoTranslate} onChange={(e) => setAutoTranslate(e.target.checked)} /><span><Globe2 size={15} /> <b>Auto-translate for each recipient</b><small>Write in English. Each parent and teacher also gets it in their own language, based on the country detected from their IP address. The English original is always included underneath.</small></span></label>
           {error && <div className="portal-error" role="alert">{error}</div>}
@@ -4902,7 +4902,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         id: teacherId,
         role: 'teacher',
         status: 'approved',
-        fullName: bookingForName?.teacherName || 'TutorPro English Teacher',
+        fullName: bookingForName?.teacherName || 'TutorPro Online English Teacher',
         teacher: {
           specialization: 'Both Curricula',
           bio: 'Teacher profile setup is loaded from sync. Configure their local rates below.',
@@ -5237,13 +5237,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {adminActionError && <div className="portal-error admin-action-error" role="alert">{adminActionError}</div>}
       {active === 'overview' && (
         <div className="portal-view">
-          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
+          <section className="admin-welcome"><div><span className="portal-kicker">TutorPro Online English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
           {cloudError && <div className="portal-error admin-cloud-error" role="alert">{cloudError} Check the Supabase setup and administrator membership.</div>}
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student profiles</small><strong>{studentProfiles.length}</strong><em>{students.length} family accounts</em></div></article>
             <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>
             <article><span className="stat-icon stat-icon--gold"><CalendarDays size={21} /></span><div><small>Total bookings</small><strong>{bookingStats.total}</strong><em>{bookingStats.pending} pending</em></div></article>
-            <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro English</em></div></article>
+            <article><span className="stat-icon stat-icon--green"><CheckCircle2 size={21} /></span><div><small>Lessons completed</small><strong>{bookingStats.completed}</strong><em>Across TutorPro Online English</em></div></article>
           </div>
 
           <section className="admin-command-center">
@@ -5442,7 +5442,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'profile' && (
-        <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro English Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
+        <div className="portal-view"><section className="admin-profile-card"><span className="admin-profile-card__icon"><ShieldCheck size={34} /></span><span className="portal-kicker">Administrator account</span><h1>TutorPro Online English Control</h1><p>{account.email}</p><div><ShieldCheck size={18} /><span><strong>Full platform access</strong><small>Teacher approvals, student access and booking controls</small></span></div><button className="portal-secondary-button" onClick={onHome}><Home size={16} /> Return to website</button></section></div>
       )}
       {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); refresh() }} />}
       {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}

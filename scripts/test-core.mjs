@@ -253,4 +253,4 @@ if (typeof BroadcastChannel !== 'undefined') {
   assert(receivedLocalSignal, 'Same-room classroom signaling failed between browser contexts.')
 }
 
-console.log('TutorPro English core flows: PASS')
+console.log('TutorPro Online English core flows: PASS')

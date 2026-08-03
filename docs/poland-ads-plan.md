@@ -1,4 +1,4 @@
-# TutorPro English — Poland Launch Ad Plan
+# TutorPro Online English — Poland Launch Ad Plan
 
 Prepared for the Poland market entry. All Polish ad copy below is ready to paste.
 

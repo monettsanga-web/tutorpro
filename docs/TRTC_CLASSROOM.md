@@ -1,6 +1,6 @@
 # Embedded VooV / Tencent RTC classroom
 
-TutorPro English can use Tencent RTC as the embedded audio/video engine while keeping the booking, whiteboard, annotations, files, chat and feedback inside the website.
+TutorPro Online English can use Tencent RTC as the embedded audio/video engine while keeping the booking, whiteboard, annotations, files, chat and feedback inside the website.
 
 ## Configuration
 

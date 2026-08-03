@@ -4541,7 +4541,7 @@ body {
 }
 
 .public-teacher-card__media-viewport > div:first-child::before {
-  content: 'TutorPro English Teacher';
+  content: 'TutorPro Online English Teacher';
   position: absolute;
   left: 22px;
   top: 20px;

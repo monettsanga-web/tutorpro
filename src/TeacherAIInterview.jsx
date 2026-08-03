@@ -45,7 +45,7 @@ function buildQuestions(microDemoPrompt) {
     { stage: 'Live micro-demo', question: microDemoPrompt, voice: interviewerVoice(microDemoVoice) },
     { stage: 'Live micro-demo follow-up', question: 'Now imagine the student still looks confused. Explain the same teaching point in a different and simpler way.', voice: interviewerVoice('q12-simpler') },
     { stage: 'Platform fit & logistics', question: 'What days and hours can you reliably teach, what is your timezone, and what internet, webcam, headset, and quiet teaching space do you have?', voice: interviewerVoice('q13-logistics') },
-    { stage: 'Platform fit & motivation', question: 'Why do you want to teach with TutorPro English, and which Primary or Secondary learners do you most enjoy teaching?', voice: interviewerVoice('q14-tutorpro') },
+    { stage: 'Platform fit & motivation', question: 'Why do you want to teach with TutorPro Online English, and which Primary or Secondary learners do you most enjoy teaching?', voice: interviewerVoice('q14-tutorpro') },
   ]
 }
 
@@ -496,11 +496,11 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
     return (
       <section className="teacher-ai-interview teacher-ai-interview--welcome">
         <figure className="teacher-interviewer-portrait teacher-interviewer-portrait--male">
-          <TalkingInterviewerFace alt="TutorPro English fictional English male AI hiring assistant" />
+          <TalkingInterviewerFace alt="TutorPro Online English fictional English male AI hiring assistant" />
           <figcaption><i aria-hidden="true" /> English AI interviewer · Online</figcaption>
         </figure>
         <span className="kicker">Required recorded first-round interview</span>
-        <h2>Meet your TutorPro English Hiring Assistant</h2>
+        <h2>Meet your TutorPro Online English Hiring Assistant</h2>
         <p>I’m a fictional English male AI interviewer—not a human recruiter. My animated portrait speaks each question using a natural masculine British English voice. Take as long as you need to review each question, then press <strong>Start answer</strong> when you are ready. Your microphone records one answer at a time and you can listen, re-record and review the transcript before continuing.</p>
         <div className="teacher-interview-features"><span><Clock3 size={17} /> 15–25 minutes</span><span><Mic size={17} /> Microphone required</span><span><ShieldCheck size={17} /> Private hiring review</span><span><Sparkles size={17} /> Review before saving</span></div>
         <button type="button" className="button button--primary" onClick={begin}>Enter recorded interview <ArrowRight size={17} /></button>
@@ -515,7 +515,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
         <span className="teacher-ai-avatar complete"><CheckCircle2 size={35} /></span>
         <span className="kicker">Recorded interview complete</span>
         <h2>Thank you, {applicant.fullName}.</h2>
-        <p>Your recorded responses and reviewed transcripts are ready for the TutorPro English hiring team. A real team member will review your application, credentials and interview before following up. Compensation and platform policy details will be discussed by a human recruiter if you move forward.</p>
+        <p>Your recorded responses and reviewed transcripts are ready for the TutorPro Online English hiring team. A real team member will review your application, credentials and interview before following up. Compensation and platform policy details will be discussed by a human recruiter if you move forward.</p>
         <div className="teacher-interview-complete-summary"><strong>{transcript.length}</strong><span>recorded answers</span><strong>100%</strong><span>interview progress</span></div>
         {uploadProgress && <div className="teacher-interview-upload"><UploadCloud size={18} /><span><strong>Securing recorded answers</strong><small>{uploadProgress.completed} of {uploadProgress.total} uploaded</small></span></div>}
         {error && <div className="auth-error" role="alert">{error}</div>}
@@ -526,7 +526,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
 
   return (
     <section className="teacher-ai-interview teacher-ai-interview--question">
-      <div className="teacher-interview-top"><span className={`teacher-interviewer-mini ${speaking ? 'is-speaking' : ''}`}><TalkingInterviewerFace /><i aria-hidden="true" /></span><div><small>TutorPro English Hiring Assistant · English male AI voice</small><strong>{current.stage}</strong></div><em>{index + 1} / {questions.length}</em></div>
+      <div className="teacher-interview-top"><span className={`teacher-interviewer-mini ${speaking ? 'is-speaking' : ''}`}><TalkingInterviewerFace /><i aria-hidden="true" /></span><div><small>TutorPro Online English Hiring Assistant · English male AI voice</small><strong>{current.stage}</strong></div><em>{index + 1} / {questions.length}</em></div>
       <div className="teacher-interview-progress"><span style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div>
 
       <div className={`teacher-live-question ${speaking ? 'is-speaking' : ''}`}>
@@ -544,7 +544,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
       </div>
 
       {error && <div className="auth-error" role="alert">{error}</div>}
-      <p className="teacher-interview-privacy"><ShieldCheck size={14} /> Audio and internal notes are private and available only to the TutorPro English hiring team. The portrait is AI-generated.</p>
+      <p className="teacher-interview-privacy"><ShieldCheck size={14} /> Audio and internal notes are private and available only to the TutorPro Online English hiring team. The portrait is AI-generated.</p>
     </section>
   )
 }

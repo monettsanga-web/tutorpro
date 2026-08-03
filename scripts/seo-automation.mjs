@@ -106,7 +106,7 @@ function generateDraft(topic) {
   const date = new Date().toISOString().slice(0, 10)
   return `---
 title: "${topic.title}"
-description: "A parent-friendly guide from TutorPro English PH about ${topic.keyword}."
+description: "A parent-friendly guide from TutorPro Online English PH about ${topic.keyword}."
 keyword: "${topic.keyword}"
 intent: "${topic.intent}"
 status: "draft - human review required"
@@ -119,7 +119,7 @@ created: "${date}"
 
 ## Quick answer
 
-TutorPro English PH offers personalised 1-to-1 online English lessons for children and teens. Families comparing platforms such as Novakid, 51Talk, Preply, and other online English class providers may choose TutorPro when they want a more guided, parent-supported learning experience.
+TutorPro Online English PH offers personalised 1-to-1 online English lessons for children and teens. Families comparing platforms such as Novakid, 51Talk, Preply, and other online English class providers may choose TutorPro when they want a more guided, parent-supported learning experience.
 
 ## Who this is for
 
@@ -135,9 +135,9 @@ This option is best for parents who want:
 
 Parents often search for **${topic.keyword}** because they want to understand price, teacher consistency, class quality, feedback, and scheduling. A good online English programme should make it easy to book classes, track progress, and communicate with support.
 
-## How TutorPro English PH helps
+## How TutorPro Online English PH helps
 
-TutorPro English PH focuses on 1-to-1 online instruction. Lessons can be adjusted to each learner’s school year, curriculum, confidence level, and learning goals. Parents can access booking tools, feedback, payment options, and support from one dashboard.
+TutorPro Online English PH focuses on 1-to-1 online instruction. Lessons can be adjusted to each learner’s school year, curriculum, confidence level, and learning goals. Parents can access booking tools, feedback, payment options, and support from one dashboard.
 
 ## What to check before choosing a provider
 
@@ -149,15 +149,15 @@ TutorPro English PH focuses on 1-to-1 online instruction. Lessons can be adjuste
 
 ## Suggested internal links
 
-- [TutorPro English homepage](${siteUrl}/)
+- [TutorPro Online English homepage](${siteUrl}/)
 - [Novakid, 51Talk and Preply alternative guide](${siteUrl}/online-english-alternatives.html)
 - [China mobile student page](${siteUrl}/cn/)
 
 ## Call to action
 
-Book a free first class with TutorPro English PH and see whether the learning style fits your child.
+Book a free first class with TutorPro Online English PH and see whether the learning style fits your child.
 
-[Start at TutorPro English](${siteUrl}/)
+[Start at TutorPro Online English](${siteUrl}/)
 `
 }
 

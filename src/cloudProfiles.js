@@ -29,7 +29,7 @@ function metadataFor(account) {
   return {
     role: account.role,
     status: account.status,
-    display_name: account.parentName || account.fullName || 'TutorPro English user',
+    display_name: account.parentName || account.fullName || 'TutorPro Online English user',
     login_id: account.loginId || account.email || '',
     auth_provider: account.authProvider || 'email',
     profile_data: safeAccount(account),
@@ -124,7 +124,7 @@ export async function fetchPublicTeachers() {
     id: row.id,
     role: 'teacher',
     status: 'approved',
-    fullName: row.full_name || 'TutorPro English Teacher',
+    fullName: row.full_name || 'TutorPro Online English Teacher',
     teacher: row.teacher && typeof row.teacher === 'object' ? row.teacher : {},
     updatedAt: row.updated_at,
     publicTeacher: true,
@@ -143,7 +143,7 @@ export async function updateCloudProfile(account) {
     auth_provider: account.authProvider || 'email',
     parent_name: account.parentName || null,
     full_name: account.fullName || null,
-    display_name: account.parentName || account.fullName || 'TutorPro English user',
+    display_name: account.parentName || account.fullName || 'TutorPro Online English user',
     profile_data: safeAccount(account),
     updated_at: new Date().toISOString(),
   }
@@ -188,7 +188,7 @@ export async function deleteCloudTeacherAccount(account) {
 
 
 export async function requestCloudPasswordReset(loginValue, redirectTo) {
-  if (!supabase) throw new Error('Password reset is not configured yet. Please contact TutorPro English support.')
+  if (!supabase) throw new Error('Password reset is not configured yet. Please contact TutorPro Online English support.')
   const login = String(loginValue || '').trim().toLowerCase()
   if (!/^\S+@\S+\.\S+$/.test(login)) throw new Error('Password reset is available for email-based accounts. Please enter your registered email address or contact admin support.')
   const destination = redirectTo || (typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}#reset-password` : undefined)
@@ -198,7 +198,7 @@ export async function requestCloudPasswordReset(loginValue, redirectTo) {
 }
 
 export async function updateCloudPassword(newPassword) {
-  if (!supabase) throw new Error('Password reset is not configured yet. Please contact TutorPro English support.')
+  if (!supabase) throw new Error('Password reset is not configured yet. Please contact TutorPro Online English support.')
   if (typeof newPassword !== 'string' || newPassword.length < 8 || !/[0-9]/.test(newPassword)) {
     throw new Error('Use at least 8 characters and include at least one number.')
   }

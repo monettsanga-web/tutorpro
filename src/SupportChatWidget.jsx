@@ -129,7 +129,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
       setLoading(true)
       setError('')
       try {
-        const displayName = account.parentName || account.fullName || account.displayName || 'TutorPro English user'
+        const displayName = account.parentName || account.fullName || account.displayName || 'TutorPro Online English user'
         const nextCredentials = await createSupportConversation({
           parentName: displayName,
           email,
@@ -263,7 +263,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
 
   return (
     <div className={`support-widget ${embedded ? 'support-widget--embedded' : ''} ${open ? 'support-widget--open' : ''}`}>
-      {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
+      {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro Online English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
 
       {open && <section className="support-panel" role="dialog" aria-label={chinese ? '家长客服聊天' : 'Parent support chat'}>
         <header><span><Headphones size={21} /></span><div><strong>{supportRoleLabel}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div>{!embedded && <button onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>}</header>

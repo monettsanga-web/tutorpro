@@ -398,7 +398,7 @@ export default function AuthModal({
                 <span className="auth-heading__icon"><LockKeyhole size={22} /></span>
                 <div>
                   <span>Welcome back</span>
-                  <h2 id="auth-title">Log in to TutorPro English</h2>
+                  <h2 id="auth-title">Log in to TutorPro Online English</h2>
                   <p>Pick up where your learner left off.</p>
                 </div>
               </div>
@@ -425,7 +425,7 @@ export default function AuthModal({
               </form>
               <p className="auth-switch auth-switch--compact"><button onClick={() => switchView('reset-request')}>Forgot password?</button></p>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
-              <p className="auth-switch">New to TutorPro English? <button onClick={() => switchView('register')}>Create a free account</button></p>
+              <p className="auth-switch">New to TutorPro Online English? <button onClick={() => switchView('register')}>Create a free account</button></p>
               <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Teacher registration and login</button>
             </>
           )}
@@ -483,7 +483,7 @@ export default function AuthModal({
               <div className="auth-confetti" aria-hidden="true"><i /><i /><i /><i /><i /></div>
               <span className="auth-result__icon"><CheckCircle2 size={35} /></span>
               <span className="kicker">You’re all set</span>
-              <h2 id="auth-title">Welcome to TutorPro English, {activeAccount.parentName.split(' ')[0]}!</h2>
+              <h2 id="auth-title">Welcome to TutorPro Online English, {activeAccount.parentName.split(' ')[0]}!</h2>
               <p>{activeAccount.child.name}’s learning profile is ready. You can now explore the plan that best fits your family.</p>
               <div className="account-summary">
                 <div><span>Student</span><strong>{activeAccount.child.name}</strong></div>

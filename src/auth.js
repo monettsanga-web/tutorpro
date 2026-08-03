@@ -476,7 +476,7 @@ export async function createTeacherByAdmin(details) {
     referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     teacher: {
       specialization: details.specialization || 'Both Curricula',
-      bio: details.bio?.trim() || 'TutorPro English teacher.',
+      bio: details.bio?.trim() || 'TutorPro Online English teacher.',
       education: details.education?.trim() || 'To be updated',
       experience: Number(details.experience) || 0,
       languages: details.languages?.trim() || 'English',
@@ -514,7 +514,7 @@ export async function registerAdmin(emailValue, password) {
     id: crypto.randomUUID(),
     role: 'admin',
     status: 'active',
-    fullName: 'TutorPro English Administrator',
+    fullName: 'TutorPro Online English Administrator',
     email,
     loginId: email,
     authProvider: 'email',
@@ -576,7 +576,7 @@ export async function loginAccount(loginValue, password) {
       const cloudAccount = await signInCloudProfile(loginValue, password)
       if (cloudAccount) {
         account = mergeCloudAccounts([cloudAccount])[0]
-        if (['suspended', 'rejected', 'removed'].includes(account.status)) throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
+        if (['suspended', 'rejected', 'removed'].includes(account.status)) throw new Error(`This account is ${account.status}. Please contact the TutorPro Online English administrator.`)
         writeSessionId(account.id)
         return account
       }
@@ -587,7 +587,7 @@ export async function loginAccount(loginValue, password) {
 
   const confirmationPending = isEmailConfirmationError(cloudLoginError)
   if (!account || !account.passwordHash) {
-    if (confirmationPending) throw new Error('This registration is waiting for email activation. Open the TutorPro English confirmation email once, then log in again on this device.')
+    if (confirmationPending) throw new Error('This registration is waiting for email activation. Open the TutorPro Online English confirmation email once, then log in again on this device.')
     throw cloudLoginError || new Error('We could not find a login-enabled account with that email.')
   }
   // Supabase projects with Confirm email enabled do not issue a cloud session
@@ -595,7 +595,7 @@ export async function loginAccount(loginValue, password) {
   // its pending dashboard on the same device without exposing a Supabase error.
   if (cloudLoginError && (account.cloudProfile || account.cloudOnly) && !confirmationPending) throw cloudLoginError
   if (['suspended', 'rejected', 'removed'].includes(account.status)) {
-    throw new Error(`This account is ${account.status}. Please contact the TutorPro English administrator.`)
+    throw new Error(`This account is ${account.status}. Please contact the TutorPro Online English administrator.`)
   }
 
   const passwordHash = await hashPassword(password, account.salt)
@@ -768,7 +768,7 @@ export async function removeTeacherAccount(accountId) {
   const accounts = readAccounts()
   const account = accounts.find((item) => item.id === accountId)
   if (!account || account.role !== 'teacher') throw new Error('Teacher account not found.')
-  if (account.systemProfile) throw new Error('The TutorPro English default teacher profile cannot be deleted.')
+  if (account.systemProfile) throw new Error('The TutorPro Online English default teacher profile cannot be deleted.')
 
   if (cloudSyncEnabled() && (account.cloudProfile || account.cloudOnly)) {
     await deleteCloudTeacherAccount(publicAccount(account))

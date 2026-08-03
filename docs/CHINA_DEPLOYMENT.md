@@ -1,12 +1,12 @@
-# TutorPro English — China-accessible deployment
+# TutorPro Online English — China-accessible deployment
 
-GitHub Pages can be slow or unreachable from mainland China. TutorPro English is therefore prepared for deployment to **Tencent EdgeOne Pages**.
+GitHub Pages can be slow or unreachable from mainland China. TutorPro Online English is therefore prepared for deployment to **Tencent EdgeOne Pages**.
 
 ## One-click deployment
 
 Open this link while signed in to Tencent EdgeOne:
 
-[Deploy TutorPro English to Tencent EdgeOne Pages](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build%3Aedgeone)
+[Deploy TutorPro Online English to Tencent EdgeOne Pages](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmonettsanga-web%2Ftutorpro%2Ftree%2Farena%2F019f690b-tutorpro&project-name=tutorpro-english&output-directory=.%2Fdist&install-command=npm%20ci&build-command=npm%20run%20build%3Aedgeone)
 
 Then:
 
@@ -24,7 +24,7 @@ The repository includes `edgeone.json`, so these settings and safe cache/securit
 
 ## Domain and ICP note
 
-A temporary EdgeOne project URL can be used first. A custom TutorPro English domain is strongly recommended for a stable permanent address.
+A temporary EdgeOne project URL can be used first. A custom TutorPro Online English domain is strongly recommended for a stable permanent address.
 
 - EdgeOne **Global (excluding mainland China)** can be used without an ICP filing, but mainland performance should be tested with the final domain.
 - Selecting acceleration nodes **inside mainland China** requires a custom domain, identity verification, and an ICP filing.
