@@ -79,6 +79,8 @@ import { downloadBookingCalendar } from './bookingCalendar.js'
 import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
+import AnnouncementBanner from './AnnouncementBanner.jsx'
+import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import OnlineClassroom from './OnlineClassroom.jsx'
 import CoursewareManager from './CoursewareManager.jsx'
 import { isTencentClassroomConfigured } from './tencentClassroom.js'
@@ -2651,6 +2653,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       </div>
       {active === 'overview' && (
         <div className="portal-view">
+          <AnnouncementBanner account={account} />
           <section className="student-welcome">
             <div>
               <span className="portal-kicker">Welcome back, {account.parentName.split(' ')[0]}</span>
@@ -3231,6 +3234,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'overview' && (
         <div className="portal-view">
+          <AnnouncementBanner account={account} />
           <div className="portal-page-heading"><div><span className="portal-kicker">Teacher studio</span><h1>Good day, {account.fullName.split(' ')[0]}.</h1><p>Keep every learner, booking and teaching hour in view.</p></div><button className="portal-primary-button" onClick={() => setActive('schedule')}><CalendarDays size={17} /> Update availability</button></div>
           <div className="portal-stat-grid portal-stat-grid--four" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             <article><span className="stat-icon stat-icon--orange"><ClipboardCheck size={21} /></span><div><small>Pending requests</small><strong>{pending}</strong><em>Needs attention</em></div></article>
@@ -4434,6 +4438,7 @@ export function AdminAnnouncementsPanel() {
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [autoTranslate, setAutoTranslate] = useState(true)
   const stats = campaignStats(campaignLog)
 
   const applyMarketingTemplate = (templateId) => {
@@ -4457,18 +4462,52 @@ export function AdminAnnouncementsPanel() {
     setError('')
     setMessage('')
     try {
+      const cleanSubject = subject.trim()
+      const cleanBody = body.trim()
+
+      // Work out which languages the audience actually needs, based on the
+      // country saved from each account's registration IP.
+      let translations = {}
+      let languageNote = ''
+      if (autoTranslate) {
+        const audience = getAccounts().filter((item) => {
+          const role = String(item.role || '').toUpperCase()
+          if (role === 'ADMIN') return false
+          if (target === 'TEACHER') return role === 'TEACHER'
+          if (target === 'STUDENT') return role === 'STUDENT'
+          return true
+        })
+        const needed = [...new Set(audience.map((item) => languageForCountry(item.registrationCountry)))]
+          .filter((code) => code && code !== 'en')
+        if (needed.length) {
+          setMessage(`Translating into ${needed.length} language${needed.length > 1 ? 's' : ''}…`)
+          translations = await translateAnnouncementBatch(cleanSubject, cleanBody, needed)
+          const done = Object.keys(translations)
+          if (done.length) languageNote = ` Translated into ${done.map((code) => LANGUAGE_LABELS[code] || code).join(', ')}.`
+        }
+      }
+
       const { supabase } = await import('./supabaseClient.js')
       const { data, error: invokeError } = await supabase.functions.invoke('mass-announcement', {
         body: {
-          subject: subject.trim(),
-          body: body.trim(),
+          subject: cleanSubject,
+          body: cleanBody,
           targetRole: target,
+          // The email function can send each person their own language when
+          // it supports it; the English original always remains included.
+          autoTranslate,
+          translations,
         },
       })
       if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send bulk announcement')
       const recipients = data?.recipients || 0
-      setMessage(`🎉 Successfully sent campaign to ${recipients} active registered emails!`)
-      setCampaignLog(saveCampaignLog({ target, subject: subject.trim(), templateId: selectedTemplateId, recipients, status: 'sent' }))
+
+      // Also publish it inside the dashboard, where it translates live from
+      // the reader's current IP language.
+      saveAnnouncement({ subject: cleanSubject, body: cleanBody, target, translations })
+
+      setMessage(`🎉 Successfully sent campaign to ${recipients} active registered emails!${languageNote} It is also posted on their dashboards.`)
+      setCampaignLog(saveCampaignLog({ target, subject: cleanSubject, templateId: selectedTemplateId, recipients, status: 'sent' }))
       setSubject('')
       setBody('')
       setSelectedTemplateId('')
@@ -4489,6 +4528,7 @@ export function AdminAnnouncementsPanel() {
           <label><span>Target audience</span><select value={target} onChange={(e) => setTarget(e.target.value)}><option value="ALL">All Registered Emails (Teachers & Parents)</option><option value="TEACHER">Teachers Only</option><option value="STUDENT">Students/Parents Only</option></select></label>
           <label><span>Email subject</span><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. TutorPro English Holiday Schedule Update" /></label>
           <label><span>Campaign body</span><textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write your campaign details here..." /></label>
+          <label className="announcement-translate-toggle"><input type="checkbox" checked={autoTranslate} onChange={(e) => setAutoTranslate(e.target.checked)} /><span><Globe2 size={15} /> <b>Auto-translate for each recipient</b><small>Write in English. Each parent and teacher also gets it in their own language, based on the country detected from their IP address. The English original is always included underneath.</small></span></label>
           {error && <div className="portal-error" role="alert">{error}</div>}
           {message && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Campaign sent</strong><span>{message}</span></div></div>}
           <button className="portal-primary-button" type="submit" disabled={sending}>{sending ? <RotateCcw className="animate-spin w-4 h-4" /> : <Bell size={15} />} {sending ? 'Broadcasting emails...' : 'Send campaign email'}</button>
