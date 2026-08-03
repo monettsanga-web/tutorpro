@@ -52,8 +52,8 @@ Live audit results:
 | Sitemap | ✅ 8 URLs | Good |
 | H1 / H2 structure | ✅ 1 H1, 6 H2 | Good |
 | FAQ schema | ✅ Present | Good |
-| **Image alt text** | ❌ **0 images with alt** | **HIGH** |
-| **JS payload** | ❌ **543 KB gzipped main bundle** | **HIGH** |
+| Image alt text | ✅ 25/25 have alt (2 improved) | Fixed |
+| JS payload | ✅ 163 KB gz (was 543 KB) | Fixed |
 | **hreflang tags** | ❌ None | MEDIUM |
 | **AggregateRating schema** | ❌ None | MEDIUM |
 | **Breadcrumb schema** | ❌ None | LOW |
@@ -189,8 +189,8 @@ I can generate them with the same build script pattern.
 ## Part 5 — Technical fixes checklist
 
 **Immediate (this week)**
-- [ ] Add alt text to every image
-- [ ] Code-split classroom/TRTC/pdfjs out of the marketing bundle
+- [x] ~~Add alt text to every image~~ — done, all 25 images covered
+- [x] ~~Code-split classroom/TRTC/pdfjs out of the marketing bundle~~ — done, 543→163 KB
 - [ ] Request re-indexing of homepage in Search Console (new brand name)
 - [ ] Submit the updated 8-URL sitemap in Search Console
 - [ ] Verify the site in Google Search Console and Bing Webmaster Tools

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -29,7 +29,9 @@ import {
 } from 'lucide-react'
 import AuthModal from './AuthModal.jsx'
 import PortalAccess from './PortalAccess.jsx'
-import { AdminDashboard, StudentDashboard, TeacherDashboard } from './Dashboards.jsx'
+const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.AdminDashboard })))
+const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
+const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { getBookings, mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
@@ -1518,9 +1520,15 @@ export default function App() {
       onHome: () => setActivePortal(null),
       onLogout: logout,
     }
-    if (activePortal === 'admin') return <AdminDashboard {...portalProps} />
-    if (activePortal === 'teacher') return <TeacherDashboard {...portalProps} onAccountChange={setCurrentAccount} />
-    return <StudentDashboard {...portalProps} onAccountChange={setCurrentAccount} />
+    const portalFallback = (
+      <div className="portal-boot" role="status" aria-live="polite">
+        <span className="portal-boot__spinner" aria-hidden="true" />
+        <strong>Loading your dashboard…</strong>
+      </div>
+    )
+    if (activePortal === 'admin') return <Suspense fallback={portalFallback}><AdminDashboard {...portalProps} /></Suspense>
+    if (activePortal === 'teacher') return <Suspense fallback={portalFallback}><TeacherDashboard {...portalProps} onAccountChange={setCurrentAccount} /></Suspense>
+    return <Suspense fallback={portalFallback}><StudentDashboard {...portalProps} onAccountChange={setCurrentAccount} /></Suspense>
   }
 
   return (

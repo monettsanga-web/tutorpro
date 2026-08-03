@@ -293,7 +293,7 @@ export const WhiteboardSlides = ({
           <img
             src={fileUrl}
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            alt="Courseware View"
+            alt={fileName ? `Lesson material: ${fileName}` : 'Lesson material shared on the classroom board'}
           />
         )}
 

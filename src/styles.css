@@ -5493,3 +5493,26 @@ body {
 .teacher-dashboard-profile-card__actions { display:grid; grid-template-columns:1fr; gap:10px; margin-top:18px; }
 .teacher-dashboard-profile-card__view { min-height:46px; border:1px solid #dbeafe; border-radius:14px; background:#eff6ff; color:#1d4ed8; font-weight:950; }
 @media(max-width:900px){.public-teacher-profile-detail__identity,.public-teacher-profile-detail__grid{grid-template-columns:1fr}.public-teacher-profile-detail__rating{justify-items:start}.public-teacher-profile-resume{grid-template-columns:1fr}.public-teacher-profile-reviews-list{margin:0 18px 18px}.public-teacher-profile-detail__identity,.public-teacher-profile-detail__grid{padding-left:18px;padding-right:18px}}
+
+/* Loading state while a lazily-loaded dashboard chunk downloads.
+   Dashboards are code-split so marketing visitors never download the
+   classroom, TRTC or PDF libraries — this keeps Core Web Vitals healthy. */
+.portal-boot {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #090510 0%, #25104d 54%, #111827 100%);
+  color: #fff;
+  font-family: 'Manrope', Inter, sans-serif;
+}
+.portal-boot__spinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: #bce94e;
+  border-radius: 50%;
+  animation: portal-boot-spin 800ms linear infinite;
+}
+@keyframes portal-boot-spin { to { transform: rotate(360deg); } }
