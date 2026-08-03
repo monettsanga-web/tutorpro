@@ -9580,3 +9580,63 @@ a.feedback-resource-detail:hover strong {
 @media (max-width: 900px) {
   .schedule-timezone-switch { display: none; }
 }
+
+/* ---------------- Lesson recording playback on booking cards ---------------- */
+.booking-recordings {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  border: 1px solid rgba(220, 38, 38, .18);
+  border-radius: 14px;
+  padding: 11px 13px;
+  background: linear-gradient(135deg, #fff5f5 0%, #fdf7ff 100%);
+}
+.booking-recordings > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #9f1239;
+  font-size: .74rem;
+  font-weight: 900;
+}
+.booking-recordings__error { margin: 0; color: #b4436c; font-size: .72rem; font-weight: 600; }
+.booking-recordings__list { display: grid; gap: 6px; }
+.booking-recording-row { display: flex; gap: 6px; align-items: center; }
+.booking-recording-row > button {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  padding: 0 11px;
+  background: #fff;
+  color: #9f1239;
+  font-size: .78rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.booking-recording-row > button:hover { border-color: #fb7185; background: #fff1f2; }
+.booking-recording-row > button em { margin-left: auto; font-size: .7rem; font-style: normal; opacity: .7; }
+.booking-recording-download {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  background: #fff;
+  color: #9f1239;
+  text-decoration: none;
+}
+.booking-recording-download:hover { border-color: #fb7185; background: #fff1f2; }
+.booking-recording-player {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+  aspect-ratio: 16 / 9;
+}

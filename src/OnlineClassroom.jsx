@@ -72,6 +72,7 @@ import {
   uploadClassroomFile,
   getClassroomFileUrl,
 } from './classroomStorage.js'
+import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailable, isRecordingSupported, startClassroomRecording, uploadClassroomRecording } from './classroomRecording.js'
 
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
@@ -286,6 +287,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const selectedPathIdRef = useRef(null)
   const dragOffsetRef = useRef(null)
   const classJoinedAtRef = useRef(null)
+  const recorderRef = useRef(null)
+  const recordingTimerRef = useRef(null)
+  const [recording, setRecording] = useState(false)
+  const [remoteRecording, setRemoteRecording] = useState(false)
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  const [recordingStatus, setRecordingStatus] = useState('')
+  const [recordingError, setRecordingError] = useState('')
+  const [savedRecordings, setSavedRecordings] = useState(() => (booking?.classroomRecordings || []))
   const [joined, setJoined] = useState(false)
   const [mediaReady, setMediaReady] = useState(false)
   const [mediaError, setMediaError] = useState('')
@@ -670,6 +679,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (message.type === 'courseware-reward') {
         setClassStars(Number(message.stars) || 0)
         confetti({ particleCount: 55, spread: 65, origin: { y: 0.72 }, colors: ['#bce94e', '#7048df', '#ff4f87'] })
+        return
+      }
+      if (message.type === 'recording-state') {
+        // Students are always told when the teacher is recording.
+        setRemoteRecording(Boolean(message.recording))
         return
       }
       if (message.type === 'student-reaction') {
@@ -1088,6 +1102,95 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
   }
 
+  /* ---------------- Lesson recording (teacher only) ---------------- */
+
+  const persistRecording = (record) => {
+    if (!roomBooking?.id) return
+    try {
+      const existing = Array.isArray(roomBooking.classroomRecordings) ? roomBooking.classroomRecordings : []
+      const next = [...existing, record].slice(-20)
+      const updated = updateBooking(roomBooking.id, {
+        classroomRecordings: next,
+        lastRecordingAt: record.recordedAt,
+      })
+      setSavedRecordings(next)
+      syncBookingNow(updated).catch(() => {})
+    } catch {
+      // Recording is already stored; booking metadata is best-effort.
+    }
+  }
+
+  const stopRecording = () => {
+    if (!recorderRef.current) return
+    setRecordingStatus('Saving recording…')
+    recorderRef.current.stop()
+    recorderRef.current = null
+    window.clearInterval(recordingTimerRef.current)
+    setRecording(false)
+    transportRef.current?.send({ type: 'recording-state', recording: false })
+  }
+
+  const startRecording = () => {
+    setRecordingError('')
+    if (!isRecordingSupported()) {
+      setRecordingError('Recording needs Chrome, Edge or Safari. Please switch browser.')
+      return
+    }
+    if (!isRecordingStorageAvailable()) {
+      setRecordingError('Recording storage is not configured. Run the classroom_recordings_storage.sql file in Supabase.')
+      return
+    }
+    try {
+      // Record whatever the teacher is presenting, plus both voices.
+      const videoSource = screenSharing && screenStreamRef.current ? screenStreamRef.current : localStreamRef.current
+      const controller = startClassroomRecording({
+        videoStream: videoSource,
+        audioStreams: [localStreamRef.current, remoteStreamRef.current].filter(Boolean),
+        onError: (error) => {
+          setRecordingError(error?.message || 'Recording stopped unexpectedly.')
+          setRecording(false)
+          window.clearInterval(recordingTimerRef.current)
+        },
+        onStop: async ({ blob, durationMs, mimeType }) => {
+          try {
+            setRecordingStatus('Uploading recording…')
+            const record = await uploadClassroomRecording(roomBooking.id, blob, {
+              durationMs,
+              mimeType,
+              recordedBy: account.id,
+              recordedByName: account.fullName || 'TutorPro Teacher',
+              learnerName: learner?.name || roomBooking.learnerName || 'Student',
+            })
+            persistRecording(record)
+            setRecordingStatus(`Recording saved · ${formatRecordingDuration(durationMs)} · ${formatRecordingSize(blob.size)}`)
+            window.setTimeout(() => setRecordingStatus(''), 6000)
+          } catch (uploadError) {
+            setRecordingError(uploadError?.message || 'The recording could not be uploaded.')
+            setRecordingStatus('')
+          }
+        },
+      })
+      recorderRef.current = controller
+      setRecording(true)
+      setRecordingSeconds(0)
+      setRecordingStatus('')
+      recordingTimerRef.current = window.setInterval(() => setRecordingSeconds((value) => value + 1), 1000)
+      // Students must always know when they are being recorded.
+      transportRef.current?.send({ type: 'recording-state', recording: true })
+    } catch (error) {
+      setRecordingError(error?.message || 'Recording could not start.')
+    }
+  }
+
+  const toggleRecording = () => { if (recording) stopRecording(); else startRecording() }
+
+  useEffect(() => () => {
+    // Never leave a recorder or its timer running after the classroom closes.
+    window.clearInterval(recordingTimerRef.current)
+    try { recorderRef.current?.stop() } catch { /* already stopped */ }
+    recorderRef.current = null
+  }, [])
+
   const saveClassroomSessionSummary = () => {
     if (account.role !== 'teacher' || !roomBooking?.id || !joined) return
     const endedAt = new Date().toISOString()
@@ -1138,6 +1241,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const leaveClass = () => {
+    if (recorderRef.current) stopRecording()
     saveClassroomSessionSummary()
     localStreamRef.current?.getTracks().forEach((track) => track.stop())
     cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
@@ -2058,6 +2162,9 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             </div>}
             {screenSharing && <div className="screen-share-controls" role="toolbar" aria-label="Teacher screen sharing controls"><span><i /> You are presenting</span><button onClick={toggleScreenPause} title={screenPaused ? 'Resume screen sharing' : 'Pause screen sharing'}>{screenPaused ? <Play size={16} /> : <Pause size={16} />}<b>{screenPaused ? 'Resume' : 'Pause'}</b></button><button onClick={toggleScreenFit} title="Change screen fit"><MonitorUp size={16} /><b>{screenFit === 'fit' ? 'Fill' : 'Fit'}</b></button><button onClick={toggleStageFullscreen} title={stageFullscreen ? 'Exit full screen' : 'Open lesson board full screen'}>{stageFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<b>{stageFullscreen ? 'Exit' : 'Full screen'}</b></button><button className="stop" onClick={stopScreenShare} title="Stop screen sharing"><X size={16} /><b>Stop</b></button></div>}
             {!screenSharing && !remoteScreenSharing && !presenterUrl && !presentedFile && account.role === 'teacher' && <div className="courseware-controls" role="toolbar" aria-label="Courseware controls"><label className="courseware-picker"><span>Lesson</span><select value={coursewareTemplate.id} onChange={(event) => chooseCoursewareTemplate(event.target.value)}>{coursewareTemplateChoices.map((template) => <option key={template.id} value={template.id}>{template.title}</option>)}</select></label><button onClick={() => goToCoursewareSlide(coursewareSlideIndex - 1)} disabled={coursewareSlideIndex === 0}><ArrowLeft size={15} /> Prev</button><button onClick={() => goToCoursewareSlide(coursewareSlideIndex + 1)} disabled={coursewareSlideIndex >= activeCoursewareSlides.length - 1}>Next <ArrowLeftRight size={15} /></button><button onClick={toggleCoursewareAnswer}>{coursewareShowAnswer ? 'Hide answer' : 'Show answer'}</button><button onClick={rewardStudent}><Award size={15} /> Give star</button><button onClick={toggleStageFullscreen}>{stageFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />} Board</button></div>}
+            {(recording || remoteRecording) && <div className="classroom-recording-badge" role="status"><i /> REC{recording ? ` ${formatRecordingDuration(recordingSeconds * 1000)}` : ''}<small>This lesson is being recorded</small></div>}
+            {account.role === 'teacher' && recordingStatus && <div className="classroom-recording-toast" role="status">{recordingStatus}</div>}
+            {account.role === 'teacher' && recordingError && <div className="classroom-recording-toast classroom-recording-toast--error" role="alert">{recordingError}<button onClick={() => setRecordingError('')}><X size={12} /></button></div>}
             {account.role === 'teacher' && latestStudentReaction && <div className={`student-reaction-alert student-reaction-alert--${latestStudentReaction.tone || 'purple'}`}><span>{latestStudentReaction.emoji}</span><div><strong>{latestStudentReaction.studentName || learner?.name || 'Student'}</strong><small>{latestStudentReaction.label}</small></div><button onClick={clearStudentReaction}><X size={14} /></button></div>}
             <div className="classroom-stage__badge"><ShieldCheck size={13} /> Private lesson board</div>
           </div>
@@ -2097,7 +2204,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
       <footer className="classroom-controls">
         <div><button className={micOn ? 'active' : 'off'} onClick={toggleMic}>{micOn ? <Mic size={20} /> : <MicOff size={20} />}<span>{micOn ? 'Mute' : 'Unmute'}</span></button><button className={cameraOn ? 'active' : 'off'} onClick={toggleCamera} disabled={screenSharing}>{cameraOn ? <Camera size={20} /> : <CameraOff size={20} />}<span>{cameraOn ? 'Camera' : 'Start video'}</span></button></div>
-        <div>{account.role !== 'student' && <button className={screenSharing ? 'active sharing' : ''} onClick={toggleScreenShare}><MonitorUp size={20} /><span>{screenSharing ? 'Stop share' : 'Share screen'}</span></button>}{account.role !== 'student' && <button className="control-website-button" onClick={() => setPresenterUrlDraft(presenterUrl || 'https://')} title="Present a website"><Globe size={20} /><span>Website</span></button>}<button className={annotationMode ? 'active annotation' : ''} onClick={() => setAnnotationMode((active) => !active)} disabled={account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed} title={account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed ? 'The teacher must allow annotation or pointer first' : 'Annotate the lesson board'}><PenTool size={20} /><span>{account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed ? 'Permission needed' : 'Annotate'}</span></button><label className="control-file-button"><FileUp size={20} /><span>Share file</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label><button onClick={() => setSidebarOpen((open) => !open)}><Users size={20} /><span>Chat & files</span></button><button className="leave-class-button" onClick={leaveClass}><PhoneOff size={21} /><span>End class</span></button></div>
+        <div>{account.role !== 'student' && <button className={screenSharing ? 'active sharing' : ''} onClick={toggleScreenShare}><MonitorUp size={20} /><span>{screenSharing ? 'Stop share' : 'Share screen'}</span></button>}{account.role !== 'student' && <button className="control-website-button" onClick={() => setPresenterUrlDraft(presenterUrl || 'https://')} title="Present a website"><Globe size={20} /><span>Website</span></button>}<button className={annotationMode ? 'active annotation' : ''} onClick={() => setAnnotationMode((active) => !active)} disabled={account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed} title={account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed ? 'The teacher must allow annotation or pointer first' : 'Annotate the lesson board'}><PenTool size={20} /><span>{account.role === 'student' && !studentAnnotationAllowed && !studentPointerAllowed ? 'Permission needed' : 'Annotate'}</span></button><label className="control-file-button"><FileUp size={20} /><span>Share file</span><input type="file" accept={CLASSROOM_FILE_ACCEPT} onChange={uploadFile} disabled={uploadingFile} /></label><button onClick={() => setSidebarOpen((open) => !open)}><Users size={20} /><span>Chat & files</span></button>{account.role === 'teacher' && <button className={recording ? 'active recording-live' : ''} onClick={toggleRecording} title={recording ? 'Stop and save the recording' : 'Record this lesson'}><Circle size={20} fill={recording ? 'currentColor' : 'none'} /><span>{recording ? `Stop · ${formatRecordingDuration(recordingSeconds * 1000)}` : 'Record'}</span></button>}<button className="leave-class-button" onClick={leaveClass}><PhoneOff size={21} /><span>End class</span></button></div>
       </footer>
 
       {presenterUrlDraft !== '' && account.role === 'teacher' && <div className="classroom-presenter-overlay">
