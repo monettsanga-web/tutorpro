@@ -12,7 +12,15 @@ import './premium-motion.css'
 import './support-chat.css'
 import './support-inbox.css'
 
-createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root')
+
+// scripts/prerender-home.mjs injects static, crawlable homepage copy into #root
+// at build time so search engines and link scrapers see real content instead of
+// an empty div. Remove it before mounting so users never see it flash twice.
+const prerendered = rootElement?.querySelector('#prerendered-home')
+if (prerendered) prerendered.remove()
+
+createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>
       <AutoTranslate />
