@@ -422,6 +422,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [reconnectKey, setReconnectKey] = useState(0)
   const [participantCount, setParticipantCount] = useState(1)
   const [iceDetail, setIceDetail] = useState('')
+  const [transportStats, setTransportStats] = useState(null)
   const [annotationMode, setAnnotationMode] = useState(false)
   const [annotationTool, setAnnotationTool] = useState('pen')
   const [stickyColor, setStickyColor] = useState('#ffe27a')
@@ -608,6 +609,16 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }).catch(() => {})
     }
   }, [useTencentClassroom, remoteScreenSharing])
+
+  // Sample the transport counters for the staff diagnostics line. Polled
+  // rather than read during render, which would be an impure read of a ref.
+  useEffect(() => {
+    if (!joined || connectionStatus === 'connected') return undefined
+    const timer = window.setInterval(() => {
+      setTransportStats(transportRef.current?.stats?.() || null)
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [joined, connectionStatus])
 
   // Mint Cloudflare TURN credentials as soon as the classroom opens, so the
   // relay is ready before the first connection attempt rather than after it has
@@ -2037,7 +2048,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     `ice:${iceDetail || 'n/a'}`,
     `signalling:${signalingStatus}`,
     `in-room:${participantCount}`,
-  ].join(' · ')
+    transportStats ? `sig-sent:${transportStats.sent}/recv:${transportStats.received}` : '',
+    transportStats && !transportStats.databaseEnabled ? 'durable:off' : '',
+    transportStats?.lastError ? `err:${transportStats.lastError}` : '',
+  ].filter(Boolean).join(' · ')
   const connectionHelpText = connectionAdvice.detail
   const showRelayWarning = participantCount > 1
     && !hasTurnRelay()

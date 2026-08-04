@@ -40,8 +40,11 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
   const seenMessages = new Set()
   const seenDatabaseRows = new Set()
 
+  const stats = { sent: 0, received: 0, viaRealtime: 0, viaDatabase: 0, queued: 0, lastError: '' }
+
   const receive = (payload) => {
     if (!payload || payload.sender === participantId) return
+    stats.received += 1
     const messageId = payload.messageId
     if (messageId && seenMessages.has(messageId)) return
     if (messageId) {
@@ -69,6 +72,9 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
 
   const noteDatabaseError = (error) => {
     databaseFailures += 1
+    // Remember why the durable path failed. An RLS rejection or a missing
+    // table is otherwise completely silent, and the call just never connects.
+    stats.lastError = String(error?.message || error?.code || 'unknown').slice(0, 90)
     if (missingSignalTable(error) || databaseFailures >= 4) disableDatabaseFallback()
   }
 
@@ -212,9 +218,13 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
         messageId: `${participantId}-${crypto.randomUUID()}`,
         sentAt: Date.now(),
       }
+      stats.sent += 1
       localChannel?.postMessage(message)
       if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message))
-      else if (realtimeChannel && !postRealtime(message)) {
+      else if (realtimeChannel && postRealtime(message)) {
+        stats.viaRealtime += 1
+      } else if (realtimeChannel) {
+        stats.queued += 1
         queuedMessages.push(message)
         if (queuedMessages.length > MAX_QUEUED_MESSAGES) queuedMessages.shift()
       }
@@ -236,6 +246,7 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
       }
       if (databaseChannel && supabase) supabase.removeChannel(databaseChannel)
     },
+    stats() { return { ...stats, databaseEnabled } },
     mode: signalingUrl ? 'websocket' : supabase ? 'supabase-hybrid' : 'local',
   }
 }
