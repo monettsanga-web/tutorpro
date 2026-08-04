@@ -655,6 +655,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   useEffect(() => {
     if (!joined || !access.allowed) return undefined
     let active = true
+    // The whole connection waits on relayReady, so this must never be able to
+    // hang. If the credential lookup is slow we proceed without the relay
+    // rather than leave the pair staring at a spinner; a later ICE restart
+    // picks the relay up once it arrives.
+    const failSafe = window.setTimeout(() => { if (active) setRelayReady(true) }, 4000)
     fetchDynamicIceServers()
       .then((servers) => {
         if (!active) return
@@ -667,7 +672,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       })
       .catch(() => { /* Direct connection is still attempted. */ })
       .finally(() => { if (active) setRelayReady(true) })
-    return () => { active = false }
+    return () => { active = false; window.clearTimeout(failSafe) }
   }, [joined, access.allowed])
 
   useEffect(() => {

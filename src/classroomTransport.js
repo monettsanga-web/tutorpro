@@ -40,7 +40,7 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
   const seenMessages = new Set()
   const seenDatabaseRows = new Set()
 
-  const stats = { sent: 0, received: 0, viaRealtime: 0, viaDatabase: 0, queued: 0, lastError: '' }
+  const stats = { sent: 0, received: 0, viaRealtime: 0, viaDatabase: 0, queued: 0, realtimeFailures: 0, lastError: '' }
 
   const receive = (payload) => {
     if (!payload || payload.sender === participantId) return
@@ -117,15 +117,44 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
 
   const postRealtime = (message) => {
     if (!realtimeChannel || !realtimeReady || closed) return false
-    realtimeChannel.send({ type: 'broadcast', event: 'signal', payload: message }).catch(() => {
-      // The HTTPS database path continues trying when WebSockets are blocked.
-    })
-    return true
+    // send() resolves with 'ok' / 'timed out' / 'error'. Previously the result
+    // was discarded, so a dropped offer or answer looked like a success and was
+    // never retried, leaving both sides waiting on a handshake that never
+    // completed. Re-queue anything the server did not accept.
+    try {
+      const result = realtimeChannel.send({ type: 'broadcast', event: 'signal', payload: message })
+      if (result && typeof result.then === 'function') {
+        result.then((status) => {
+          if (status !== 'ok' && !closed) {
+            stats.realtimeFailures += 1
+            queuedMessages.push(message)
+            if (queuedMessages.length > MAX_QUEUED_MESSAGES) queuedMessages.shift()
+          }
+        }).catch(() => {
+          if (!closed) stats.realtimeFailures += 1
+        })
+      }
+      return true
+    } catch {
+      stats.realtimeFailures += 1
+      return false
+    }
   }
 
   const flushRealtimeQueue = () => {
     if (!realtimeReady) return
     queuedMessages.splice(0).forEach(postRealtime)
+  }
+
+  // The queue previously only drained when the channel first subscribed, so a
+  // message re-queued after a failed send sat there forever. Retry on a short
+  // timer for as long as the transport is open.
+  let queueTimer = null
+  if (typeof window !== 'undefined') {
+    queueTimer = window.setInterval(() => {
+      if (closed || !queuedMessages.length) return
+      flushRealtimeQueue()
+    }, 1200)
   }
 
   // BroadcastChannel keeps two tabs on the same browser working even if the
@@ -158,7 +187,9 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
     realtimeChannel = supabase
       .channel(channelKey(roomId, token), {
         config: {
-          broadcast: { self: false, ack: true },
+          // ack:true required a server round trip that timed out on slow
+          // links and silently dropped signalling messages.
+          broadcast: { self: false, ack: false },
           presence: { key: participantId },
         },
       })
@@ -233,6 +264,7 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
     close() {
       closed = true
       realtimeReady = false
+      if (queueTimer) window.clearInterval(queueTimer)
       socket?.close()
       localChannel?.close()
       if (databasePollTimer) window.clearInterval(databasePollTimer)
