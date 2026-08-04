@@ -9,6 +9,10 @@ import {
   Check,
   CheckCircle2,
   Circle,
+  Minus,
+  MoveUpRight,
+  Square,
+  StickyNote,
   Copy,
   Download,
   Eraser,
@@ -138,6 +142,19 @@ function hitTestAnnotation(path, point, width, height, threshold = 18) {
     const textHeight = ((path.fontSize || 24) * 1.2) / height
     return Math.abs(dx) < textWidth / 2 + threshold / width && Math.abs(dy) < textHeight / 2 + threshold / height
   }
+  if (['rect', 'ellipse', 'line', 'arrow'].includes(path.tool) && path.start && path.end) {
+    const minX = Math.min(path.start.x, path.end.x) - threshold / width
+    const maxX = Math.max(path.start.x, path.end.x) + threshold / width
+    const minY = Math.min(path.start.y, path.end.y) - threshold / height
+    const maxY = Math.max(path.start.y, path.end.y) + threshold / height
+    return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY
+  }
+  if (path.tool === 'sticky' && path.point) {
+    const noteW = path.noteWidth || 0.18
+    const noteH = path.noteHeight || 0.13
+    return point.x >= path.point.x && point.x <= path.point.x + noteW
+      && point.y >= path.point.y && point.y <= path.point.y + noteH
+  }
   if (path.points?.length) {
     return path.points.some((p) => {
       const dx = (point.x - p.x) * width
@@ -176,6 +193,95 @@ function drawPath(context, path, width, height, options = {}) {
     context.restore()
     return
   }
+  // Shapes: rectangle, ellipse, line and arrow, drawn from start to end.
+  if (['rect', 'ellipse', 'line', 'arrow'].includes(path.tool) && path.start && path.end) {
+    const x1 = path.start.x * width
+    const y1 = path.start.y * height
+    const x2 = path.end.x * width
+    const y2 = path.end.y * height
+    context.save()
+    context.strokeStyle = path.color || '#ff4f87'
+    context.lineWidth = path.width || 4
+    context.lineCap = 'round'
+    context.lineJoin = 'round'
+    if (isLivePreview) context.globalAlpha = 0.7
+    context.beginPath()
+    if (path.tool === 'rect') {
+      context.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1))
+    } else if (path.tool === 'ellipse') {
+      context.ellipse((x1 + x2) / 2, (y1 + y2) / 2, Math.abs(x2 - x1) / 2, Math.abs(y2 - y1) / 2, 0, 0, Math.PI * 2)
+    } else {
+      context.moveTo(x1, y1)
+      context.lineTo(x2, y2)
+    }
+    context.stroke()
+    if (path.tool === 'arrow') {
+      // Arrowhead sized relative to the stroke so it stays proportional.
+      const angle = Math.atan2(y2 - y1, x2 - x1)
+      const head = Math.max(12, (path.width || 4) * 3)
+      context.beginPath()
+      context.moveTo(x2, y2)
+      context.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6))
+      context.moveTo(x2, y2)
+      context.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6))
+      context.stroke()
+    }
+    if (selected) {
+      context.strokeStyle = '#7048df'
+      context.lineWidth = 2
+      context.setLineDash([6, 4])
+      context.strokeRect(Math.min(x1, x2) - 6, Math.min(y1, y2) - 6, Math.abs(x2 - x1) + 12, Math.abs(y2 - y1) + 12)
+      context.setLineDash([])
+    }
+    context.restore()
+    return
+  }
+
+  // Sticky note: a coloured card with wrapped text, for lesson reminders.
+  if (path.tool === 'sticky' && path.point) {
+    const noteW = (path.noteWidth || 0.18) * width
+    const noteH = (path.noteHeight || 0.13) * height
+    const x = path.point.x * width
+    const y = path.point.y * height
+    context.save()
+    if (isLivePreview) context.globalAlpha = 0.75
+    context.fillStyle = path.color || '#ffe27a'
+    context.shadowColor = 'rgba(0,0,0,0.28)'
+    context.shadowBlur = 10
+    context.shadowOffsetY = 4
+    context.beginPath()
+    context.roundRect?.(x, y, noteW, noteH, 8) ?? context.rect(x, y, noteW, noteH)
+    context.fill()
+    context.shadowColor = 'transparent'
+    // Word-wrapped body text.
+    context.fillStyle = '#2a2118'
+    const size = path.fontSize || 16
+    context.font = `600 ${size}px Arial, sans-serif`
+    context.textBaseline = 'top'
+    const words = String(path.text || '').split(/\s+/).filter(Boolean)
+    const maxWidth = noteW - 16
+    let line = ''
+    let lineY = y + 10
+    words.forEach((word) => {
+      const test = line ? `${line} ${word}` : word
+      if (context.measureText(test).width > maxWidth && line) {
+        context.fillText(line, x + 8, lineY)
+        line = word
+        lineY += size * 1.3
+      } else line = test
+    })
+    if (line && lineY < y + noteH - 4) context.fillText(line, x + 8, lineY)
+    if (selected) {
+      context.strokeStyle = '#7048df'
+      context.lineWidth = 2
+      context.setLineDash([6, 4])
+      context.strokeRect(x - 4, y - 4, noteW + 8, noteH + 8)
+      context.setLineDash([])
+    }
+    context.restore()
+    return
+  }
+
   if (path.tool === 'pointer' && path.point) {
     context.save()
     context.beginPath()
@@ -320,6 +426,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [participantCount, setParticipantCount] = useState(1)
   const [annotationMode, setAnnotationMode] = useState(false)
   const [annotationTool, setAnnotationTool] = useState('pen')
+  const [stickyColor, setStickyColor] = useState('#ffe27a')
   const [annotationColor, setAnnotationColor] = useState('#ff4f87')
   const [studentAnnotationAllowed, setStudentAnnotationAllowed] = useState(false)
   const [textEditor, setTextEditor] = useState(null)
@@ -1370,6 +1477,26 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       liveTextPathRef.current = null
       return
     }
+    // Sticky note: reuse the text editor to capture the note body.
+    if (annotationTool === 'sticky') {
+      setTextEditor(point)
+      setTextDraft('')
+      liveTextPathRef.current = null
+      return
+    }
+    // Shape tools: drag from start point to end point.
+    if (['rect', 'ellipse', 'line', 'arrow'].includes(annotationTool)) {
+      event.currentTarget.setPointerCapture(event.pointerId)
+      currentPathRef.current = {
+        id: crypto.randomUUID(),
+        tool: annotationTool,
+        color: annotationColor,
+        width: 5,
+        start: point,
+        end: point,
+      }
+      return
+    }
     // Drawing tools (pen, highlighter, eraser)
     event.currentTarget.setPointerCapture(event.pointerId)
     currentPathRef.current = {
@@ -1395,8 +1522,13 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (!path) return
       const newX = point.x - dragOffsetRef.current.x
       const newY = point.y - dragOffsetRef.current.y
-      if (path.tool === 'text' && path.point) {
+      if ((path.tool === 'text' || path.tool === 'sticky') && path.point) {
         path.point = { x: newX, y: newY }
+      } else if (path.start && path.end) {
+        const dx = newX - path.start.x
+        const dy = newY - path.start.y
+        path.start = { x: path.start.x + dx, y: path.start.y + dy }
+        path.end = { x: path.end.x + dx, y: path.end.y + dy }
       } else if (path.points?.length) {
         const refPoint = path.points[0]
         const dx = newX - refPoint.x
@@ -1407,6 +1539,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       return
     }
     if (!currentPathRef.current || !canAnnotate()) return
+    // Shapes track a moving end point instead of accumulating points.
+    if (currentPathRef.current.start) {
+      currentPathRef.current.end = point
+      redrawAnnotations(); syncUndoState()
+      const shapeCanvas = annotationCanvasRef.current
+      const shapeContext = shapeCanvas?.getContext('2d')
+      if (shapeCanvas && shapeContext) drawPath(shapeContext, currentPathRef.current, shapeCanvas.width, shapeCanvas.height, { isLivePreview: true })
+      return
+    }
     currentPathRef.current.points.push(point)
     redrawAnnotations(); syncUndoState()
     const canvas = annotationCanvasRef.current
@@ -1490,7 +1631,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       redrawAnnotations(); syncUndoState()
       return
     }
-    const path = { id: crypto.randomUUID(), tool: 'text', text: text.slice(0, 500), color: annotationColor, fontSize: 24, point: textEditor }
+    // The sticky tool reuses this editor, so build the right kind of annotation.
+    const path = annotationTool === 'sticky'
+      ? { id: crypto.randomUUID(), tool: 'sticky', text: text.slice(0, 240), color: stickyColor, fontSize: 16, noteWidth: 0.18, noteHeight: 0.13, point: textEditor }
+      : { id: crypto.randomUUID(), tool: 'text', text: text.slice(0, 500), color: annotationColor, fontSize: 24, point: textEditor }
     pathsRef.current.push(path)
     undonePathsRef.current = []
     liveTextPathRef.current = null
@@ -2222,8 +2366,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               <button className={annotationTool === 'pen' ? 'active' : ''} onClick={() => setAnnotationTool('pen')} title="Pen"><PenTool size={17} /></button>
               <button className={annotationTool === 'highlighter' ? 'active' : ''} onClick={() => setAnnotationTool('highlighter')} title="Highlighter"><Circle size={17} /></button>
               <button className={annotationTool === 'text' ? 'active' : ''} onClick={() => setAnnotationTool('text')} title="Text"><Type size={17} /></button>
+              <button className={annotationTool === 'sticky' ? 'active' : ''} onClick={() => setAnnotationTool('sticky')} title="Sticky note"><StickyNote size={17} /></button>
+              <button className={annotationTool === 'rect' ? 'active' : ''} onClick={() => setAnnotationTool('rect')} title="Rectangle"><Square size={17} /></button>
+              <button className={annotationTool === 'ellipse' ? 'active' : ''} onClick={() => setAnnotationTool('ellipse')} title="Ellipse"><Circle size={17} /></button>
+              <button className={annotationTool === 'line' ? 'active' : ''} onClick={() => setAnnotationTool('line')} title="Line"><Minus size={17} /></button>
+              <button className={annotationTool === 'arrow' ? 'active' : ''} onClick={() => setAnnotationTool('arrow')} title="Arrow"><MoveUpRight size={17} /></button>
               <button className={annotationTool === 'eraser' ? 'active' : ''} onClick={() => setAnnotationTool('eraser')} title="Eraser"><Eraser size={17} /></button>
               <label title="Ink colour"><input type="color" value={annotationColor} onChange={(event) => setAnnotationColor(event.target.value)} /></label>
+              {annotationTool === 'sticky' && <label title="Sticky note colour" className="annotation-sticky-colour"><input type="color" value={stickyColor} onChange={(event) => setStickyColor(event.target.value)} /></label>}
               <span className="annotation-toolbar__divider" />
               <button onClick={undoAnnotation} title="Undo" disabled={!canUndo}><Undo2 size={17} /></button>
               <button onClick={redoAnnotation} title="Redo" disabled={!canRedo}><Redo2 size={17} /></button>
