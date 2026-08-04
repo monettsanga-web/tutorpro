@@ -347,6 +347,20 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const studentAccount = getAccountById(roomBooking.studentId)
   const learner = studentAccount?.children?.find((item) => item.id === roomBooking.learnerId) || studentAccount?.child
   const teacher = getAccountById(roomBooking.teacherId)
+  // WebRTC needs exactly one side to create the offer and one to answer. That
+  // was decided by account.role === 'teacher', which silently broke whenever
+  // the person on the teaching side was not a teacher account — most obviously
+  // an administrator opening the classroom from the admin dashboard, where
+  // their own admin account is passed in. Both ends then behaved as the
+  // answering side, no offer was ever created, and the pair sat forever on
+  // "Both of you are in the room. Re-establishing the video link".
+  //
+  // Decide it from the BOOKING instead: whoever is not the booked student
+  // hosts the call. Falls back to the account role when the ids are missing.
+  const isBookedStudent = String(roomBooking.studentId || '') === String(account.id)
+  const isHost = roomBooking.teacherId || roomBooking.studentId
+    ? !isBookedStudent
+    : account.role === 'teacher'
   const teacherClassroom = account.role === 'teacher' ? account.teacher?.classroom : teacher?.teacher?.classroom
   const useTencentClassroom = teacherClassroom?.platform === 'voov' && isTencentClassroomConfigured()
   const voovFallbackLink = teacherClassroom?.voovLink || ''
@@ -713,7 +727,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           if (typeof peer.restartIce === 'function') peer.restartIce()
           // Only the teacher re-offers, so both sides cannot renegotiate at
           // once and glare.
-          if (account.role === 'teacher') void sendTeacherOffer(true)
+          if (isHost) void sendTeacherOffer(true)
         } catch { /* The periodic reconnect below is the backstop. */ }
       }
       peer.onconnectionstatechange = () => {
@@ -721,7 +735,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         if (status === 'connected') setConnectionStatus('connected')
         else if (['failed', 'disconnected', 'closed'].includes(status)) {
           setConnectionStatus(status)
-          if (status !== 'closed' && account.role !== 'teacher') transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
+          if (status !== 'closed' && !isHost) transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
         } else setConnectionStatus('connecting')
       }
       return peer
@@ -779,7 +793,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         const count = Math.max(1, Number(message.count) || 1)
         setParticipantCount(count)
         if (count > 1 && !useTencentClassroom) {
-          if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
+          if (isHost) transportRef.current?.send({ type: 'teacher-ready' })
           else transportRef.current?.send({ type: 'join-request', role: account.role })
         } else if (count === 1) {
           // Presence dropped back to just us. Covers the cases where no 'leave'
@@ -812,23 +826,23 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         offerStartedAtRef.current = 0
         return
       }
-      if (message.type === 'teacher-ready' && account.role !== 'teacher' && !useTencentClassroom) {
+      if (message.type === 'teacher-ready' && !isHost && !useTencentClassroom) {
         transportRef.current?.send({ type: 'join-request', role: account.role })
         return
       }
-      if (message.type === 'join-request' && account.role === 'teacher') {
+      if (message.type === 'join-request' && isHost) {
         // A student just arrived. If the teacher is already in the room, tell
         // them immediately so they are not left waiting.
         if (joined) transportRef.current?.send({ type: 'teacher-present', present: true })
       }
-      if (message.type === 'join-request' && account.role === 'teacher' && !useTencentClassroom) {
+      if (message.type === 'join-request' && isHost && !useTencentClassroom) {
         transportRef.current?.send({ type: 'annotation-permission', allowed: annotationPermissionRef.current })
         transportRef.current?.send({ type: 'pointer-permission', allowed: pointerPermissionRef.current })
         if (studentMuted) transportRef.current?.send({ type: 'mute-student', muted: true })
         await sendTeacherOffer(Boolean(message.reconnect))
         return
       }
-      if (message.type === 'offer' && account.role !== 'teacher' && !useTencentClassroom) {
+      if (message.type === 'offer' && !isHost && !useTencentClassroom) {
         let peer = ensurePeer()
         if (peer.signalingState !== 'stable' || ['failed', 'closed'].includes(peer.connectionState)) peer = resetPeer()
         try {
@@ -842,7 +856,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         return
       }
-      if (message.type === 'answer' && account.role === 'teacher' && !useTencentClassroom) {
+      if (message.type === 'answer' && isHost && !useTencentClassroom) {
         const peer = ensurePeer()
         if (peer.signalingState !== 'have-local-offer') return
         try {
@@ -1060,7 +1074,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       // case too, otherwise the pair can wait indefinitely.
       const stalled = offerStartedAtRef.current && Date.now() - offerStartedAtRef.current > 7000
       const needsRestart = ['failed', 'disconnected'].includes(peerRef.current?.connectionState) || stalled
-      if (account.role === 'teacher') {
+      if (isHost) {
         if (needsRestart) void sendTeacherOffer(true)
         else transportRef.current?.send({ type: 'teacher-ready' })
       } else {
@@ -1078,7 +1092,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       pendingIceRef.current = []
       offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, relayReady, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
+  }, [joined, access.allowed, relayReady, isHost, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
 
   useEffect(() => {
     if (!joined || !access.allowed || !useTencentClassroom) return undefined
@@ -1248,13 +1262,13 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     if (!classJoinedAtRef.current) classJoinedAtRef.current = new Date().toISOString()
     saveAttendance('join')
     // Students wait until the teacher is in the room. Teachers enter directly.
-    if (account.role === 'student' && !teacherPresent) {
+    if (!isHost && account.role === 'student' && !teacherPresent) {
       setWaiting(true)
       return
     }
     setWaiting(false)
     setJoined(true)
-    if (account.role === 'teacher') {
+    if (isHost) {
       transportRef.current?.send({ type: 'teacher-present', present: true })
     }
   }
