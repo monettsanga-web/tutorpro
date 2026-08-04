@@ -1449,7 +1449,14 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
 }
 
 export default function App() {
-  const [authOpen, setAuthOpen] = useState(false)
+  // Landing pages link back with ?book=1 so the registration form is already
+  // open on arrival, instead of asking the parent to find the button again.
+  // Resolved during the first render so there is no extra pass.
+  const [authOpen, setAuthOpen] = useState(() => {
+    try {
+      return new URL(window.location.href).searchParams.get('book') === '1' && !getCurrentAccount()
+    } catch { return false }
+  })
   const [authMode, setAuthMode] = useState('register')
   const [roleAccess, setRoleAccess] = useState(null)
   const [activePortal, setActivePortal] = useState(null)
@@ -1493,6 +1500,7 @@ export default function App() {
   // Record which channel sent this visitor (UTM tags / referrer) so the admin
   // funnel can credit sign-ups to the post or ad that earned them.
   useEffect(() => { captureAttribution() }, [])
+
 
   // Website settings the admin controls (currently teacher-directory visibility).
   // Read from cache instantly, then refreshed from Supabase and kept live.

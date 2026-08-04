@@ -87,6 +87,7 @@ const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
 const AdminFunnelPanel = lazy(() => import('./AdminFunnelPanel.jsx'))
 const AdminFollowUpPanel = lazy(() => import('./AdminFollowUpPanel.jsx'))
+const AdminLinkBuilder = lazy(() => import('./AdminLinkBuilder.jsx'))
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 const OnlineClassroom = lazy(() => import('./OnlineClassroom.jsx'))
@@ -5282,6 +5283,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'payments', label: 'Payments', icon: Coins },
     { id: 'funnel', label: 'Growth funnel', icon: TrendingUp },
     { id: 'followups', label: 'Follow-ups', icon: MessageSquareText },
+    { id: 'sharelinks', label: 'Share links', icon: Award },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'library', label: 'Library', icon: BookOpen },
@@ -5387,6 +5389,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'funnel' && <Suspense fallback={<PanelFallback label="Loading growth funnel…" />}><AdminFunnelPanel /></Suspense>}
 
       {active === 'followups' && <Suspense fallback={<PanelFallback label="Loading follow-ups…" />}><AdminFollowUpPanel /></Suspense>}
+
+      {active === 'sharelinks' && <Suspense fallback={<PanelFallback label="Loading share links…" />}><AdminLinkBuilder /></Suspense>}
 
       {active === 'announcements' && <AdminAnnouncementsPanel />}
 
