@@ -9752,3 +9752,103 @@ a.feedback-resource-detail:hover strong {
   animation: boot-spin 700ms linear infinite;
 }
 @keyframes boot-spin { to { transform: rotate(360deg); } }
+
+/* ------------------------------------------------------------------ */
+/* Admin → Website controls                                            */
+/* ------------------------------------------------------------------ */
+
+.website-control-flash {
+  display: flex; align-items: center; gap: 9px;
+  margin-bottom: 16px; padding: 12px 15px;
+  border-radius: 13px;
+  font-size: .85rem; font-weight: 650;
+}
+.website-control-flash--ok { background: #edf9ec; border: 1px solid #b9e2b4; color: #24632a; }
+.website-control-flash--warn { background: #fff4e8; border: 1px solid #f3cfa2; color: #8a4d09; }
+
+.website-visibility-card { margin-bottom: 20px; }
+.website-visibility-options {
+  display: grid; gap: 13px;
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  margin-top: 6px;
+}
+.website-visibility-option {
+  display: grid; gap: 6px; justify-items: start;
+  padding: 17px 17px 16px;
+  border: 2px solid var(--portal-line);
+  border-radius: 17px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.website-visibility-option:hover:not(:disabled) { border-color: #c3b4e6; transform: translateY(-1px); }
+.website-visibility-option:disabled { cursor: progress; opacity: .75; }
+.website-visibility-option--active {
+  border-color: var(--portal-blue);
+  box-shadow: 0 8px 24px rgba(112,72,223,.16);
+}
+.website-visibility-option__icon {
+  display: grid; place-items: center;
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  background: #f1ecfd; color: var(--portal-blue);
+}
+.website-visibility-option--active .website-visibility-option__icon { background: var(--portal-blue); color: #fff; }
+.website-visibility-option strong { color: var(--portal-navy); font-size: .98rem; font-weight: 850; }
+.website-visibility-option small { color: var(--portal-muted); font-size: .8rem; line-height: 1.45; font-weight: 550; }
+.website-visibility-option__saving {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--portal-blue); font-size: .76rem; font-style: normal; font-weight: 750;
+}
+.website-visibility-option__saving svg { animation: boot-spin 700ms linear infinite; }
+.website-visibility-card__note {
+  margin-top: 15px;
+  color: var(--portal-muted);
+  font-size: .83rem; line-height: 1.55; font-weight: 550;
+}
+.website-visibility-card__note strong { color: var(--portal-navy); }
+
+.website-teacher-count { color: var(--portal-muted); font-size: .8rem; font-weight: 700; }
+.website-teacher-list-card__note {
+  margin: 0 0 14px;
+  color: var(--portal-muted);
+  font-size: .83rem; line-height: 1.5; font-weight: 550;
+}
+.website-teacher-list { display: grid; gap: 9px; }
+.website-teacher-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 12px 15px;
+  border: 1px solid var(--portal-line);
+  border-radius: 14px;
+  background: #fff;
+}
+.website-teacher-row--muted { background: #faf9fc; }
+.website-teacher-row > div { display: grid; gap: 2px; min-width: 0; }
+.website-teacher-row strong { color: var(--portal-navy); font-size: .92rem; font-weight: 800; }
+.website-teacher-row small { color: var(--portal-muted); font-size: .77rem; font-weight: 550; }
+.website-teacher-toggle {
+  display: inline-flex; align-items: center; gap: 7px; flex: none;
+  padding: 8px 15px;
+  border: 1px solid var(--portal-line);
+  border-radius: 999px;
+  background: #f4f2f8; color: var(--portal-muted);
+  font-size: .79rem; font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.website-teacher-toggle--on { background: #e9f8ea; border-color: #b7e3b6; color: #24632a; }
+.website-teacher-toggle:hover { border-color: var(--portal-blue); color: var(--portal-blue); }
+.website-teacher-list__empty { color: var(--portal-muted); font-size: .85rem; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .website-teacher-row { flex-direction: column; align-items: flex-start; }
+  .website-teacher-toggle { width: 100%; justify-content: center; }
+}
+
+.website-visibility-card__warning {
+  margin-top: 13px; padding: 12px 15px;
+  border: 1px solid #f3cfa2; border-radius: 13px;
+  background: #fff8ef; color: #8a4d09;
+  font-size: .82rem; line-height: 1.55; font-weight: 600;
+}

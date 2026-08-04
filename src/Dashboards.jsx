@@ -84,6 +84,7 @@ import RecordingPlayback from './RecordingPlayback.jsx'
 import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
+const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 const OnlineClassroom = lazy(() => import('./OnlineClassroom.jsx'))
@@ -5271,6 +5272,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'students', label: 'Students', icon: GraduationCap },
     { id: 'support', label: 'Parents/Teachers support', icon: MessageSquareText, badge: supportUnread },
     { id: 'reviews', label: 'Parent reviews', icon: Star },
+    { id: 'website', label: 'Website controls', icon: Globe2 },
     { id: 'referrals', label: 'Referral growth', icon: Award },
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
@@ -5375,6 +5377,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'referrals' && <AdminReferralDashboard />}
 
       {active === 'reviews' && <Suspense fallback={<PanelFallback label="Loading parent reviews…" />}><AdminReviewsPanel /></Suspense>}
+
+      {active === 'website' && <Suspense fallback={<PanelFallback label="Loading website controls…" />}><AdminWebsitePanel /></Suspense>}
 
       {active === 'announcements' && <AdminAnnouncementsPanel />}
 

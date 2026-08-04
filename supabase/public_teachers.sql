@@ -32,6 +32,9 @@ as $$
   from public.profiles p
   where p.role = 'teacher'
     and p.status = 'approved'
+    -- Admins can hide an individual teacher from the public directory.
+    -- Absent flag means visible, so existing profiles are unaffected.
+    and coalesce((p.profile_data->'teacher'->>'hiddenFromWebsite')::boolean, false) = false
   order by p.updated_at desc;
 $$;
 

@@ -33,6 +33,7 @@ const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ defa
 const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
 const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
+import { canViewTeacherDirectory, loadSiteSettings, publiclyListedTeachers, subscribeToCloudSiteSettings, subscribeToSiteSettings } from './siteSettings.js'
 import { getBookings, mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
@@ -133,7 +134,7 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
+function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro Online English user'
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
@@ -150,7 +151,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
         <Logo />
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
           <a href="#programmes" onClick={closeMenu}>Programmes</a>
-          <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Teachers</a>
+          {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Teachers</a>}
           <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
           <div className="nav__mobile-actions">
@@ -1059,7 +1060,8 @@ function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
 }
 
 function TeacherShowcase({ onChooseTeacher, onBack }) {
-  const teachers = getApprovedTeachers()
+  // Teachers the admin has switched off in the dashboard never reach parents.
+  const teachers = publiclyListedTeachers(getApprovedTeachers())
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState(null)
 
   if (selectedTeacherProfile) return <PublicTeacherProfileDetail teacher={selectedTeacherProfile} onBack={() => setSelectedTeacherProfile(null)} onChooseTeacher={onChooseTeacher} />
@@ -1378,7 +1380,7 @@ function PWAInstallPrompt() {
   )
 }
 
-function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers }) {
+function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -1394,7 +1396,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <h3>Explore</h3>
               <a href="#why">Why TutorPro Online English</a>
               <a href="#programmes">Programmes</a>
-              <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>
+              {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>}
               <a href="#journey">How it works</a>
               <a href="#pricing">Pricing</a>
             </div>
@@ -1454,6 +1456,7 @@ export default function App() {
   const [preferredTeacher, setPreferredTeacher] = useState(null)
   const [teacherVersion, setTeacherVersion] = useState(0)
   const [showPublicTeachers, setShowPublicTeachers] = useState(false)
+  const [settingsVersion, setSettingsVersion] = useState(0)
   const [incomingReferralCode] = useState(() => {
     try {
       const code = new URL(window.location.href).searchParams.get('ref') || localStorage.getItem('tutorpro_pending_referral_code') || ''
@@ -1486,11 +1489,26 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
+  // Website settings the admin controls (currently teacher-directory visibility).
+  // Read from cache instantly, then refreshed from Supabase and kept live.
+  useEffect(() => {
+    const bump = () => setSettingsVersion((version) => version + 1)
+    const unsubscribe = subscribeToSiteSettings(bump)
+    const unsubscribeCloud = subscribeToCloudSiteSettings()
+    loadSiteSettings().then(bump)
+    return () => { unsubscribe(); unsubscribeCloud() }
+  }, [])
+
   const [currentAccount, setCurrentAccount] = useState(() => {
     initializePlatform()
     return getCurrentAccount()
   })
   void teacherVersion
+
+  // Admin setting: public / parents-only / hidden. Teachers and admins always
+  // keep access so they can check exactly what parents will see.
+  void settingsVersion
+  const teachersVisible = canViewTeacherDirectory(currentAccount)
 
   useEffect(() => {
     let active = true
@@ -1633,6 +1651,7 @@ export default function App() {
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
+        showTeachersLink={teachersVisible}
       />
       {!currentAccount && (
         <div className="mobile-guest-action-bar" aria-label="Student account actions">
@@ -1640,7 +1659,7 @@ export default function App() {
           <button type="button" className="primary" onClick={() => openRegistration('Mobile quick registration')}>Book free class</button>
         </div>
       )}
-      {showPublicTeachers ? (
+      {showPublicTeachers && teachersVisible ? (
         <main>
           <TeacherShowcase onChooseTeacher={chooseTeacher} onBack={() => { setShowPublicTeachers(false); window.scrollTo(0, 0); }} />
         </main>
@@ -1671,6 +1690,7 @@ export default function App() {
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
+        showTeachersLink={teachersVisible}
       />
       {authOpen && (
         <AuthModal
