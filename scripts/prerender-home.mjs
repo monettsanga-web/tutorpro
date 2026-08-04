@@ -94,6 +94,12 @@ const REVIEWS = [
     source: 'Facebook recommendation',
     date: '2021-12-09',
   },
+  {
+    quote: 'Very good teacher. Good pronounciation. Always punctual. Keeping up to date with parent regarding students progress. My son enjoy learning the class with experienced teacher. Recommended.',
+    name: 'Syafiqah Izzati',
+    source: 'Facebook recommendation',
+    date: '2021-07-28',
+  },
 ]
 
 /* Mirrored from the `faqs` array in src/App.jsx. */
