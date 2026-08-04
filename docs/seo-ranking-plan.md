@@ -100,11 +100,21 @@ earned. It's also the highest-trust signal for a school.
 2. Create a **Google Business Profile** (gets you into the knowledge panel).
 3. Email your happiest existing parents a direct review link. Even 5–10 genuine reviews
    changes how both parents and AI assistants describe you.
-4. Once real ratings exist, add `AggregateRating` schema so **stars appear in search results**
-   — one of the biggest click-through-rate boosters available.
+4. Let ratings accumulate **on Trustpilot and Google Business Profile**, not in site schema.
 
-⚠️ Never invent reviews or add `AggregateRating` markup without real ratings behind it. That
-is a manual-action penalty and Google actively polices it.
+### ⚠️ Important correction: AggregateRating will NOT work here
+
+Google's policy (2019, restated Dec 2025) makes pages using `Organization` /
+`LocalBusiness` schema — which includes your `EducationalOrganization` — **ineligible for
+star rich results when the entity controls the reviews about itself**. Google explicitly
+counts embedded third-party review widgets as self-serving too.
+
+So adding `AggregateRating` to the homepage would produce no stars and risk a manual action.
+Stars reach Google via **Trustpilot's own platform pages** and your **Google Business
+Profile** instead — neither needs schema on tutorpro.site.
+
+**Legitimate exception:** `Course` schema is still eligible for review snippets. Once real
+lesson ratings exist, ratings can be attached to individual course/programme entities.
 
 ---
 

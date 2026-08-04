@@ -5516,3 +5516,18 @@ body {
   animation: portal-boot-spin 800ms linear infinite;
 }
 @keyframes portal-boot-spin { to { transform: rotate(360deg); } }
+
+/* Trustpilot review widget. Renders nothing until
+   VITE_TRUSTPILOT_BUSINESS_UNIT_ID is set, so there is never an empty box. */
+.hero__trustpilot { margin: 14px 0 4px; max-width: 320px; }
+.footer__trustpilot { margin-top: 14px; max-width: 280px; }
+.trustpilot-widget a {
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .hero__trustpilot { max-width: 100%; }
+}

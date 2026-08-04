@@ -40,6 +40,7 @@ import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from
 import { WEEKDAYS } from './schedule.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
+import TrustpilotWidget from './TrustpilotWidget.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -219,6 +220,7 @@ function Hero({ onBook }) {
               Explore programmes
             </a>
           </div>
+          <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
           <div className="hero__proof" aria-label="TutorPro Online English benefits">
             <span><Check size={15} /> No commitment</span>
             <span><Check size={15} /> From $8 per class</span>
@@ -1304,6 +1306,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
             <Logo light />
             <p>Personalised English tutoring for confident, capable learners.</p>
             <span>Cambridge & Oxford aligned</span>
+            <TrustpilotWidget variant="mini" theme="dark" className="footer__trustpilot" />
           </div>
           <div className="footer__links">
             <div>
