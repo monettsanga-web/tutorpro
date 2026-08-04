@@ -230,7 +230,6 @@ function Hero({ onBook }) {
         </div>
 
         <div className="hero__visual">
-          <PromoVideo lang="en" className="hero__promo-video" />
           <div className="hero__photo-wrap">
             <img
               className="hero__photo"
@@ -1649,6 +1648,16 @@ export default function App() {
       ) : (
         <main>
           <Hero onBook={openRegistration} />
+          <section className="section promo-section" id="how-it-works-video">
+            <div className="container promo-section__inner">
+              <div className="section-heading section-heading--center">
+                <span className="kicker">See it in action</span>
+                <h2>What a TutorPro lesson looks like.</h2>
+                <p>Under 20 seconds — how one-to-one classes help your child speak with confidence.</p>
+              </div>
+              <PromoVideo lang="en" className="promo-section__video" />
+            </div>
+          </section>
           <Stats />
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />

@@ -40,14 +40,27 @@ LIME = (78, 233, 188)      # BGR for OpenCV
 WHITE = (255, 255, 255)
 
 
-def load_font(size, bold=True):
-    """Pick a font that can render both Latin and Hangul where available."""
-    candidates = [
-        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-        '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc',
-        '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+def has_cjk(text):
+    """True if the string contains Hangul or CJK characters."""
+    return any('\uac00' <= c <= '\ud7af' or '\u3040' <= c <= '\u9fff' for c in str(text))
+
+
+def load_font(size, bold=True, cjk=False):
+    """
+    Pick a font that can actually render the text.
+
+    DejaVu has no Hangul glyphs, so Korean rendered as empty boxes until this
+    checked for CJK first. Noto Sans CJK covers both scripts, so it is used
+    whenever the line contains Hangul.
+    """
+    cjk_faces = [
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc' if bold else '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
     ]
-    for path in candidates:
+    latin_faces = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    ]
+    for path in (cjk_faces if cjk else latin_faces + cjk_faces):
         if os.path.exists(path):
             try:
                 return ImageFont.truetype(path, size)
@@ -56,7 +69,7 @@ def load_font(size, bold=True):
     return ImageFont.load_default()
 
 
-def draw_text_block(frame_bgr, lines, alpha=1.0, y_anchor=0.72):
+def draw_text_block(frame_bgr, lines, alpha=1.0, y_anchor=0.80):
     """
     Burn a centred text block onto a frame, with a soft dark scrim behind it so
     the words stay readable over any illustration.
@@ -71,7 +84,7 @@ def draw_text_block(frame_bgr, lines, alpha=1.0, y_anchor=0.72):
     total_h = 0
     measured = []
     for i, line in enumerate(lines):
-        font = load_font(sizes[min(i, len(sizes) - 1)])
+        font = load_font(sizes[min(i, len(sizes) - 1)], cjk=has_cjk(line))
         bbox = draw.textbbox((0, 0), line, font=font)
         w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
         measured.append((line, font, w, h))
@@ -193,18 +206,18 @@ def render(scenes, out_path):
 
 TIMELINE_EN = [
     {'card': True, 'seconds': 2.6, 'lines': ['TutorPro Online English', 'One-to-one English classes for kids']},
-    {'image': 'scene1.png', 'seconds': 4.0, 'lines': ['Learning from home', 'A real teacher, every single lesson']},
-    {'image': 'scene2.png', 'seconds': 4.0, 'lines': ['Your child speaks the whole lesson', 'No group classes. No waiting for a turn.']},
-    {'image': 'scene3.png', 'seconds': 4.0, 'lines': ['See the progress', 'Teacher feedback after every class']},
+    {'image': 'scene1.png', 'seconds': 4.2, 'lines': ['Your child speaks. Every lesson.', 'No group classes. No waiting for a turn.']},
+    {'image': 'scene2.png', 'seconds': 4.2, 'lines': ['A real teacher, one to one', 'Cambridge and Oxford curriculum']},
+    {'image': 'scene3.png', 'seconds': 4.2, 'lines': ['You see the progress', 'Written feedback after every class']},
     {'card': True, 'seconds': 3.2, 'lines': ['First class free', 'tutorpro.site']},
 ]
 
 TIMELINE_KO = [
     {'card': True, 'seconds': 2.6, 'lines': ['TutorPro 온라인 영어', '어린이 1:1 화상영어']},
-    {'image': 'scene1.png', 'seconds': 4.0, 'lines': ['집에서 배우는 영어', '매 수업 실제 선생님과 함께']},
-    {'image': 'scene2.png', 'seconds': 4.0, 'lines': ['수업 내내 우리 아이가 말합니다', '그룹 수업 없이, 기다림 없이']},
-    {'image': 'scene3.png', 'seconds': 4.0, 'lines': ['성장이 보입니다', '매 수업 후 학부모 리포트']},
-    {'card': True, 'seconds': 3.2, 'lines': ['첫 수업 무료', 'tutorpro.site']},
+    {'image': 'scene1.png', 'seconds': 4.2, 'lines': ['수업 내내 우리 아이가 말합니다', '그룹 수업 없이, 기다림 없이']},
+    {'image': 'scene2.png', 'seconds': 4.2, 'lines': ['선생님과 1:1 수업', '케임브리지 · 옥스퍼드 커리큘럼']},
+    {'image': 'scene3.png', 'seconds': 4.2, 'lines': ['성장이 보입니다', '매 수업 후 학부모 리포트']},
+    {'card': True, 'seconds': 3.2, 'lines': ['첫 수업 무료 · 25분 ₩15,000', 'tutorpro.site']},
 ]
 
 

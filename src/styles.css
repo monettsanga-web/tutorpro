@@ -5564,8 +5564,13 @@ body {
 .parent-review figcaption strong { color: #321568; font-size: 0.92rem; font-weight: 800; }
 .parent-review figcaption small { color: #7b8794; font-size: 0.76rem; font-weight: 600; }
 
-/* Promo video: poster-first so the 3.5 MB file never loads until requested */
-.promo-video { position: relative; width: 100%; margin-bottom: 16px; border-radius: 22px; overflow: hidden; }
+/* Promo video: poster-first so the 3.5 MB file never loads until requested.
+   Lives in its own section rather than the hero, where the absolutely
+   positioned photo card (z-index 2) would sit on top of it. */
+.promo-section { padding-top: 8px; }
+.promo-section__inner { display: grid; gap: 22px; }
+.promo-section__video { max-width: 760px; margin: 0 auto; box-shadow: var(--shadow-lg); }
+.promo-video { position: relative; width: 100%; border-radius: 22px; overflow: hidden; }
 .promo-video--poster {
   display: block; padding: 0; border: 0; cursor: pointer;
   background: #160b2d; aspect-ratio: 16 / 9;
