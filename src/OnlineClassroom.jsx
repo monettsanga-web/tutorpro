@@ -80,24 +80,10 @@ import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailab
 
 import SpeechCoachPanel from './SpeechCoachPanel.jsx'
 import { recordJoin, recordLeave } from './classroomAttendance.js'
+import { buildRtcConfiguration, connectionFailureAdvice, hasTurnRelay } from './iceServers.js'
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
-const turnServer = import.meta.env.VITE_CLASSROOM_TURN_URL
-  ? {
-      urls: import.meta.env.VITE_CLASSROOM_TURN_URL,
-      username: import.meta.env.VITE_CLASSROOM_TURN_USERNAME || '',
-      credential: import.meta.env.VITE_CLASSROOM_TURN_CREDENTIAL || '',
-    }
-  : null
-const rtcConfiguration = {
-  iceServers: [
-    { urls: 'stun:stun.qq.com:3478' },
-    { urls: 'stun:stun.miwifi.com:3478' },
-    { urls: 'stun:stun.cloudflare.com:3478' },
-    ...(turnServer ? [turnServer] : []),
-  ],
-  iceCandidatePoolSize: 10,
-}
+const rtcConfiguration = buildRtcConfiguration()
 
 function formatTime(time) {
   return new Date(`2026-01-01T${time}`).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })
@@ -642,6 +628,19 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           setVideoStream(remoteScreenVideoRef.current, stream)
         }
       }
+      // An ICE restart is the correct recovery when the chosen network path
+      // dies (wifi to mobile handover, a NAT binding expiring, a relay
+      // switching). Without it the connection sat in 'failed' forever and the
+      // only way out was for someone to leave and rejoin.
+      peer.oniceconnectionstatechange = () => {
+        if (peer.iceConnectionState !== 'failed') return
+        try {
+          if (typeof peer.restartIce === 'function') peer.restartIce()
+          // Only the teacher re-offers, so both sides cannot renegotiate at
+          // once and glare.
+          if (account.role === 'teacher') void sendTeacherOffer(true)
+        } catch { /* The periodic reconnect below is the backstop. */ }
+      }
       peer.onconnectionstatechange = () => {
         const status = peer.connectionState
         if (status === 'connected') setConnectionStatus('connected')
@@ -662,7 +661,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
 
     const resetPeer = () => {
-      if (peerRef.current) peerRef.current.onconnectionstatechange = null
+      if (peerRef.current) {
+        peerRef.current.onconnectionstatechange = null
+        // Detach the ICE handler too, otherwise a dying peer can fire a
+        // restart against a connection we have already replaced.
+        peerRef.current.oniceconnectionstatechange = null
+      }
       peerRef.current?.close()
       peerRef.current = null
       pendingIceRef.current = []
@@ -1974,9 +1978,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           ? 'Connection needs attention'
           : 'Waiting for participant'
   const showConnectionHelp = connectionStatus !== 'connected' && elapsed >= 6
-  const connectionHelpText = participantCount > 1
-    ? 'Both participants were found. TutorPro Online English is retrying the secure video handshake.'
-    : 'Keep this classroom open while the other participant enters this exact booking.'
+  // Say what is actually wrong instead of spinning on a generic 'retrying'
+  // message. When no relay is configured the call cannot recover on its own,
+  // so pretending it is still trying is misleading.
+  const connectionAdvice = connectionFailureAdvice({ bothPresent: participantCount > 1 })
+  const connectionHelpText = connectionAdvice.detail
+  const showRelayWarning = participantCount > 1
+    && !hasTurnRelay()
+    && ['failed', 'disconnected'].includes(connectionStatus)
 
   const broadcastCoursewareState = (slideIndex = coursewareSlideIndex, showAnswer = coursewareShowAnswer, clearPresentation = false, template = coursewareTemplate) => {
     const snapshot = coursewareSnapshot(template)
@@ -2333,7 +2342,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         </div>
       </header>
 
-      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'China-friendly connection help' : participantCount > 1 ? 'Reconnecting both participants' : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? 'If cross-border video does not connect, retry once or use the VooV/Tencent backup link.' : connectionHelpText} Room ID: {roomBooking.classroomId}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
+      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'China-friendly connection help' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? 'If cross-border video does not connect, retry once or use the VooV/Tencent backup link.' : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
 
       <div className="classroom-workspace">
         <section className="classroom-stage">

@@ -12,7 +12,7 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice",
     "test:core": "node scripts/test-core.mjs",
     "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
@@ -21,7 +21,8 @@
     "desktop:dev": "concurrently -k \"npm run dev -- --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env NODE_ENV=development electron .\"",
     "desktop:pack": "npm run build && electron-builder --dir",
     "desktop:dist": "npm run build && electron-builder",
-    "seo:automation": "node scripts/seo-automation.mjs"
+    "seo:automation": "node scripts/seo-automation.mjs",
+    "test:ice": "node scripts/test-ice-servers.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
