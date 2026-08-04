@@ -9679,3 +9679,15 @@ a.feedback-resource-detail:hover strong {
   .review-row { grid-template-columns: 1fr; }
   .review-row__actions { grid-auto-flow: column; justify-content: start; }
 }
+
+/* Korea-only pricing: lesson length toggle in the payment summary */
+.korea-duration-row { display: grid !important; gap: 8px; }
+.korea-duration-toggle { display: flex; gap: 7px; flex-wrap: wrap; }
+.korea-duration-toggle button {
+  flex: 1 1 auto; min-height: 40px;
+  border: 1px solid rgba(255,255,255,.18); border-radius: 11px; padding: 0 12px;
+  background: rgba(255,255,255,.06); color: #e2e8f0;
+  font-size: .8rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+}
+.korea-duration-toggle button:hover { border-color: #bce94e; background: rgba(188,233,78,.12); }
+.korea-duration-toggle button.active { border-color: #bce94e; background: #bce94e; color: #140a29; }

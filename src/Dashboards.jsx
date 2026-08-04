@@ -98,7 +98,7 @@ import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSu
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
 import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES, searchLibraryResources, toggleLibraryBookmark } from './library.js'
-import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
+import { currentVisitorLocale, isChineseVisitor, isKoreanVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { supabase } from './supabaseClient.js'
 import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferralLink, getReferralStats, getShareTargets, referralActivity } from './referrals.js'
 import { BADGE_CATALOG, DAILY_MISSIONS, canClaimMission, claimMission, deriveAutomaticBadges, getRewardProfile, rewardProgress } from './rewards.js'
@@ -162,6 +162,20 @@ function localPriceHint(amount, country) {
   const converted = Math.round(Number(amount) * hint.perUsd)
   return hint.suffix ? `≈ ${converted} ${hint.symbol}` : `≈ ${hint.symbol}${converted}`
 }
+/**
+ * Korea-only pricing, shown exclusively to Korean visitors (ko language or KR IP)
+ * and to admins previewing. Korean private English tutoring commonly runs
+ * WON 40,000-70,000 per hour, so these rates remain well below the domestic
+ * market while avoiding the "suspiciously cheap" perception that hurts trust
+ * with Korean parents. Charged in KRW, not converted from USD.
+ */
+const KOREA_TUITION_PER_25_MINUTES = 15000
+const KOREA_TUITION_PER_50_MINUTES = 30000
+const koreaRateForDuration = (duration) => (Number(duration) >= 50 ? KOREA_TUITION_PER_50_MINUTES : KOREA_TUITION_PER_25_MINUTES)
+const koreaSessionTotal = (sessions, billingPlan = 'weekly', duration = 25) =>
+  planCreditCount(billingPlan, sessions) * koreaRateForDuration(duration)
+const formatKrw = (amount) => `₩${Number(amount).toLocaleString('en-US')}`
+
 const CHINA_TUITION_PER_25_MINUTES = 25
 const CHINA_PROCESSING_FEE_PER_SESSION = 5
 const chinaSessionTotal = (sessions, billingPlan = 'weekly') => planCreditCount(billingPlan, sessions) * (CHINA_TUITION_PER_25_MINUTES + CHINA_PROCESSING_FEE_PER_SESSION)
@@ -170,6 +184,7 @@ const formatRmb = (amount) => `RMB${Number(amount).toFixed(2)}`
 const paymentMethodLabel = {
   paypal: 'PayPal Checkout',
   chinaQr: 'AUB PayMate / WeChat Pay QR',
+  koreaKrw: 'Korea pricing (KRW)',
 }
 const GRAMMAR_FOCUS_OPTIONS = [
   'Sentence structure',
@@ -2117,6 +2132,8 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const [weeklySessions, setWeeklySessions] = useState(Math.min(MAX_CUSTOM_WEEKLY_SESSIONS, Math.max(1, initialOptions.includes(defaultWeeklySessions) ? defaultWeeklySessions : initialOptions[0])))
   const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
   const chinaQrAllowed = adminPreview || isChineseVisitor(visitorLocale) || isChineseVisitor({ language: '', country: account.registrationCountry })
+  // Korea-only pricing: shown to Korean visitors (ko language or KR country) and to admins previewing.
+  const koreaPricingAllowed = adminPreview || isKoreanVisitor(visitorLocale) || isKoreanVisitor({ language: '', country: account.registrationCountry })
   const [paymentMethod, setPaymentMethod] = useState(chinaQrAllowed ? 'chinaQr' : 'paypal')
   const [gatewayError, setGatewayError] = useState('')
   const [gatewayReady, setGatewayReady] = useState(false)
@@ -2129,6 +2146,9 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const chinaTuition = creditCount * CHINA_TUITION_PER_25_MINUTES
   const chinaProcessingFee = creditCount * CHINA_PROCESSING_FEE_PER_SESSION
   const chinaTotal = chinaSessionTotal(weeklySessions, billingPlan)
+  const [koreaDuration, setKoreaDuration] = useState(25)
+  const koreaRate = koreaRateForDuration(koreaDuration)
+  const koreaTotal = koreaSessionTotal(weeklySessions, billingPlan, koreaDuration)
   const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
   const configuredPayPalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || ''
   const paypalClientId = configuredPayPalClientId || 'sb'
@@ -2142,7 +2162,10 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
     if (!chinaQrAllowed && paymentMethod === 'chinaQr') {
       setPaymentMethod('paypal')
     }
-  }, [chinaQrAllowed, paymentMethod])
+    if (!koreaPricingAllowed && paymentMethod === 'koreaKrw') {
+      setPaymentMethod('paypal')
+    }
+  }, [chinaQrAllowed, koreaPricingAllowed, paymentMethod])
 
   useEffect(() => {
     if (!Number.isFinite(Number(weeklySessions)) || Number(weeklySessions) < 1) setWeeklySessions(1)
@@ -2282,6 +2305,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const methodCards = [
     { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal / Card Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal and debit/credit card checkout is active.', enabled: true },
     ...(chinaQrAllowed ? [{ id: 'chinaQr', title: 'AUB PayMate / WeChat Pay QR', text: adminPreview ? 'Admin preview access.' : 'China visitor payment QR.', enabled: true }] : []),
+    ...(koreaPricingAllowed ? [{ id: 'koreaKrw', title: '한국 요금 · Korea pricing (KRW)', text: adminPreview ? 'Admin preview access.' : '₩15,000 / 25분 · ₩30,000 / 50분', enabled: true }] : []),
   ]
 
   return (
@@ -2299,8 +2323,8 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
           </div>
         </div>
         <div className="student-payment-pro__amount-card">
-          <small style={{ color: 'rgba(255, 255, 255, 0.82)' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : 'Amount due today'}</small>
-          <strong style={{ color: '#ffffff' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : formatUsd(weeklyTotal)}</strong>
+          <small style={{ color: 'rgba(255, 255, 255, 0.82)' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : paymentMethod === 'koreaKrw' && koreaPricingAllowed ? '결제 금액 · Korea amount due' : 'Amount due today'}</small>
+          <strong style={{ color: '#ffffff' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : paymentMethod === 'koreaKrw' && koreaPricingAllowed ? formatKrw(koreaTotal) : formatUsd(weeklyTotal)}</strong>
           <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'} · {creditCount} booking credit{creditCount > 1 ? 's' : ''}</span>
         </div>
       </div>
@@ -2389,6 +2413,20 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
                   <div><span>Tuition</span><strong>{formatRmb(chinaTuition)}</strong></div>
                   <div><span>Processing fee</span><strong>{formatRmb(chinaProcessingFee)}</strong></div>
                   <div className="student-payment-pro__summary-total"><span>Total QR payment</span><strong>{formatRmb(chinaTotal)}</strong></div>
+                </>
+              ) : paymentMethod === 'koreaKrw' && koreaPricingAllowed ? (
+                <>
+                  <div className="korea-duration-row">
+                    <span>수업 시간 · Lesson length</span>
+                    <div className="korea-duration-toggle" role="group" aria-label="Choose lesson length">
+                      <button type="button" className={koreaDuration === 25 ? 'active' : ''} onClick={() => setKoreaDuration(25)}>25분 · ₩15,000</button>
+                      <button type="button" className={koreaDuration === 50 ? 'active' : ''} onClick={() => setKoreaDuration(50)}>50분 · ₩30,000</button>
+                    </div>
+                  </div>
+                  <div><span>Package</span><strong>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'}</strong></div>
+                  <div><span>수업당 요금 · Per class</span><strong>{formatKrw(koreaRate)} / {koreaDuration}min</strong></div>
+                  <div><span>Credits included</span><strong>{creditCount}</strong></div>
+                  <div className="student-payment-pro__summary-total"><span>총 결제 금액 · Total</span><strong>{formatKrw(koreaTotal)}</strong></div>
                 </>
               ) : (
                 <>
