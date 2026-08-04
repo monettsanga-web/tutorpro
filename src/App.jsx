@@ -398,6 +398,24 @@ function WhyTutorPro() {
       text: 'Choose 25 or 50 minutes and book times around school, activities and family routines.',
       color: 'blue',
     },
+    {
+      icon: Star,
+      title: 'Built for children',
+      text: 'A star and reward system celebrates effort, and quick reaction buttons let younger learners say "I understand" or "please repeat" without interrupting.',
+      color: 'gold',
+    },
+    {
+      icon: Sparkles,
+      title: 'AI speech coach',
+      text: 'Our AI speech coach scores pronunciation word by word during practice, so your child hears exactly how they sound and can play back the correct pronunciation.',
+      color: 'coral',
+    },
+    {
+      icon: BadgeCheck,
+      title: 'Teachers you can check',
+      text: 'Every teacher completes a recorded teaching interview and a qualifications review. View their profile and introduction video before you book.',
+      color: 'blue',
+    },
   ]
 
   return (

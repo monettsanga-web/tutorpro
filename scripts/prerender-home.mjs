@@ -34,23 +34,51 @@ const HERO = {
 const SECTIONS = [
   {
     heading: 'Great lessons start with brilliant materials.',
-    body: 'Every TutorPro class uses structured courseware aligned to Cambridge and Oxford English, with reading, speaking, grammar and vocabulary built into each lesson.',
+    body: 'Every TutorPro class uses structured courseware aligned to Cambridge and Oxford English, with reading, speaking, grammar and vocabulary built into each lesson. We teach from recognised published series including Cambridge Power Up, Power Up Academy, Global English and THiNK, Oxford Family and Friends, Everybody Up and Grammar Friends, plus dedicated phonics programmes for early readers. Your child is never working from improvised worksheets.',
   },
   {
     heading: 'Less pressure. More progress.',
-    body: 'One-to-one attention means your child speaks for the whole lesson instead of waiting their turn in a group class. Tutors adapt the pace to the learner, not the other way round.',
+    body: 'One-to-one attention means your child speaks for the whole lesson instead of waiting their turn in a group class. Tutors adapt the pace to the learner, not the other way round. A shy child is never talked over, and a confident child is never held back. If something is not working, the teacher changes the approach in that same lesson rather than at the end of a term.',
+  },
+  {
+    heading: 'What actually happens in a lesson.',
+    body: 'Classes run for 25 or 50 minutes inside our own browser-based classroom. There is no Zoom link, no download and no separate meeting software: your child clicks once from their dashboard and the lesson begins. The teacher shares interactive slides on a shared lesson board, both can write and draw on it together, and the whole session is speaking-led. Lessons typically move through a warm-up conversation, new vocabulary, guided practice, a reading or listening task, then free speaking to consolidate what was learned.',
+  },
+  {
+    heading: 'Built for children, not repurposed from adult lessons.',
+    body: 'The classroom includes a star and reward system that celebrates effort, quick reaction buttons so a younger child can signal "I understand" or "please repeat" without interrupting, and English learning games covering vocabulary, sentence building and grammar. An AI speech coach listens during practice and scores pronunciation word by word, so children get instant feedback on how they sound and can hear the correct pronunciation played back.',
   },
   {
     heading: 'Made for their school years.',
-    body: 'Programmes cover Primary and Secondary learners, supporting school English, exam preparation, conversation confidence and writing skills.',
+    body: 'Programmes cover Primary and Secondary learners, supporting school English, exam preparation, conversation confidence and writing skills. Primary learners in Years 1 to 6 focus on phonics, reading fluency, everyday vocabulary and the confidence to speak in full sentences. Secondary learners in Years 7 to 11 move into structured writing, comprehension, analysis and the language skills needed for IGCSE-style English assessment.',
+  },
+  {
+    heading: 'Parents can see exactly what is happening.',
+    body: 'After each class the teacher writes feedback covering what was practised, what went well and what to work on next, along with specific words to practise at home. Every practice word can be tapped to hear it pronounced correctly, with a slower option for tricky sounds. Parents also get homework assignments, attendance records, progress tracking and a digital library of reading and grammar resources, all in one dashboard.',
+  },
+  {
+    heading: 'Lessons can be recorded so you never miss a class.',
+    body: 'Teachers can record a lesson so parents can watch it back later. Recordings are private to your family and your teacher, and a clear red indicator shows in the classroom whenever recording is active. This is useful for revising new vocabulary, for parents who could not sit in on the class, or for showing a child their own progress over time.',
+  },
+  {
+    heading: 'Teachers you can check before you book.',
+    body: 'Every teacher applies through a structured process that includes a recorded teaching interview and a review of their qualifications and teaching experience. You can view teacher profiles, qualifications and introduction videos before booking, so you know who will be teaching your child rather than being assigned an anonymous tutor.',
   },
   {
     heading: 'Looking for a Novakid, 51Talk or Preply alternative?',
-    body: 'Families comparing online English schools choose TutorPro Online English for genuine one-to-one lessons, Cambridge and Oxford aligned courseware, transparent pricing from $8 per 25-minute class, and a free first class with no commitment.',
+    body: 'Families comparing online English schools choose TutorPro Online English for genuine one-to-one lessons, Cambridge and Oxford aligned courseware, transparent pricing from $8 per 25-minute class, and a free first class with no commitment. Unlike platforms that move children into group speaking clubs as they progress, every TutorPro lesson stays one-to-one. Our published rate is lower than the entry price of most major online English schools for children, and there is no long contract to sign.',
   },
   {
     heading: 'Choose your child’s rhythm.',
-    body: 'The Weekly plan suits 1–3 classes a week and is paid weekly. The Monthly Package covers 4–7 classes of 25 minutes each week, billed monthly, with priority scheduling and a dedicated tutor.',
+    body: 'The Weekly plan suits 1–3 classes a week at $10 per class and is paid weekly. The Monthly Package covers 4–7 classes of 25 minutes each week at $8 per class, billed monthly, with priority scheduling and a dedicated tutor. Lesson times shown in your dashboard are automatically converted to your own local timezone, so there is no mental arithmetic when booking from another country.',
+  },
+  {
+    heading: 'Simple, honest pricing.',
+    body: 'Classes start from $8 per 25-minute lesson, with 50-minute lessons available for older learners. The first class is free for every new family, with no card required to try it. Prices are published on this page rather than hidden behind a sales call, unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full.',
+  },
+  {
+    heading: 'Learning from anywhere in the world.',
+    body: 'TutorPro Online English teaches families worldwide from our teaching base in the Philippines. The site detects your language and shows lesson times in your local timezone automatically, and the classroom is designed to work on ordinary home internet connections on a laptop, desktop or tablet.',
   },
 ]
 
@@ -75,6 +103,38 @@ const FAQS = [
   {
     question: 'How do online classes work?',
     answer: 'Create a family account, complete your child’s learning profile and choose a lesson rhythm. We use those details to prepare the right one-to-one support and track progress from class to class.',
+  },
+  {
+    question: 'How much do online English classes for kids cost?',
+    answer: 'Classes start from $8 per 25-minute one-to-one lesson on the Monthly Package (4–7 classes a week), or $10 per class on the Weekly plan (1–3 classes a week). The first class is free and no card is required to try it.',
+  },
+  {
+    question: 'What age should my child start learning English?',
+    answer: 'Children can start as early as four, when lessons focus on listening, phonics and simple spoken words through songs and games. There is no age that is too late: Primary learners build reading fluency and everyday vocabulary, while Secondary learners work on writing, comprehension and exam preparation.',
+  },
+  {
+    question: 'How long is each lesson?',
+    answer: 'Lessons are 25 or 50 minutes. Most younger children do best with 25 minutes, which matches their natural attention span, while older learners preparing for exams often prefer 50-minute sessions.',
+  },
+  {
+    question: 'Do I need Zoom or any software to join?',
+    answer: 'No. Lessons run inside our own browser-based classroom. Your child clicks once from their dashboard and the class begins, with no downloads, no meeting links and no separate accounts.',
+  },
+  {
+    question: 'Can I watch or review my child’s lesson?',
+    answer: 'Yes. Teachers can record lessons so parents can watch them back later. Recordings stay private to your family and the teacher, and a clear indicator shows in the classroom whenever a lesson is being recorded.',
+  },
+  {
+    question: 'What if we need to cancel a lesson?',
+    answer: 'Cancel at least 12 hours before the lesson and the credit returns to your account in full. If a teacher ever has to cancel, or a lesson fails because of a problem on our side, you always get the credit back.',
+  },
+  {
+    question: 'Are the teachers qualified?',
+    answer: 'Every teacher goes through a structured application that includes a recorded teaching interview and a review of their qualifications and experience. You can view teacher profiles, qualifications and introduction videos before booking a class.',
+  },
+  {
+    question: 'What time are lessons available in my country?',
+    answer: 'Our teaching base is Manila time (UTC+8), and lesson times in your dashboard are automatically converted to your own local timezone. Weekend slots are available and are often the most convenient option for families in Europe.',
   },
 ]
 
