@@ -1349,6 +1349,12 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <button onClick={onAdminAccess}>Admin portal</button>
             </div>
             <div>
+              <h3>By age</h3>
+              <a href="/english-for-kids-ages-4-7.html">English for ages 4–7</a>
+              <a href="/english-for-kids-ages-8-11.html">English for ages 8–11</a>
+              <a href="/english-for-teens-ages-12-16.html">English for teens 12–16</a>
+            </div>
+            <div>
               <h3>Company</h3>
               <a href="/about.html">About us</a>
               <a href="/contact.html">Contact</a>

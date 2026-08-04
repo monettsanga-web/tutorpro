@@ -176,6 +176,7 @@ ${faqItems}
       </section>
       <footer>
         <p>TutorPro Online English — online English classes for kids and teens worldwide. Cambridge and Oxford aligned tutors, flexible scheduling, free first class.</p>
+        <p><a href="/english-for-kids-ages-4-7.html">English classes for ages 4–7</a> · <a href="/english-for-kids-ages-8-11.html">English classes for ages 8–11</a> · <a href="/english-for-teens-ages-12-16.html">English for teenagers 12–16</a></p>
         <p><a href="/about.html">About us</a> · <a href="/contact.html">Contact</a> · <a href="/privacy-policy.html">Privacy policy</a> · <a href="/terms.html">Terms of service</a> · <a href="/refund-policy.html">Refund policy</a></p>
       </footer>
     </div>`
