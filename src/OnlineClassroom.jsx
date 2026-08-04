@@ -75,6 +75,7 @@ import {
 import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailable, isRecordingSupported, startClassroomRecording, uploadClassroomRecording } from './classroomRecording.js'
 
 import SpeechCoachPanel from './SpeechCoachPanel.jsx'
+import { recordJoin, recordLeave } from './classroomAttendance.js'
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
 const turnServer = import.meta.env.VITE_CLASSROOM_TURN_URL
@@ -297,6 +298,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [recordingError, setRecordingError] = useState('')
   const [savedRecordings, setSavedRecordings] = useState(() => (booking?.classroomRecordings || []))
   const [joined, setJoined] = useState(false)
+  const [waiting, setWaiting] = useState(false)
+  const [teacherPresent, setTeacherPresent] = useState(false)
   const [mediaReady, setMediaReady] = useState(false)
   const [mediaError, setMediaError] = useState('')
   const [micOn, setMicOn] = useState(true)
@@ -584,6 +587,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         transportRef.current?.send({ type: 'join-request', role: account.role })
         return
       }
+      if (message.type === 'join-request' && account.role === 'teacher') {
+        // A student just arrived. If the teacher is already in the room, tell
+        // them immediately so they are not left waiting.
+        if (joined) transportRef.current?.send({ type: 'teacher-present', present: true })
+      }
       if (message.type === 'join-request' && account.role === 'teacher' && !useTencentClassroom) {
         transportRef.current?.send({ type: 'annotation-permission', allowed: annotationPermissionRef.current })
         transportRef.current?.send({ type: 'pointer-permission', allowed: pointerPermissionRef.current })
@@ -686,6 +694,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       if (message.type === 'courseware-reward') {
         setClassStars(Number(message.stars) || 0)
         confetti({ particleCount: 55, spread: 65, origin: { y: 0.72 }, colors: ['#bce94e', '#7048df', '#ff4f87'] })
+        return
+      }
+      if (message.type === 'teacher-present') {
+        // Release any waiting student as soon as the teacher announces presence.
+        setTeacherPresent(Boolean(message.present))
+        if (message.present && account.role === 'student') {
+          setWaiting((isWaiting) => { if (isWaiting) setJoined(true); return false })
+        }
         return
       }
       if (message.type === 'recording-state') {
@@ -961,11 +977,43 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
   if (!access.allowed) return <AccessDenied access={access} onExit={onExit} />
 
+  /**
+   * Persist a join or leave event onto the booking so parents and admins can
+   * see who actually attended. Best-effort: attendance must never block the
+   * lesson from starting.
+   */
+  const saveAttendance = (action) => {
+    if (!roomBooking?.id) return
+    try {
+      const latest = getBookings().find((item) => item.id === roomBooking.id) || roomBooking
+      const name = account.role === 'teacher'
+        ? (account.fullName || 'Teacher')
+        : (learner?.name || roomBooking.learnerName || 'Student')
+      const next = action === 'join'
+        ? recordJoin(latest.attendance, account.role, { name })
+        : recordLeave(latest.attendance, account.role)
+      const updated = updateBooking(roomBooking.id, { attendance: next })
+      syncBookingNow(updated).catch(() => {})
+    } catch {
+      // Attendance is a reporting aid, never a blocker.
+    }
+  }
+
   const joinClass = async () => {
     const stream = localStreamRef.current || await requestMedia()
     if (!stream) return
     if (!classJoinedAtRef.current) classJoinedAtRef.current = new Date().toISOString()
+    saveAttendance('join')
+    // Students wait until the teacher is in the room. Teachers enter directly.
+    if (account.role === 'student' && !teacherPresent) {
+      setWaiting(true)
+      return
+    }
+    setWaiting(false)
     setJoined(true)
+    if (account.role === 'teacher') {
+      transportRef.current?.send({ type: 'teacher-present', present: true })
+    }
   }
 
   const retryConnection = () => {
@@ -1257,6 +1305,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   }
 
   const leaveClass = () => {
+    saveAttendance('leave')
     if (recorderRef.current) stopRecording()
     saveClassroomSessionSummary()
     localStreamRef.current?.getTracks().forEach((track) => track.stop())
@@ -2048,7 +2097,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at <strong className="classroom-lesson-time">{formatTime(roomBooking.time)}</strong></p>
             <div className="prejoin-room-id"><span><ShieldCheck size={16} /></span><div><small>Unique classroom ID</small><strong>{roomBooking.classroomId}</strong></div><button onClick={copyRoomId}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div>
             {mediaError && <div className="classroom-error"><WifiOff size={17} /> {mediaError}</div>}
-            {!mediaReady ? <button className="classroom-main-button" onClick={requestMedia}><Camera size={18} /> Enable camera & microphone</button> : <button className="classroom-main-button" onClick={joinClass}><Video size={18} /> Enter private classroom</button>}
+            {waiting ? (
+              <div className="classroom-waiting-room" role="status" aria-live="polite">
+                <span className="classroom-waiting-room__spinner" aria-hidden="true" />
+                <strong>Waiting for {teacher?.fullName || 'your teacher'} to start the class</strong>
+                <small>You are in the waiting room. The lesson will open automatically the moment your teacher joins — please keep this page open.</small>
+                <button className="classroom-secondary-button" onClick={() => { setWaiting(false); setJoined(true) }}>Enter anyway</button>
+              </div>
+            ) : !mediaReady ? <button className="classroom-main-button" onClick={requestMedia}><Camera size={18} /> Enable camera & microphone</button> : <button className="classroom-main-button" onClick={joinClass}><Video size={18} /> {account.role === 'student' && !teacherPresent ? 'Join and wait for teacher' : 'Enter private classroom'}</button>}
             <p className="prejoin-privacy"><ShieldCheck size={14} /> Only this booking's teacher, student and administrator can access this room.</p>
           </section>
         </div>

@@ -2145,3 +2145,38 @@ body.classroom-active .support-widget {
   background: rgba(255,255,255,.07); color: #e2e8f0; font-size: .76rem; font-weight: 800; cursor: pointer;
 }
 .speech-coach__actions button.primary { border-color: #bce94e; background: rgba(188,233,78,.22); color: #eaffb8; }
+
+/* ---------------- Student waiting room ---------------- */
+.classroom-waiting-room {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  border: 1px solid rgba(188, 233, 78, .28);
+  border-radius: 20px;
+  padding: 24px 22px;
+  background: rgba(188, 233, 78, .08);
+  text-align: center;
+}
+.classroom-waiting-room__spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(255, 255, 255, .18);
+  border-top-color: #bce94e;
+  border-radius: 50%;
+  animation: classroom-waiting-spin 900ms linear infinite;
+}
+@keyframes classroom-waiting-spin { to { transform: rotate(360deg); } }
+.classroom-waiting-room strong { color: #fff; font-size: 1rem; font-weight: 800; }
+.classroom-waiting-room small { max-width: 380px; color: rgba(255,255,255,.7); font-size: .82rem; line-height: 1.5; }
+.classroom-waiting-room .classroom-secondary-button {
+  min-height: 38px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.classroom-waiting-room .classroom-secondary-button:hover { border-color: #bce94e; color: #eaffb8; }

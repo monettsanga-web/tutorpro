@@ -82,6 +82,7 @@ import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './Prac
 import AnnouncementBanner from './AnnouncementBanner.jsx'
 import RecordingPlayback from './RecordingPlayback.jsx'
 import { qrDataUri } from './qrCode.js'
+import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
 import AdminReviewsPanel from './AdminReviewsPanel.jsx'
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
@@ -755,6 +756,24 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
+        {booking.attendance && (() => {
+          const summary = attendanceSummary(booking)
+          if (summary.id === 'none') return null
+          const studentLate = summary.student ? punctuality(booking, summary.student.joinedAt) : null
+          return (
+            <div className={`booking-attendance booking-attendance--${summary.tone}`}>
+              <UserCheck size={14} />
+              <div>
+                <strong>{summary.label}</strong>
+                <span>
+                  {summary.student?.presentSeconds ? `Student present ${formatPresence(summary.student.presentSeconds)}` : summary.student ? 'Student joined' : 'Student absent'}
+                  {studentLate && studentLate.minutesLate > 5 ? ` · ${studentLate.label}` : ''}
+                  {summary.teacher?.presentSeconds ? ` · Teacher ${formatPresence(summary.teacher.presentSeconds)}` : ''}
+                </span>
+              </div>
+            </div>
+          )
+        })()}
         {booking.classroomRecordings?.length > 0 && <RecordingPlayback recordings={booking.classroomRecordings} canDownload={showStudent} />}
         {session && <div className="booking-classroom-summary"><Video size={14} /><div><strong>Classroom recap saved</strong><span>{sessionMinutes ? `${sessionMinutes} min · ` : ''}⭐ {session.classStars || 0} · {session.coursewareTitle || 'Courseware'}{session.presentedFileName ? ` · ${session.presentedFileName}` : ''}{session.lastStudentReaction?.label ? ` · ${session.lastStudentReaction.emoji || ''} ${session.lastStudentReaction.label}` : ''}</span></div></div>}
         <div className="booking-utility-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
