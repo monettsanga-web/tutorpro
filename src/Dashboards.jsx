@@ -81,6 +81,7 @@ import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
 import AnnouncementBanner from './AnnouncementBanner.jsx'
 import RecordingPlayback from './RecordingPlayback.jsx'
+import AdminReviewsPanel from './AdminReviewsPanel.jsx'
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 import OnlineClassroom from './OnlineClassroom.jsx'
@@ -5185,6 +5186,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'teachers', label: 'Teachers', icon: UserCheck, badge: pendingTeachers },
     { id: 'students', label: 'Students', icon: GraduationCap },
     { id: 'support', label: 'Parents/Teachers support', icon: MessageSquareText, badge: supportUnread },
+    { id: 'reviews', label: 'Parent reviews', icon: Star },
     { id: 'referrals', label: 'Referral growth', icon: Award },
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
@@ -5287,6 +5289,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'support' && <SupportInbox onUnreadChange={setSupportUnread} initialConversationId={initialSupportId} />}
 
       {active === 'referrals' && <AdminReferralDashboard />}
+
+      {active === 'reviews' && <AdminReviewsPanel />}
 
       {active === 'announcements' && <AdminAnnouncementsPanel />}
 

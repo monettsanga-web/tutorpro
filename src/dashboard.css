@@ -9640,3 +9640,42 @@ a.feedback-resource-detail:hover strong {
   background: #000;
   aspect-ratio: 16 / 9;
 }
+
+/* ---------------- Admin parent reviews panel ---------------- */
+.review-empty-card ol,
+.review-guidance-card ul { margin: 10px 0 0; padding-left: 20px; }
+.review-empty-card li,
+.review-guidance-card li { margin-bottom: 8px; color: var(--portal-muted); line-height: 1.55; }
+
+.review-invite-card {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  align-items: center; justify-content: space-between;
+}
+.review-invite-card h2 { margin: 4px 0 6px; }
+.review-invite-card p { margin: 0; color: var(--portal-muted); }
+
+.review-list { display: grid; gap: 10px; }
+.review-row {
+  display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; gap: 14px;
+  align-items: start; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px; padding: 13px 15px; background: rgba(255,255,255,.04);
+}
+.review-row__score { text-align: center; }
+.review-row__score strong { display: block; color: #facc15; font-size: 1.15rem; font-weight: 900; }
+.review-row__score small { display: block; margin-top: 2px; color: var(--portal-muted); font-size: .64rem; }
+.review-row__body b { display: block; color: #fff; font-size: .88rem; }
+.review-row__body small { display: block; margin: 2px 0 6px; color: var(--portal-muted); font-size: .72rem; }
+.review-row__body p { margin: 0; color: #e2e8f0; font-size: .86rem; line-height: 1.5; }
+.review-row__nocomment { color: #8c8399 !important; font-style: italic; }
+.review-row__actions { display: grid; gap: 6px; }
+.review-row__actions button {
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  border: 1px solid rgba(255,255,255,.16); border-radius: 9px; padding: 7px 11px;
+  background: rgba(255,255,255,.06); color: #e2e8f0; font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.review-row__actions button:hover { border-color: #bce94e; background: rgba(188,233,78,.14); color: #eaffb8; }
+
+@media (max-width: 760px) {
+  .review-row { grid-template-columns: 1fr; }
+  .review-row__actions { grid-auto-flow: column; justify-content: start; }
+}
