@@ -601,7 +601,7 @@ function CurriculumFramework() {
           <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.02em', marginTop: '8px' }}>
             {t.title}
           </h2>
-          <p style={{ color: '#b9adc7', fontSize: '1rem', maxWidth: '600px', margin: '12px auto 0', lineHeight: '1.6' }}>
+          <p style={{ color: '#b9adc7', fontSize: '1.15rem', maxWidth: '600px', margin: '12px auto 0', lineHeight: '1.6' }}>
             {t.subtitle}
           </p>
         </div>
@@ -612,86 +612,86 @@ function CurriculumFramework() {
             <thead>
               {/* Header Title Row */}
               <tr style={{ background: '#1e3a8a', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
-                <th colSpan={13} style={{ padding: '16px', color: '#fff', fontSize: '1.25rem', fontWeight: '900' }}>
+                <th colSpan={13} style={{ padding: '16px', color: '#fff', fontSize: '1.344rem', fontWeight: '900' }}>
                   Tutorpro English Philippines
-                  <small style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', marginTop: '4px', opacity: 0.8 }}>{t.title}</small>
+                  <small style={{ display: 'block', fontSize: '1.037rem', fontWeight: '500', marginTop: '4px', opacity: 0.8 }}>{t.title}</small>
                 </th>
               </tr>
               {/* Column labels */}
               <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <th style={{ padding: '12px', color: '#bce94e', fontSize: '0.85rem', fontWeight: 'bold', width: '150px', background: 'rgba(255,255,255,0.02)' }}>{t.age}</th>
+                <th style={{ padding: '12px', color: '#bce94e', fontSize: '1.037rem', fontWeight: 'bold', width: '150px', background: 'rgba(255,255,255,0.02)' }}>{t.age}</th>
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <th key={i} style={{ padding: '12px', color: '#fff', fontSize: '0.85rem', fontWeight: '800', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Lv.{i}</th>
+                  <th key={i} style={{ padding: '12px', color: '#fff', fontSize: '1.037rem', fontWeight: '800', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Lv.{i}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {/* Grade Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <td style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
+                <td style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
                   {t.grade}
                 </td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem' }}>K1</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>K2</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>K3</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Pre-school</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 1</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 2</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 3</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 4</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 5</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 6</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 7</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 8</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem' }}>K1</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>K2</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>K3</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Pre-school</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 1</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 2</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 3</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 4</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 5</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 6</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 7</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Grade 8</td>
               </tr>
 
               {/* CEFR Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <td style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
+                <td style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
                   {t.cefr}
                 </td>
-                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold' }}>pre-A1</td>
-                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A1</td>
-                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A2</td>
-                <td style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A2+</td>
-                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>B1</td>
-                <td style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>B1+</td>
+                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold' }}>pre-A1</td>
+                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A1</td>
+                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A2</td>
+                <td style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>A2+</td>
+                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>B1</td>
+                <td style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>B1+</td>
               </tr>
 
               {/* US CCSS Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <td style={{ padding: '14px', color: '#f59e0b', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
+                <td style={{ padding: '14px', color: '#f59e0b', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
                   {t.ccss}
                 </td>
-                <td colSpan={3} style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem' }}>GK</td>
-                <td colSpan={3} style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G1</td>
-                <td colSpan={2} style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G2</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G3</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G4</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G5</td>
-                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G6</td>
+                <td colSpan={3} style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem' }}>GK</td>
+                <td colSpan={3} style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G1</td>
+                <td colSpan={2} style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G2</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G3</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G4</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G5</td>
+                <td style={{ padding: '14px', color: '#b9adc7', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>G6</td>
               </tr>
 
               {/* Cambridge Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <td style={{ padding: '14px', color: '#a855f7', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
+                <td style={{ padding: '14px', color: '#a855f7', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)' }}>
                   {t.cambridge}
                 </td>
-                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem' }}>Towards Starters</td>
-                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>YLE Starters</td>
-                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Start to Movers</td>
-                <td style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Movers to Flyers</td>
-                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Movers to Flyers / KET</td>
-                <td style={{ padding: '14px', color: '#fff', fontSize: '0.82rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>PET</td>
+                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem' }}>Towards Starters</td>
+                <td colSpan={3} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>YLE Starters</td>
+                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Start to Movers</td>
+                <td style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Movers to Flyers</td>
+                <td colSpan={2} style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>Movers to Flyers / KET</td>
+                <td style={{ padding: '14px', color: '#fff', fontSize: '1.015rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>PET</td>
               </tr>
 
               {/* Learning Outcomes Row */}
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <td style={{ padding: '20px 14px', color: '#ef4444', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)', verticalAlign: 'middle' }}>
+                <td style={{ padding: '20px 14px', color: '#ef4444', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.02)', verticalAlign: 'middle' }}>
                   {t.outcomes}
                 </td>
                 {/* Column 1 */}
-                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6' }}>
+                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.978rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
                     {t.outcomes0_2.map((item, idx) => (
                       <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
@@ -699,7 +699,7 @@ function CurriculumFramework() {
                   </ul>
                 </td>
                 {/* Column 2 */}
-                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.978rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
                     {t.outcomes3_5.map((item, idx) => (
                       <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
@@ -707,7 +707,7 @@ function CurriculumFramework() {
                   </ul>
                 </td>
                 {/* Column 3 */}
-                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.978rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
                     {t.outcomes6_8.map((item, idx) => (
                       <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
@@ -715,7 +715,7 @@ function CurriculumFramework() {
                   </ul>
                 </td>
                 {/* Column 4 */}
-                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.76rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+                <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.978rem', color: '#b9adc7', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
                   <ul style={{ listStyleType: 'disc', paddingLeft: '16px', margin: 0 }}>
                     {t.outcomes9_11.map((item, idx) => (
                       <li key={idx} style={idx > 0 ? { marginTop: '6px' } : undefined}>{item}</li>
@@ -728,7 +728,7 @@ function CurriculumFramework() {
         </div>
         
         {/* Mobile touch scroll indicator */}
-        <div style={{ textAlign: 'center', color: '#bce94e', fontSize: '0.72rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} className="mobile-scroll-tip">
+        <div style={{ textAlign: 'center', color: '#bce94e', fontSize: '0.956rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} className="mobile-scroll-tip">
           <span>{t.swipe}</span>
         </div>
       </div>
@@ -1085,7 +1085,7 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
               alignItems: 'center', 
               gap: '8px', 
               fontWeight: '900', 
-              fontSize: '0.8rem',
+              fontSize: '1rem',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
               marginBottom: '32px',
@@ -1102,7 +1102,7 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
               Choosing your child’s favorite English teacher is easy!
             </h2>
           </div>
-          <p style={{ color: '#b9adc7', fontSize: '0.98rem', lineHeight: '1.6', maxWidth: '480px' }}>
+          <p style={{ color: '#b9adc7', fontSize: '1.135rem', lineHeight: '1.6', maxWidth: '480px' }}>
             Compare credentials, read friendly superpowers, and switch between their presentation video and a live sample class recording to find the perfect educator.
           </p>
         </div>
@@ -1112,8 +1112,8 @@ function TeacherShowcase({ onChooseTeacher, onBack }) {
           )) : <div className="public-teachers-empty" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.08)' }}>
             <span style={{ display: 'inline-block', padding: '16px', background: 'rgba(120, 80, 201, 0.1)', color: '#bce94e', borderRadius: '50%', marginBottom: '12px' }}><Users size={32} /></span>
             <div>
-              <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '6px' }}>Teacher profiles are being prepared.</h3>
-              <p style={{ color: '#b9adc7', fontSize: '0.85rem' }}>Approved TutorPro Online English teachers will appear here as soon as their profiles are ready.</p>
+              <h3 style={{ fontSize: '1.344rem', color: '#fff', marginBottom: '6px' }}>Teacher profiles are being prepared.</h3>
+              <p style={{ color: '#b9adc7', fontSize: '1.037rem' }}>Approved TutorPro Online English teachers will appear here as soon as their profiles are ready.</p>
             </div>
           </div>}
         </div>

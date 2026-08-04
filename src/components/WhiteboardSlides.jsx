@@ -137,7 +137,7 @@ function PdfPageView({ pdf, pageNumber, scale, registerNode }) {
         <div style={{
           position: 'absolute', inset: 0, display: 'grid', placeContent: 'center',
           background: '#f3f1f7', color: failed ? '#b4342f' : '#7a7290',
-          fontSize: '0.7rem', fontWeight: 800, textAlign: 'center', padding: '10px',
+          fontSize: '0.945rem', fontWeight: 800, textAlign: 'center', padding: '10px',
         }}>
           {failed || `Page ${pageNumber}`}
         </div>
@@ -314,13 +314,13 @@ function CustomPdfBoard({
         />
       ))}
       {(status || error) && (
-        <div style={{ margin: 'auto', textAlign: 'center', color: error ? '#fca5a5' : '#e7f8c1', fontSize: '0.8rem', fontWeight: 800 }}>
+        <div style={{ margin: 'auto', textAlign: 'center', color: error ? '#fca5a5' : '#e7f8c1', fontSize: '1rem', fontWeight: 800 }}>
           <FileImage style={{ width: '42px', height: '42px', marginBottom: '10px' }} />
           <p style={{ margin: 0 }}>{error || status}</p>
         </div>
       )}
       {!status && !error && pdf && (
-        <p style={{ margin: '2px 0 6px', textAlign: 'center', color: '#8d84a1', fontSize: '0.62rem', fontWeight: 700 }}>
+        <p style={{ margin: '2px 0 6px', textAlign: 'center', color: '#8d84a1', fontSize: '0.901rem', fontWeight: 700 }}>
           {fileName} · {pageCount} page{pageCount === 1 ? '' : 's'}{canControl ? ' · scroll to move the class through the book' : ''}
         </p>
       )}
@@ -357,10 +357,10 @@ export class SafeSlidesErrorBoundary extends React.Component {
           fontFamily: 'sans-serif',
           boxSizing: 'border-box'
         }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: '900', margin: '0 0 10px 0', color: '#ef4444' }}>⚠️ Whiteboard Render Exception</h3>
-          <p style={{ fontSize: '0.75rem', margin: '0 0 12px 0', fontWeight: 'bold' }}>{this.state.error?.toString()}</p>
+          <h3 style={{ fontSize: '1.113rem', fontWeight: '900', margin: '0 0 10px 0', color: '#ef4444' }}>⚠️ Whiteboard Render Exception</h3>
+          <p style={{ fontSize: '0.972rem', margin: '0 0 12px 0', fontWeight: 'bold' }}>{this.state.error?.toString()}</p>
           <pre style={{ 
-            fontSize: '0.62rem', 
+            fontSize: '0.901rem', 
             background: 'rgba(0,0,0,0.4)', 
             padding: '12px', 
             borderRadius: '8px', 
@@ -434,16 +434,16 @@ export const WhiteboardSlides = ({
             <FileImage style={{ width: '16px', height: '16px' }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.78rem', fontWeight: 'bold', margin: '0' }}>
+            <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.989rem', fontWeight: 'bold', margin: '0' }}>
               {fileName}
             </h2>
-            <p style={{ fontSize: '0.58rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '0.879rem', color: '#b9adc7', margin: '2px 0 0 0' }}>
               {isPdf ? 'Continuous-scroll PDF classroom viewer' : isOfficeDoc ? 'Microsoft Web PowerPoint' : 'Shared Courseware'}
             </p>
           </div>
         </div>
         
-        <div style={{ display: 'flex', flex: '0 0 auto', alignItems: 'center', gap: '6px', fontSize: '0.62rem', color: '#b9adc7' }}>
+        <div style={{ display: 'flex', flex: '0 0 auto', alignItems: 'center', gap: '6px', fontSize: '0.901rem', color: '#b9adc7' }}>
           <Shield style={{ width: '12px', height: '12px', color: '#bce94e' }} />
           <span>Protected Preview</span>
         </div>
@@ -483,7 +483,7 @@ export const WhiteboardSlides = ({
         {!isPdf && !isOfficeDoc && !isImage && (
           <div style={{ margin: 'auto', textAlign: 'center', padding: '24px' }}>
             <FileImage style={{ width: '48px', height: '48px', color: '#bce94e', marginBottom: '10px' }} />
-            <p style={{ fontSize: '0.8rem', margin: '0' }}>Shared lesson courseware is loading...</p>
+            <p style={{ fontSize: '1rem', margin: '0' }}>Shared lesson courseware is loading...</p>
           </div>
         )}
       </div>
@@ -517,7 +517,7 @@ export const WhiteboardSlides = ({
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              fontSize: '0.7rem',
+              fontSize: '0.945rem',
               fontWeight: 'bold'
             }}
           >
@@ -526,7 +526,7 @@ export const WhiteboardSlides = ({
           </button>
         )}
 
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', fontWeight: 'bold', background: '#090510', padding: '4px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.934rem', fontWeight: 'bold', background: '#090510', padding: '4px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
           {isPdf ? 'Jump to' : 'Page'}
           <input
             type="number"
@@ -535,7 +535,7 @@ export const WhiteboardSlides = ({
             value={currentPage}
             onChange={(event) => canControl && onPageChange?.(Math.max(1, Math.min(pageTotal, Number(event.target.value) || 1)))}
             readOnly={!canControl}
-            style={{ width: '54px', border: '0', borderRadius: '5px', padding: '4px 5px', background: '#211339', color: '#fff', fontSize: '0.68rem', fontWeight: '900', textAlign: 'center' }}
+            style={{ width: '54px', border: '0', borderRadius: '5px', padding: '4px 5px', background: '#211339', color: '#fff', fontSize: '0.934rem', fontWeight: '900', textAlign: 'center' }}
           />
           / {pageTotal}
         </label>
@@ -555,7 +555,7 @@ export const WhiteboardSlides = ({
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              fontSize: '0.7rem',
+              fontSize: '0.945rem',
               fontWeight: 'bold'
             }}
           >
@@ -565,7 +565,7 @@ export const WhiteboardSlides = ({
         )}
 
         {isPdf && (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#8d84a1', fontSize: '0.62rem', fontWeight: 800 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#8d84a1', fontSize: '0.901rem', fontWeight: 800 }}>
             <ScrollText style={{ width: '13px', height: '13px', color: '#bce94e' }} />
             {canControl ? 'Scroll the book — the student follows you' : 'Scrolls with your teacher'}
           </span>
@@ -575,23 +575,23 @@ export const WhiteboardSlides = ({
           <button
             onClick={() => updateView({ viewMode: 'fit-width', zoom: 1 })}
             disabled={!canControl}
-            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: viewMode === 'fit-width' ? '#7048df' : 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: viewMode === 'fit-width' ? '#7048df' : 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.912rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
           >Fit width</button>
           <button
             onClick={() => updateView({ viewMode: 'fit-page', zoom: 1 })}
             disabled={!canControl}
-            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: viewMode === 'fit-page' ? '#7048df' : 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: viewMode === 'fit-page' ? '#7048df' : 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.912rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
           >Fit page</button>
           <button
             onClick={() => updateView({ zoom: Math.max(0.5, Math.round((currentZoom - 0.15) * 100) / 100) })}
             disabled={!canControl}
-            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.912rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
           >−</button>
-          <span style={{ minWidth: '42px', textAlign: 'center', color: '#bce94e', fontSize: '0.66rem', fontWeight: '950' }}>{Math.round(currentZoom * 100)}%</span>
+          <span style={{ minWidth: '42px', textAlign: 'center', color: '#bce94e', fontSize: '0.923rem', fontWeight: '950' }}>{Math.round(currentZoom * 100)}%</span>
           <button
             onClick={() => updateView({ zoom: Math.min(2.5, Math.round((currentZoom + 0.15) * 100) / 100) })}
             disabled={!canControl}
-            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.64rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
+            style={{ padding: '6px 10px', border: '0', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: '0.912rem', fontWeight: '900', opacity: canControl ? 1 : 0.45 }}
           >+</button>
         </>}
       </div>

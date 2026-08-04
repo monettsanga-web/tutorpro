@@ -2276,7 +2276,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               borderRadius: '8px',
               padding: '6px 12px',
               cursor: 'pointer',
-              fontSize: '0.72rem',
+              fontSize: '0.956rem',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
@@ -2336,7 +2336,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
                   color: '#bce94e',
                   padding: '6px 12px',
                   borderRadius: '8px',
-                  fontSize: '0.65rem',
+                  fontSize: '0.917rem',
                   fontWeight: 'bold',
                   display: 'flex',
                   alignItems: 'center',

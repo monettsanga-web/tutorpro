@@ -797,17 +797,17 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
           
           {/* Trial class badges */}
           {booking.isTrialClass && (
-            <span style={{ background: '#ff9e2c', color: '#090510', fontSize: '0.62rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <span style={{ background: '#ff9e2c', color: '#090510', fontSize: '0.901rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               🎁 Free Trial Class
             </span>
           )}
           {booking.isTrialClass && booking.trialEnrolled && (
-            <span style={{ background: '#bce94e', color: '#090510', fontSize: '0.62rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <span style={{ background: '#bce94e', color: '#090510', fontSize: '0.901rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               🏆 Enrolled (₱100)
             </span>
           )}
           {booking.isTrialClass && !booking.trialEnrolled && (
-            <span style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.62rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+            <span style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.901rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
               Trial (₱40)
             </span>
           )}
@@ -818,7 +818,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
             <strong 
               className="booking-person-name"
               style={{
-                fontSize: '1.25rem', // Make it BIGGER as requested!
+                fontSize: '1.344rem', // Make it BIGGER as requested!
                 fontWeight: '900',
                 padding: '4px 10px',
                 borderRadius: '8px',
@@ -832,7 +832,7 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
               {showTeacher ? '👨‍🏫 Teacher' : '👶 Student'}: {person}
             </strong>
           )}
-          <span style={{ fontSize: '0.8rem', color: 'var(--portal-muted)' }}>
+          <span style={{ fontSize: '1rem', color: 'var(--portal-muted)' }}>
             {formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time" style={{ color: '#fff' }}>{formatTime(booking.time)}</strong>
           </span>
         </p>
@@ -940,8 +940,8 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
       <section className="portal-dialog direct-chat-dialog" role="dialog" aria-modal="true" style={{ width: '450px', maxWidth: '90vw', height: '550px', display: 'flex', flexDirection: 'column' }}>
         <header className="portal-dialog__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
           <div>
-            <span className="portal-kicker" style={{ textTransform: 'uppercase', color: '#bce94e', fontWeight: '800', fontSize: '0.68rem', letterSpacing: '0.05em' }}>Direct Messaging</span>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>💬 Chat with {targetUserName}</h3>
+            <span className="portal-kicker" style={{ textTransform: 'uppercase', color: '#bce94e', fontWeight: '800', fontSize: '0.934rem', letterSpacing: '0.05em' }}>Direct Messaging</span>
+            <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '900', color: '#fff' }}>💬 Chat with {targetUserName}</h3>
           </div>
           <button className="portal-dialog__close" onClick={onClose} style={{ border: 'none', background: 'transparent', color: '#b9adc7', cursor: 'pointer' }}><X size={20} /></button>
         </header>
@@ -960,8 +960,8 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
                   border: isMe ? 'none' : '1px solid rgba(255,255,255,0.08)',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                 }}>
-                  <p style={{ margin: 0, fontSize: '0.84rem', lineHeight: '1.4' }}>{msg.body}</p>
-                  <small style={{ display: 'block', textAlign: 'right', fontSize: '0.62rem', color: isMe ? 'rgba(255,255,255,0.7)' : '#b9adc7', marginTop: '4px' }}>
+                  <p style={{ margin: 0, fontSize: '1.03rem', lineHeight: '1.4' }}>{msg.body}</p>
+                  <small style={{ display: 'block', textAlign: 'right', fontSize: '0.901rem', color: isMe ? 'rgba(255,255,255,0.7)' : '#b9adc7', marginTop: '4px' }}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </small>
                 </div>
@@ -971,7 +971,7 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#b9adc7', textAlign: 'center', padding: '20px' }}>
               <span style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</span>
               <strong>No messages yet</strong>
-              <span style={{ fontSize: '0.72rem', opacity: 0.7, marginTop: '4px' }}>Say hello and start the conversation! Your chats are secure.</span>
+              <span style={{ fontSize: '0.956rem', opacity: 0.7, marginTop: '4px' }}>Say hello and start the conversation! Your chats are secure.</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -990,7 +990,7 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
               borderRadius: '8px',
               padding: '10px 14px',
               color: '#fff',
-              fontSize: '0.85rem',
+              fontSize: '1.037rem',
               outline: 'none'
             }}
           />
@@ -1008,7 +1008,7 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              fontSize: '0.8rem'
+              fontSize: '1rem'
             }}
           >
             Send <Send size={14} />
@@ -1140,8 +1140,8 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
                 style={{ width: '18px', height: '18px', accentColor: '#bce94e', cursor: 'pointer' }}
               />
               <div>
-                <strong style={{ display: 'block', fontSize: '0.88rem', color: '#bce94e' }}>🎁 Successful Trial Class Enrolled</strong>
-                <span style={{ fontSize: '0.74rem', color: '#b9adc7' }}>Marking this trial class as enrolled will upgrade the teacher's payout from ₱40 to ₱100!</span>
+                <strong style={{ display: 'block', fontSize: '1.06rem', color: '#bce94e' }}>🎁 Successful Trial Class Enrolled</strong>
+                <span style={{ fontSize: '0.967rem', color: '#b9adc7' }}>Marking this trial class as enrolled will upgrade the teacher's payout from ₱40 to ₱100!</span>
               </div>
             </label>
           </div>
@@ -1486,35 +1486,35 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 
         {/* ✨ FAST FEEDBACK TEMPLATE RECOMMENDATIONS */}
         <div className="feedback-recommendations" style={{ margin: '15px 0', padding: '12px', background: 'rgba(120, 80, 201, 0.08)', border: '1px solid rgba(120, 80, 201, 0.2)', borderRadius: '10px' }}>
-          <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <span style={{ display: 'block', fontSize: '0.956rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             ✨ Fast Feedback Recommendations (Click to Pre-fill)
           </span>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button 
               type="button" 
               onClick={() => fillTemplate('speaking')}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.956rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
             >
               🗣️ Speaking Confidence
             </button>
             <button 
               type="button" 
               onClick={() => fillTemplate('phonics')}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.956rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
             >
               📖 Phonics & Reading
             </button>
             <button 
               type="button" 
               onClick={() => fillTemplate('grammar')}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.956rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
             >
               ✍️ Grammar & Builder
             </button>
             <button 
               type="button" 
               onClick={() => fillTemplate('effort')}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.72rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.956rem', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
             >
               🚀 Exceptional Effort
             </button>
@@ -1534,7 +1534,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
             <legend>Resource links for the student</legend>
             <p>Attach worksheets, videos, quizzes or other practice materials the student can access after class.</p>
             <div className="feedback-resource-entry">
-              <select value={resourceDraft.resourceType} onChange={(event) => setResourceDraft((current) => ({ ...current, resourceType: event.target.value }))} aria-label="Resource type" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 10px', color: '#fff', fontSize: '0.78rem', outline: 'none', minWidth: '110px' }}>
+              <select value={resourceDraft.resourceType} onChange={(event) => setResourceDraft((current) => ({ ...current, resourceType: event.target.value }))} aria-label="Resource type" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 10px', color: '#fff', fontSize: '0.989rem', outline: 'none', minWidth: '110px' }}>
                 {RESOURCE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
               <input value={resourceDraft.title} onChange={(event) => setResourceDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Resource title (e.g. Phonics worksheet)" maxLength="120" onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addResourceLink() } }} style={{ flex: '1 1 140px', minWidth: '0' }} />
@@ -2919,71 +2919,71 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', textAlign: 'center', background: '#fff' }}>
                 <thead>
                   <tr style={{ background: 'rgba(112, 72, 223, 0.08)', borderBottom: '2px solid rgba(112, 72, 223, 0.15)' }}>
-                    <th style={{ padding: '14px', color: '#7048df', fontSize: '0.82rem', fontWeight: 'bold', width: '150px' }}>年齡 Age</th>
+                    <th style={{ padding: '14px', color: '#7048df', fontSize: '1.015rem', fontWeight: 'bold', width: '150px' }}>年齡 Age</th>
                     {Array.from({ length: 12 }).map((_, i) => (
-                      <th key={i} style={{ padding: '14px', color: '#321568', fontSize: '0.82rem', fontWeight: '900', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Lv.{i}</th>
+                      <th key={i} style={{ padding: '14px', color: '#321568', fontSize: '1.015rem', fontWeight: '900', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Lv.{i}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid rgba(112, 72, 223, 0.1)' }}>
-                    <td style={{ padding: '14px', color: '#321568', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>年級對應<br/><small style={{ color: '#665578', fontSize: '0.7rem' }}>Grade</small></td>
+                    <td style={{ padding: '14px', color: '#321568', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>年級對應<br/><small style={{ color: '#665578', fontSize: '0.945rem' }}>Grade</small></td>
                     {['K1', 'K2', 'K3', 'Pre-school', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'].map((g, idx) => (
-                      <td key={idx} style={{ padding: '14px', color: '#463650', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>{g}</td>
+                      <td key={idx} style={{ padding: '14px', color: '#463650', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>{g}</td>
                     ))}
                   </tr>
                   <tr style={{ borderBottom: '1px solid rgba(112, 72, 223, 0.1)' }}>
-                    <td style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>CEFR Level</td>
-                    <td colSpan={3} style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold' }}>pre-A1</td>
-                    <td colSpan={3} style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>A1</td>
-                    <td colSpan={2} style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>A2</td>
-                    <td style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>A2+</td>
-                    <td colSpan={2} style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>B1</td>
-                    <td style={{ padding: '14px', color: '#10b981', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>B1+</td>
+                    <td style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>CEFR Level</td>
+                    <td colSpan={3} style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold' }}>pre-A1</td>
+                    <td colSpan={3} style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>A1</td>
+                    <td colSpan={2} style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>A2</td>
+                    <td style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>A2+</td>
+                    <td colSpan={2} style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>B1</td>
+                    <td style={{ padding: '14px', color: '#10b981', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>B1+</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid rgba(112, 72, 223, 0.1)' }}>
-                    <td style={{ padding: '14px', color: '#d97706', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>US CCSS</td>
-                    <td colSpan={3} style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold' }}>GK</td>
-                    <td colSpan={3} style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G1</td>
-                    <td colSpan={2} style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G2</td>
-                    <td style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G3</td>
-                    <td style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G4</td>
-                    <td style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G5</td>
-                    <td style={{ padding: '14px', color: '#b45309', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G6</td>
+                    <td style={{ padding: '14px', color: '#d97706', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>US CCSS</td>
+                    <td colSpan={3} style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold' }}>GK</td>
+                    <td colSpan={3} style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G1</td>
+                    <td colSpan={2} style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G2</td>
+                    <td style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G3</td>
+                    <td style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G4</td>
+                    <td style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G5</td>
+                    <td style={{ padding: '14px', color: '#b45309', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>G6</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid rgba(112, 72, 223, 0.1)' }}>
-                    <td style={{ padding: '14px', color: '#a855f7', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>Cambridge</td>
-                    <td colSpan={3} style={{ padding: '14px', color: '#6b21a8', fontSize: '0.82rem', fontWeight: 'bold' }}>Towards Starters</td>
-                    <td colSpan={3} style={{ padding: '14px', color: '#6b21a8', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>YLE Starters</td>
-                    <td colSpan={2} style={{ padding: '14px', color: '#6b21a8', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Start to Movers</td>
-                    <td style={{ padding: '14px', color: '#6b21a8', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Movers to Flyers</td>
-                    <td colSpan={2} style={{ padding: '14px', color: '#6b21a8', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Movers to Flyers / KET</td>
-                    <td style={{ padding: '14px', color: '#6b21a8', fontSize: '0.82rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>PET</td>
+                    <td style={{ padding: '14px', color: '#a855f7', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>Cambridge</td>
+                    <td colSpan={3} style={{ padding: '14px', color: '#6b21a8', fontSize: '1.015rem', fontWeight: 'bold' }}>Towards Starters</td>
+                    <td colSpan={3} style={{ padding: '14px', color: '#6b21a8', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>YLE Starters</td>
+                    <td colSpan={2} style={{ padding: '14px', color: '#6b21a8', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Start to Movers</td>
+                    <td style={{ padding: '14px', color: '#6b21a8', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Movers to Flyers</td>
+                    <td colSpan={2} style={{ padding: '14px', color: '#6b21a8', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Movers to Flyers / KET</td>
+                    <td style={{ padding: '14px', color: '#6b21a8', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>PET</td>
                   </tr>
                   <tr>
-                    <td style={{ padding: '24px 14px', color: '#ef4444', fontSize: '0.82rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)', verticalAlign: 'middle' }}>Outcomes</td>
-                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.78rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6' }}>
+                    <td style={{ padding: '24px 14px', color: '#ef4444', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)', verticalAlign: 'middle' }}>Outcomes</td>
+                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
                         <li>熟練掌握26個字母及44個基本發音及拼讀</li>
                         <li style={{ marginTop: '6px' }}>能夠拼讀和拼寫簡單單詞</li>
                         <li style={{ marginTop: '6px' }}>逐漸建立英語閱讀與溝通基礎</li>
                       </ul>
                     </td>
-                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.78rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
+                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
                         <li>完全掌握自然拼讀及字母組合發音</li>
                         <li style={{ marginTop: '6px' }}>培養閱讀與寫作表達能力</li>
                         <li style={{ marginTop: '6px' }}>可以進行日常流利溝通</li>
                       </ul>
                     </td>
-                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.78rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
+                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
                         <li>自如用英語表達觀點、喜好、想法</li>
                         <li style={{ marginTop: '6px' }}>進行段落和100詞內短寫作</li>
                         <li style={{ marginTop: '6px' }}>熟練使用多種閱讀策略</li>
                       </ul>
                     </td>
-                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.78rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
+                    <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
                         <li>流暢與英語母語者全方位交流交際</li>
                         <li style={{ marginTop: '6px' }}>複雜問題解讀，達到美國中學閱讀水準</li>
@@ -2993,7 +2993,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
                 </tbody>
               </table>
             </div>
-            <div style={{ textAlign: 'center', color: '#7048df', fontSize: '0.78rem', padding: '14px', background: 'rgba(112, 72, 223, 0.05)', borderTop: '1px solid rgba(112, 72, 223, 0.1)', fontWeight: 'bold' }}>
+            <div style={{ textAlign: 'center', color: '#7048df', fontSize: '0.989rem', padding: '14px', background: 'rgba(112, 72, 223, 0.05)', borderTop: '1px solid rgba(112, 72, 223, 0.1)', fontWeight: 'bold' }}>
               👈 Swipe horizontally to view full levels (Lv.0 to Lv.11) 👉
             </div>
           </section>
@@ -3425,7 +3425,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             <article><span className="stat-icon stat-icon--blue"><Video size={21} /></span><div><small>Lessons completed</small><strong>{account.teacher.lessonsCompleted || 0}</strong><em>All time</em></div></article>
             <article><span className="stat-icon stat-icon--gold"><Star size={21} /></span><div><small>Teacher rating</small><strong>{account.teacher.rating ? `${account.teacher.rating}.0` : 'New'}</strong><em>Student feedback</em></div></article>
             <article className="teacher-feedback-due-stat"><span className="stat-icon stat-icon--pink"><MessageSquareText size={21} /></span><div><small>Feedback due</small><strong>{feedbackNeededBookings.length}</strong><em>Needs remark</em></div></article>
-            <article style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.04)' }}><span className="stat-icon stat-icon--green"><Coins size={21} style={{ color: '#10b981' }} /></span><div><small style={{ color: '#10b981' }}>Estimated Earnings</small><strong style={{ color: '#10b981' }}>₱{estimatedEarnings.toLocaleString()}</strong><em style={{ fontSize: '0.65rem' }}>{trialCompletedBookings.length} trials · {regularCompletedBookings.length} regular classes</em></div></article>
+            <article style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.04)' }}><span className="stat-icon stat-icon--green"><Coins size={21} style={{ color: '#10b981' }} /></span><div><small style={{ color: '#10b981' }}>Estimated Earnings</small><strong style={{ color: '#10b981' }}>₱{estimatedEarnings.toLocaleString()}</strong><em style={{ fontSize: '0.917rem' }}>{trialCompletedBookings.length} trials · {regularCompletedBookings.length} regular classes</em></div></article>
           </div>
           <section className="portal-card teacher-feedback-queue-card">
             <div className="portal-card__heading portal-card__heading--small">
@@ -3569,7 +3569,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               <IntroVideo accountId={account.id} refreshKey={mediaVersion} />
               
               <div style={{ marginTop: '14px', padding: '12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase' }}>Option A: Paste Video Link</span>
+                <span style={{ display: 'block', fontSize: '0.956rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase' }}>Option A: Paste Video Link</span>
                 <input 
                   type="text"
                   placeholder="Paste YouTube, Shorts, Drive or Vimeo link..."
@@ -3585,7 +3585,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                     borderRadius: '8px',
                     padding: '8px 12px',
                     color: '#fff',
-                    fontSize: '0.78rem',
+                    fontSize: '0.989rem',
                     outline: 'none',
                     marginBottom: '8px'
                   }}
@@ -3595,23 +3595,23 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                   className="portal-primary-button" 
                   onClick={saveIntroVideoUrl}
                   disabled={savingIntroVideo}
-                  style={{ width: '100%', padding: '8px 12px', fontSize: '0.75rem' }}
+                  style={{ width: '100%', padding: '8px 12px', fontSize: '0.972rem' }}
                 >
                   {savingIntroVideo ? 'Saving Intro Link...' : 'Save Intro Link'}
                 </button>
                 {introVideoSaved && (
-                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.72rem' }}>
+                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.956rem' }}>
                     <Check size={12} /> Introduction link saved!
                   </span>
                 )}
               </div>
 
-              <div style={{ marginTop: '14px', textAlign: 'center', color: '#b9adc7', fontSize: '0.7rem', fontWeight: 'bold' }}>— OR —</div>
+              <div style={{ marginTop: '14px', textAlign: 'center', color: '#b9adc7', fontSize: '0.945rem', fontWeight: 'bold' }}>— OR —</div>
 
               <div style={{ marginTop: '14px' }}>
-                <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase' }}>Option B: Upload raw video file</span>
+                <span style={{ display: 'block', fontSize: '0.956rem', fontWeight: 'bold', color: '#bce94e', marginBottom: '8px', textTransform: 'uppercase' }}>Option B: Upload raw video file</span>
                 <label className="media-upload-button" style={{ margin: 0 }}><Upload size={16} /> Upload introduction video<input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => uploadTeacherMedia(event, 'intro-video')} /></label>
-                <p style={{ marginTop: '6px', fontSize: '0.65rem', color: '#b9adc7' }}>MP4 or WebM, up to 50 MB.</p>
+                <p style={{ marginTop: '6px', fontSize: '0.917rem', color: '#b9adc7' }}>MP4 or WebM, up to 50 MB.</p>
               </div>
             </section>
             
@@ -3622,7 +3622,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                 <span className="portal-card__icon"><Video size={21} /></span>
               </div>
               <div style={{ marginTop: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.972rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
                   Paste link to your sample class (YouTube, YouTube Shorts, Vimeo, Bilibili, Google Drive video, or Raw Mp4 url)
                 </label>
                 <input 
@@ -3640,7 +3640,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                     borderRadius: '8px',
                     padding: '10px 14px',
                     color: '#fff',
-                    fontSize: '0.82rem',
+                    fontSize: '1.015rem',
                     outline: 'none',
                     marginBottom: '10px'
                   }}
@@ -3655,7 +3655,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                   {savingSampleClass ? 'Saving & Syncing...' : 'Save Sample Class Link'}
                 </button>
                 {sampleClassSaved && (
-                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}>
+                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.972rem' }}>
                     <Check size={14} /> Saved and synced to public showcase!
                   </span>
                 )}
@@ -3669,7 +3669,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                 <span className="portal-card__icon"><Coins size={21} /></span>
               </div>
               <div style={{ marginTop: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.972rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
                   Select your preferred payout channel (Philippines local wallets & bank transfers)
                 </label>
                 <select
@@ -3685,7 +3685,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                     borderRadius: '8px',
                     padding: '10px 14px',
                     color: '#fff',
-                    fontSize: '0.82rem',
+                    fontSize: '1.015rem',
                     outline: 'none',
                     marginBottom: '10px'
                   }}
@@ -3697,7 +3697,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                   <option value="PayPal">PayPal Business Account</option>
                 </select>
 
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.972rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>
                   Mobile Phone Number or Bank Account Number
                 </label>
                 <input 
@@ -3715,7 +3715,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                     borderRadius: '8px',
                     padding: '10px 14px',
                     color: '#fff',
-                    fontSize: '0.82rem',
+                    fontSize: '1.015rem',
                     outline: 'none',
                     marginBottom: '12px'
                   }}
@@ -3731,7 +3731,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                   {savingPayout ? 'Saving Payouts...' : 'Save Philippine Payout Details'}
                 </button>
                 {payoutSaved && (
-                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}>
+                  <span className="saved-label" style={{ display: 'inline-block', marginTop: '6px', color: '#bce94e', fontSize: '0.972rem' }}>
                     <Check size={14} /> Salary preferences saved successfully!
                   </span>
                 )}
@@ -3873,7 +3873,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
                 border: 'none',
                 borderRadius: '8px',
                 padding: '6px 12px',
-                fontSize: '0.72rem',
+                fontSize: '0.956rem',
                 cursor: 'pointer'
               }}
             >
@@ -3900,7 +3900,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
                   alert("Failed to send message: " + err.message);
                 }
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.956rem', cursor: 'pointer' }}
             >
               <Send size={15} /> Send Email
             </button>
@@ -3914,11 +3914,11 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
       <div className="admin-teacher-profile-grid">
         <section className="portal-card"><span className="portal-kicker">Professional profile</span><h2>About the teacher</h2><p className="teacher-bio">{profile.bio || 'The teacher has not added a biography yet.'}</p><div className="profile-info-row profile-info-row--three"><div><span>Education</span><strong>{profile.education || 'Not provided'}</strong></div><div><span>Languages</span><strong>{profile.languages || 'Not provided'}</strong></div><div><span>Curriculum</span><strong>{profile.specialization || 'Not provided'}</strong></div></div></section>
         <section className="portal-card admin-teacher-media"><span className="portal-kicker">Public introduction</span><h2>Introduction video</h2><IntroVideo accountId={teacher.id} compact /><p>Visible to parents on the public teacher profile.</p></section>
-        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed/Absent lessons</dt><dd>{completedLessons} classes</dd></div><div style={{ background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '6px', gridColumn: '1/-1' }}><dt style={{ fontSize: '0.72rem', color: '#b9adc7' }}>Earnings Breakdown</dt><dd style={{ fontSize: '0.72rem', color: '#fff', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '4px' }}><span>Regular: {regularSlotsCount} slots × ₱{rate} = ₱{(regularSlotsCount * rate).toLocaleString()}</span><span>Trial Enrolled: {trialEnrolledCount} × ₱100 = ₱{(trialEnrolledCount * 100).toLocaleString()}</span><span>Trial Not Enrolled: {trialNotEnrolledCount} × ₱40 = ₱{(trialNotEnrolledCount * 40).toLocaleString()}</span></dd></div><div><dt style={{ color: '#10b981', fontWeight: 'bold' }}>Estimated Earnings</dt><dd style={{ color: '#10b981', fontWeight: 'black', fontSize: '1.2rem' }}>₱{estimatedEarnings.toLocaleString()}</dd></div></dl>
+        <section className="portal-card"><span className="portal-kicker">Teaching access</span><h2>Availability & classroom</h2><dl className="admin-teacher-detail-list"><div><dt>Weekly slots</dt><dd>{availabilitySlots.length} × 30 min</dd></div><div><dt>Class platform</dt><dd>{profile.classroom?.platform === 'voov' ? 'VooV' : 'Zoom / TutorPro Classroom'}</dd></div><div><dt>Confirmed bookings</dt><dd>{teacherBookings.filter((booking) => booking.status === 'confirmed').length}</dd></div><div><dt>Completed/Absent lessons</dt><dd>{completedLessons} classes</dd></div><div style={{ background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '6px', gridColumn: '1/-1' }}><dt style={{ fontSize: '0.956rem', color: '#b9adc7' }}>Earnings Breakdown</dt><dd style={{ fontSize: '0.956rem', color: '#fff', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '4px' }}><span>Regular: {regularSlotsCount} slots × ₱{rate} = ₱{(regularSlotsCount * rate).toLocaleString()}</span><span>Trial Enrolled: {trialEnrolledCount} × ₱100 = ₱{(trialEnrolledCount * 100).toLocaleString()}</span><span>Trial Not Enrolled: {trialNotEnrolledCount} × ₱40 = ₱{(trialNotEnrolledCount * 40).toLocaleString()}</span></dd></div><div><dt style={{ color: '#10b981', fontWeight: 'bold' }}>Estimated Earnings</dt><dd style={{ color: '#10b981', fontWeight: 'black', fontSize: '1.3rem' }}>₱{estimatedEarnings.toLocaleString()}</dd></div></dl>
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <label style={{ display: 'block', fontSize: '0.68rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>Configure Peso Rate (PHP per completed/absent class)</label>
+            <label style={{ display: 'block', fontSize: '0.934rem', fontWeight: 'bold', color: '#b9adc7', marginBottom: '6px' }}>Configure Peso Rate (PHP per completed/absent class)</label>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '0 10px', borderRadius: '8px', color: '#b9adc7', fontSize: '0.8rem' }}>₱</span>
+              <span style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '0 10px', borderRadius: '8px', color: '#b9adc7', fontSize: '1rem' }}>₱</span>
               <input 
                 type="number" 
                 value={pesoRate}
@@ -3930,7 +3930,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
                   borderRadius: '8px',
                   padding: '6px 12px',
                   color: '#fff',
-                  fontSize: '0.8rem',
+                  fontSize: '1rem',
                   outline: 'none'
                 }}
               />
@@ -3944,7 +3944,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
                   border: 'none',
                   borderRadius: '8px',
                   padding: '6px 12px',
-                  fontSize: '0.72rem',
+                  fontSize: '0.956rem',
                   cursor: 'pointer'
                 }}
               >
@@ -3953,7 +3953,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
             </div>
           </div>
         </section>
-        <section className="portal-card"><span className="portal-kicker">Verification</span><h2>Submitted credentials</h2>{credentials.length ? <ul className="admin-credential-list">{credentials.map((credential, index) => <li key={credential} style={{ display: 'block', margin: '4px 0' }}><button type="button" onClick={async () => { try { const record = await getProfileMedia(teacher.id, `credential-${index}`); if (record?.blob) { const objectUrl = URL.createObjectURL(record.blob); window.open(objectUrl, '_blank'); } else { alert("This credential file binary has not been uploaded yet or is empty."); } } catch(err) { alert("Error opening file: " + err.message); } }} style={{ background: 'transparent', border: 'none', color: '#bce94e', cursor: 'pointer', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', padding: '0', fontWeight: 'bold' }}><ShieldCheck size={15} /> {credential} (Click to View File)</button></li>)}</ul> : <EmptyState icon={ShieldCheck} title="No credentials submitted" text="The teacher has not uploaded credential names yet." />}</section>
+        <section className="portal-card"><span className="portal-kicker">Verification</span><h2>Submitted credentials</h2>{credentials.length ? <ul className="admin-credential-list">{credentials.map((credential, index) => <li key={credential} style={{ display: 'block', margin: '4px 0' }}><button type="button" onClick={async () => { try { const record = await getProfileMedia(teacher.id, `credential-${index}`); if (record?.blob) { const objectUrl = URL.createObjectURL(record.blob); window.open(objectUrl, '_blank'); } else { alert("This credential file binary has not been uploaded yet or is empty."); } } catch(err) { alert("Error opening file: " + err.message); } }} style={{ background: 'transparent', border: 'none', color: '#bce94e', cursor: 'pointer', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.956rem', padding: '0', fontWeight: 'bold' }}><ShieldCheck size={15} /> {credential} (Click to View File)</button></li>)}</ul> : <EmptyState icon={ShieldCheck} title="No credentials submitted" text="The teacher has not uploaded credential names yet." />}</section>
       </div>
       <section className="portal-card admin-interview-review">
         <div className="admin-interview-heading">
@@ -4047,11 +4047,11 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
     console.error("Render error inside AdminTeacherProfile: ", renderError)
     return (
       <div className="role-error-card" style={{ padding: '30px', background: '#110925', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', margin: '20px' }}>
-        <h2 style={{ fontSize: '1.5rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Layout Evaluation Exception</h2>
-        <p style={{ color: '#b9adc7', fontSize: '0.9rem', marginBottom: '15px' }}>
+        <h2 style={{ fontSize: '1.562rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Layout Evaluation Exception</h2>
+        <p style={{ color: '#b9adc7', fontSize: '1.075rem', marginBottom: '15px' }}>
           TutorPro Online English was unable to compile the teacher profile layout. Detail description:
         </p>
-        <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', fontSize: '0.8rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap' }}>
+        <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', fontSize: '1rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap' }}>
           {renderError.stack || renderError.message}
         </pre>
         <button onClick={onBack} className="portal-primary-button" style={{ marginTop: '15px' }}>Return to Admin</button>
@@ -4199,7 +4199,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
               border: 'none',
               borderRadius: '8px',
               padding: '6px 12px',
-              fontSize: '0.72rem',
+              fontSize: '0.956rem',
               cursor: 'pointer'
             }}
           >
@@ -4217,7 +4217,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed', 'ongoing'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Profile access</span><h2>Administrator controls</h2><p className="teacher-bio">Use the controls above to suspend, restore, or permanently remove this individual student registration. Other learners in the same family separate.</p></section>
-        <section className="portal-card"><span className="portal-kicker">Academic Management</span><h2>Assign Specific Teacher</h2><p style={{ fontSize: '0.75rem', color: '#b9adc7', marginBottom: '12px' }}>Assign a specific teacher. Once assigned, this student will ONLY be allowed to see and book lessons with this teacher.</p>
+        <section className="portal-card"><span className="portal-kicker">Academic Management</span><h2>Assign Specific Teacher</h2><p style={{ fontSize: '0.972rem', color: '#b9adc7', marginBottom: '12px' }}>Assign a specific teacher. Once assigned, this student will ONLY be allowed to see and book lessons with this teacher.</p>
           <div style={{ display: 'flex', gap: '8px' }}>
             <select
               value={assignedTeacherId}
@@ -4229,7 +4229,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
                 borderRadius: '8px',
                 padding: '8px 12px',
                 color: '#fff',
-                fontSize: '0.8rem',
+                fontSize: '1rem',
                 outline: 'none'
               }}
             >
@@ -4245,7 +4245,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
         <section className="portal-card">
           <span className="portal-kicker">Tuition & Billing</span>
           <h2>Paid Session Credits</h2>
-          <p style={{ fontSize: '0.75rem', color: '#b9adc7', marginBottom: '12px' }}>
+          <p style={{ fontSize: '0.972rem', color: '#b9adc7', marginBottom: '12px' }}>
             Control the number of paid slots this parent is allowed to book. Booking a lesson decrements this balance automatically.
           </p>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -4260,7 +4260,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
                 borderRadius: '8px',
                 padding: '8px 12px',
                 color: '#fff',
-                fontSize: '0.8rem',
+                fontSize: '1rem',
                 outline: 'none'
               }}
             />
@@ -4268,12 +4268,12 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
               onClick={handleSaveBalance}
               disabled={savingBalance}
               className="portal-primary-button"
-              style={{ margin: 0, padding: '8px 16px', fontSize: '0.75rem' }}
+              style={{ margin: 0, padding: '8px 16px', fontSize: '0.972rem' }}
             >
               {savingBalance ? 'Saving...' : 'Save Credits'}
             </button>
           </div>
-          {balanceSaved && <span className="saved-label" style={{ display: 'block', marginTop: '6px', color: '#bce94e', fontSize: '0.75rem' }}><Check size={14} /> Credits saved successfully!</span>}
+          {balanceSaved && <span className="saved-label" style={{ display: 'block', marginTop: '6px', color: '#bce94e', fontSize: '0.972rem' }}><Check size={14} /> Credits saved successfully!</span>}
         </section>
       </div>
       <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Student activity</span><h2>Recent lessons</h2></div></div>{learnerBookings.length ? learnerBookings.slice(0, 5).map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher />) : <EmptyState icon={CalendarDays} title="No lessons yet" text="Student bookings will appear here." />}</section>
@@ -4737,11 +4737,11 @@ export class AdminRenderErrorBoundary extends Component {
     if (this.state.error) {
       return (
         <div style={{ padding: '40px', background: '#090510', border: '2px solid #ff4d4d', borderRadius: '12px', color: '#fff', margin: '20px', fontFamily: 'monospace' }}>
-          <h2 style={{ fontSize: '1.5rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Admin Portal Render Exception</h2>
-          <p style={{ color: '#b9adc7', fontSize: '0.9rem', marginBottom: '15px' }}>
+          <h2 style={{ fontSize: '1.562rem', color: '#ff4d4d', fontWeight: 'bold', marginBottom: '10px' }}>⚠️ Admin Portal Render Exception</h2>
+          <p style={{ color: '#b9adc7', fontSize: '1.075rem', marginBottom: '15px' }}>
             A rendering error occurred inside the Admin Dashboard workspace. Stack trace:
           </p>
-          <pre style={{ background: 'rgba(0,0,0,0.5)', padding: '16px', borderRadius: '8px', fontSize: '0.85rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)', whiteSpace: 'pre-wrap' }}>
+          <pre style={{ background: 'rgba(0,0,0,0.5)', padding: '16px', borderRadius: '8px', fontSize: '1.037rem', color: '#ff4d4d', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)', whiteSpace: 'pre-wrap' }}>
             {this.state.error?.stack || this.state.error?.message}
           </pre>
           <button onClick={() => this.setState({ error: null })} style={{ background: '#bce94e', color: '#090510', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Try Again</button>
@@ -5482,7 +5482,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                     border: 'none',
                     borderRadius: '8px',
                     padding: '6px 16px',
-                    fontSize: '0.78rem',
+                    fontSize: '0.989rem',
                     fontWeight: 'bold',
                     cursor: 'pointer'
                   }}
@@ -5503,7 +5503,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                     border: 'none',
                     borderRadius: '8px',
                     padding: '6px 16px',
-                    fontSize: '0.78rem',
+                    fontSize: '0.989rem',
                     fontWeight: 'bold',
                     cursor: 'pointer'
                   }}
@@ -5514,7 +5514,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
               {adminBookingView === 'calendar' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.78rem', color: '#b9adc7', fontWeight: 'bold' }}>Select Teacher:</span>
+                  <span style={{ fontSize: '0.989rem', color: '#b9adc7', fontWeight: 'bold' }}>Select Teacher:</span>
                   <select
                     value={selectedCalendarTeacherId}
                     onChange={(e) => setSelectedCalendarTeacherId(e.target.value)}
@@ -5524,7 +5524,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                       borderRadius: '8px',
                       padding: '6px 12px',
                       color: '#fff',
-                      fontSize: '0.78rem',
+                      fontSize: '0.989rem',
                       outline: 'none',
                       cursor: 'pointer'
                     }}

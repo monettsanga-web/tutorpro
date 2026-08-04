@@ -121,7 +121,7 @@ export const ClassroomDashboard = ({ onExit }) => {
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '8px',
               padding: '6px 12px',
-              fontSize: '0.72rem',
+              fontSize: '0.956rem',
               fontWeight: 'bold',
               cursor: 'pointer',
               transition: 'all 0.2s'
@@ -131,7 +131,7 @@ export const ClassroomDashboard = ({ onExit }) => {
             Exit Mode
           </button>
           <div style={{ height: '16px', width: '1px', background: 'rgba(255,255,255,0.15)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(188,233,78,0.1)', color: '#dafa8d', border: '1px solid rgba(188,233,78,0.2)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.7rem', fontWeight: '800' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(188,233,78,0.1)', color: '#dafa8d', border: '1px solid rgba(188,233,78,0.2)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.945rem', fontWeight: '800' }}>
             <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#bce94e', borderRadius: '50%' }} />
             TutorPro Google Classroom • Booking #{bookingId}
           </div>
@@ -142,7 +142,7 @@ export const ClassroomDashboard = ({ onExit }) => {
           <button 
             onClick={() => setIsTeacher(!isTeacher)}
             style={{
-              fontSize: '0.7rem',
+              fontSize: '0.945rem',
               background: '#1c0e2d',
               color: '#b9adc7',
               fontWeight: 'bold',
@@ -155,13 +155,13 @@ export const ClassroomDashboard = ({ onExit }) => {
             Active View: <span style={{ color: isTeacher ? '#3b82f6' : '#f59e0b' }}>{isTeacher ? 'Teacher' : 'Student'}</span> (Toggle)
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '6px 14px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '6px 14px', borderRadius: '10px', fontSize: '0.956rem', fontWeight: 'bold' }}>
             <Clock style={{ width: '14px', height: '14px', color: '#bce94e' }} />
             <span style={{ color: '#b9adc7' }}>Timer:</span>
-            <span style={{ color: '#10b981', fontFamily: 'monospace', fontSize: '0.8rem' }}>24:59</span>
+            <span style={{ color: '#10b981', fontFamily: 'monospace', fontSize: '1rem' }}>24:59</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#b9adc7' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.945rem', color: '#b9adc7' }}>
             <Wifi style={{ width: '15px', height: '15px', color: '#10b981' }} />
             <span>Ping: <span style={{ color: '#10b981', fontFamily: 'monospace' }}>12ms</span></span>
           </div>
@@ -215,17 +215,17 @@ export const ClassroomDashboard = ({ onExit }) => {
                   <div style={{ width: '64px', height: '64px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(188,233,78,0.2)', marginBottom: '16px' }}>
                     <Monitor style={{ width: '28px', height: '28px' }} />
                   </div>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff', margin: '0 0 8px 0' }}>Welcome to your Google Classroom!</h2>
-                  <p style={{ fontSize: '0.78rem', color: '#b9adc7', maxWidth: '380px', lineHeight: '1.4', margin: '0 0 24px 0' }}>
+                  <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#fff', margin: '0 0 8px 0' }}>Welcome to your Google Classroom!</h2>
+                  <p style={{ fontSize: '0.989rem', color: '#b9adc7', maxWidth: '380px', lineHeight: '1.4', margin: '0 0 24px 0' }}>
                     Whiteboard workspace is currently empty. Upload a lesson PDF, slide deck, document or image to show it on the classroom screen.
                   </p>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%' }}>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(188,233,78,0.32)', borderRadius: '999px', padding: '10px 16px', color: '#bce94e', background: 'rgba(188,233,78,0.1)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: '900' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(188,233,78,0.32)', borderRadius: '999px', padding: '10px 16px', color: '#bce94e', background: 'rgba(188,233,78,0.1)', cursor: 'pointer', fontSize: '0.978rem', fontWeight: '900' }}>
                       <FileUp style={{ width: '16px', height: '16px' }} /> Upload classroom file
                       <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,image/*" onChange={handleDemoFileUpload} style={{ display: 'none' }} />
                     </label>
-                    <span style={{ fontSize: '0.62rem', color: '#b9adc7' }}>Supabase classroom storage preview</span>
+                    <span style={{ fontSize: '0.901rem', color: '#b9adc7' }}>Supabase classroom storage preview</span>
                   </div>
                 </div>
               )}
@@ -243,8 +243,8 @@ export const ClassroomDashboard = ({ onExit }) => {
                 boxSizing: 'border-box',
                 zIndex: 30
               }}>
-                <span style={{ fontSize: '0.68rem', color: '#b9adc7', fontWeight: 'bold' }}>Active Courseware: {activeSharedFile.name}</span>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(188,233,78,0.24)', borderRadius: '999px', padding: '8px 12px', color: '#bce94e', background: 'rgba(188,233,78,0.08)', cursor: 'pointer', fontSize: '0.68rem', fontWeight: '900' }}>
+                <span style={{ fontSize: '0.934rem', color: '#b9adc7', fontWeight: 'bold' }}>Active Courseware: {activeSharedFile.name}</span>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(188,233,78,0.24)', borderRadius: '999px', padding: '8px 12px', color: '#bce94e', background: 'rgba(188,233,78,0.08)', cursor: 'pointer', fontSize: '0.934rem', fontWeight: '900' }}>
                   <FileUp style={{ width: '14px', height: '14px' }} /> Change file
                   <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,image/*" onChange={handleDemoFileUpload} style={{ display: 'none' }} />
                 </label>
@@ -285,10 +285,10 @@ export const ClassroomDashboard = ({ onExit }) => {
             }}>
               <div style={{ textAlign: 'center' }}>
                 <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '6px' }}>🧑‍🏫</span>
-                <strong style={{ fontSize: '0.75rem', color: '#fff', display: 'block' }}>Teacher Sarah (You)</strong>
-                <span style={{ fontSize: '0.58rem', color: '#bce94e', fontWeight: 'bold' }}>TutorPro Educator</span>
+                <strong style={{ fontSize: '0.972rem', color: '#fff', display: 'block' }}>Teacher Sarah (You)</strong>
+                <span style={{ fontSize: '0.879rem', color: '#bce94e', fontWeight: 'bold' }}>TutorPro Educator</span>
               </div>
-              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.58rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.879rem', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <Mic style={{ width: '10px', height: '10px', color: '#10b981' }} />
                 <span>Mic Active</span>
               </div>
@@ -309,14 +309,14 @@ export const ClassroomDashboard = ({ onExit }) => {
             }}>
               <div style={{ textAlign: 'center' }}>
                 <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '6px' }}>🧒</span>
-                <strong style={{ fontSize: '0.75rem', color: '#fff', display: 'block' }}>Leo Chen</strong>
-                <span style={{ fontSize: '0.58rem', color: '#b9adc7' }}>Beijing Student</span>
+                <strong style={{ fontSize: '0.972rem', color: '#fff', display: 'block' }}>Leo Chen</strong>
+                <span style={{ fontSize: '0.879rem', color: '#b9adc7' }}>Beijing Student</span>
               </div>
-              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.58rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.879rem', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <Mic style={{ width: '10px', height: '10px', color: '#10b981' }} />
                 <span>Leo Chen</span>
               </div>
-              <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', border: '1px solid rgba(188,233,78,0.2)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.58rem', fontWeight: 'bold' }}>
+              <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(188,233,78,0.1)', color: '#bce94e', border: '1px solid rgba(188,233,78,0.2)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.879rem', fontWeight: 'bold' }}>
                 ⭐️ {studentStars} Stars
               </div>
             </div>
@@ -336,8 +336,8 @@ export const ClassroomDashboard = ({ onExit }) => {
               boxSizing: 'border-box'
             }}>
               <div>
-                <h4 style={{ fontSize: '0.72rem', fontWeight: 'bold', margin: '0 0 2px 0', color: '#fff' }}>Reward Leo Chen</h4>
-                <p style={{ fontSize: '0.58rem', color: '#b9adc7', margin: '0' }}>Award stars for good responses</p>
+                <h4 style={{ fontSize: '0.956rem', fontWeight: 'bold', margin: '0 0 2px 0', color: '#fff' }}>Reward Leo Chen</h4>
+                <p style={{ fontSize: '0.879rem', color: '#b9adc7', margin: '0' }}>Award stars for good responses</p>
               </div>
               <button 
                 onClick={handleGiveStar}
@@ -348,7 +348,7 @@ export const ClassroomDashboard = ({ onExit }) => {
                   border: 'none',
                   borderRadius: '10px',
                   padding: '6px 12px',
-                  fontSize: '0.65rem',
+                  fontSize: '0.917rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -373,7 +373,7 @@ export const ClassroomDashboard = ({ onExit }) => {
             overflow: 'hidden',
             boxSizing: 'border-box'
           }}>
-            <h4 style={{ fontSize: '0.72rem', fontWeight: 'bold', margin: '0 0 10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h4 style={{ fontSize: '0.956rem', fontWeight: 'bold', margin: '0 0 10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <MessageSquare style={{ width: '13px', height: '13px', color: '#bce94e' }} />
               <span>Chat & Logs</span>
             </h4>
@@ -382,13 +382,13 @@ export const ClassroomDashboard = ({ onExit }) => {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
               {chatMessages.map((msg) => (
                 <div key={msg.id} style={{ background: 'rgba(0,0,0,0.18)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', fontWeight: 'bold', marginBottom: '3px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.879rem', fontWeight: 'bold', marginBottom: '3px' }}>
                     <span style={{ color: msg.sender === 'Teacher' ? '#3b82f6' : msg.sender === 'Student' ? '#f59e0b' : '#b9adc7' }}>
                       {msg.sender}
                     </span>
                     <span style={{ color: '#b9adc7' }}>{msg.timestamp}</span>
                   </div>
-                  <p style={{ fontSize: '0.68rem', color: '#cbd5e1', margin: '0', lineHeight: '1.3' }}>{msg.text}</p>
+                  <p style={{ fontSize: '0.934rem', color: '#cbd5e1', margin: '0', lineHeight: '1.3' }}>{msg.text}</p>
                 </div>
               ))}
             </div>
@@ -407,7 +407,7 @@ export const ClassroomDashboard = ({ onExit }) => {
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '8px',
                   padding: '6px 10px',
-                  fontSize: '0.68rem',
+                  fontSize: '0.934rem',
                   color: '#fff',
                   outline: 'none',
                   boxSizing: 'border-box'

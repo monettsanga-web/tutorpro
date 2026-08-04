@@ -99,7 +99,7 @@ h2 {
 }
 
 h3 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 750;
 }
 
@@ -121,7 +121,7 @@ h3 {
   display: inline-block;
   margin-bottom: 15px;
   color: var(--coral-dark);
-  font-size: 0.76rem;
+  font-size: 0.978rem;
   font-weight: 800;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -137,7 +137,7 @@ h3 {
   gap: 9px;
   margin-bottom: 24px;
   color: var(--ink-2);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -168,7 +168,7 @@ h3 {
   max-width: 470px;
   margin: 0 0 5px;
   color: var(--muted);
-  font-size: 1.05rem;
+  font-size: 1.188rem;
 }
 
 .section-heading--center {
@@ -180,7 +180,7 @@ h3 {
 .section-heading--center p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 1.05rem;
+  font-size: 1.188rem;
 }
 
 /* ---------- Buttons & links ---------- */
@@ -246,7 +246,7 @@ h3 {
 .button--small {
   min-height: 42px;
   padding: 0 16px;
-  font-size: 0.89rem;
+  font-size: 1.067rem;
 }
 
 .button--large {
@@ -317,7 +317,7 @@ h3 {
   padding: 0;
   background: transparent;
   color: var(--ink);
-  font-size: 0.88rem;
+  font-size: 1.06rem;
   font-weight: 750;
 }
 
@@ -330,7 +330,7 @@ h3 {
   background: var(--mint);
   color: var(--ink);
   font-family: 'Manrope', sans-serif;
-  font-size: 0.76rem;
+  font-size: 0.978rem;
   font-weight: 800;
 }
 
@@ -362,7 +362,7 @@ h3 {
 
 .account-link--trigger small {
   color: var(--muted);
-  font-size: 0.48rem;
+  font-size: 0.824rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -372,7 +372,7 @@ h3 {
   max-width: 100px;
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.71rem;
+  font-size: 0.951rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -446,7 +446,7 @@ h3 {
   border-radius: 12px;
   background: var(--ink);
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
   font-weight: 850;
 }
 
@@ -460,7 +460,7 @@ h3 {
 .header-account-dropdown__identity strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -468,7 +468,7 @@ h3 {
 .header-account-dropdown__identity small {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.55rem;
+  font-size: 0.863rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -505,12 +505,12 @@ h3 {
 
 .header-account-dropdown > button strong {
   color: var(--ink);
-  font-size: 0.68rem;
+  font-size: 0.934rem;
 }
 
 .header-account-dropdown > button small {
   color: var(--muted);
-  font-size: 0.52rem;
+  font-size: 0.846rem;
 }
 
 .header-account-dropdown > button > svg {
@@ -596,7 +596,7 @@ h3 {
 
 .logo__text {
   color: var(--ink);
-  font-size: 1.27rem;
+  font-size: 1.361rem;
   font-weight: 800;
   letter-spacing: -0.045em;
 }
@@ -610,7 +610,7 @@ h3 {
   margin-top: -2px;
   color: var(--ink-2);
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.48rem;
+  font-size: 0.824rem;
   font-weight: 800;
   letter-spacing: 0.18em;
   line-height: 1;
@@ -642,7 +642,7 @@ h3 {
 .nav > a {
   position: relative;
   color: #52635f;
-  font-size: 0.9rem;
+  font-size: 1.075rem;
   font-weight: 600;
 }
 
@@ -675,7 +675,7 @@ h3 {
 
 .login-link {
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: 1.075rem;
   font-weight: 700;
 }
 
@@ -686,7 +686,7 @@ h3 {
   padding: 0 9px;
   background: transparent;
   color: #4f615d;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
   font-weight: 700;
   white-space: nowrap;
   transition: color 160ms ease, background 160ms ease;
@@ -798,7 +798,7 @@ h3 {
   max-width: 590px;
   margin-bottom: 31px;
   color: #536662;
-  font-size: 1.15rem;
+  font-size: 1.262rem;
   line-height: 1.75;
 }
 
@@ -814,7 +814,7 @@ h3 {
   flex-wrap: wrap;
   gap: 19px;
   color: #53645f;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
   font-weight: 600;
 }
 
@@ -882,7 +882,7 @@ h3 {
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow-sm);
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   line-height: 1.4;
   transform: rotate(-1.2deg);
 }
@@ -894,7 +894,7 @@ h3 {
 
 .class-pill strong {
   color: var(--ink);
-  font-size: 0.84rem;
+  font-size: 1.03rem;
 }
 
 .class-pill__icon {
@@ -946,12 +946,12 @@ h3 {
 .progress-card small,
 .progress-card__foot {
   color: var(--muted);
-  font-size: 0.71rem;
+  font-size: 0.951rem;
 }
 
 .progress-card__top strong {
   color: var(--ink);
-  font-size: 0.85rem;
+  font-size: 1.037rem;
 }
 
 .progress-card__bar {
@@ -997,7 +997,7 @@ h3 {
 .stats__inner > p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1018,13 +1018,13 @@ h3 {
 .stat strong {
   color: var(--ink);
   font-family: 'Manrope', sans-serif;
-  font-size: 1.65rem;
+  font-size: 1.694rem;
   letter-spacing: -0.04em;
 }
 
 .stat span {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
 }
 
 /* ---------- Curriculum carousel ---------- */
@@ -1050,7 +1050,7 @@ h3 {
 .curriculum-showcase__heading > p {
   margin: 0 0 6px;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 1.113rem;
   line-height: 1.7;
 }
 
@@ -1118,7 +1118,7 @@ h3 {
   top: 31px;
   left: 65px;
   color: rgba(255, 255, 255, 0.63);
-  font-size: 0.65rem;
+  font-size: 0.917rem;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
@@ -1133,7 +1133,7 @@ h3 {
   padding: 7px 10px;
   background: rgba(255, 255, 255, 0.13);
   color: #fff;
-  font-size: 0.67rem;
+  font-size: 0.928rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1150,7 +1150,7 @@ h3 {
   max-width: 410px;
   margin-bottom: 27px;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.87rem;
+  font-size: 1.052rem;
   line-height: 1.7;
 }
 
@@ -1167,7 +1167,7 @@ h3 {
   padding: 6px 0;
   background: transparent;
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   font-weight: 800;
 }
 
@@ -1263,11 +1263,11 @@ h3 {
 
 .curriculum-book-cover__book::before { top: -65px; right: -55px; width: 190px; height: 190px; background: var(--cover-accent); opacity: 0.9; }
 .curriculum-book-cover__book::after { top: 75px; left: -38px; width: 125px; height: 125px; border: 22px solid rgba(255,255,255,0.14); }
-.curriculum-book-cover__book > span { position: absolute; z-index: 2; top: 22px; left: 25px; border-radius: 20px; padding: 5px 8px; background: rgba(255,255,255,0.18); font-size: 0.58rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+.curriculum-book-cover__book > span { position: absolute; z-index: 2; top: 22px; left: 25px; border-radius: 20px; padding: 5px 8px; background: rgba(255,255,255,0.18); font-size: 0.879rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
 .curriculum-book-cover__book > i { position: absolute; z-index: 2; top: 65px; right: 30px; display: grid; width: 95px; height: 95px; place-items: center; border: 5px solid rgba(255,255,255,0.82); border-radius: 29px; background: var(--cover-accent); box-shadow: 0 13px 25px rgba(28,27,55,0.22); color: var(--cover); font-family: 'Trebuchet MS', sans-serif; font-size: 2.4rem; font-style: normal; font-weight: 900; transform: rotate(7deg); }
-.curriculum-book-cover__book > strong { position: relative; z-index: 2; margin-bottom: 8px; color: #fff; font-family: 'Trebuchet MS', system-ui, sans-serif; font-size: clamp(1.8rem,3vw,2.75rem); font-weight: 900; letter-spacing: -0.05em; line-height: 0.95; text-shadow: 0 5px 14px rgba(0,0,0,0.18); }
-.curriculum-book-cover__book > small { position: relative; z-index: 2; color: rgba(255,255,255,0.88); font-size: 0.66rem; font-weight: 800; }
-.curriculum-book-cover__book > em { position: relative; z-index: 2; margin-top: 22px; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 8px; color: rgba(255,255,255,0.7); font-size: 0.48rem; font-style: normal; }
+.curriculum-book-cover__book > strong { position: relative; z-index: 2; margin-bottom: 8px; color: #fff; font-family: 'Trebuchet MS', system-ui, sans-serif; font-size: clamp(1.825rem,3vw,2.75rem); font-weight: 900; letter-spacing: -0.05em; line-height: 0.95; text-shadow: 0 5px 14px rgba(0,0,0,0.18); }
+.curriculum-book-cover__book > small { position: relative; z-index: 2; color: rgba(255,255,255,0.88); font-size: 0.923rem; font-weight: 800; }
+.curriculum-book-cover__book > em { position: relative; z-index: 2; margin-top: 22px; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 8px; color: rgba(255,255,255,0.7); font-size: 0.824rem; font-style: normal; }
 
 .curriculum-book-cover__book--back {
   position: absolute;
@@ -1279,7 +1279,7 @@ h3 {
   opacity: 0.75;
   transform: rotateY(-8deg) rotateZ(10deg);
 }
-.curriculum-book-cover__book--back strong { font-size: 1.5rem; }
+.curriculum-book-cover__book--back strong { font-size: 1.562rem; }
 .curriculum-book-cover__book--back > span { display: block; }
 
 .curriculum-cover-shapes i { position: absolute; z-index: 2; border-radius: 50%; background: var(--cover-accent); box-shadow: 0 12px 25px rgba(31,44,70,0.18); }
@@ -1298,7 +1298,7 @@ h3 {
 .curriculum-book-cover--compact .curriculum-cover-photo { width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 5px; object-fit: contain; box-shadow: none; }
 .curriculum-book-cover--compact .curriculum-book-cover__book { width: 30px; min-height: 29px; border: 2px solid rgba(255,255,255,0.8); border-radius: 3px 6px 6px 3px; padding: 0; box-shadow: -3px 3px 0 color-mix(in srgb, var(--cover), black 22%); transform: rotate(-5deg); }
 .curriculum-book-cover--compact .curriculum-book-cover__book > * { display: none; }
-.curriculum-book-cover--compact .curriculum-book-cover__book > i { position: static; display: grid; width: 18px; height: 18px; border: 0; border-radius: 5px; box-shadow: none; color: var(--cover); font-size: 0.55rem; transform: none; }
+.curriculum-book-cover--compact .curriculum-book-cover__book > i { position: static; display: grid; width: 18px; height: 18px; border: 0; border-radius: 5px; box-shadow: none; color: var(--cover); font-size: 0.863rem; transform: none; }
 
 .curriculum-arrow {
   position: absolute;
@@ -1371,7 +1371,7 @@ h3 {
   padding: 6px;
   background: #fff;
   color: #6e657d;
-  font-size: 0.62rem;
+  font-size: 0.901rem;
   font-weight: 750;
   text-align: left;
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
@@ -1447,7 +1447,7 @@ h3 {
   top: 25px;
   right: 28px;
   font-family: 'Manrope', sans-serif;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
   font-weight: 800;
 }
 
@@ -1471,13 +1471,13 @@ h3 {
 
 .benefit h3 {
   margin-bottom: 12px;
-  font-size: 1.28rem;
+  font-size: 1.37rem;
 }
 
 .benefit p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 1.113rem;
   line-height: 1.75;
 }
 
@@ -1508,7 +1508,7 @@ h3 {
   gap: 7px;
   margin-bottom: 10px;
   color: var(--coral-dark);
-  font-size: 0.71rem;
+  font-size: 0.951rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1516,20 +1516,20 @@ h3 {
 
 .lesson-note__copy h3 {
   margin-bottom: 7px;
-  font-size: 1.25rem;
+  font-size: 1.344rem;
 }
 
 .lesson-note__copy p {
   max-width: 500px;
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.87rem;
+  font-size: 1.052rem;
   line-height: 1.65;
 }
 
 .lesson-note > .text-link {
   white-space: nowrap;
-  font-size: 0.85rem;
+  font-size: 1.037rem;
 }
 
 /* ---------- Programmes ---------- */
@@ -1554,7 +1554,7 @@ h3 {
   max-width: 420px;
   margin-bottom: 32px;
   color: #bdd0cb;
-  font-size: 1.03rem;
+  font-size: 1.173rem;
 }
 
 .level-toggle {
@@ -1619,7 +1619,7 @@ h3 {
 
 .programme-card__body > span {
   color: var(--coral-dark);
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1633,7 +1633,7 @@ h3 {
   max-width: 440px;
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 1.06rem;
   line-height: 1.55;
 }
 
@@ -1647,7 +1647,7 @@ h3 {
   gap: 11px;
   padding: 12px 10px 0;
   color: #c2d0cd;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
 }
 
 .programme-note svg {
@@ -1710,20 +1710,20 @@ h3 {
 
 .step__number {
   color: #a3ada8;
-  font-size: 0.79rem;
+  font-size: 0.994rem;
   font-weight: 800;
   letter-spacing: 0.09em;
 }
 
 .step h3 {
   margin-bottom: 10px;
-  font-size: 1.22rem;
+  font-size: 1.318rem;
 }
 
 .step p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 1.09rem;
   line-height: 1.65;
 }
 
@@ -1781,7 +1781,7 @@ h3 {
 }
 
 .public-teachers-empty h3 { margin-bottom: 4px; }
-.public-teachers-empty p { max-width: 560px; margin: 0; color: var(--muted); font-size: 0.86rem; }
+.public-teachers-empty p { max-width: 560px; margin: 0; color: var(--muted); font-size: 1.045rem; }
 
 .public-teacher-card {
   overflow: hidden;
@@ -1820,24 +1820,24 @@ h3 {
   border: 3px solid #fff;
   border-radius: 17px;
   box-shadow: 0 5px 16px rgba(18, 45, 78, 0.15);
-  font-size: 1.2rem;
+  font-size: 1.3rem;
 }
 
 .public-teacher-card__profile .available {
   margin-bottom: 2px;
   color: #36835a;
-  font-size: 0.55rem;
+  font-size: 0.863rem;
 }
 
 .public-teacher-card__profile h3 {
   margin-bottom: 1px;
-  font-size: 1.08rem;
+  font-size: 1.21rem;
 }
 
 .public-teacher-card__profile p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.934rem;
 }
 
 .public-teacher-rating {
@@ -1848,19 +1848,19 @@ h3 {
 }
 
 .public-teacher-rating strong {
-  font-size: 0.76rem;
+  font-size: 0.978rem;
 }
 
 .public-teacher-rating small {
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: 0.879rem;
 }
 
 .public-teacher-card__bio {
   min-height: 67px;
   margin: 18px 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   line-height: 1.65;
 }
 
@@ -1878,7 +1878,7 @@ h3 {
   flex-direction: column;
   padding: 11px 6px;
   color: var(--muted);
-  font-size: 0.55rem;
+  font-size: 0.863rem;
   text-align: center;
 }
 
@@ -1889,7 +1889,7 @@ h3 {
 .public-teacher-facts strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.68rem;
+  font-size: 0.934rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1911,12 +1911,12 @@ h3 {
 }
 
 .selected-teacher strong {
-  font-size: 0.69rem;
+  font-size: 0.94rem;
 }
 
 .selected-teacher small {
   color: #6682a3;
-  font-size: 0.57rem;
+  font-size: 0.873rem;
 }
 
 /* ---------- Pricing ---------- */
@@ -1957,7 +1957,7 @@ h3 {
   border-radius: 0 0 9px 9px;
   background: var(--gold);
   color: var(--ink);
-  font-size: 0.7rem;
+  font-size: 0.945rem;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1987,13 +1987,13 @@ h3 {
 
 .price-card__head h3 {
   margin-bottom: 2px;
-  font-size: 1.25rem;
+  font-size: 1.344rem;
 }
 
 .price-card__head p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.79rem;
+  font-size: 0.994rem;
 }
 
 .price-options {
@@ -2026,13 +2026,13 @@ h3 {
 .price-options span,
 .package-price span {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.978rem;
 }
 
 .price-card__cadence {
   margin: 8px 0 25px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
 }
 
 .price-card ul {
@@ -2050,7 +2050,7 @@ h3 {
   align-items: center;
   gap: 9px;
   color: #50635e;
-  font-size: 0.86rem;
+  font-size: 1.045rem;
 }
 
 .price-card li svg {
@@ -2070,7 +2070,7 @@ h3 {
   gap: 7px;
   margin: 24px 0 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
 }
 
 /* ---------- FAQ ---------- */
@@ -2116,7 +2116,7 @@ h3 {
   color: var(--ink);
   text-align: left;
   font-family: 'Manrope', sans-serif;
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
 }
 
@@ -2148,7 +2148,7 @@ h3 {
   max-width: 680px;
   margin: -3px 40px 0 0;
   color: var(--muted);
-  font-size: 0.93rem;
+  font-size: 1.098rem;
   line-height: 1.75;
 }
 
@@ -2230,12 +2230,12 @@ h3 {
 .footer__brand > p {
   max-width: 360px;
   margin: 24px 0 13px;
-  font-size: 0.94rem;
+  font-size: 1.105rem;
 }
 
 .footer__brand > span {
   color: #efc67a;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2257,7 +2257,7 @@ h3 {
   margin-bottom: 7px;
   color: #fff;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -2269,7 +2269,7 @@ h3 {
   background: transparent;
   color: inherit;
   text-align: left;
-  font-size: 0.86rem;
+  font-size: 1.045rem;
   transition: color 160ms ease;
 }
 
@@ -2284,7 +2284,7 @@ h3 {
   padding-top: 23px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   color: #849b96;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
 }
 
 /* ---------- Runtime recovery ---------- */
@@ -2319,7 +2319,7 @@ h3 {
 
 .fatal-error__card small {
   color: var(--coral-dark);
-  font-size: 0.6rem;
+  font-size: 0.89rem;
   font-weight: 850;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2332,7 +2332,7 @@ h3 {
 
 .fatal-error__card p {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 
 .fatal-error__card > div {
@@ -2382,7 +2382,7 @@ h3 {
 
 .language-control > span {
   color: #dff7a6;
-  font-size: 0.55rem;
+  font-size: 0.863rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -2398,7 +2398,7 @@ h3 {
   padding: 0 7px;
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.934rem;
   font-weight: 750;
   cursor: pointer;
 }
@@ -2590,7 +2590,7 @@ body {
 
 .auth-story__brand strong {
   font-family: 'Manrope', sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.344rem;
   letter-spacing: -0.04em;
 }
 
@@ -2614,7 +2614,7 @@ body {
 .auth-story__content > p {
   max-width: 360px;
   color: #bcd0cb;
-  font-size: 0.94rem;
+  font-size: 1.105rem;
   line-height: 1.7;
 }
 
@@ -2625,7 +2625,7 @@ body {
   padding: 0;
   list-style: none;
   color: #edf5f3;
-  font-size: 0.83rem;
+  font-size: 1.022rem;
 }
 
 .auth-story__content li {
@@ -2662,7 +2662,7 @@ body {
 
 .auth-story__quote p {
   margin-bottom: 0;
-  font-size: 0.77rem;
+  font-size: 0.984rem;
   font-style: italic;
   line-height: 1.6;
 }
@@ -2727,7 +2727,7 @@ body {
   display: block;
   margin-bottom: 3px;
   color: var(--coral-dark);
-  font-size: 0.68rem;
+  font-size: 0.934rem;
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -2735,13 +2735,13 @@ body {
 
 .auth-heading h2 {
   margin-bottom: 4px;
-  font-size: 1.7rem;
+  font-size: 1.738rem;
 }
 
 .auth-heading p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 1.015rem;
 }
 
 .auth-progress {
@@ -2774,7 +2774,7 @@ body {
 
 .auth-progress--three { grid-template-columns: repeat(3, 1fr); }
 
-.teacher-interview-loading { display: flex; min-height: 480px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #756985; font-size: 0.65rem; }
+.teacher-interview-loading { display: flex; min-height: 480px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #756985; font-size: 0.917rem; }
 .teacher-interview-loading i { width: 48px; height: 48px; border: 4px solid #e4ddee; border-top-color: #7048df; border-radius: 50%; animation: premium-orb-spin 800ms linear infinite; }
 @keyframes premium-orb-spin { to { transform: rotate(360deg); } }
 .teacher-ai-interview { display: flex; min-height: 500px; flex-direction: column; }
@@ -2791,41 +2791,41 @@ body {
 @keyframes teacher-mouth-idle { 0%, 22%, 78%, 100% { opacity: 1; } 23%, 77% { opacity: 0; } }
 @keyframes teacher-mouth-one { 0%, 22%, 52%, 100% { opacity: 0; } 23%, 51% { opacity: 1; } }
 @keyframes teacher-mouth-two { 0%, 51%, 78%, 100% { opacity: 0; } 52%, 77% { opacity: 1; } }
-.teacher-interviewer-portrait figcaption { position: absolute; right: -26px; bottom: -12px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e6dff0; border-radius: 20px; padding: 7px 10px; background: #fff; box-shadow: 0 8px 22px rgba(66,42,105,0.16); color: #59486f; font-size: 0.52rem; font-weight: 900; white-space: nowrap; transform: rotate(2deg); }
+.teacher-interviewer-portrait figcaption { position: absolute; right: -26px; bottom: -12px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e6dff0; border-radius: 20px; padding: 7px 10px; background: #fff; box-shadow: 0 8px 22px rgba(66,42,105,0.16); color: #59486f; font-size: 0.846rem; font-weight: 900; white-space: nowrap; transform: rotate(2deg); }
 .teacher-interviewer-portrait figcaption i,
 .teacher-interviewer-mini i { width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; background: #8bcf36; box-shadow: 0 0 0 2px rgba(139,207,54,0.25); }
 @keyframes interviewer-portrait-pulse { 50% { opacity: 0.45; transform: scale(1.035); } }
 .teacher-ai-avatar { display: grid; width: 78px; height: 78px; margin-bottom: 19px; place-items: center; border: 5px solid #fff; border-radius: 25px; background: linear-gradient(145deg, #7048df, #ff4f87); box-shadow: 0 17px 36px rgba(87,52,154,0.25); color: #fff; transform: rotate(-4deg); }
 .teacher-ai-avatar.complete { background: linear-gradient(145deg, #a8dd4b, #68a82d); }
-.teacher-ai-interview h2 { max-width: 680px; margin: 6px 0 11px; font-size: clamp(1.7rem,3vw,2.4rem); }
+.teacher-ai-interview h2 { max-width: 680px; margin: 6px 0 11px; font-size: clamp(1.738rem,3vw,2.4rem); }
 .teacher-ai-interview--welcome > p,
-.teacher-ai-interview--complete > p { max-width: 690px; color: var(--muted); font-size: 0.72rem; line-height: 1.7; }
+.teacher-ai-interview--complete > p { max-width: 690px; color: var(--muted); font-size: 0.956rem; line-height: 1.7; }
 .teacher-interview-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin: 8px 0 22px; }
-.teacher-interview-features span { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 7px 9px; background: #f0ebfb; color: #624796; font-size: 0.55rem; font-weight: 800; }
-.teacher-interview-back { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border: 0; background: transparent; color: #716782; font-size: 0.58rem; font-weight: 750; }
+.teacher-interview-features span { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 7px 9px; background: #f0ebfb; color: #624796; font-size: 0.863rem; font-weight: 800; }
+.teacher-interview-back { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border: 0; background: transparent; color: #716782; font-size: 0.879rem; font-weight: 750; }
 .teacher-interview-top { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; border-radius: 14px; padding: 10px 12px; background: linear-gradient(120deg, #321568, #5c3499); color: #fff; }
 .teacher-interviewer-mini { position: relative; display: block; width: 46px; height: 46px; border: 3px solid rgba(255,255,255,0.92); border-radius: 14px; background: #ff4f87; box-shadow: 0 6px 16px rgba(20,7,49,0.22); }
 .teacher-interviewer-mini img { display: block; width: 100%; height: 100%; border-radius: 11px; object-fit: cover; object-position: center 20%; }
 .teacher-interviewer-mini i { position: absolute; right: -3px; bottom: -3px; }
 .teacher-interview-top > div { display: flex; flex-direction: column; }
-.teacher-interview-top small { color: #d6c9e8; font-size: 0.48rem; }
-.teacher-interview-top strong { font-size: 0.68rem; }
-.teacher-interview-top em { color: #dff7a6; font-size: 0.57rem; font-style: normal; font-weight: 900; }
+.teacher-interview-top small { color: #d6c9e8; font-size: 0.824rem; }
+.teacher-interview-top strong { font-size: 0.934rem; }
+.teacher-interview-top em { color: #dff7a6; font-size: 0.873rem; font-style: normal; font-weight: 900; }
 .teacher-interview-progress { height: 6px; margin: 12px 0 23px; overflow: hidden; border-radius: 6px; background: #e8e3ef; }
 .teacher-interview-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #bce94e, #ff4f87, #7048df); transition: width 420ms cubic-bezier(0.22,1,0.36,1); }
 .teacher-interview-question { min-height: 130px; padding: 8px 4px; }
-.teacher-interview-question small { color: var(--coral); font-size: 0.55rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
-.teacher-interview-question h2 { margin-top: 7px; font-size: clamp(1.3rem,2.5vw,1.85rem); line-height: 1.25; }
+.teacher-interview-question small { color: var(--coral); font-size: 0.863rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+.teacher-interview-question h2 { margin-top: 7px; font-size: clamp(1.388rem,2.5vw,1.869rem); line-height: 1.25; }
 .teacher-ai-interview form { display: grid; gap: 10px; }
-.teacher-ai-interview form label { display: grid; gap: 6px; color: #3d3150; font-size: 0.62rem; font-weight: 800; }
-.teacher-ai-interview form textarea { width: 100%; min-height: 185px; border: 1px solid #d9d1e5; border-radius: 13px; outline: 0; padding: 13px; background: #fff; color: #302440; font: inherit; font-size: 0.7rem; line-height: 1.65; resize: vertical; }
+.teacher-ai-interview form label { display: grid; gap: 6px; color: #3d3150; font-size: 0.901rem; font-weight: 800; }
+.teacher-ai-interview form textarea { width: 100%; min-height: 185px; border: 1px solid #d9d1e5; border-radius: 13px; outline: 0; padding: 13px; background: #fff; color: #302440; font: inherit; font-size: 0.945rem; line-height: 1.65; resize: vertical; }
 .teacher-ai-interview form textarea:focus { border-color: #7048df; box-shadow: 0 0 0 4px rgba(112,72,223,0.1); }
 .teacher-ai-interview form > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.teacher-ai-interview form > div small { color: #8a7e94; font-size: 0.49rem; }
-.teacher-interview-privacy { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 15px 0 0; color: #877c91; font-size: 0.5rem; }
+.teacher-ai-interview form > div small { color: #8a7e94; font-size: 0.83rem; }
+.teacher-interview-privacy { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 15px 0 0; color: #877c91; font-size: 0.835rem; }
 .teacher-interview-complete-summary { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 4px 9px; margin: 12px 0 20px; border-radius: 14px; padding: 12px 16px; background: #f0ebfa; text-align: left; }
-.teacher-interview-complete-summary strong { color: #7048df; font-size: 1.05rem; }
-.teacher-interview-complete-summary span { align-self: center; color: #776b82; font-size: 0.51rem; }
+.teacher-interview-complete-summary strong { color: #7048df; font-size: 1.188rem; }
+.teacher-interview-complete-summary span { align-self: center; color: #776b82; font-size: 0.841rem; }
 .teacher-ai-interview .auth-error { width: 100%; margin: 10px 0 0; }
 .teacher-interviewer-mini.is-speaking { animation: interviewer-speaking-glow 900ms ease-in-out infinite alternate; }
 @keyframes interviewer-speaking-glow { to { border-color: #dff7a6; box-shadow: 0 0 0 6px rgba(188,233,78,0.15), 0 8px 20px rgba(20,7,49,0.3); } }
@@ -2833,21 +2833,21 @@ body {
 .teacher-live-question__portrait { position: relative; min-height: 148px; overflow: hidden; border-radius: 15px; background: #30205b; }
 .teacher-live-question__portrait img { display: block; width: 100%; height: 100%; min-height: 148px; object-fit: cover; object-position: center 18%; transition: transform 700ms ease; }
 .teacher-live-question.is-speaking .teacher-live-question__portrait img { transform: scale(1.035); }
-.teacher-live-question__portrait > span { position: absolute; right: 7px; bottom: 7px; left: 7px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 14px; padding: 6px; background: rgba(39,21,74,0.88); backdrop-filter: blur(7px); color: #fff; font-size: 0.43rem; font-weight: 850; text-align: center; }
+.teacher-live-question__portrait > span { position: absolute; right: 7px; bottom: 7px; left: 7px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 14px; padding: 6px; background: rgba(39,21,74,0.88); backdrop-filter: blur(7px); color: #fff; font-size: 0.796rem; font-weight: 850; text-align: center; }
 .teacher-live-question__portrait > span i { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #bce94e; box-shadow: 0 0 0 3px rgba(188,233,78,0.18); }
 .teacher-live-question .teacher-interview-question { display: flex; min-height: 148px; flex-direction: column; align-items: flex-start; justify-content: center; padding: 8px 5px; }
-.teacher-live-question .teacher-interview-question h2 { margin: 7px 0 10px; font-size: clamp(1.15rem,2.2vw,1.65rem); }
-.teacher-interview-question > button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d8cfea; border-radius: 18px; padding: 6px 9px; background: #fff; color: #654a90; font-size: 0.52rem; font-weight: 850; }
+.teacher-live-question .teacher-interview-question h2 { margin: 7px 0 10px; font-size: clamp(1.262rem,2.2vw,1.694rem); }
+.teacher-interview-question > button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d8cfea; border-radius: 18px; padding: 6px 9px; background: #fff; color: #654a90; font-size: 0.846rem; font-weight: 850; }
 .teacher-answer-recorder { display: flex; min-height: 188px; flex-direction: column; justify-content: center; gap: 13px; margin-top: 13px; border: 1px solid #e0d8e9; border-radius: 18px; padding: 16px; background: #fff; }
 .teacher-answer-recorder--recording { border-color: #f1aabd; background: linear-gradient(180deg, #fff, #fff7fa); box-shadow: 0 0 0 4px rgba(255,79,135,0.06); }
 .teacher-answer-recorder__intro { display: flex; align-items: center; gap: 11px; }
 .teacher-answer-recorder__intro > span { display: grid; width: 46px; height: 46px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: #efeafa; color: #7048df; }
 .teacher-answer-recorder__intro div { display: flex; flex-direction: column; gap: 2px; }
-.teacher-answer-recorder__intro strong { color: #3e2e52; font-size: 0.68rem; }
-.teacher-answer-recorder__intro p { margin: 0; color: #81758c; font-size: 0.55rem; line-height: 1.5; }
+.teacher-answer-recorder__intro strong { color: #3e2e52; font-size: 0.934rem; }
+.teacher-answer-recorder__intro p { margin: 0; color: #81758c; font-size: 0.863rem; line-height: 1.5; }
 .teacher-recording-status { display: flex; min-height: 152px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #7048df; text-align: center; }
-.teacher-recording-status strong { color: #453456; font-size: 0.78rem; }
-.teacher-recording-status span { color: #83768d; font-size: 0.54rem; }
+.teacher-recording-status strong { color: #453456; font-size: 0.989rem; }
+.teacher-recording-status span { color: #83768d; font-size: 0.857rem; }
 .teacher-speaking-bars { display: flex; height: 27px; align-items: center; gap: 4px; margin-top: 7px; }
 .teacher-speaking-bars i,
 .teacher-recording-wave i { display: block; width: 4px; border-radius: 5px; background: linear-gradient(#bce94e, #7048df); animation: teacher-audio-wave 750ms ease-in-out infinite alternate; }
@@ -2860,31 +2860,31 @@ body {
 .teacher-recording-countdown strong { display: grid; width: 74px; height: 74px; place-items: center; border-radius: 50%; background: linear-gradient(145deg, #7048df, #ff4f87); box-shadow: 0 12px 30px rgba(112,72,223,0.25); color: #fff; font-size: 2rem; animation: teacher-countdown-pop 700ms ease both; }
 @keyframes teacher-countdown-pop { from { opacity: 0.25; transform: scale(0.65); } }
 .teacher-recording-live { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; }
-.teacher-recording-live > span { display: flex; align-items: center; gap: 6px; color: #bd315f; font-size: 0.58rem; font-weight: 900; text-transform: uppercase; }
+.teacher-recording-live > span { display: flex; align-items: center; gap: 6px; color: #bd315f; font-size: 0.879rem; font-weight: 900; text-transform: uppercase; }
 .teacher-recording-live > span i { width: 9px; height: 9px; border-radius: 50%; background: #ef376f; box-shadow: 0 0 0 4px rgba(239,55,111,0.13); animation: teacher-recording-dot 1s ease-in-out infinite; }
 @keyframes teacher-recording-dot { 50% { opacity: 0.35; } }
-.teacher-recording-live strong { color: #392748; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-.teacher-recording-live em { color: #918497; font-size: 0.5rem; font-style: normal; }
+.teacher-recording-live strong { color: #392748; font-size: 1.188rem; font-variant-numeric: tabular-nums; }
+.teacher-recording-live em { color: #918497; font-size: 0.835rem; font-style: normal; }
 .teacher-recording-wave { display: flex; height: 35px; align-items: center; justify-content: center; gap: 5px; overflow: hidden; border-radius: 12px; background: #fff0f5; }
 .teacher-recording-wave i { width: 3px; height: 24px; background: linear-gradient(#ff4f87, #7048df); }
 .teacher-live-transcript { min-height: 60px; border-radius: 11px; padding: 9px 11px; background: #f7f4fb; }
-.teacher-live-transcript small { color: #7e679b; font-size: 0.46rem; font-weight: 900; text-transform: uppercase; }
-.teacher-live-transcript p { margin: 4px 0 0; color: #62546d; font-size: 0.57rem; line-height: 1.5; }
+.teacher-live-transcript small { color: #7e679b; font-size: 0.813rem; font-weight: 900; text-transform: uppercase; }
+.teacher-live-transcript p { margin: 4px 0 0; color: #62546d; font-size: 0.873rem; line-height: 1.5; }
 .teacher-stop-recording { border-color: #c93261 !important; background: #c93261 !important; color: #fff !important; }
 .teacher-answer-review__heading { display: grid; gap: 9px; }
 .teacher-answer-review__heading > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.teacher-answer-review__heading span { display: flex; align-items: center; gap: 5px; color: #578d20; font-size: 0.62rem; font-weight: 900; }
-.teacher-answer-review__heading small { color: #897b92; font-size: 0.49rem; }
+.teacher-answer-review__heading span { display: flex; align-items: center; gap: 5px; color: #578d20; font-size: 0.901rem; font-weight: 900; }
+.teacher-answer-review__heading small { color: #897b92; font-size: 0.83rem; }
 .teacher-answer-review__heading audio { width: 100%; height: 42px; }
-.teacher-transcript-review { display: grid; gap: 6px; color: #443453; font-size: 0.6rem; font-weight: 850; }
-.teacher-transcript-review textarea { width: 100%; min-height: 118px; border: 1px solid #d8d0e2; border-radius: 12px; outline: 0; padding: 11px; color: #34263f; font: inherit; font-size: 0.63rem; line-height: 1.55; resize: vertical; }
+.teacher-transcript-review { display: grid; gap: 6px; color: #443453; font-size: 0.89rem; font-weight: 850; }
+.teacher-transcript-review textarea { width: 100%; min-height: 118px; border: 1px solid #d8d0e2; border-radius: 12px; outline: 0; padding: 11px; color: #34263f; font: inherit; font-size: 0.906rem; line-height: 1.55; resize: vertical; }
 .teacher-transcript-review textarea:focus { border-color: #7048df; box-shadow: 0 0 0 4px rgba(112,72,223,0.09); }
-.teacher-transcript-review small { color: #8c8095; font-size: 0.47rem; font-weight: 600; }
+.teacher-transcript-review small { color: #8c8095; font-size: 0.819rem; font-weight: 600; }
 .teacher-answer-review__actions { display: grid; grid-template-columns: auto 1fr; gap: 9px; }
 .teacher-interview-upload { display: flex; width: 100%; align-items: center; gap: 9px; margin: 0 0 12px; border-radius: 12px; padding: 10px 12px; background: #f0ebfa; color: #7048df; text-align: left; }
 .teacher-interview-upload span { display: flex; flex-direction: column; }
-.teacher-interview-upload strong { color: #493768; font-size: 0.62rem; }
-.teacher-interview-upload small { color: #80738d; font-size: 0.5rem; }
+.teacher-interview-upload strong { color: #493768; font-size: 0.901rem; }
+.teacher-interview-upload small { color: #80738d; font-size: 0.835rem; }
 
 .auth-alert {
   margin-bottom: 17px;
@@ -2893,7 +2893,7 @@ body {
   border-radius: 9px;
   background: #fff0ec;
   color: #9d3e2b;
-  font-size: 0.78rem;
+  font-size: 0.989rem;
 }
 
 .auth-form {
@@ -2911,7 +2911,7 @@ body {
 .provider-picker legend {
   margin-bottom: 7px;
   color: var(--ink);
-  font-size: 0.73rem;
+  font-size: 0.962rem;
   font-weight: 750;
 }
 
@@ -2936,9 +2936,9 @@ body {
 
 .china-email-guide > svg { flex: 0 0 auto; margin-top: 2px; color: #c68112; }
 .china-email-guide > div { display: flex; flex-direction: column; gap: 3px; }
-.china-email-guide strong { color: #5b3510; font-size: 0.69rem; }
-.china-email-guide p { margin: 0; color: #6d4b16; font-size: 0.59rem; line-height: 1.55; }
-.china-email-guide small { color: #8a7252; font-size: 0.48rem; line-height: 1.4; }
+.china-email-guide strong { color: #5b3510; font-size: 0.94rem; }
+.china-email-guide p { margin: 0; color: #6d4b16; font-size: 0.884rem; line-height: 1.55; }
+.china-email-guide small { color: #8a7252; font-size: 0.824rem; line-height: 1.4; }
 
 .provider-method {
   position: relative;
@@ -2977,7 +2977,7 @@ body {
   place-items: center;
   border-radius: 11px;
   background: #f3f4f6;
-  font-size: 1.35rem;
+  font-size: 1.431rem;
   transition: transform 160ms ease, background 160ms ease;
 }
 
@@ -2995,14 +2995,14 @@ body {
   overflow: hidden;
   max-width: 100%;
   color: var(--ink);
-  font-size: 0.58rem;
+  font-size: 0.879rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .provider-method small {
   color: var(--muted);
-  font-size: 0.44rem;
+  font-size: 0.802rem;
   line-height: 1.15;
 }
 
@@ -3020,7 +3020,7 @@ body {
   gap: 5px;
   margin: 7px 0 0;
   color: var(--muted);
-  font-size: 0.52rem;
+  font-size: 0.846rem;
   line-height: 1.45;
 }
 
@@ -3038,7 +3038,7 @@ body {
 .auth-form label > span:first-child,
 .frequency-field legend {
   color: var(--ink);
-  font-size: 0.73rem;
+  font-size: 0.962rem;
   font-weight: 750;
 }
 
@@ -3078,7 +3078,7 @@ body {
   outline: 0;
   background: transparent;
   color: var(--ink);
-  font-size: 0.83rem;
+  font-size: 1.022rem;
 }
 
 .input-wrap input::placeholder {
@@ -3109,7 +3109,7 @@ body {
   background-repeat: no-repeat;
   background-size: 5px 5px, 5px 5px;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 
 .auth-form select:focus {
@@ -3123,7 +3123,7 @@ body {
 
 .field-error {
   color: #b64a35;
-  font-size: 0.67rem;
+  font-size: 0.928rem;
   line-height: 1.25;
 }
 
@@ -3144,7 +3144,7 @@ body {
 
 .check-field span {
   color: var(--muted) !important;
-  font-size: 0.69rem !important;
+  font-size: 0.94rem !important;
   font-weight: 500 !important;
   line-height: 1.5;
 }
@@ -3174,7 +3174,7 @@ body {
   border-radius: 9px;
   background: #fff;
   color: var(--muted);
-  font-size: 0.71rem;
+  font-size: 0.951rem;
   font-weight: 650;
   text-align: center;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
@@ -3206,7 +3206,7 @@ body {
   border-radius: 8px;
   background: #f8ebc9;
   color: #7a5b17;
-  font-size: 0.7rem;
+  font-size: 0.945rem;
   font-weight: 700;
 }
 
@@ -3235,7 +3235,7 @@ body {
 .auth-switch {
   margin: 20px 0 0;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.972rem;
   text-align: center;
 }
 
@@ -3259,7 +3259,7 @@ body {
   gap: 7px;
   margin-top: 18px;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.945rem;
 }
 
 .auth-security svg {
@@ -3275,7 +3275,7 @@ body {
   padding-top: 17px;
   border-top: 1px solid var(--line);
   color: #83908d;
-  font-size: 0.66rem;
+  font-size: 0.923rem;
 }
 
 .auth-result,
@@ -3315,7 +3315,7 @@ body {
   max-width: 450px;
   margin-bottom: 23px;
   color: var(--muted);
-  font-size: 0.89rem;
+  font-size: 1.067rem;
 }
 
 .account-summary {
@@ -3340,21 +3340,21 @@ body {
 
 .account-summary span {
   color: var(--muted);
-  font-size: 0.64rem;
+  font-size: 0.912rem;
   text-transform: uppercase;
 }
 
 .account-summary strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .auth-result__link {
   margin-top: 15px;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
 }
 
 .auth-confetti i {
@@ -3391,21 +3391,21 @@ body {
   background: var(--ink);
   color: #fff;
   font-family: 'Manrope', sans-serif;
-  font-size: 1.55rem;
+  font-size: 1.606rem;
   font-weight: 800;
   transform: rotate(-3deg);
 }
 
 .account-view__top h2 {
   margin-bottom: 1px;
-  font-size: 1.8rem;
+  font-size: 1.825rem;
 }
 
 .account-view__top p,
 .account-view__student p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
 }
 
 .account-view__student {
@@ -3421,7 +3421,7 @@ body {
 .account-view__student strong {
   display: block;
   color: var(--ink);
-  font-size: 1rem;
+  font-size: 1.15rem;
 }
 
 .account-details {
@@ -3439,13 +3439,13 @@ body {
 
 .account-details dt {
   color: var(--muted);
-  font-size: 0.73rem;
+  font-size: 0.962rem;
 }
 
 .account-details dd {
   margin: 0;
   color: var(--ink);
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   font-weight: 700;
 }
 
@@ -3456,7 +3456,7 @@ body {
   gap: 6px;
   margin-top: 17px;
   color: #8d4a3c;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
   text-decoration: none;
 }
 
@@ -3542,7 +3542,7 @@ body {
   }
 
   .auth-heading h2 {
-    font-size: 1.4rem;
+    font-size: 1.475rem;
   }
 
   .auth-form__row {
@@ -3570,15 +3570,15 @@ body {
   .teacher-ai-interview--complete { padding-right: 0; padding-left: 0; }
   .teacher-interviewer-portrait { width: 118px; height: 144px; margin-bottom: 21px; border-radius: 29px; }
   .teacher-interviewer-portrait img { border-radius: 23px; }
-  .teacher-interviewer-portrait figcaption { right: -18px; padding: 6px 8px; font-size: 0.48rem; }
+  .teacher-interviewer-portrait figcaption { right: -18px; padding: 6px 8px; font-size: 0.824rem; }
   .teacher-interview-top { padding: 9px; }
   .teacher-interviewer-mini { width: 42px; height: 42px; }
   .teacher-live-question { grid-template-columns: 86px 1fr; gap: 10px; padding: 9px; }
   .teacher-live-question__portrait,
   .teacher-live-question__portrait img { min-height: 124px; }
   .teacher-live-question .teacher-interview-question { min-height: 124px; }
-  .teacher-live-question .teacher-interview-question h2 { font-size: 1rem; }
-  .teacher-live-question__portrait > span { right: 4px; bottom: 4px; left: 4px; padding: 5px 3px; font-size: 0.36rem; }
+  .teacher-live-question .teacher-interview-question h2 { font-size: 1.15rem; }
+  .teacher-live-question__portrait > span { right: 4px; bottom: 4px; left: 4px; padding: 5px 3px; font-size: 0.78rem; }
   .teacher-answer-recorder { min-height: 176px; padding: 13px; }
   .teacher-recording-live { grid-template-columns: 1fr auto; }
   .teacher-recording-live em { display: none; }
@@ -3596,7 +3596,7 @@ body {
   }
 
   .auth-result h2 {
-    font-size: 1.75rem;
+    font-size: 1.781rem;
   }
 
   .account-summary {
@@ -3630,7 +3630,7 @@ body {
   .header-portal-link {
     padding-right: 6px;
     padding-left: 6px;
-    font-size: 0.7rem;
+    font-size: 0.945rem;
   }
 
   .header-actions .login-link {
@@ -3701,7 +3701,7 @@ body {
     border-bottom: 1px solid var(--line);
     color: var(--ink);
     font-family: 'Manrope', sans-serif;
-    font-size: 1.05rem;
+    font-size: 1.188rem;
   }
 
   .nav > a::after {
@@ -3922,11 +3922,11 @@ body {
 
   .curriculum-book-cover { min-height: 275px; }
   .curriculum-book-cover__book { width: 165px; min-height: 220px; border-width: 4px; padding: 20px 16px; }
-  .curriculum-book-cover__book > span { top: 13px; left: 14px; font-size: 0.43rem; }
-  .curriculum-book-cover__book > i { top: 45px; right: 17px; width: 56px; height: 56px; border-width: 3px; border-radius: 17px; font-size: 1.25rem; }
-  .curriculum-book-cover__book > strong { font-size: 1.45rem; }
-  .curriculum-book-cover__book > small { font-size: 0.49rem; }
-  .curriculum-book-cover__book > em { margin-top: 10px; font-size: 0.38rem; }
+  .curriculum-book-cover__book > span { top: 13px; left: 14px; font-size: 0.796rem; }
+  .curriculum-book-cover__book > i { top: 45px; right: 17px; width: 56px; height: 56px; border-width: 3px; border-radius: 17px; font-size: 1.344rem; }
+  .curriculum-book-cover__book > strong { font-size: 1.519rem; }
+  .curriculum-book-cover__book > small { font-size: 0.83rem; }
+  .curriculum-book-cover__book > em { margin-top: 10px; font-size: 0.78rem; }
   .curriculum-book-cover__book--back { right: 5%; width: 135px; min-height: 175px; }
 
   .curriculum-arrow {
@@ -3972,7 +3972,7 @@ body {
 
   .eyebrow {
     margin-bottom: 17px;
-    font-size: 0.69rem;
+    font-size: 0.94rem;
   }
 
   .hero h1 {
@@ -3986,7 +3986,7 @@ body {
   }
 
   .hero__lede {
-    font-size: 1rem;
+    font-size: 1.15rem;
     line-height: 1.7;
   }
 
@@ -4088,7 +4088,7 @@ body {
   }
 
   .programme-card p {
-    font-size: 0.82rem;
+    font-size: 1.015rem;
   }
 
   .level-toggle {
@@ -4121,12 +4121,12 @@ body {
 
   .price-options strong,
   .package-price strong {
-    font-size: 1.75rem;
+    font-size: 1.781rem;
   }
 
   .faq-item > button {
     min-height: 72px;
-    font-size: 0.92rem;
+    font-size: 1.09rem;
   }
 
   .final-cta {
@@ -4219,7 +4219,7 @@ body {
   padding: 8px 11px;
   background: #35c76f;
   color: #102c1c;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
   font-weight: 800;
 }
 
@@ -4271,7 +4271,7 @@ body {
 .global-discovery__content p {
   max-width: 720px;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 1rem;
+  font-size: 1.15rem;
   line-height: 1.65;
 }
 
@@ -4312,7 +4312,7 @@ body {
   color: #bce94e;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   font-weight: 950;
 }
 
@@ -4321,7 +4321,7 @@ body {
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.13);
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 1.075rem;
   font-weight: 900;
 }
 
@@ -4368,13 +4368,13 @@ body {
 
 .messenger-float strong {
   color: #fff;
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   font-weight: 950;
 }
 
 .messenger-float small {
   color: rgba(255, 255, 255, 0.82);
-  font-size: 0.68rem;
+  font-size: 0.934rem;
   font-weight: 800;
 }
 
@@ -4430,7 +4430,7 @@ body {
 }
 
 .public-teacher-card__profile h3 {
-  font-size: 1.65rem !important;
+  font-size: 1.694rem !important;
   letter-spacing: -0.045em !important;
 }
 
@@ -4470,13 +4470,13 @@ body {
 
 .public-teacher-reviews > div:first-child strong {
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
   font-weight: 950;
 }
 
 .public-teacher-reviews > div:first-child span {
   color: #bce94e;
-  font-size: 0.68rem;
+  font-size: 0.934rem;
   font-weight: 850;
   text-align: right;
 }
@@ -4491,20 +4491,20 @@ body {
 
 .public-teacher-reviews blockquote span {
   color: #ffc107;
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   letter-spacing: 0.04em;
 }
 
 .public-teacher-reviews blockquote p {
   margin: 4px 0;
   color: #f8fafc;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
   line-height: 1.45;
 }
 
 .public-teacher-reviews blockquote small {
   color: #b9adc7;
-  font-size: 0.64rem;
+  font-size: 0.912rem;
   font-weight: 800;
 }
 
@@ -4549,7 +4549,7 @@ body {
   padding: 7px 11px;
   background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   font-weight: 950;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -4611,7 +4611,7 @@ body {
 
 .public-teacher-card__profile h3 {
   color: #111827 !important;
-  font-size: 1.55rem !important;
+  font-size: 1.606rem !important;
   letter-spacing: -0.045em !important;
   margin-bottom: 4px !important;
 }
@@ -4655,7 +4655,7 @@ body {
 
 .public-teacher-card.novakid-style-card > div:nth-of-type(4) p {
   color: #334155 !important;
-  font-size: 0.82rem !important;
+  font-size: 1.015rem !important;
 }
 
 .public-teacher-card.novakid-style-card > div:nth-of-type(4) span {
@@ -4665,7 +4665,7 @@ body {
 .public-teacher-card__bio {
   min-height: 50px !important;
   color: #475569 !important;
-  font-size: 0.84rem !important;
+  font-size: 1.03rem !important;
   line-height: 1.55 !important;
 }
 
@@ -4821,14 +4821,14 @@ body {
 .teacher-dashboard-profile-card__name-row h3 {
   margin: 0;
   color: #111827;
-  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-size: clamp(1.431rem, 2.4vw, 1.869rem);
   letter-spacing: -0.055em;
 }
 
 .teacher-dashboard-profile-card__name-block p {
   margin: 5px 0 8px;
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 1.075rem;
 }
 
 .teacher-dashboard-profile-card__top-badge {
@@ -4837,7 +4837,7 @@ body {
   padding: 5px 9px;
   background: #eef2ff;
   color: #4f46e5;
-  font-size: 0.7rem;
+  font-size: 0.945rem;
   font-weight: 950;
 }
 
@@ -4848,7 +4848,7 @@ body {
   border-radius: 14px;
   background: #fff;
   color: #64748b;
-  font-size: 1.25rem;
+  font-size: 1.344rem;
 }
 
 .teacher-dashboard-profile-card__stats {
@@ -4868,14 +4868,14 @@ body {
 .teacher-dashboard-profile-card__stats strong {
   display: block;
   color: #111827;
-  font-size: 0.9rem;
+  font-size: 1.075rem;
 }
 
 .teacher-dashboard-profile-card__stats span {
   display: block;
   margin-top: 2px;
   color: #64748b;
-  font-size: 0.7rem;
+  font-size: 0.945rem;
   font-weight: 750;
 }
 
@@ -4900,7 +4900,7 @@ body {
   padding: 9px 14px;
   background: #fff;
   color: #64748b;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
   font-weight: 900;
 }
 
@@ -4935,8 +4935,8 @@ body {
 }
 
 .teacher-dashboard-profile-card__schedule-preview div:first-child { border-left: 0; }
-.teacher-dashboard-profile-card__schedule-preview span { color: #7c3aed; font-size: 0.68rem; font-weight: 950; }
-.teacher-dashboard-profile-card__schedule-preview strong { color: #111827; font-size: 1.1rem; }
+.teacher-dashboard-profile-card__schedule-preview span { color: #7c3aed; font-size: 0.934rem; font-weight: 950; }
+.teacher-dashboard-profile-card__schedule-preview strong { color: #111827; font-size: 1.225rem; }
 .teacher-dashboard-profile-card__schedule-preview small { line-height: 1.45; }
 
 .teacher-dashboard-profile-card__cta {
@@ -4982,7 +4982,7 @@ body {
 
 .teacher-dashboard-profile-card__review-head span {
   color: #7c3aed;
-  font-size: 0.78rem;
+  font-size: 0.989rem;
   font-weight: 900;
 }
 
@@ -5005,13 +5005,13 @@ body {
 
 .teacher-dashboard-profile-card__score small {
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
 }
 
 .teacher-dashboard-profile-card__bar {
   margin-top: 10px;
   color: #64748b;
-  font-size: 0.75rem;
+  font-size: 0.972rem;
 }
 
 .teacher-dashboard-profile-card__bar i {
@@ -5124,7 +5124,7 @@ body {
 .teacher-dashboard-profile-card__empty-panel strong {
   display: block;
   color: #111827;
-  font-size: .92rem;
+  font-size: 1.09rem;
 }
 
 .teacher-dashboard-profile-card__course-panel span,
@@ -5133,7 +5133,7 @@ body {
   display: block;
   margin-top: 4px;
   color: #64748b;
-  font-size: .76rem;
+  font-size: 0.978rem;
   line-height: 1.4;
 }
 
@@ -5174,7 +5174,7 @@ body {
   padding: 6px 9px;
   background: rgba(188, 233, 78, 0.16);
   color: #bce94e;
-  font-size: 0.68rem;
+  font-size: 0.934rem;
   font-weight: 950;
   text-decoration: none;
   white-space: nowrap;
@@ -5221,15 +5221,15 @@ body {
   background: rgba(188, 233, 78, .16);
 }
 
-.pwa-install-card strong { font-size: .86rem; }
-.pwa-install-card small { color: #c9bddb; font-size: .7rem; }
+.pwa-install-card strong { font-size: 1.045rem; }
+.pwa-install-card small { color: #c9bddb; font-size: 0.945rem; }
 .pwa-install-card button {
   border: 0;
   border-radius: 999px;
   padding: 9px 12px;
   background: #bce94e;
   color: #160b2d;
-  font-size: .74rem;
+  font-size: 0.967rem;
   font-weight: 950;
   white-space: nowrap;
 }
@@ -5240,7 +5240,7 @@ body {
   padding: 0 !important;
   background: rgba(255,255,255,.1) !important;
   color: #fff !important;
-  font-size: 1.2rem !important;
+  font-size: 1.3rem !important;
 }
 
 @media (max-width: 560px) {
@@ -5288,7 +5288,7 @@ body {
     background: rgba(255,255,255,.09);
     color: #fff;
     font-weight: 950;
-    font-size: .9rem;
+    font-size: 1.075rem;
   }
 
   .mobile-guest-action-bar button.primary {
@@ -5341,14 +5341,14 @@ body {
 .china-mobile-student-prompt strong {
   display: block;
   color: #bce94e;
-  font-size: 0.88rem;
+  font-size: 1.06rem;
 }
 
 .china-mobile-student-prompt small {
   display: block;
   margin-top: 2px;
   color: #d8cceb;
-  font-size: 0.72rem;
+  font-size: 0.956rem;
   line-height: 1.35;
 }
 
@@ -5369,7 +5369,7 @@ body {
 .china-mobile-student-prompt button {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
 }
 
 /* Strong mobile registration/login scrolling fix */
@@ -5429,7 +5429,7 @@ body {
   .auth-form .button,
   .auth-submit {
     min-height: 50px !important;
-    font-size: 0.95rem !important;
+    font-size: 1.113rem !important;
   }
 
   .provider-picker > div,
@@ -5453,21 +5453,21 @@ body {
 .teacher-profile-detail-back { display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(188,233,78,.25); border-radius:999px; padding:9px 14px; background:rgba(188,233,78,.08); color:#bce94e; font-weight:950; margin-bottom:22px; }
 .public-teacher-profile-detail { overflow:hidden; border-radius:34px; background:#f8fafc; box-shadow:0 34px 100px rgba(0,0,0,.38); }
 .public-teacher-profile-detail__cover { min-height:220px; display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:26px; background: radial-gradient(circle at 16% 12%, rgba(188,233,78,.3), transparent 28%), linear-gradient(135deg,#3b0764 0%,#7048df 50%,#0ea5e9 100%); color:#fff; }
-.public-teacher-profile-detail__cover span { border-radius:999px; padding:8px 12px; background:rgba(255,255,255,.18); font-weight:950; text-transform:uppercase; font-size:.72rem; letter-spacing:.07em; }
+.public-teacher-profile-detail__cover span { border-radius:999px; padding:8px 12px; background:rgba(255,255,255,.18); font-weight:950; text-transform:uppercase; font-size:0.956rem; letter-spacing:.07em; }
 .public-teacher-profile-detail__identity { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:20px; align-items:end; padding:0 30px 24px; margin-top:-68px; }
 .public-teacher-profile-detail__photo { width:150px!important; height:150px!important; border:7px solid #fff!important; box-shadow:0 20px 45px rgba(15,23,42,.18); }
 .public-teacher-profile-detail__name { display:flex; gap:9px; align-items:center; }
 .public-teacher-profile-detail__name h1 { margin:0; color:#111827; font-size:clamp(2rem,4vw,3.3rem); letter-spacing:-.07em; line-height:.95; }
 .public-teacher-profile-detail__identity p { margin:8px 0 12px; color:#64748b; }
 .public-teacher-profile-detail__badges { display:flex; flex-wrap:wrap; gap:8px; }
-.public-teacher-profile-detail__badges span { border-radius:999px; padding:7px 10px; background:#ede9fe; color:#5b21b6; font-size:.75rem; font-weight:900; }
+.public-teacher-profile-detail__badges span { border-radius:999px; padding:7px 10px; background:#ede9fe; color:#5b21b6; font-size:0.972rem; font-weight:900; }
 .public-teacher-profile-detail__rating { display:grid; justify-items:center; border-radius:22px; padding:16px; background:#fff; border:1px solid #e2e8f0; min-width:120px; }
 .public-teacher-profile-detail__rating strong { color:#111827; font-size:2rem; line-height:1; }
 .public-teacher-profile-detail__rating small { color:#64748b; }
 .public-teacher-profile-detail__grid { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr); gap:20px; padding:0 30px 30px; }
 .public-teacher-profile-detail__grid main, .public-teacher-profile-detail__grid aside { display:grid; gap:18px; align-content:start; }
 .public-teacher-profile-panel { border:1px solid #e2e8f0; border-radius:26px; padding:22px; background:#fff; box-shadow:0 16px 38px rgba(15,23,42,.06); }
-.public-teacher-profile-panel h2 { margin:8px 0 12px; color:#111827; font-size:1.5rem; letter-spacing:-.04em; }
+.public-teacher-profile-panel h2 { margin:8px 0 12px; color:#111827; font-size:1.562rem; letter-spacing:-.04em; }
 .public-teacher-profile-detail__bio, .public-teacher-profile-panel p { color:#475569; line-height:1.75; }
 .public-teacher-profile-panel__tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
 .public-teacher-profile-panel__tabs button { border:1px solid #e2e8f0; border-radius:999px; padding:10px 14px; background:#fff; color:#64748b; font-weight:950; }
@@ -5476,7 +5476,7 @@ body {
 .public-teacher-profile-schedule { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
 .public-teacher-profile-schedule div, .public-teacher-profile-resume div { border:1px solid #e2e8f0; border-radius:16px; padding:13px; background:#f8fafc; }
 .public-teacher-profile-schedule strong, .public-teacher-profile-resume strong { display:block; color:#111827; }
-.public-teacher-profile-schedule span, .public-teacher-profile-resume span { display:block; margin-top:5px; color:#64748b; font-size:.82rem; }
+.public-teacher-profile-schedule span, .public-teacher-profile-resume span { display:block; margin-top:5px; color:#64748b; font-size:1.015rem; }
 .public-teacher-profile-resume { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .public-teacher-profile-resume .kicker, .public-teacher-profile-resume h2 { grid-column:1/-1; }
 .public-teacher-profile-review-box > div:first-child { display:flex; justify-content:space-between; gap:12px; align-items:center; }
@@ -5523,7 +5523,7 @@ body {
 .footer__trustpilot { margin-top: 14px; max-width: 280px; }
 .trustpilot-widget a {
   color: inherit;
-  font-size: 0.82rem;
+  font-size: 1.015rem;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -5554,13 +5554,13 @@ body {
 .parent-review blockquote {
   margin: 0;
   color: #241042;
-  font-size: 1.02rem;
+  font-size: 1.165rem;
   font-style: normal;
   line-height: 1.6;
 }
 .parent-review blockquote::before { content: '\\201C'; }
 .parent-review blockquote::after { content: '\\201D'; }
 .parent-review figcaption { display: grid; gap: 2px; }
-.parent-review figcaption strong { color: #321568; font-size: 0.92rem; font-weight: 800; }
-.parent-review figcaption small { color: #7b8794; font-size: 0.76rem; font-weight: 600; }
+.parent-review figcaption strong { color: #321568; font-size: 1.09rem; font-weight: 800; }
+.parent-review figcaption small { color: #7b8794; font-size: 0.978rem; font-weight: 600; }
 

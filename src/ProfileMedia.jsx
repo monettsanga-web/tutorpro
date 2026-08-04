@@ -110,7 +110,7 @@ export function SampleClassPlayer({ url, className = '' }) {
       <div className={`profile-video-placeholder ${className}`} style={{ height: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.15)', color: '#b9adc7', gap: '8px' }}>
         <span><Play size={24} style={{ opacity: 0.5 }} /></span>
         <strong>Video Coming Soon!</strong>
-        <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>A video recording is being prepared.</span>
+        <span style={{ fontSize: '0.945rem', opacity: 0.7 }}>A video recording is being prepared.</span>
       </div>
     )
   }
