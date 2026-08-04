@@ -301,7 +301,11 @@
 }
 
 .portal-content {
-  width: min(1320px, 100%);
+  /* Full screen width on every tab. Previously capped at 1320px, which left
+     large empty margins on wide monitors while tables and calendars were
+     cramped. The readable-line-length limit now lives on the few text-heavy
+     blocks that actually need it, rather than on every page. */
+  width: 100%;
   margin: 0 auto;
   padding: 34px;
 }
@@ -9149,12 +9153,11 @@ a.feedback-resource-detail:hover strong {
    Desktop calendar: use the full screen width/height and larger student names
    ========================================================================== */
 @media (min-width: 901px) {
-  /* Let any page holding a schedule calendar break out of the 1320px column */
+  /* .portal-content is full width for every tab now; calendars just want
+     slightly tighter padding to maximise the visible grid. */
   .portal-content:has(.booking-calendar-card),
   .portal-content:has(.availability-calendar-card),
   .portal-content:has(.student-schedule-card) {
-    width: 100%;
-    max-width: none;
     padding: 22px 22px 40px;
   }
 
@@ -9261,8 +9264,6 @@ a.feedback-resource-detail:hover strong {
 /* JS-applied fallback for browsers without :has() support */
 @media (min-width: 901px) {
   .portal-content.portal-content--wide-calendar {
-    width: 100%;
-    max-width: none;
     padding: 22px 22px 40px;
   }
 }
@@ -10076,4 +10077,13 @@ a.feedback-resource-detail:hover strong {
 @media (max-width: 640px) {
   .linkbuilder-qr { flex-direction: column; align-items: flex-start; }
   .linkbuilder-result__actions > * { flex: 1; justify-content: center; }
+}
+
+/* Full-width tabs: keep intro paragraphs readable.
+   Tables, calendars and card grids should use the whole monitor, but a line of
+   prose stretched across an ultra-wide screen is hard to read, so the few
+   text-only blocks keep a sensible measure. */
+.portal-page-heading > div > p,
+.admin-welcome > div > p {
+  max-width: 76ch;
 }
