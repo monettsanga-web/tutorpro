@@ -106,6 +106,12 @@ const REVIEWS = [
     source: 'Facebook recommendation',
     date: '2021-08-06',
   },
+  {
+    quote: 'My 6Yr old loves the classes as the teacher tought Reading, writing & Memorising. I as a parent, Love the method of their teaching.',
+    name: 'Sharmila Maniam',
+    source: 'Facebook recommendation',
+    date: '2021-08-09',
+  },
 ]
 
 /* Mirrored from the `faqs` array in src/App.jsx. */
