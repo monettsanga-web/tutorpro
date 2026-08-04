@@ -5531,3 +5531,35 @@ body {
 @media (max-width: 760px) {
   .hero__trustpilot { max-width: 100%; }
 }
+
+/* Real parent testimonials section */
+.parent-reviews__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.parent-review {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  border: 1px solid rgba(50, 21, 104, 0.1);
+  border-radius: 22px;
+  padding: 26px 28px;
+  background: linear-gradient(135deg, #fff 0%, #faf8ff 60%, #f5fbf2 100%);
+  box-shadow: 0 14px 40px rgba(50, 21, 104, 0.07);
+}
+.parent-review__stars { display: flex; gap: 3px; color: #f5b301; }
+.parent-review blockquote {
+  margin: 0;
+  color: #241042;
+  font-size: 1.02rem;
+  font-style: normal;
+  line-height: 1.6;
+}
+.parent-review blockquote::before { content: '\\201C'; }
+.parent-review blockquote::after { content: '\\201D'; }
+.parent-review figcaption { display: grid; gap: 2px; }
+.parent-review figcaption strong { color: #321568; font-size: 0.92rem; font-weight: 800; }
+.parent-review figcaption small { color: #7b8794; font-size: 0.76rem; font-weight: 600; }

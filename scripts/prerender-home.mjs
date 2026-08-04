@@ -82,6 +82,20 @@ const SECTIONS = [
   },
 ]
 
+
+/**
+ * Real parent testimonials, mirrored verbatim from `parentReviews` in src/App.jsx.
+ * Keep both in sync. Never add a quote that a parent has not actually written.
+ */
+const REVIEWS = [
+  {
+    quote: 'Great Teachers, admins and customer service. My Son is a naughty one and hard to teach but he can now identify and read words. I\u2019ve enrolled him again.',
+    name: 'James King',
+    source: 'Facebook recommendation',
+    date: '2021-12-09',
+  },
+]
+
 /* Mirrored from the `faqs` array in src/App.jsx. */
 const FAQS = [
   {
@@ -170,6 +184,14 @@ function buildStaticHtml() {
         <p><a href="/?action=book">Book a free first class</a> · <a href="#programmes">Explore programmes</a></p>
       </header>
 ${sections}
+      <section>
+        <h2>What families say.</h2>
+${REVIEWS.map((r) => `
+        <blockquote>
+          <p>&ldquo;${escapeHtml(r.quote)}&rdquo;</p>
+          <footer>${escapeHtml(r.name)} — ${escapeHtml(r.source)}, ${new Date(r.date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}</footer>
+        </blockquote>`).join('')}
+      </section>
       <section>
         <h2>Questions, answered.</h2>
 ${faqItems}

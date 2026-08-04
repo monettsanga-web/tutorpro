@@ -783,6 +783,51 @@ function HowItWorks({ onBook }) {
   )
 }
 
+/**
+ * Real parent testimonials.
+ *
+ * Every quote here is verbatim from a real parent review. Do not add, edit or
+ * invent entries: fabricated testimonials breach Google and Trustpilot policy
+ * and mislead families. Source and date are kept for provenance.
+ */
+const parentReviews = [
+  {
+    quote: 'Great Teachers, admins and customer service. My Son is a naughty one and hard to teach but he can now identify and read words. I\u2019ve enrolled him again.',
+    name: 'James King',
+    source: 'Facebook recommendation',
+    date: '2021-12-09',
+  },
+]
+
+function ParentReviews() {
+  if (!parentReviews.length) return null
+  return (
+    <section className="section parent-reviews" id="reviews">
+      <div className="container">
+        <div className="section-heading section-heading--center">
+          <span className="kicker">Parent reviews</span>
+          <h2>What families say.</h2>
+          <p>Real reviews from parents whose children learn with TutorPro Online English.</p>
+        </div>
+        <div className="parent-reviews__grid">
+          {parentReviews.map((review) => (
+            <figure className="parent-review" key={review.name + review.date}>
+              <div className="parent-review__stars" aria-label="5 out of 5">
+                {[0, 1, 2, 3, 4].map((i) => <Star key={i} size={16} fill="currentColor" />)}
+              </div>
+              <blockquote>{review.quote}</blockquote>
+              <figcaption>
+                <strong>{review.name}</strong>
+                <small>{review.source} · {new Date(review.date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}</small>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
   const [activeMedia, setActiveMedia] = useState('schedule')
   const profile = teacher.teacher || {}
@@ -1591,6 +1636,7 @@ export default function App() {
           <Programmes />
           <CurriculumFramework />
           <HowItWorks onBook={openRegistration} />
+          <ParentReviews />
           <Pricing onBook={openRegistration} />
           <FAQ onBook={openRegistration} />
           <FinalCTA onBook={openRegistration} />
