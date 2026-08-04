@@ -421,6 +421,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [lowBandwidthMode, setLowBandwidthMode] = useState(false)
   const [reconnectKey, setReconnectKey] = useState(0)
   const [participantCount, setParticipantCount] = useState(1)
+  const [iceDetail, setIceDetail] = useState('')
   const [annotationMode, setAnnotationMode] = useState(false)
   const [annotationTool, setAnnotationTool] = useState('pen')
   const [stickyColor, setStickyColor] = useState('#ffe27a')
@@ -662,6 +663,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       // switching). Without it the connection sat in 'failed' forever and the
       // only way out was for someone to leave and rejoin.
       peer.oniceconnectionstatechange = () => {
+        setIceDetail(peer.iceConnectionState)
         if (peer.iceConnectionState !== 'failed') return
         try {
           if (typeof peer.restartIce === 'function') peer.restartIce()
@@ -704,11 +706,19 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
     const sendTeacherOffer = async (forceRestart = false) => {
       let peer = ensurePeer()
+      // A handshake that never completes leaves the peer in 'connecting' with a
+      // non-stable signalingState. The old guard then returned early on every
+      // retry, so the call sat on "re-establishing the video link" forever.
+      // Treat an offer that has been outstanding too long as stale and rebuild.
       const offerIsStale = offerStartedAtRef.current && Date.now() - offerStartedAtRef.current > 7000
-      if (forceRestart || peer.connectionState === 'failed' || peer.connectionState === 'closed' || (peer.signalingState !== 'stable' && offerIsStale)) {
+      const stuckConnecting = peer.connectionState === 'connecting' && offerIsStale
+      if (forceRestart || stuckConnecting || peer.connectionState === 'failed' || peer.connectionState === 'closed' || (peer.signalingState !== 'stable' && offerIsStale)) {
         peer = resetPeer()
       }
-      if (peer.connectionState === 'connected' || peer.signalingState !== 'stable') return
+      if (peer.connectionState === 'connected') return
+      // Only bail on a non-stable state when the offer is still fresh; a stale
+      // one has already triggered the reset above.
+      if (peer.signalingState !== 'stable' && !offerIsStale) return
       try {
         offerStartedAtRef.current = Date.now()
         const offer = await peer.createOffer({ iceRestart: forceRestart })
@@ -996,8 +1006,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
     const connectionReminder = useTencentClassroom ? null : window.setInterval(() => {
       if (peerRef.current?.connectionState === 'connected') return
-      if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
-      else transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: ['failed', 'disconnected'].includes(peerRef.current?.connectionState) })
+      // 'connecting' with a long-outstanding offer means the handshake stalled,
+      // which the browser never reports as 'failed'. Ask for a restart in that
+      // case too, otherwise the pair can wait indefinitely.
+      const stalled = offerStartedAtRef.current && Date.now() - offerStartedAtRef.current > 7000
+      const needsRestart = ['failed', 'disconnected'].includes(peerRef.current?.connectionState) || stalled
+      if (account.role === 'teacher') {
+        if (needsRestart) void sendTeacherOffer(true)
+        else transportRef.current?.send({ type: 'teacher-ready' })
+      } else {
+        transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: needsRestart })
+      }
     }, 2500)
 
     return () => {
@@ -2011,6 +2030,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   // message. When no relay is configured the call cannot recover on its own,
   // so pretending it is still trying is misleading.
   const connectionAdvice = connectionFailureAdvice({ bothPresent: participantCount > 1 })
+  // Surfaced to staff only. Without this a stalled call gives no clue whether
+  // signalling, ICE gathering or the relay itself is the problem.
+  const connectionDiagnostics = [
+    `peer:${connectionStatus}`,
+    `ice:${iceDetail || 'n/a'}`,
+    `signalling:${signalingStatus}`,
+    `in-room:${participantCount}`,
+  ].join(' · ')
   const connectionHelpText = connectionAdvice.detail
   const showRelayWarning = participantCount > 1
     && !hasTurnRelay()
@@ -2371,7 +2398,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         </div>
       </header>
 
-      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'China-friendly connection help' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? 'If cross-border video does not connect, retry once or use the VooV/Tencent backup link.' : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
+      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'China-friendly connection help' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? 'If cross-border video does not connect, retry once or use the VooV/Tencent backup link.' : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''}{account.role !== 'student' ? ` · ${connectionDiagnostics}` : ''}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
 
       <div className="classroom-workspace">
         <section className="classroom-stage">
