@@ -83,11 +83,11 @@ import AnnouncementBanner from './AnnouncementBanner.jsx'
 import RecordingPlayback from './RecordingPlayback.jsx'
 import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
-import AdminReviewsPanel from './AdminReviewsPanel.jsx'
+const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
-import OnlineClassroom from './OnlineClassroom.jsx'
-import CoursewareManager from './CoursewareManager.jsx'
+const OnlineClassroom = lazy(() => import('./OnlineClassroom.jsx'))
+const CoursewareManager = lazy(() => import('./CoursewareManager.jsx'))
 import { isTencentClassroomConfigured } from './tencentClassroom.js'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
@@ -243,6 +243,30 @@ function EmptyState({ icon: Icon = CalendarDays, title, text, action, actionLabe
       <h3>{title}</h3>
       <p>{text}</p>
       {action && <button className="portal-text-button" onClick={action}>{actionLabel} <ArrowRight size={15} /></button>}
+    </div>
+  )
+}
+
+/**
+ * Shown while the lazily-loaded classroom bundle downloads. Students see this
+ * every lesson, so it is branded and reassuring rather than a bare spinner.
+ */
+function ClassroomBootFallback() {
+  return (
+    <div className="classroom-boot" role="status" aria-live="polite">
+      <span className="classroom-boot__spinner" aria-hidden="true" />
+      <strong>Opening your classroom…</strong>
+      <small>Loading the lesson board, whiteboard and video.</small>
+    </div>
+  )
+}
+
+/** Lightweight fallback for lazily-loaded dashboard tabs. */
+function PanelFallback({ label = 'Loading…' }) {
+  return (
+    <div className="panel-boot" role="status" aria-live="polite">
+      <span className="panel-boot__spinner" aria-hidden="true" />
+      <span>{label}</span>
     </div>
   )
 }
@@ -2744,7 +2768,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     )
   }
 
-  if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
+  if (classroomBooking) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   return (
     <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
@@ -3327,7 +3351,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
-  if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
+  if (classroomBooking) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
@@ -3465,7 +3489,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'referrals' && <ReferralDashboardPanel account={account} role="teacher" onAccountChange={(updated) => { setAccount(updated); onAccountChange(updated) }} />}
 
-      {active === 'courseware' && <CoursewareManager account={account} mode="teacher" />}
+      {active === 'courseware' && <Suspense fallback={<PanelFallback label="Loading courseware…" />}><CoursewareManager account={account} mode="teacher" /></Suspense>}
 
       {active === 'homework' && <TeacherHomeworkPanel account={account} />}
 
@@ -5264,7 +5288,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
-  if (classroomBooking) return <OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} />
+  if (classroomBooking) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   const managedRole = managedAccount?.role?.toLowerCase()
 
@@ -5350,7 +5374,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
       {active === 'referrals' && <AdminReferralDashboard />}
 
-      {active === 'reviews' && <AdminReviewsPanel />}
+      {active === 'reviews' && <Suspense fallback={<PanelFallback label="Loading parent reviews…" />}><AdminReviewsPanel /></Suspense>}
 
       {active === 'announcements' && <AdminAnnouncementsPanel />}
 
@@ -5487,7 +5511,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
       {active === 'analytics' && <AdminAnalyticsPanel />}
 
-      {active === 'courseware' && <CoursewareManager account={account} mode="admin" />}
+      {active === 'courseware' && <Suspense fallback={<PanelFallback label="Loading courseware…" />}><CoursewareManager account={account} mode="admin" /></Suspense>}
 
       {active === 'homework' && <AdminHomeworkPanel />}
 
