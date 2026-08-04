@@ -25,6 +25,19 @@ const publicDir = resolve(here, '..', 'public')
 const SITE = 'https://www.tutorpro.site'
 const UPDATED = '4 August 2026'
 
+/**
+ * Philippine DTI business registration, supplied by the owner.
+ * Publishing a verifiable registration number turns an unverifiable
+ * "sole proprietorship" claim into a fact a parent can check, which is
+ * a significant trust signal. Never alter this without confirmation.
+ */
+const REGISTRATION = {
+  authority: 'DTI',
+  number: '5274092',
+  country: 'Philippines',
+}
+const REGISTRATION_LINE = `Registered with the Philippine Department of Trade and Industry (${REGISTRATION.authority}), Registration No. ${REGISTRATION.number}.`
+
 const CONTACT = {
   messenger: 'https://m.me/526047974195321',
   facebook: 'https://www.facebook.com/tutorproenglish',
@@ -133,7 +146,7 @@ const PAGES = [
     description: 'How TutorPro Online English collects, uses and protects personal data for parents, students and teachers, including GDPR rights and children’s privacy.',
     heading: 'Privacy Policy',
     body: `
-      <p>TutorPro Online English ("we", "us") provides online one-to-one English tutoring. This policy explains what personal information we collect, why we collect it, and the rights you have over it. TutorPro Online English is operated as a sole proprietorship based in the Philippines.</p>
+      <p>TutorPro Online English ("we", "us") provides online one-to-one English tutoring. This policy explains what personal information we collect, why we collect it, and the rights you have over it. TutorPro Online English is operated as a registered sole proprietorship based in the Philippines. ${REGISTRATION_LINE}</p>
 
       <h2>Information we collect</h2>
       <ul>
@@ -184,6 +197,7 @@ const PAGES = [
     heading: 'Terms of Service',
     body: `
       <p>These terms apply when you create an account or book lessons with TutorPro Online English. By using the service you agree to them.</p>
+      <p><strong>Who you are contracting with:</strong> TutorPro Online English, a sole proprietorship based in the Philippines. ${REGISTRATION_LINE}</p>
 
       <h2>Who may use TutorPro Online English</h2>
       <p>Accounts must be created and managed by a parent or legal guardian aged 18 or over. The account holder is responsible for all activity on the account and for supervising their child's use of the classroom.</p>
@@ -291,7 +305,12 @@ const PAGES = [
       <p>Teachers apply through a structured process that includes a recorded teaching interview and a review of their qualifications and experience. Parents can view teacher profiles, qualifications and introduction videos before booking.</p>
 
       <h2>Where we operate</h2>
-      <p>TutorPro Online English is run as a sole proprietorship based in the Philippines and teaches families worldwide. Our teaching base is Manila time (UTC+8), and lesson times shown in your dashboard are automatically converted to your own local timezone.</p>
+      <p>TutorPro Online English is run as a registered sole proprietorship based in the Philippines and teaches families worldwide. Our teaching base is Manila time (UTC+8), and lesson times shown in your dashboard are automatically converted to your own local timezone.</p>
+      <div class="card">
+        <h3>Business registration</h3>
+        <p><strong>${REGISTRATION_LINE}</strong></p>
+        <p>You can verify a DTI business name registration through the DTI Business Name Registration System at <a href="https://bnrs.dti.gov.ph/" target="_blank" rel="noopener">bnrs.dti.gov.ph</a>.</p>
+      </div>
 
       <h2>Pricing you can see up front</h2>
       <p>Our rates are published on the website, not hidden behind a sales call. Classes start from $8 per 25-minute lesson, and every new family can take a free first class before paying anything. Full terms are on our <a href="/refund-policy.html">Refund Policy</a> page.</p>
@@ -369,7 +388,8 @@ const PAGES = [
       <p>We aim to reply to messages within 1 business day, and to acknowledge refund requests within 2 business days.</p>
 
       <h2>Our details</h2>
-      <p>TutorPro Online English is operated as a sole proprietorship based in the Philippines, delivering online English lessons to families worldwide. Teaching base: Manila time (UTC+8).</p>
+      <p>TutorPro Online English is operated as a registered sole proprietorship based in the Philippines, delivering online English lessons to families worldwide. Teaching base: Manila time (UTC+8).</p>
+      <p><strong>${REGISTRATION_LINE}</strong> Verify at <a href="https://bnrs.dti.gov.ph/" target="_blank" rel="noopener">bnrs.dti.gov.ph</a>.</p>
     `,
     schema: {
       '@context': 'https://schema.org',

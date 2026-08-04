@@ -1437,7 +1437,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
           </div>
         </div>
         <div className="footer__bottom">
-          <span>© {new Date().getFullYear()} TutorPro Online English</span>
+          <span>© {new Date().getFullYear()} TutorPro Online English · Registered with DTI, Reg. No. 5274092</span>
           <a className="footer__credit" href="https://www.pexels.com/photo/7014777/">Learning photo via Pexels</a>
         </div>
       </div>
