@@ -6,24 +6,28 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 /**
- * One page of the PDF, on its own canvas.
+ * One page of the PDF.
  *
- * Each page owns exactly one canvas and one render task. Before starting a new
- * render the previous task is cancelled AND awaited — pdf.js only releases the
- * canvas once the cancelled task has settled, which is what caused
- * "Cannot use the same canvas during multiple render() operations" when the
- * old viewer re-rendered a single shared canvas on every Next Page click.
+ * pdf.js guards against concurrent renders with a global WeakSet keyed on the
+ * canvas ELEMENT (InternalRenderTask.#canvasInUse). Any canvas that is reused
+ * can therefore still be "in use" when the next render() starts — cancel() is
+ * asynchronous, and StrictMode/remounts can re-enter before it settles. That
+ * is what produced "Cannot use the same canvas during multiple render()
+ * operations".
+ *
+ * The fix that removes the whole class of bug: never reuse a canvas. Each
+ * render creates a brand-new detached canvas, draws into it, and only then
+ * swaps it into the DOM. A freshly constructed element cannot possibly be in
+ * pdf.js's in-use set, so the guard can never fire.
  */
 function PdfPageView({ pdf, pageNumber, scale, registerNode }) {
   const wrapRef = useRef(null);
-  const canvasRef = useRef(null);
+  const holderRef = useRef(null);
   const taskRef = useRef(null);
-  // Every draw on this canvas is chained onto the previous one. Awaiting the
-  // cancelled task is not enough on its own: two rapid scale changes can both
-  // finish awaiting and then call render() at the same moment.
   const chainRef = useRef(Promise.resolve());
   const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined');
   const [painted, setPainted] = useState(false);
+  const [failed, setFailed] = useState('');
 
   useEffect(() => {
     const node = wrapRef.current;
@@ -31,8 +35,8 @@ function PdfPageView({ pdf, pageNumber, scale, registerNode }) {
     return () => registerNode?.(pageNumber, null);
   }, [pageNumber, registerNode]);
 
-  // Only pages near the viewport are rasterised, so a 200-page coursebook
-  // still opens instantly and does not exhaust memory.
+  // Only pages near the viewport are rasterised, so a large coursebook opens
+  // instantly and does not exhaust memory on a cheap laptop or phone.
   useEffect(() => {
     const node = wrapRef.current;
     if (!node || typeof IntersectionObserver === 'undefined') return undefined;
@@ -48,30 +52,30 @@ function PdfPageView({ pdf, pageNumber, scale, registerNode }) {
     let cancelled = false;
 
     const draw = async () => {
-      // Wait for any in-flight render on this canvas to finish unwinding.
-      // pdf.js only releases the canvas once the cancelled task has settled.
-      const previous = taskRef.current;
-      if (previous) {
-        previous.cancel();
-        try { await previous.promise; } catch { /* Expected: RenderingCancelledException. */ }
-        taskRef.current = null;
-      }
+      // Abandon any render still in flight for this page. We do not need to
+      // await it: it owns a different canvas element that we are throwing away.
+      taskRef.current?.cancel?.();
+      taskRef.current = null;
       if (cancelled) return;
 
       const page = await pdf.getPage(pageNumber);
       if (cancelled) return;
 
       const viewport = page.getViewport({ scale });
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      const context = canvas.getContext('2d', { alpha: false });
 
+      // A brand-new canvas every time — never touched by a previous render.
+      const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.floor(viewport.width * pixelRatio));
       canvas.height = Math.max(1, Math.floor(viewport.height * pixelRatio));
+      canvas.style.display = 'block';
       canvas.style.width = `${Math.floor(viewport.width)}px`;
       canvas.style.height = `${Math.floor(viewport.height)}px`;
+      canvas.style.background = '#fff';
+      canvas.setAttribute('aria-label', `Page ${pageNumber}`);
 
+      const context = canvas.getContext('2d', { alpha: false });
+      if (!context) return;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       context.fillStyle = '#ffffff';
       context.fillRect(0, 0, viewport.width, viewport.height);
@@ -80,24 +84,35 @@ function PdfPageView({ pdf, pageNumber, scale, registerNode }) {
       taskRef.current = task;
       try {
         await task.promise;
-        if (!cancelled) setPainted(true);
       } catch (renderError) {
-        if (renderError?.name !== 'RenderingCancelledException') throw renderError;
+        if (renderError?.name === 'RenderingCancelledException') return;
+        throw renderError;
       } finally {
         if (taskRef.current === task) taskRef.current = null;
       }
+      if (cancelled) return;
+
+      // Swap the finished page in. The old canvas is dropped and garbage
+      // collected, taking its entry in pdf.js's in-use set with it.
+      const holder = holderRef.current;
+      if (!holder) return;
+      holder.replaceChildren(canvas);
+      setPainted(true);
+      setFailed('');
     };
 
-    // Serialise: the next draw starts only after the previous one has fully
-    // released the canvas, so render() is never called twice concurrently.
     chainRef.current = chainRef.current
       .catch(() => {})
       .then(() => draw())
-      .catch(() => { /* A failed page must never take down the whole board. */ });
+      .catch((drawError) => {
+        // One bad page must never take down the whole lesson board.
+        if (!cancelled) setFailed(drawError?.message || 'This page could not be displayed.');
+      });
 
     return () => {
       cancelled = true;
       taskRef.current?.cancel?.();
+      taskRef.current = null;
     };
   }, [pdf, pageNumber, scale, visible]);
 
@@ -117,13 +132,14 @@ function PdfPageView({ pdf, pageNumber, scale, registerNode }) {
         maxWidth: '100%',
       }}
     >
-      <canvas ref={canvasRef} aria-label={`Page ${pageNumber}`} style={{ display: 'block', background: '#fff' }} />
-      {!painted && (
+      <div ref={holderRef} />
+      {(!painted || failed) && (
         <div style={{
           position: 'absolute', inset: 0, display: 'grid', placeContent: 'center',
-          background: '#f3f1f7', color: '#7a7290', fontSize: '0.7rem', fontWeight: 800,
+          background: '#f3f1f7', color: failed ? '#b4342f' : '#7a7290',
+          fontSize: '0.7rem', fontWeight: 800, textAlign: 'center', padding: '10px',
         }}>
-          Page {pageNumber}
+          {failed || `Page ${pageNumber}`}
         </div>
       )}
     </div>
