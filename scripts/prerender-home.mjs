@@ -100,6 +100,12 @@ const REVIEWS = [
     source: 'Facebook recommendation',
     date: '2021-07-28',
   },
+  {
+    quote: 'Very recommended teacher. The teacher is very patient and children communicate, very will drive the atmosphere. Getting the child moving also lets the child know how to pronounce it.',
+    name: 'Snoopy Fen',
+    source: 'Facebook recommendation',
+    date: '2021-08-06',
+  },
 ]
 
 /* Mirrored from the `faqs` array in src/App.jsx. */
