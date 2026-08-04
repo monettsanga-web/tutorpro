@@ -3126,6 +3126,17 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const estimatedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
 
   const tencentClassroomReady = isTencentClassroomConfigured()
+  // Booked classrooms previously showed only confirmed/ongoing lessons, so a
+  // completed class disappeared and its recap, recording and shared files
+  // became unreachable. Upcoming first, then the most recent past lessons.
+  const classroomHistory = (() => {
+    const relevant = bookings.filter((booking) => ['confirmed', 'ongoing', 'completed', 'absent'].includes(booking.status))
+    const when = (booking) => new Date(`${booking.date}T${booking.time || '00:00'}`).getTime() || 0
+    const live = relevant.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).sort((a, b) => when(a) - when(b))
+    const past = relevant.filter((booking) => ['completed', 'absent'].includes(booking.status)).sort((a, b) => when(b) - when(a))
+    return [...live, ...past.slice(0, 20)]
+  })()
+
   const pending = bookings.filter((booking) => booking.status === 'pending').length
   const feedbackNeededBookings = bookings
     .filter((booking) => booking.status === 'completed' && !booking.teacherFeedback?.summary?.trim())
@@ -3498,7 +3509,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             </section>
             <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
-          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).length ? bookings.filter((booking) => ['confirmed', 'ongoing'].includes(booking.status)).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} />) : <EmptyState icon={Video} title="No active classrooms" text="Accept a student booking and its unique classroom will appear here." />}</section>
+          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{classroomHistory.length ? classroomHistory.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} />) : <EmptyState icon={Video} title="No classrooms yet" text="Accept a student booking and its unique classroom will appear here." />}</section>
         </div>
       )}
 

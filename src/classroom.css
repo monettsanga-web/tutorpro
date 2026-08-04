@@ -2180,3 +2180,22 @@ body.classroom-active .support-widget {
   cursor: pointer;
 }
 .classroom-waiting-room .classroom-secondary-button:hover { border-color: #bce94e; color: #eaffb8; }
+
+/* Teacher's reusable material library inside the classroom file panel.
+   Files used to be stored per booking, so the same PDF had to be uploaded
+   again for every lesson. */
+.classroom-library { margin-top: 14px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 12px; }
+.classroom-library__head strong { display: block; color: #fff; font-size: .875rem; font-weight: 800; }
+.classroom-library__head small { display: block; margin-bottom: 9px; color: #b9adc7; font-size: .78rem; }
+.classroom-library__list { display: grid; gap: 6px; max-height: 220px; overflow-y: auto; }
+.classroom-library__list button {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 11px;
+  border: 1px solid rgba(255,255,255,.14); border-radius: 10px;
+  background: rgba(255,255,255,.05); color: #e8e2f3;
+  font-size: .82rem; font-weight: 650; text-align: left; cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.classroom-library__list button:hover { background: rgba(188,233,78,.12); border-color: rgba(188,233,78,.4); }
+.classroom-library__list button span {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

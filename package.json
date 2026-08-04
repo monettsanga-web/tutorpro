@@ -12,7 +12,7 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing",
     "test:core": "node scripts/test-core.mjs",
     "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
@@ -23,7 +23,8 @@
     "desktop:dist": "npm run build && electron-builder",
     "seo:automation": "node scripts/seo-automation.mjs",
     "test:ice": "node scripts/test-ice-servers.mjs",
-    "test:handshake": "node scripts/test-handshake-recovery.mjs"
+    "test:handshake": "node scripts/test-handshake-recovery.mjs",
+    "test:sharing": "node scripts/test-classroom-sharing.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

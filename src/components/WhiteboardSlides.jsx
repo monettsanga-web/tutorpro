@@ -161,6 +161,8 @@ function CustomPdfBoard({
   zoom = 1,
   onPageCount,
   onVisiblePageChange,
+  onScrollRatioChange,
+  followScrollRatio,
   canControl = false,
 }) {
   const containerRef = useRef(null);
@@ -168,6 +170,7 @@ function CustomPdfBoard({
   const programmaticScrollRef = useRef(0);
   const reportedPageRef = useRef(1);
   const broadcastTimerRef = useRef(0);
+  const ratioTimerRef = useRef(0);
   const [pdf, setPdf] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -253,6 +256,18 @@ function CustomPdfBoard({
     if (Date.now() < programmaticScrollRef.current) return;
     const container = containerRef.current;
     if (!container) return;
+
+    // Share the exact position, not just the page. Page-only sync meant the
+    // student's board did not move at all while the teacher scrolled within a
+    // page, which looked like the sharing was broken.
+    if (onScrollRatioChange) {
+      const scrollable = container.scrollHeight - container.clientHeight;
+      const ratio = scrollable > 0 ? container.scrollTop / scrollable : 0;
+      window.clearTimeout(ratioTimerRef.current);
+      ratioTimerRef.current = window.setTimeout(() => {
+        onScrollRatioChange(Math.max(0, Math.min(1, ratio)));
+      }, 90);
+    }
     const marker = container.getBoundingClientRect().top + 60;
     let best = 1;
     let bestDistance = Infinity;
@@ -269,9 +284,26 @@ function CustomPdfBoard({
         onVisiblePageChange?.(reportedPageRef.current);
       }, 160);
     }
-  }, [onVisiblePageChange]);
+  }, [onVisiblePageChange, onScrollRatioChange]);
 
   useEffect(() => () => window.clearTimeout(broadcastTimerRef.current), []);
+
+  // Follow the teacher's exact scroll position.
+  useEffect(() => {
+    if (canControl || typeof followScrollRatio !== 'number') return;
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollable = container.scrollHeight - container.clientHeight;
+    if (scrollable <= 0) return;
+    const target = followScrollRatio * scrollable;
+    // Only move for a real change, so tiny rounding differences do not fight
+    // the student's own rendering.
+    if (Math.abs(container.scrollTop - target) < 8) return;
+    programmaticScrollRef.current = Date.now() + 400;
+    container.scrollTo({ top: target, behavior: 'auto' });
+  }, [followScrollRatio, canControl, scale]);
+
+  useEffect(() => () => window.clearTimeout(ratioTimerRef.current), []);
 
   // Follow the page the teacher is on.
   useEffect(() => {
@@ -388,6 +420,8 @@ export const WhiteboardSlides = ({
   viewMode = 'fit-width',
   zoom = 1,
   onViewChange,
+  onScrollRatioChange,
+  followScrollRatio,
 }) => {
   const [pdfPageCount, setPdfPageCount] = useState(totalSlides);
   const lowerName = fileName?.toLowerCase() || '';
@@ -461,6 +495,8 @@ export const WhiteboardSlides = ({
             onPageCount={setPdfPageCount}
             canControl={canControl}
             onVisiblePageChange={canControl ? onPageChange : undefined}
+            onScrollRatioChange={canControl ? onScrollRatioChange : undefined}
+            followScrollRatio={followScrollRatio}
           />
         )}
         

@@ -75,6 +75,7 @@ import {
   isClassroomStorageAvailable,
   uploadClassroomFile,
   getClassroomFileUrl,
+  listTeacherLibrary,
 } from './classroomStorage.js'
 import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailable, isRecordingSupported, startClassroomRecording, uploadClassroomRecording } from './classroomRecording.js'
 
@@ -434,6 +435,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [cosSlidePage, setCosSlidePage] = useState(1)
   const [documentViewMode, setDocumentViewMode] = useState('fit-width')
   const [documentZoom, setDocumentZoom] = useState(1)
+  const [documentScrollRatio, setDocumentScrollRatio] = useState(null)
   const [useGoogleClassroomMode, setUseGoogleClassroomMode] = useState(false)
   const [sidebarTab, setSidebarTab] = useState('chat')
   const [speechSummary, setSpeechSummary] = useState(null)
@@ -619,6 +621,32 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }, 1000)
     return () => window.clearInterval(timer)
   }, [joined, connectionStatus])
+
+  // Load the teacher's previously uploaded material so it can be re-shared
+  // without uploading the same file every lesson.
+  const [libraryFiles, setLibraryFiles] = useState([])
+  useEffect(() => {
+    if (!joined || account.role !== 'teacher' || !isClassroomStorageAvailable()) return undefined
+    let active = true
+    listTeacherLibrary(account.id)
+      .then((items) => { if (active) setLibraryFiles(items) })
+      .catch(() => { /* The library is a convenience; uploading still works. */ })
+    return () => { active = false }
+  }, [joined, account.role, account.id, uploadingFile])
+
+  const shareLibraryFile = async (item) => {
+    try {
+      setFileError('')
+      const signedUrl = await getClassroomFileUrl(item.storagePath)
+      if (!signedUrl) throw new Error('That file could not be opened. It may have been removed.')
+      const entry = { ...item, dataUrl: signedUrl, sender: participantName }
+      setFiles((current) => current.some((f) => f.storagePath === entry.storagePath) ? current : [...current, entry])
+      transportRef.current?.send({ type: 'classroom-file-storage', file: entry })
+      await presentFile(entry)
+    } catch (error) {
+      setFileError(error.message || 'That file could not be shared.')
+    }
+  }
 
   // Mint Cloudflare TURN credentials as soon as the classroom opens, so the
   // relay is ready before the first connection attempt rather than after it has
@@ -926,6 +954,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       if (message.type === 'slide-page') {
         setCosSlidePage(Number(message.page) || 1)
+        return
+      }
+      if (message.type === 'document-scroll') {
+        const ratio = Number(message.ratio)
+        if (Number.isFinite(ratio)) setDocumentScrollRatio(Math.max(0, Math.min(1, ratio)))
         return
       }
       if (message.type === 'document-view-state') {
@@ -1925,7 +1958,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
 
       setUploadStatus(isClassroomStorageAvailable() ? 'Uploading to Supabase classroom storage…' : 'Preparing secure classroom file…')
       if (isClassroomStorageAvailable()) {
-        const stored = await uploadClassroomFile(roomBooking.id, file)
+        const stored = await uploadClassroomFile(roomBooking.id, file, {
+          // A teacher's material is saved to their own library so it can be
+          // re-shared in any future lesson without uploading again.
+          teacherId: account.role === 'teacher' ? account.id : '',
+        })
         const signedUrl = await getClassroomFileUrl(stored.storagePath)
         const entry = {
           id: stored.id,
@@ -2168,6 +2205,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
               zoom={documentZoom}
               onPageChange={(newPage) => syncDocumentViewState({ page: newPage })}
               onViewChange={(viewState) => syncDocumentViewState(viewState)}
+              onScrollRatioChange={(ratio) => transportRef.current?.send({ type: 'document-scroll', ratio })}
+              followScrollRatio={account.role === 'teacher' ? undefined : documentScrollRatio}
             />
           </SafeSlidesErrorBoundary>
         </div>
@@ -2531,6 +2570,26 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             {fileError && <div className="classroom-file-error">{fileError}</div>}
             {uploadingFile && <div className="classroom-file-uploading"><span className="classroom-file-uploading__spinner" /> {uploadStatus || 'Uploading…'}</div>}
             <div className="classroom-file-list">{files.length ? files.map((file) => <div key={file.id}><span><Paperclip size={16} /></span><div><strong>{file.name}</strong><small>{file.sender} · {(file.size / 1024).toFixed(0)} KB{file.source === 'supabase' ? ' · Cloud' : ''}</small></div>{account.role !== 'student' && <button onClick={() => presentFile(file)} title="Present on lesson board"><Presentation size={16} /></button>}<a href={file.dataUrl || '#'} download={file.name} title="Download" onClick={async (e) => { if (!file.dataUrl && file.storagePath) { e.preventDefault(); const url = await resolveFileUrl(file); if (url) window.open(url, '_blank') } }}><Download size={16} /></a></div>) : <div className="classroom-file-empty"><FileUp size={25} /><span>No lesson files shared yet.</span></div>}</div>
+            {account.role === 'teacher' && libraryFiles.length > 0 && (
+              <div className="classroom-library">
+                <div className="classroom-library__head">
+                  <strong>My saved materials</strong>
+                  <small>Uploaded before — share again without re-uploading</small>
+                </div>
+                <div className="classroom-library__list">
+                  {libraryFiles
+                    .filter((item) => !files.some((shared) => shared.storagePath === item.storagePath))
+                    .slice(0, 30)
+                    .map((item) => (
+                      <button key={item.storagePath} type="button" onClick={() => shareLibraryFile(item)} title={`Share ${item.name}`}>
+                        <Paperclip size={14} />
+                        <span>{item.name}</span>
+                        <Presentation size={14} />
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>}
           <div className="classroom-people"><span><Users size={17} /> Participants</span><div><i className="online" /><strong>{participantName}</strong><small>{account.role}</small></div>{connectionStatus === 'connected' && <div><i className="online" /><strong>{account.role === 'teacher' ? learner?.name : teacher?.fullName}</strong><small>{account.role === 'teacher' ? 'student' : 'teacher'}</small></div>}{account.role === 'teacher' && <>
             <button className={studentAnnotationAllowed ? 'allowed' : ''} onClick={toggleStudentAnnotationPermission}>{studentAnnotationAllowed ? <Unlock size={15} /> : <Lock size={15} />}{studentAnnotationAllowed ? 'Student can annotate' : 'Allow student annotation'}</button>
