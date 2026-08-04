@@ -81,6 +81,7 @@ import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
 import AnnouncementBanner from './AnnouncementBanner.jsx'
 import RecordingPlayback from './RecordingPlayback.jsx'
+import { qrDataUri } from './qrCode.js'
 import AdminReviewsPanel from './AdminReviewsPanel.jsx'
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
@@ -1764,7 +1765,9 @@ function ReferralDashboardPanel({ account, role = 'parent', onAccountChange }) {
   const stats = getReferralStats(account, allAccounts)
   const code = stats.code
   const link = stats.link
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=png&ecc=M&margin=10&data=${encodeURIComponent(link)}`
+  // Generated locally: api.qrserver.com is unreliable/blocked in mainland China,
+  // where QR sharing on WeChat matters most.
+  const qrUrl = qrDataUri(link, { size: 240 })
   const nextLabel = stats.nextLevel ? `${stats.nextLevel.label} at ${stats.nextLevel.min} successful referrals` : 'Top ambassador level unlocked'
   const shareText = role === 'teacher'
     ? `Join TutorPro Online English PH through my teacher referral link and start learning online English.`
