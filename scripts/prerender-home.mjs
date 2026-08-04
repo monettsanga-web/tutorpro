@@ -121,6 +121,98 @@ ${faqItems}
     </div>`
 }
 
+/**
+ * Course schema for the four programmes.
+ *
+ * WHY Course AND NOT AggregateRating ON THE ORGANISATION:
+ * Google's self-serving review policy (2019, restated Dec 2025) makes pages using
+ * Organization / LocalBusiness schema — including EducationalOrganization — ineligible
+ * for star rich results when the business controls its own reviews. Course is one of the
+ * few types still eligible, so this is the correct home for ratings.
+ *
+ * Ratings are deliberately NOT included yet: no lessons have been rated. When real
+ * ratings exist from rateCompletedBooking(), add an aggregateRating block to the
+ * matching course below. Never publish a rating that is not genuinely earned.
+ *
+ * Content mirrors the `programmes` object in src/App.jsx and the pricing helpers in
+ * src/Dashboards.jsx ($10/class for 1-3 lessons a week, $8/class for 4 or more).
+ */
+const COURSES = [
+  {
+    name: 'Cambridge Primary English',
+    description: 'One-to-one online English lessons for Years 1–6, building strong foundations in reading, writing, speaking and comprehension using the Cambridge Primary English curriculum.',
+    level: 'Primary (Years 1–6)',
+  },
+  {
+    name: 'Oxford Primary English',
+    description: 'One-to-one online English lessons for Years 1–6 that grow literacy and a love of language through clear, engaging Oxford Primary lessons.',
+    level: 'Primary (Years 1–6)',
+  },
+  {
+    name: 'Cambridge Secondary English',
+    description: 'One-to-one online English lessons for Years 7–11, developing the analysis and writing skills students need for IGCSE English.',
+    level: 'Secondary (Years 7–11)',
+  },
+  {
+    name: 'Oxford Secondary English',
+    description: 'One-to-one online English lessons for Years 7–11, mastering advanced language and literature with structured Oxford Secondary support.',
+    level: 'Secondary (Years 7–11)',
+  },
+]
+
+function buildCourseSchema() {
+  const provider = {
+    '@type': 'EducationalOrganization',
+    name: 'TutorPro Online English',
+    sameAs: 'https://www.tutorpro.site/',
+  }
+  const payload = {
+    '@context': 'https://schema.org',
+    '@graph': COURSES.map((course, index) => ({
+      '@type': 'Course',
+      '@id': `https://www.tutorpro.site/#course-${index + 1}`,
+      name: course.name,
+      description: course.description,
+      provider,
+      educationalLevel: course.level,
+      inLanguage: 'en',
+      teaches: ['Speaking', 'Reading', 'Writing', 'Grammar', 'Vocabulary'],
+      // Google requires at least one CourseInstance carrying courseMode and offers.
+      hasCourseInstance: [
+        {
+          '@type': 'CourseInstance',
+          courseMode: 'online',
+          courseWorkload: 'PT25M',
+          location: { '@type': 'VirtualLocation', url: 'https://www.tutorpro.site/' },
+          courseSchedule: {
+            '@type': 'Schedule',
+            duration: 'PT25M',
+            repeatFrequency: 'Weekly',
+            repeatCount: 4,
+          },
+          offers: {
+            '@type': 'Offer',
+            category: 'Paid',
+            price: '8.00',
+            priceCurrency: 'USD',
+            availability: 'https://schema.org/InStock',
+            url: 'https://www.tutorpro.site/',
+          },
+        },
+      ],
+      offers: {
+        '@type': 'Offer',
+        category: 'Paid',
+        price: '8.00',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/InStock',
+        url: 'https://www.tutorpro.site/',
+      },
+    })),
+  }
+  return `<script type="application/ld+json">${JSON.stringify(payload)}</script>`
+}
+
 /** FAQPage schema makes the answers eligible for rich results in Google. */
 function buildFaqSchema() {
   const payload = {
@@ -165,10 +257,16 @@ async function run() {
     html = html.replace('</head>', `    ${buildFaqSchema()}\n  </head>`)
   }
 
+  // Course schema: eligible for rich results, and the correct place to attach
+  // real lesson ratings later (Organization schema is not eligible).
+  if (!html.includes('"@type":"Course"') && !html.includes('"@type": "Course"')) {
+    html = html.replace('</head>', `    ${buildCourseSchema()}\n  </head>`)
+  }
+
   await writeFile(distIndex, html, 'utf8')
 
   const words = buildStaticHtml().replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length
-  console.log(`[prerender] Injected ${words} words of crawlable homepage content + FAQPage schema.`)
+  console.log(`[prerender] Injected ${words} words of crawlable content + FAQPage + ${COURSES.length} Course entities.`)
 }
 
 run()
