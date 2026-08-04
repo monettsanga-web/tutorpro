@@ -41,6 +41,7 @@ import { WEEKDAYS } from './schedule.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import TrustpilotWidget from './TrustpilotWidget.jsx'
+import PromoVideo from './PromoVideo.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -229,6 +230,7 @@ function Hero({ onBook }) {
         </div>
 
         <div className="hero__visual">
+          <PromoVideo lang="en" className="hero__promo-video" />
           <div className="hero__photo-wrap">
             <img
               className="hero__photo"
