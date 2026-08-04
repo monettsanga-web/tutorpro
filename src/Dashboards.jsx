@@ -95,6 +95,7 @@ const CoursewareManager = lazy(() => import('./CoursewareManager.jsx'))
 import { isTencentClassroomConfigured } from './tencentClassroom.js'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
+import { onHashRouteChange, readHashRoute, writeHashRoute } from './hashRoute.js'
 import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
@@ -617,6 +618,60 @@ export function ScheduleCalendar({
       </div>
     </div>
   )
+}
+
+/** Real nav ids per dashboard, so a typo'd URL cannot select a tab that
+  * does not exist and leave the content area blank. */
+const STUDENT_SECTIONS = ['overview', 'book', 'lessons', 'curriculum', 'games', 'referrals', 'homework', 'library', 'rewards', 'ai-report', 'support', 'profile']
+const TEACHER_SECTIONS = ['overview', 'bookings', 'classroom', 'courseware', 'schedule', 'support', 'referrals', 'homework', 'library', 'profile']
+const ADMIN_SECTIONS = ['overview', 'teachers', 'students', 'support', 'reviews', 'website', 'referrals', 'announcements', 'bookings', 'courseware', 'payments', 'funnel', 'followups', 'sharelinks', 'analytics', 'homework', 'library', 'profile']
+
+/**
+ * Keeps a dashboard tab in sync with the URL hash (#/admin/funnel).
+ *
+ * Without this the address bar never changed, so Back left the site, refresh
+ * reset you to Overview, and no tab could be bookmarked or shared.
+ * `adminPreview` dashboards are skipped: an admin previewing someone else's
+ * dashboard should not have that overwrite their own admin URL.
+ */
+function useHashSection(role, fallback, enabled = true, validSections = null) {
+  // A hand-edited or stale URL must never leave the user staring at a blank
+  // panel, so an unknown section quietly falls back to the dashboard home.
+  const accept = (section) => {
+    if (!section) return ''
+    if (!validSections) return section
+    return validSections.includes(section) ? section : ''
+  }
+
+  const [active, setActive] = useState(() => {
+    if (!enabled) return fallback
+    const route = readHashRoute()
+    if (!route || route.role !== role) return fallback
+    return accept(route.section) || fallback
+  })
+
+  // Reflect the current tab in the URL. Replace on first paint so Back still
+  // returns to wherever the visitor came from rather than to the same page.
+  const first = useRef(true)
+  useEffect(() => {
+    if (!enabled) return
+    writeHashRoute(role, active, { replace: first.current })
+    first.current = false
+  }, [role, active, enabled])
+
+  // Follow the browser Back and Forward buttons.
+  useEffect(() => {
+    if (!enabled) return undefined
+    return onHashRouteChange((route) => {
+      if (!route || route.role !== role) return
+      const next = accept(route.section)
+      if (next) setActive(next)
+    })
+    // `accept` is derived from validSections, which is stable per dashboard.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, enabled])
+
+  return [active, setActive]
 }
 
 function PortalShell({ account, role, active, onActive, onHome, onLogout, navItems, children, adminPreview = false, mediaVersion = 0 }) {
@@ -2576,7 +2631,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
 }
 
 export function StudentDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false, initialLearnerId = '' }) {
-  const [active, setActive] = useState('overview')
+  const [active, setActive] = useHashSection('student', 'overview', !adminPreview, STUDENT_SECTIONS)
   const [account, setAccount] = useState(initialAccount)
   const [activeLearnerId, setActiveLearnerId] = useState(initialLearnerId || initialAccount.children?.[0]?.id || initialAccount.child?.id || '')
   const [showAddStudent, setShowAddStudent] = useState(false)
@@ -3008,7 +3063,7 @@ function TargetIcon() {
 }
 
 export function TeacherDashboard({ account: initialAccount, onAccountChange, onHome, onLogout, adminPreview = false, initialSection = 'overview' }) {
-  const [active, setActive] = useState(initialSection)
+  const [active, setActive] = useHashSection('teacher', initialSection, !adminPreview, TEACHER_SECTIONS)
   const [account, setAccount] = useState(() => {
     const source = initialAccount.teacher || {}
     return {
@@ -4698,7 +4753,7 @@ export class AdminRenderErrorBoundary extends Component {
 }
 
 export function AdminDashboard({ account, onHome, onLogout }) {
-  const [active, setActive] = useState('overview')
+  const [active, setActive] = useHashSection('admin', 'overview', true, ADMIN_SECTIONS)
   const [version, setVersion] = useState(0)
   const [managedAccount, setManagedAccount] = useState(null)
   const [managedLearnerId, setManagedLearnerId] = useState('')
