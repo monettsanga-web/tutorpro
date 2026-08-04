@@ -376,6 +376,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   // known at module load. Fetched once when the classroom opens and reused for
   // every reconnect within the session.
   const rtcConfigRef = useRef(rtcConfiguration)
+  const publishedTracksRef = useRef(0)
   const participantIdRef = useRef(`${account.id}::${roomBooking.id}`)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
@@ -693,7 +694,12 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     // Wait for the relay lookup so the very first offer already carries relay
     // candidates. Without this the first attempt could fail on a restrictive
     // network and only the retry would succeed.
-    if (!joined || !access.allowed || !relayReady) return undefined
+    // Media must exist BEFORE the peer is built. Three separate paths set
+    // joined=true ("Enter anyway", the teacher-present signal, and joinClass),
+    // and two of them did not guarantee a camera stream. A peer created with no
+    // tracks negotiates perfectly happily and reports "connected" while sending
+    // nothing, so both people sat in the room unable to see each other.
+    if (!joined || !access.allowed || !relayReady || !mediaReady) return undefined
     let active = true
 
     const ensurePeer = () => {
@@ -705,6 +711,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       const videoTracks = outgoingStream?.getVideoTracks() || localStreamRef.current?.getVideoTracks() || []
       audioTracks.forEach((track) => peer.addTrack(track, localStreamRef.current))
       videoTracks.slice(0, 1).forEach((track) => peer.addTrack(track, outgoingStream || localStreamRef.current))
+      // Record what we actually published. A peer with no senders can still
+      // reach 'connected', which previously looked like success while the other
+      // side received nothing at all.
+      publishedTracksRef.current = audioTracks.length + Math.min(videoTracks.length, 1)
       peer.onicecandidate = (event) => {
         if (event.candidate) transportRef.current?.send({ type: 'ice', candidate: event.candidate })
       }
@@ -732,7 +742,30 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       }
       peer.onconnectionstatechange = () => {
         const status = peer.connectionState
-        if (status === 'connected') setConnectionStatus('connected')
+        if (status === 'connected') {
+          setConnectionStatus('connected')
+          // 'connected' only means the transport is up. If we published no
+          // tracks, or none ever arrive, the lesson looks connected while both
+          // tiles stay black. Renegotiate once rather than leave it silent.
+          window.setTimeout(() => {
+            if (!active || peer.connectionState !== 'connected') return
+            const receiving = peer.getReceivers?.().some((r) => r.track && r.track.readyState === 'live')
+            if (receiving && publishedTracksRef.current > 0) return
+            if (!publishedTracksRef.current && localStreamRef.current) {
+              // We joined before the camera was ready: attach and re-offer.
+              try {
+                localStreamRef.current.getTracks().forEach((track) => {
+                  if (!peer.getSenders().some((sender) => sender.track === track)) {
+                    peer.addTrack(track, localStreamRef.current)
+                  }
+                })
+                publishedTracksRef.current = localStreamRef.current.getTracks().length
+              } catch { /* Renegotiation below is the fallback. */ }
+            }
+            if (isHost) void sendTeacherOffer(true)
+            else transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
+          }, 3000)
+        }
         else if (['failed', 'disconnected', 'closed'].includes(status)) {
           setConnectionStatus(status)
           if (status !== 'closed' && !isHost) transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
@@ -949,7 +982,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         // Release any waiting student as soon as the teacher announces presence.
         setTeacherPresent(Boolean(message.present))
         if (message.present && account.role === 'student') {
-          setWaiting((isWaiting) => { if (isWaiting) setJoined(true); return false })
+          setWaiting((isWaiting) => {
+            // Only release the student once their camera is actually running,
+            // otherwise they join with no tracks and stay invisible.
+            if (isWaiting) {
+              if (localStreamRef.current) setJoined(true)
+              else requestMedia().then((stream) => { if (stream) setJoined(true) })
+            }
+            return false
+          })
         }
         return
       }
@@ -1098,7 +1139,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       pendingIceRef.current = []
       offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, relayReady, isHost, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
+  }, [joined, access.allowed, relayReady, mediaReady, isHost, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
 
   useEffect(() => {
     if (!joined || !access.allowed || !useTencentClassroom) return undefined
@@ -2433,7 +2474,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
                 <span className="classroom-waiting-room__spinner" aria-hidden="true" />
                 <strong>Waiting for {teacher?.fullName || 'your teacher'} to start the class</strong>
                 <small>You are in the waiting room. The lesson will open automatically the moment your teacher joins — please keep this page open.</small>
-                <button className="classroom-secondary-button" onClick={() => { setWaiting(false); setJoined(true) }}>Enter anyway</button>
+                <button className="classroom-secondary-button" onClick={async () => { const stream = localStreamRef.current || await requestMedia(); if (!stream) return; setWaiting(false); setJoined(true) }}>Enter anyway</button>
               </div>
             ) : !mediaReady ? <button className="classroom-main-button" onClick={requestMedia}><Camera size={18} /> Enable camera & microphone</button> : <button className="classroom-main-button" onClick={joinClass}><Video size={18} /> {account.role === 'student' && !teacherPresent ? 'Join and wait for teacher' : 'Enter private classroom'}</button>}
             <p className="prejoin-privacy"><ShieldCheck size={14} /> Only this booking's teacher, student and administrator can access this room.</p>
