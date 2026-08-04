@@ -195,8 +195,28 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
       })
       .on('broadcast', { event: 'signal' }, ({ payload }) => receive(payload))
       .on('presence', { event: 'sync' }, () => {
-        const count = Object.values(realtimeChannel.presenceState()).reduce((total, entries) => total + entries.length, 0)
-        onMessage({ type: 'presence', sender: 'classroom-presence', count: Math.max(1, count) })
+        // Count DISTINCT participants, not presence entries. Summing entries
+        // counted the same person twice whenever they had two live tracks —
+        // React StrictMode's double mount, a quick refresh, or a reconnect
+        // before the old entry expired. The room then looked full while the
+        // other person was still absent, so the app kept trying to negotiate
+        // with somebody who was not there and reported
+        // "Both of you are in the room" over an empty video tile.
+        const state = realtimeChannel.presenceState()
+        const peers = new Set()
+        Object.entries(state).forEach(([key, entries]) => {
+          if (Array.isArray(entries) && entries.length) {
+            entries.forEach((entry) => peers.add(entry?.participantId || key))
+          } else {
+            peers.add(key)
+          }
+        })
+        onMessage({
+          type: 'presence',
+          sender: 'classroom-presence',
+          count: Math.max(1, peers.size),
+          peers: [...peers],
+        })
       })
       .subscribe((status) => {
         if (closed) return

@@ -790,7 +790,13 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     const handleMessage = async (message) => {
       if (!active) return
       if (message.type === 'presence') {
-        const count = Math.max(1, Number(message.count) || 1)
+        // Ignore our own entries. Presence keys are `${accountId}::${bookingId}`,
+        // so anything sharing our prefix is another tab or a stale entry of
+        // ours, not the other participant.
+        const others = Array.isArray(message.peers)
+          ? message.peers.filter((peer) => String(peer) !== participantIdRef.current)
+          : null
+        const count = others ? Math.max(1, others.length + 1) : Math.max(1, Number(message.count) || 1)
         setParticipantCount(count)
         if (count > 1 && !useTencentClassroom) {
           if (isHost) transportRef.current?.send({ type: 'teacher-ready' })

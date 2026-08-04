@@ -156,10 +156,10 @@ export function connectionFailureAdvice({ bothPresent }) {
     }
   }
   return {
-    title: 'Reconnecting',
+    title: bothPresent ? 'Reconnecting' : 'Waiting for the other participant',
     detail: bothPresent
       ? 'Both of you are in the room. Re-establishing the video link through the relay server.'
-      : 'Waiting for the other participant to enter this same booking.',
+      : 'Waiting for the other participant to open this same lesson. Their camera tile stays empty until they join.',
     adminHint: '',
   }
 }
