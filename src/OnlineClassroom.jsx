@@ -80,7 +80,7 @@ import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailab
 
 import SpeechCoachPanel from './SpeechCoachPanel.jsx'
 import { recordJoin, recordLeave } from './classroomAttendance.js'
-import { buildRtcConfiguration, connectionFailureAdvice, hasTurnRelay } from './iceServers.js'
+import { buildRtcConfiguration, connectionFailureAdvice, fetchDynamicIceServers, hasTurnRelay } from './iceServers.js'
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
 const rtcConfiguration = buildRtcConfiguration()
@@ -357,6 +357,10 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   // like "both here", the video handshake kept retrying against people who had
   // already gone. Supabase presence is keyed on this id, so reusing it means a
   // rejoin REPLACES the previous entry instead of stacking another one.
+  // Cloudflare mints short-lived TURN credentials, so the ICE config is not
+  // known at module load. Fetched once when the classroom opens and reused for
+  // every reconnect within the session.
+  const rtcConfigRef = useRef(rtcConfiguration)
   const participantIdRef = useRef(`${account.id}::${roomBooking.id}`)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
@@ -604,13 +608,38 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     }
   }, [useTencentClassroom, remoteScreenSharing])
 
+  // Mint Cloudflare TURN credentials as soon as the classroom opens, so the
+  // relay is ready before the first connection attempt rather than after it has
+  // already failed. Harmless and instant when Cloudflare is not configured.
+  const [relayReady, setRelayReady] = useState(false)
   useEffect(() => {
     if (!joined || !access.allowed) return undefined
+    let active = true
+    fetchDynamicIceServers()
+      .then((servers) => {
+        if (!active) return
+        if (servers.length) {
+          rtcConfigRef.current = {
+            ...rtcConfigRef.current,
+            iceServers: [...buildRtcConfiguration().iceServers, ...servers],
+          }
+        }
+      })
+      .catch(() => { /* Direct connection is still attempted. */ })
+      .finally(() => { if (active) setRelayReady(true) })
+    return () => { active = false }
+  }, [joined, access.allowed])
+
+  useEffect(() => {
+    // Wait for the relay lookup so the very first offer already carries relay
+    // candidates. Without this the first attempt could fail on a restrictive
+    // network and only the retry would succeed.
+    if (!joined || !access.allowed || !relayReady) return undefined
     let active = true
 
     const ensurePeer = () => {
       if (peerRef.current) return peerRef.current
-      const peer = new RTCPeerConnection(rtcConfiguration)
+      const peer = new RTCPeerConnection(rtcConfigRef.current)
       peerRef.current = peer
       const outgoingStream = screenSharing && screenStreamRef.current ? screenStreamRef.current : localStreamRef.current
       const audioTracks = localStreamRef.current?.getAudioTracks() || []
@@ -981,7 +1010,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       pendingIceRef.current = []
       offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
+  }, [joined, access.allowed, relayReady, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
 
   useEffect(() => {
     if (!joined || !access.allowed || !useTencentClassroom) return undefined

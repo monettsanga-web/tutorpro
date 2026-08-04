@@ -24,7 +24,14 @@ const check = (name, condition, extra = '') => {
 }
 
 async function load(env) {
-  const shim = source.replace(/import\.meta\.env\?\.\[key\]/g, '(globalThis.__ENV || {})[key]')
+  // Stub the Supabase import: this suite covers the pure configuration logic,
+  // and the real client would try to open a websocket.
+  const shim = source
+    .replace(/import\.meta\.env\?\.\[key\]/g, '(globalThis.__ENV || {})[key]')
+    .replace(
+      /^import \{ isSupabaseConfigured, supabase \} from '\.\/supabaseClient\.js'$/m,
+      'const isSupabaseConfigured = false; const supabase = null;',
+    )
   fs.mkdirSync(tmpDir, { recursive: true })
   const file = resolve(tmpDir, `mod-${Math.random().toString(16).slice(2)}.mjs`)
   fs.writeFileSync(file, shim)
@@ -115,6 +122,26 @@ async function load(env) {
   const m = await load({})
   const advice = m.connectionFailureAdvice({ bothPresent: false })
   check('alone -> waiting message', /waiting for the other/i.test(advice.detail))
+}
+
+// --- Cloudflare dynamic credentials ---
+{
+  const m = await load({})
+  check('no Supabase -> dynamic returns nothing', (await m.fetchDynamicIceServers()).length === 0)
+  check('no Supabase -> hasDynamicRelay false', m.hasDynamicRelay() === false)
+  const cfg = await m.buildRtcConfigurationAsync()
+  check('async config falls back to static', cfg.iceServers.length === 4)
+}
+{
+  // Static TURN still works alongside the dynamic path.
+  const m = await load({
+    VITE_CLASSROOM_TURN_URL: 'turn:h:3478',
+    VITE_CLASSROOM_TURN_USERNAME: 'u',
+    VITE_CLASSROOM_TURN_CREDENTIAL: 'c',
+  })
+  const cfg = await m.buildRtcConfigurationAsync()
+  check('async config keeps static TURN', cfg.iceServers.length === 5)
+  check('async + relayOnly honoured', (await m.buildRtcConfigurationAsync({ relayOnly: true })).iceTransportPolicy === 'relay')
 }
 
 fs.rmSync(tmpDir, { recursive: true, force: true })

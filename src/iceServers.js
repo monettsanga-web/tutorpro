@@ -29,6 +29,8 @@
  *   VITE_CLASSROOM_TURN_URL=turn:host:3478,turn:host:80?transport=tcp,turns:host:443?transport=tcp
  */
 
+import { isSupabaseConfigured, supabase } from './supabaseClient.js'
+
 /** STUN only discovers your public address. Kept China-reachable on purpose. */
 const STUN_SERVERS = [
   { urls: 'stun:stun.qq.com:3478' },
@@ -85,6 +87,56 @@ export function buildRtcConfiguration({ relayOnly = false } = {}) {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Cloudflare Realtime TURN (short-lived credentials)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Cloudflare will not accept a fixed username/password: credentials are minted
+ * per session and expire. The `turn-credentials` edge function does the minting
+ * so the long-lived key never reaches the browser.
+ *
+ * Cached in memory for the lifetime of the tab, because a lesson may reconnect
+ * several times and there is no reason to mint fresh credentials each attempt.
+ */
+let cachedDynamic = null
+
+export async function fetchDynamicIceServers() {
+  if (cachedDynamic && cachedDynamic.expiresAt > Date.now()) return cachedDynamic.iceServers
+  if (!isSupabaseConfigured || !supabase) return []
+  try {
+    const { data, error } = await supabase.functions.invoke('turn-credentials', { body: {} })
+    if (error || !data?.configured || !Array.isArray(data.iceServers) || !data.iceServers.length) return []
+    const expiresAt = data.expiresAt ? new Date(data.expiresAt).getTime() : Date.now() + 30 * 60 * 1000
+    cachedDynamic = { iceServers: data.iceServers, expiresAt }
+    return data.iceServers
+  } catch {
+    // Never block a lesson because credentials could not be minted: the direct
+    // peer-to-peer path is still attempted.
+    return []
+  }
+}
+
+/** True once dynamic credentials have been successfully fetched this session. */
+export function hasDynamicRelay() {
+  return Boolean(cachedDynamic && cachedDynamic.expiresAt > Date.now())
+}
+
+/**
+ * Full configuration including any Cloudflare-issued servers.
+ * Falls back to the static configuration when none are available.
+ */
+export async function buildRtcConfigurationAsync({ relayOnly = false } = {}) {
+  const dynamic = await fetchDynamicIceServers()
+  const base = buildRtcConfiguration({ relayOnly })
+  if (!dynamic.length) return base
+  return {
+    ...base,
+    iceServers: [...base.iceServers, ...dynamic],
+    ...(relayOnly ? { iceTransportPolicy: 'relay' } : {}),
+  }
+}
+
 /**
  * Plain-language explanation of a failed connection.
  *
@@ -93,7 +145,7 @@ export function buildRtcConfiguration({ relayOnly = false } = {}) {
  * than an endless spinner.
  */
 export function connectionFailureAdvice({ bothPresent }) {
-  if (!hasTurnRelay()) {
+  if (!hasTurnRelay() && !hasDynamicRelay()) {
     return {
       title: 'Video could not connect',
       detail: bothPresent
