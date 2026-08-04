@@ -41,7 +41,6 @@ import { WEEKDAYS } from './schedule.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import TrustpilotWidget from './TrustpilotWidget.jsx'
-import PromoVideo from './PromoVideo.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -1648,16 +1647,6 @@ export default function App() {
       ) : (
         <main>
           <Hero onBook={openRegistration} />
-          <section className="section promo-section" id="how-it-works-video">
-            <div className="container promo-section__inner">
-              <div className="section-heading section-heading--center">
-                <span className="kicker">See it in action</span>
-                <h2>What a TutorPro lesson looks like.</h2>
-                <p>Under 20 seconds — how one-to-one classes help your child speak with confidence.</p>
-              </div>
-              <PromoVideo lang="en" className="promo-section__video" />
-            </div>
-          </section>
           <Stats />
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />
