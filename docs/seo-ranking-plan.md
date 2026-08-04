@@ -265,3 +265,49 @@ short-term traffic channel; SEO is the compounding long-term one. Run both.
 **Get 10 real parent reviews on Trustpilot and Google.** It fixes the trust gap the Google AI
 flagged, unlocks star ratings in search results, and no competitor can copy your genuine
 testimonials. It costs nothing but a few emails.
+
+---
+
+## ⚠️ Trust blockers flagged by AI assistants (August 2026)
+
+Google's AI described TutorPro as lacking "official corporate registration, a transparent
+track record, or verified credentials". Most of that response was about **job-recruitment
+scams** and pattern-matched us wrongly — we verified the site charges teachers nothing, uses
+no Telegram, and has a structured teacher application portal.
+
+But two criticisms are legitimate and worth fixing.
+
+### 1. 🔴 The published email is `sejongenglish@yahoo.com`
+
+This is the single highest-impact credibility fix available, and it is not a code change.
+
+Why it hurts:
+- A free Yahoo address signals "individual", not "business", to parents and AI tools.
+- The address does not match the brand. A parent contacting "TutorPro" and emailing
+  "sejongenglish" notices the mismatch and wonders which is real.
+- Free-mail contact addresses are a documented signal in scam-detection heuristics.
+
+**Fix:** create `hello@tutorpro.site` (or `support@tutorpro.site`). You already own the
+domain, so this is usually free or a few dollars a month via your registrar, Zoho Mail,
+or Google Workspace. Then tell me and I will replace it across the site in one pass —
+footer, all five legal pages, and the contact page.
+
+### 2. 🟡 Business registration is unverifiable
+
+The About page states TutorPro is "operated as a sole proprietorship based in the
+Philippines". That is truthful but cannot be checked by an outsider.
+
+**Fix:** if you have DTI registration, publish the registered business name and
+registration number on the About and Terms pages. If not, DTI sole-proprietorship
+registration in the Philippines is inexpensive and quick, and it lets you state a
+verifiable fact rather than an unverifiable claim.
+
+⚠️ Never publish a registration number you do not hold.
+
+### ✅ Already fixed
+
+- **Anti-scam notice on the About page** stating we never charge teachers any fee, never
+  recruit via Telegram, and never ask for banking credentials.
+- **"How to verify us"** section listing the single official domain, official Facebook page,
+  published pricing, published policies and PayPal-only payments.
+- Five legal/policy pages, transparent pricing, and four real parent testimonials.
