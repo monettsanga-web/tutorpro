@@ -1,6 +1,7 @@
 import { cloudSyncEnabled, deleteCloudProfile, deleteCloudTeacherAccount, registerCloudProfile, requestCloudPasswordReset, signInCloudProfile, updateCloudPassword, updateCloudProfile } from './cloudProfiles.js'
 import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
 import { readVisitorCountry } from './visitorLocale.js'
+import { attributionSnapshot } from './attribution.js'
 
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
 const LEGACY_ACCOUNTS_KEY = 'tutorpro_accounts_v1'
@@ -369,6 +370,8 @@ export async function registerAccount(details) {
     referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     // Store only the country code estimated from the registration IP — never the IP address itself.
     registrationCountry: readVisitorCountry().toUpperCase(),
+    // Which channel earned this family (Facebook post, referral, search...).
+    attribution: attributionSnapshot(),
     createdAt: new Date().toISOString(),
   }
 

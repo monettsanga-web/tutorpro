@@ -34,6 +34,7 @@ const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ de
 const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { canViewTeacherDirectory, loadSiteSettings, publiclyListedTeachers, subscribeToCloudSiteSettings, subscribeToSiteSettings } from './siteSettings.js'
+import { captureAttribution } from './attribution.js'
 import { getBookings, mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
@@ -1488,6 +1489,10 @@ export default function App() {
     handleHashChange() // Check initial hash
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  // Record which channel sent this visitor (UTM tags / referrer) so the admin
+  // funnel can credit sign-ups to the post or ad that earned them.
+  useEffect(() => { captureAttribution() }, [])
 
   // Website settings the admin controls (currently teacher-directory visibility).
   // Read from cache instantly, then refreshed from Supabase and kept live.
