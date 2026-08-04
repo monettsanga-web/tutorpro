@@ -1,0 +1,312 @@
+/**
+ * Generates the public pricing page for TutorPro Online English.
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * Parents search price directly ("how much are online english classes for kids"),
+ * and hidden pricing is a trust red flag — AI assistants specifically flag schools
+ * that only reveal cost via private chat. Novakid publishes 8 price tiers on its
+ * homepage. TutorPro is CHEAPER than Novakid's entry tier and was not saying so
+ * anywhere a crawler could read.
+ *
+ * ACCURACY IS CRITICAL HERE. Every figure below is computed with the SAME formula
+ * used by the live booking system in src/Dashboards.jsx:
+ *
+ *   weeklySessionRate = sessions <= 3 ? 10 : 8
+ *   planCreditCount   = sessions * (monthly ? 4 : 1)
+ *   planTotal         = credits * rate
+ *
+ * If that pricing logic changes, update PRICING below to match, or the page will
+ * quote prices the checkout does not honour.
+ */
+
+import { writeFile, mkdir } from 'node:fs/promises'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const publicDir = resolve(here, '..', 'public')
+
+const SITE = 'https://www.tutorpro.site'
+const UPDATED = '4 August 2026'
+const MESSENGER = 'https://m.me/526047974195321'
+
+/* Mirrors src/Dashboards.jsx exactly. */
+const MONTHLY_BILLING_WEEKS = 4
+const sessionRate = (sessions) => (Number(sessions) <= 3 ? 10 : 8)
+const creditCount = (plan, sessions) => Number(sessions) * (plan === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
+const planTotal = (plan, sessions) => creditCount(plan, sessions) * sessionRate(sessions)
+
+const WEEKLY_ROWS = [1, 2, 3].map((s) => ({
+  sessions: s,
+  credits: creditCount('weekly', s),
+  rate: sessionRate(s),
+  total: planTotal('weekly', s),
+}))
+
+const MONTHLY_ROWS = [3, 4, 5, 6, 7].map((s) => ({
+  sessions: s,
+  credits: creditCount('monthly', s),
+  rate: sessionRate(s),
+  total: planTotal('monthly', s),
+}))
+
+const STYLE = `
+  :root { color-scheme: dark; --violet:#7048df; --lime:#bce94e; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 15% 5%, rgba(188,233,78,.14), transparent 30%), linear-gradient(135deg,#090510 0%,#25104d 54%,#111827 100%); color:var(--text); line-height:1.65; }
+  a { color: var(--lime); }
+  .container { width:min(940px, calc(100% - 32px)); margin:auto; }
+  header { position:sticky; top:0; z-index:10; backdrop-filter:blur(18px); background:rgba(9,5,16,.74); border-bottom:1px solid var(--line); }
+  nav { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .brand { display:flex; align-items:center; gap:11px; font-weight:950; text-decoration:none; color:#fff; }
+  .brand img { width:42px; height:42px; border-radius:13px; }
+  main { padding:40px 0 70px; }
+  h1 { font-size:clamp(1.9rem,4vw,2.8rem); letter-spacing:-.03em; line-height:1.12; margin:0 0 10px; }
+  h2 { font-size:1.25rem; margin:34px 0 10px; }
+  h3 { font-size:1rem; margin:16px 0 6px; color:var(--lime); }
+  p, li, td { color:var(--muted); }
+  .lede { font-size:1.05rem; color:#e6dff5; }
+  .pill { display:inline-block; border-radius:999px; padding:6px 13px; background:var(--card); border:1px solid var(--line); font-size:.78rem; margin:0 6px 18px 0; color:var(--muted); }
+  .card { border:1px solid var(--line); border-radius:18px; padding:18px 20px; background:var(--card); margin:16px 0; }
+  .card--hero { border-color:rgba(188,233,78,.4); background:linear-gradient(135deg, rgba(188,233,78,.12), rgba(112,72,223,.12)); }
+  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:13px 20px; background:var(--lime); color:#140a29; font-weight:900; text-decoration:none; margin:6px 8px 6px 0; }
+  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.92rem; }
+  th, td { text-align:left; padding:11px 10px; border-bottom:1px solid var(--line); }
+  th { color:#fff; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  tr.best td { background:rgba(188,233,78,.08); color:#eaffb8; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  footer { border-top:1px solid var(--line); padding:26px 0; font-size:.84rem; color:var(--muted); }
+  footer a { margin-right:14px; display:inline-block; }
+  ul { padding-left:20px; }
+  small { color:#9c8fb3; }
+`
+
+const FAQS = [
+  ['How much do online English classes for kids cost?',
+   'At TutorPro Online English, classes cost $8 per 25-minute one-to-one lesson on the Monthly Package (4 or more classes a week), or $10 per class on the Weekly plan (1 to 3 classes a week). The first class is free and no card is required to try it.'],
+  ['Is the first class really free?',
+   'Yes. Every new family can take one free trial class before choosing a plan. It is a real lesson with a real teacher, not a sales call, and there is no obligation to continue.'],
+  ['Do I have to sign a contract?',
+   'No. There is no long-term contract. The Weekly plan is paid weekly and the Monthly Package is billed monthly. You can change plan as your child\u2019s schedule or goals change.'],
+  ['What is the difference between the Weekly plan and the Monthly Package?',
+   'The Weekly plan suits 1 to 3 classes a week at $10 per class, paid weekly. The Monthly Package is for 4 to 7 classes a week at $8 per class, billed over 4 weeks, and includes priority scheduling and a dedicated tutor.'],
+  ['Can I get a refund?',
+   'Unused lesson credits can be refunded within 14 days of purchase. Cancelling a booked lesson at least 12 hours in advance returns the credit in full, and if a lesson fails because of a problem on our side you always get the credit back.'],
+  ['How do I pay?',
+   'Payments are made securely through PayPal in US dollars. We never see or store your card details. Where a local currency amount is shown next to the price it is an approximate guide only.'],
+  ['Are there any hidden fees?',
+   'No. The price per class is the price you pay. There are no registration fees, no materials fees and no platform charges — coursebooks and classroom tools are included.'],
+]
+
+const escapeHtml = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+function buildSchema() {
+  const url = `${SITE}/pricing.html`
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Course',
+        '@id': `${url}#course`,
+        name: 'One-to-One Online English Classes for Kids',
+        description: 'One-to-one online English lessons for children and teenagers, from $8 per 25-minute class. Cambridge and Oxford aligned, with a free first class.',
+        url,
+        provider: { '@type': 'EducationalOrganization', name: 'TutorPro Online English', sameAs: SITE },
+        inLanguage: 'en',
+        // One Offer per real plan tier, matching the tables shown on the page.
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'Weekly plan',
+            category: 'Paid',
+            price: '10.00',
+            priceCurrency: 'USD',
+            description: '1 to 3 classes a week, $10 per 25-minute class, paid weekly.',
+            availability: 'https://schema.org/InStock',
+            url,
+          },
+          {
+            '@type': 'Offer',
+            name: 'Monthly package',
+            category: 'Paid',
+            price: '8.00',
+            priceCurrency: 'USD',
+            description: '4 to 7 classes a week, $8 per 25-minute class, billed monthly over 4 weeks.',
+            availability: 'https://schema.org/InStock',
+            url,
+          },
+        ],
+        hasCourseInstance: [{
+          '@type': 'CourseInstance',
+          courseMode: 'online',
+          courseWorkload: 'PT25M',
+          location: { '@type': 'VirtualLocation', url: SITE },
+          courseSchedule: { '@type': 'Schedule', duration: 'PT25M', repeatFrequency: 'Weekly', repeatCount: 4 },
+          offers: { '@type': 'Offer', category: 'Paid', price: '8.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url },
+        }],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: FAQS.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${url}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: 'Pricing', item: url },
+        ],
+      },
+    ],
+  }
+}
+
+function page() {
+  const url = `${SITE}/pricing.html`
+  const title = 'Pricing — Online English Classes from $8 | TutorPro Online English'
+  const description = 'Transparent pricing for one-to-one online English classes for kids: from $8 per 25-minute lesson, free first class, no contract. Weekly and monthly plans compared.'
+
+  const weeklyRows = WEEKLY_ROWS.map((r) => `
+            <tr>
+              <td>${r.sessions} class${r.sessions > 1 ? 'es' : ''} a week</td>
+              <td>${r.credits} lesson${r.credits > 1 ? 's' : ''}</td>
+              <td>$${r.rate}.00</td>
+              <td><strong>$${r.total}.00 per week</strong></td>
+            </tr>`).join('')
+
+  const monthlyRows = MONTHLY_ROWS.map((r) => `
+            <tr${r.sessions === 4 ? ' class="best"' : ''}>
+              <td>${r.sessions} classes a week</td>
+              <td>${r.credits} lessons</td>
+              <td>$${r.rate}.00</td>
+              <td><strong>$${r.total}.00 per month</strong>${r.sessions === 4 ? ' — best value' : ''}</td>
+            </tr>`).join('')
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#321568" />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="${url}" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/assets/pwa-icon-192.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TutorPro Online English" />
+    <meta property="og:url" content="${url}" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
+    <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
+    <script type="application/ld+json">${JSON.stringify(buildSchema())}</script>
+    <style>${STYLE}</style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <nav>
+          <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+          <a class="btn" href="/">Book a free first class</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <div class="container">
+        <h1>Online English class pricing</h1>
+        <p class="lede">One-to-one lessons from <strong>$8 per 25-minute class</strong>. The first class is free, there is no contract, and every price is published here rather than hidden behind a sales call.</p>
+        <p>
+          <span class="pill">From $8 per class</span>
+          <span class="pill">Free first class</span>
+          <span class="pill">No contract</span>
+          <span class="pill">No hidden fees</span>
+        </p>
+        <p>
+          <a class="btn" href="/">Book a free first class</a>
+          <a class="btn btn--ghost" href="${MESSENGER}" target="_blank" rel="noopener">Ask about pricing</a>
+        </p>
+
+        <div class="card card--hero">
+          <h3>The short version</h3>
+          <p><strong>$10 per class</strong> if your child has 1–3 lessons a week.<br />
+          <strong>$8 per class</strong> if your child has 4 or more lessons a week.<br />
+          Lessons are 25 minutes one-to-one. 50-minute lessons are available for older learners.</p>
+        </div>
+
+        <h2>Weekly plan — 1 to 3 classes a week</h2>
+        <p>Paid weekly. Best if you are starting out, or want to fit lessons around a changing schedule.</p>
+        <table>
+          <tr><th>Frequency</th><th>Lessons</th><th>Per class</th><th>Total</th></tr>${weeklyRows}
+        </table>
+
+        <h2>Monthly package — 4 to 7 classes a week</h2>
+        <p>Billed monthly over 4 weeks, with priority scheduling and a dedicated tutor. This is where the $8 rate applies.</p>
+        <table>
+          <tr><th>Frequency</th><th>Lessons per month</th><th>Per class</th><th>Total</th></tr>${monthlyRows}
+        </table>
+        <p><small>Prices are charged in US dollars through PayPal. Custom schedules of up to 12 classes a week are available — contact us if you need more.</small></p>
+
+        <h2>What is included in every price</h2>
+        <div class="grid">
+          <div class="card"><h3>One-to-one teaching</h3><p>Every lesson is your child and their teacher. No group classes, no shared attention, no waiting for a turn.</p></div>
+          <div class="card"><h3>Coursebooks and materials</h3><p>Cambridge, Oxford and other published series are included. There is nothing extra to buy.</p></div>
+          <div class="card"><h3>Our own classroom</h3><p>No Zoom, no downloads, no separate meeting links. Lessons run in the browser from your dashboard.</p></div>
+          <div class="card"><h3>Written feedback</h3><p>After each class the teacher records what was practised, what went well and what to work on next.</p></div>
+          <div class="card"><h3>Homework and progress tracking</h3><p>Assignments, attendance and progress reports in the parent dashboard.</p></div>
+          <div class="card"><h3>Lesson recordings</h3><p>Teachers can record lessons so parents can watch them back. Recordings stay private to your family.</p></div>
+        </div>
+
+        <h2>How we compare</h2>
+        <p>Most well-known online English schools for children start higher than $8 per lesson, and many move children into group speaking clubs as they progress. Every TutorPro lesson stays one-to-one at every level.</p>
+        <p>We publish our full price list on this page. If you are comparing providers, check three things: the real price per lesson after any introductory discount, whether lessons stay one-to-one, and whether the refund terms are written down anywhere you can read before paying.</p>
+        <p><a href="/online-english-alternatives.html">See how TutorPro compares to Novakid, 51Talk and Preply →</a></p>
+
+        <h2>Refunds and cancellations</h2>
+        <ul>
+          <li>Unused lesson credits can be refunded within <strong>14 days</strong> of purchase.</li>
+          <li>Cancel a booked lesson at least <strong>12 hours</strong> ahead and the credit returns in full.</li>
+          <li>If a lesson fails because of a problem on our side, the credit is <strong>always</strong> returned.</li>
+        </ul>
+        <p>Full details are on our <a href="/refund-policy.html">refund policy</a> page.</p>
+
+        <h2>Pricing questions</h2>
+        ${FAQS.map(([q, a]) => `<div class="card"><h3>${escapeHtml(q)}</h3><p>${escapeHtml(a)}</p></div>`).join('\n        ')}
+
+        <h2>Start with a free class</h2>
+        <p>Every new family gets one free class before paying anything. It is a real lesson with a real teacher — see how your child responds first.</p>
+        <p>
+          <a class="btn" href="/">Book a free first class</a>
+          <a class="btn btn--ghost" href="/english-for-kids-ages-8-11.html">Lessons by age</a>
+        </p>
+        <p><small>Prices last reviewed: ${UPDATED}</small></p>
+      </div>
+    </main>
+    <footer>
+      <div class="container">
+        <a href="/">Home</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/english-for-kids-ages-4-7.html">Ages 4–7</a>
+        <a href="/english-for-kids-ages-8-11.html">Ages 8–11</a>
+        <a href="/english-for-teens-ages-12-16.html">Ages 12–16</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/refund-policy.html">Refunds</a>
+        <p>© ${new Date().getFullYear()} TutorPro Online English. One-to-one online English classes for children and teenagers worldwide.</p>
+      </div>
+    </footer>
+  </body>
+</html>
+`
+}
+
+async function run() {
+  await mkdir(publicDir, { recursive: true })
+  await writeFile(resolve(publicDir, 'pricing.html'), page(), 'utf8')
+  console.log('[pricing] wrote public/pricing.html')
+}
+
+run()

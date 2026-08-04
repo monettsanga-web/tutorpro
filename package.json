@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-age-pages.mjs && vite build && node scripts/prerender-home.mjs",
-    "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && vite build && node scripts/prerender-home.mjs",
+    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && vite build && node scripts/prerender-home.mjs",
+    "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render",
