@@ -364,7 +364,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const useTencentClassroom = teacherClassroom?.platform === 'voov' && isTencentClassroomConfigured()
   const voovFallbackLink = teacherClassroom?.voovLink || ''
   const participantName = account.role === 'student' ? learner?.name : account.fullName || account.parentName || 'Participant'
-  const participantIdRef = useRef(`${account.id}-${crypto.randomUUID().slice(0, 8)}`)
+  // Stable per person AND per booking. Previously this used a fresh random
+  // UUID on every mount, so a refresh, a reconnect or React StrictMode's double
+  // mount each registered as a brand-new participant. Presence counted the
+  // ghosts (a 1-to-1 lesson showing 5 people) and, because count > 1 looked
+  // like "both here", the video handshake kept retrying against people who had
+  // already gone. Supabase presence is keyed on this id, so reusing it means a
+  // rejoin REPLACES the previous entry instead of stacking another one.
+  const participantIdRef = useRef(`${account.id}::${roomBooking.id}`)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const localTencentViewRef = useRef(null)
@@ -687,7 +694,35 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         if (count > 1 && !useTencentClassroom) {
           if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
           else transportRef.current?.send({ type: 'join-request', role: account.role })
+        } else if (count === 1) {
+          // Presence dropped back to just us. Covers the cases where no 'leave'
+          // is ever sent: the other side closed the tab, shut the laptop or
+          // lost connection. Clear their video so it does not sit frozen.
+          setRemoteScreenSharing(false)
+          setRemoteScreenPaused(false)
+          remoteStreamRef.current = null
+          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null
+          if (remoteScreenVideoRef.current) remoteScreenVideoRef.current.srcObject = null
         }
+        return
+      }
+      if (message.type === 'leave') {
+        // The other participant ended the class. Without this the remaining
+        // person kept seeing the last frozen frame of the teacher's camera or
+        // shared screen, which looked like the lesson was still live.
+        setRemoteScreenSharing(false)
+        setRemoteScreenPaused(false)
+        setParticipantCount(1)
+        setConnectionStatus('disconnected')
+        remoteStreamRef.current = null
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null
+        if (remoteScreenVideoRef.current) remoteScreenVideoRef.current.srcObject = null
+        // Drop the peer so a later rejoin negotiates cleanly instead of
+        // resuming a half-dead connection.
+        peerRef.current?.close()
+        peerRef.current = null
+        pendingIceRef.current = []
+        offerStartedAtRef.current = 0
         return
       }
       if (message.type === 'teacher-ready' && account.role !== 'teacher' && !useTencentClassroom) {
@@ -1418,9 +1453,18 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     localStreamRef.current?.getTracks().forEach((track) => track.stop())
     cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
     screenStreamRef.current?.getTracks().forEach((track) => track.stop())
-    transportRef.current?.send({ type: 'leave' })
-    transportRef.current?.close()
-    peerRef.current?.close()
+    // Send the departure, then give it a moment to flush. Closing the
+    // transport in the same tick often discarded the message, so the other
+    // participant was never told and sat looking at a frozen video tile.
+    const transport = transportRef.current
+    const peer = peerRef.current
+    transport?.send({ type: 'leave' })
+    transportRef.current = null
+    peerRef.current = null
+    window.setTimeout(() => {
+      try { transport?.close() } catch { /* Already closed. */ }
+      try { peer?.close() } catch { /* Already closed. */ }
+    }, 250)
     document.body.classList.remove('classroom-active')
     onExit()
   }

@@ -8,6 +8,9 @@ const DURABLE_SIGNAL_TYPES = new Set([
   'annotation-undo-clear', 'pointer-permission', 'object-select', 'presenter-url',
   'classroom-file-storage', 'courseware-state', 'courseware-reward', 'document-view-state',
   'student-reaction', 'student-reaction-clear', 'recording-state', 'teacher-present',
+  // 'leave' must be durable: if it is dropped, the remaining participant keeps
+  // staring at a frozen video tile believing the lesson is still running.
+  'leave',
 ])
 
 function channelKey(roomId, token) {
@@ -223,7 +226,14 @@ export function createClassroomTransport({ bookingId, roomId, token, participant
       socket?.close()
       localChannel?.close()
       if (databasePollTimer) window.clearInterval(databasePollTimer)
-      if (realtimeChannel && supabase) supabase.removeChannel(realtimeChannel)
+      if (realtimeChannel && supabase) {
+        // Untrack first so the other side sees the departure immediately.
+        // removeChannel alone leaves the presence entry until the server times
+        // it out (tens of seconds), during which the remaining participant is
+        // still told the room is full and keeps retrying the handshake.
+        try { realtimeChannel.untrack() } catch { /* Channel already torn down. */ }
+        supabase.removeChannel(realtimeChannel)
+      }
       if (databaseChannel && supabase) supabase.removeChannel(databaseChannel)
     },
     mode: signalingUrl ? 'websocket' : supabase ? 'supabase-hybrid' : 'local',
