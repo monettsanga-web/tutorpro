@@ -35,7 +35,7 @@ const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ de
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { canViewTeacherDirectory, loadSiteSettings, publiclyListedTeachers, subscribeToCloudSiteSettings, subscribeToSiteSettings } from './siteSettings.js'
 import { captureAttribution } from './attribution.js'
-import { clearHashRoute } from './hashRoute.js'
+import { clearHashRoute, readHashRoute } from './hashRoute.js'
 import { getBookings, mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
@@ -1517,6 +1517,33 @@ export default function App() {
     initializePlatform()
     return getCurrentAccount()
   })
+
+  // Reopen the dashboard the URL points at (#/admin/funnel) after a refresh.
+  // Previously the session was restored but activePortal stayed null, so a
+  // logged-in user was dropped back on the public homepage on every reload.
+  //
+  // This must run AFTER currentAccount, because that initialiser is what calls
+  // initializePlatform() and migrates stored accounts. Reading the session any
+  // earlier returns null and the dashboard never reopens.
+  //
+  // The requested role is only honoured when it matches the signed-in
+  // account's own role, so editing the hash cannot escalate a student to admin.
+  useEffect(() => {
+    if (activePortal || !currentAccount) return
+    const route = readHashRoute()
+    if (!route) return
+    const role = String(currentAccount.role || 'student').toLowerCase()
+    const wanted = route.role === 'parent' ? 'student' : route.role
+    // setState in an effect is deliberate here and cannot be hoisted into
+    // useState: this must run AFTER initializePlatform(), which only happens
+    // inside the currentAccount initialiser above. Reading the session any
+    // earlier returns null and the dashboard silently fails to reopen.
+    // It runs at most once per load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (wanted === role) setActivePortal(role)
+    else clearHashRoute()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAccount])
   void teacherVersion
 
   // Admin setting: public / parents-only / hidden. Teachers and admins always
