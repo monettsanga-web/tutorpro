@@ -96,6 +96,19 @@
       footer{border-top:1px solid var(--line);padding:24px 0;font-size:.84rem;color:var(--muted)}
       footer a{margin-right:14px;display:inline-block}
       ul{padding-left:20px}
+      .promo{position:relative;width:100%;margin:6px 0 20px;border-radius:20px;overflow:hidden;background:#160b2d}
+      .promo__poster{display:block;width:100%;padding:0;border:0;cursor:pointer;background:#160b2d;aspect-ratio:16/9}
+      .promo__poster img{display:block;width:100%;height:100%;object-fit:cover}
+      .promo__scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,5,16,.18),rgba(9,5,16,.72))}
+      .promo__cta{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:6px;color:#fff;text-align:center;padding:16px}
+      .promo__play{display:grid;width:60px;height:60px;place-items:center;margin-bottom:6px;border-radius:50%;background:var(--lime);color:#160b2d;font-size:1.3rem;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:transform .16s ease}
+      .promo__poster:hover .promo__play{transform:scale(1.08)}
+      .promo__cta strong{font-size:1rem;font-weight:900}
+      .promo__cta small{color:rgba(255,255,255,.8);font-size:.8rem}
+      .promo video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+      .promo__bar{display:flex;gap:8px;padding:8px;background:#160b2d}
+      .promo__bar button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:7px 13px;background:transparent;color:#e2e8f0;font-size:.76rem;font-weight:700;cursor:pointer}
+      .promo__bar button:hover{border-color:var(--lime);color:#eaffb8}
     </style>
   </head>
   <body>
@@ -122,6 +135,23 @@
           <a class="btn" href="/">첫 수업 무료로 신청하기</a>
           <a class="btn btn--ghost" href="https://m.me/526047974195321" target="_blank" rel="noopener">상담 문의하기</a>
         </p>
+
+        <!--
+          Poster-first promo video. The 3.3 MB WebM is only fetched when the
+          parent taps play, so it costs nothing on page load or mobile data.
+          Narration is a separate MP3 because the encoder cannot mux audio.
+        -->
+        <div class="promo" id="promo">
+          <button class="promo__poster" id="promoPlay" type="button" aria-label="소개 영상 재생">
+            <img src="/assets/tutorpro-hero.webp" alt="" loading="lazy" />
+            <span class="promo__scrim"></span>
+            <span class="promo__cta">
+              <span class="promo__play" aria-hidden="true">&#9654;</span>
+              <strong>소개 영상 보기</strong>
+              <small>16초 · 첫 수업 무료</small>
+            </span>
+          </button>
+        </div>
 
         <h2>수업료</h2>
         <div class="card">
@@ -187,5 +217,52 @@
         <p>© 2026 TutorPro Online English · 필리핀 통상산업부(DTI) 등록번호 5274092 · 어린이·청소년 1:1 온라인 영어 수업</p>
       </div>
     </footer>
+    <script>
+      (function () {
+        var wrap = document.getElementById('promo');
+        var trigger = document.getElementById('promoPlay');
+        if (!wrap || !trigger) return;
+
+        trigger.addEventListener('click', function () {
+          var muted = false;
+          wrap.innerHTML =
+            '<video id="promoVid" src="/assets/tutorpro-promo-ko.webm" controls playsinline ' +
+            'aria-label="TutorPro 온라인 영어 소개 영상"></video>' +
+            '<audio id="promoAud" src="/assets/tutorpro-promo-ko.mp3" preload="auto"></audio>' +
+            '<div class="promo__bar">' +
+            '<button type="button" id="promoMute">음소거</button>' +
+            '<button type="button" id="promoClose">닫기</button>' +
+            '</div>';
+
+          var video = document.getElementById('promoVid');
+          var audio = document.getElementById('promoAud');
+          var muteBtn = document.getElementById('promoMute');
+
+          video.play().catch(function () {});
+          audio.play().catch(function () {});
+
+          // Keep the narration aligned if the viewer scrubs.
+          video.addEventListener('seeked', function () {
+            if (!muted) audio.currentTime = video.currentTime;
+          });
+          video.addEventListener('pause', function () { audio.pause(); });
+          video.addEventListener('play', function () {
+            if (!muted) { audio.currentTime = video.currentTime; audio.play().catch(function () {}); }
+          });
+
+          muteBtn.addEventListener('click', function () {
+            muted = !muted;
+            muteBtn.textContent = muted ? '소리 켜기' : '음소거';
+            if (muted) { audio.pause(); }
+            else { audio.currentTime = video.currentTime; audio.play().catch(function () {}); }
+          });
+
+          document.getElementById('promoClose').addEventListener('click', function () {
+            video.pause(); audio.pause();
+            window.location.reload();
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
