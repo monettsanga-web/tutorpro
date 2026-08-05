@@ -10087,3 +10087,24 @@ a.feedback-resource-detail:hover strong {
 .admin-welcome > div > p {
   max-width: 76ch;
 }
+
+/* Admin → Announcements: who can actually receive an email.
+   A campaign only reaches accounts holding a real email address, so this is
+   shown before sending rather than discovered afterwards. */
+.announcement-reach { margin-bottom: 18px; }
+.announcement-reach--warn { border: 1px solid #f3cfa2; background: #fff8ef; }
+.announcement-reach__grid {
+  display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.announcement-reach__grid > div {
+  padding: 13px 15px; border: 1px solid var(--portal-line); border-radius: 13px; background: #fff;
+}
+.announcement-reach__grid strong { display: block; color: var(--portal-navy); font-size: 1.45rem; font-weight: 900; }
+.announcement-reach__grid span { color: var(--portal-muted); font-size: .82rem; font-weight: 650; }
+.announcement-reach__warn {
+  margin: 13px 0 0; padding: 12px 14px; border-radius: 12px;
+  background: #fff4e8; color: #8a4d09; font-size: .84rem; line-height: 1.55; font-weight: 650;
+}
+.announcement-reach__note {
+  margin: 12px 0 0; color: var(--portal-muted); font-size: .82rem; line-height: 1.55; font-weight: 550;
+}

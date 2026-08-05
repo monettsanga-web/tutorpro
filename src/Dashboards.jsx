@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   ArrowRight,
@@ -4630,12 +4630,43 @@ export function AdminTeacherBookingGroups({ bookings, teachers, onStatusChange, 
 }
 
 
+/**
+ * How many people can an announcement actually reach?
+ *
+ * A campaign is only delivered to accounts that hold a real email address.
+ * Families who registered with a phone number or a WeChat ID have none, so an
+ * announcement silently reaches nobody. This is computed from the same accounts
+ * the dashboard already has, and shown BEFORE sending.
+ */
+function announcementReach() {
+  const hasEmail = (account) => {
+    const candidates = [account?.email, account?.loginId]
+    return candidates.some((value) => typeof value === 'string' && value.includes('@'))
+  }
+  const families = getAccounts().filter((account) => {
+    const role = String(account.role || 'student').toLowerCase()
+    return (role === 'student' || role === 'parent') && account.status !== 'removed'
+  })
+  const teachers = getAccounts('teacher').filter((account) => account.status !== 'removed')
+  const reachableFamilies = families.filter(hasEmail)
+  const reachableTeachers = teachers.filter(hasEmail)
+  return {
+    families: families.length,
+    reachableFamilies: reachableFamilies.length,
+    unreachableFamilies: families.filter((account) => !hasEmail(account)),
+    teachers: teachers.length,
+    reachableTeachers: reachableTeachers.length,
+    unreachableTeachers: teachers.filter((account) => !hasEmail(account)),
+  }
+}
+
 export function AdminAnnouncementsPanel() {
   const [target, setTarget] = useState('ALL')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [campaignLog, setCampaignLog] = useState(readCampaignLog)
+  const reach = useMemo(() => announcementReach(), [])
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -4734,6 +4765,42 @@ export function AdminAnnouncementsPanel() {
     <div className="portal-view marketing-view">
       <div className="portal-page-heading"><div><span className="portal-kicker">Marketing automation</span><h1>Email campaigns & announcements</h1><p>Use ready-made campaign templates for booking reminders, payments, homework, referrals, feedback and reactivation.</p></div></div>
       <div className="portal-stat-grid marketing-stat-grid"><article><span className="stat-icon stat-icon--blue"><Bell size={21} /></span><div><small>Total campaigns</small><strong>{stats.total}</strong><em>Logged locally</em></div></article><article><span className="stat-icon stat-icon--green"><GraduationCap size={21} /></span><div><small>Parent/student</small><strong>{stats.student}</strong><em>Student audience</em></div></article><article><span className="stat-icon stat-icon--orange"><UserCheck size={21} /></span><div><small>Teacher</small><strong>{stats.teacher}</strong><em>Teacher audience</em></div></article><article><span className="stat-icon stat-icon--gold"><Users size={21} /></span><div><small>All users</small><strong>{stats.all}</strong><em>Whole community</em></div></article></div>
+      <section className={`portal-card announcement-reach announcement-reach--${reach.reachableFamilies ? 'ok' : 'warn'}`}>
+        <div className="portal-card__heading portal-card__heading--small">
+          <div><span className="portal-kicker">Before you send</span><h2>Who can actually receive an email</h2></div>
+        </div>
+        <div className="announcement-reach__grid">
+          <div>
+            <strong>{reach.reachableFamilies} of {reach.families}</strong>
+            <span>Families reachable by email</span>
+          </div>
+          <div>
+            <strong>{reach.reachableTeachers} of {reach.teachers}</strong>
+            <span>Teachers reachable by email</span>
+          </div>
+        </div>
+        {reach.reachableFamilies === 0 && reach.families > 0 && (
+          <p className="announcement-reach__warn">
+            No family account has an email address, so an email announcement would reach nobody.
+            Those families registered with a phone number or a WeChat ID. The dashboard
+            announcement still reaches them when they log in.
+          </p>
+        )}
+        {reach.families === 0 && (
+          <p className="announcement-reach__warn">
+            No family accounts yet. Announcements will start working once parents register.
+          </p>
+        )}
+        {reach.unreachableFamilies.length > 0 && reach.reachableFamilies > 0 && (
+          <p className="announcement-reach__note">
+            {reach.unreachableFamilies.length} famil{reach.unreachableFamilies.length === 1 ? 'y has' : 'ies have'} no
+            email address and will only see this on their dashboard:{' '}
+            {reach.unreachableFamilies.slice(0, 5).map((account) => displayName(account)).join(', ')}
+            {reach.unreachableFamilies.length > 5 ? ` +${reach.unreachableFamilies.length - 5} more` : ''}.
+          </p>
+        )}
+      </section>
+
       <section className="portal-card marketing-template-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Campaign templates</span><h2>Choose a ready-made automation message</h2></div></div><div className="marketing-template-grid">{MARKETING_TEMPLATES.map((template) => <button key={template.id} type="button" className={selectedTemplateId === template.id ? 'active' : ''} onClick={() => applyMarketingTemplate(template.id)}><strong>{template.name}</strong><span>{template.audience}</span></button>)}</div></section>
       <section className="portal-card marketing-compose-card">
         <form onSubmit={handleSendAnnouncement}>
