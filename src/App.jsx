@@ -1425,6 +1425,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
             <div>
               <h3>Company</h3>
               <a href="/about.html">About us</a>
+              <a href="/is-tutorpro-legitimate.html">Are we legitimate?</a>
               <a href="/contact.html">Contact</a>
               <a href="/privacy-policy.html">Privacy policy</a>
               <a href="/terms.html">Terms of service</a>

@@ -3902,10 +3902,16 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
                     body: {
                       subject: "Message from TutorPro Administration",
                       body: bodyText.trim(),
-                      recipientEmail: teacher?.email || teacher?.loginId
+                      recipientEmail: (teacher?.email || teacher?.loginId || '').includes('@')
+                        ? (teacher?.email || teacher?.loginId)
+                        : ''
                     }
                   });
                   if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send email');
+                  // Do not claim success when nothing was actually delivered.
+                  if (Number(data?.recipients) === 0) {
+                    throw new Error(`${teacher?.fullName || 'This teacher'} has no email address on file, so nothing was sent.`);
+                  }
                   alert(`Message successfully emailed to ${teacher?.fullName}!`);
                 } catch(err) {
                   alert("Failed to send message: " + err.message);
@@ -4695,7 +4701,18 @@ export function AdminAnnouncementsPanel() {
         },
       })
       if (invokeError || data?.error) throw new Error(invokeError?.message || data?.error || 'Failed to send bulk announcement')
-      const recipients = data?.recipients || 0
+      const recipients = Number(data?.recipients) || 0
+      // Zero recipients previously still reported a cheerful success, so an
+      // announcement that reached nobody looked like it had been delivered.
+      // Surface it plainly instead: almost always it means no family account
+      // has a usable email address yet.
+      if (!recipients) {
+        throw new Error(
+          'Nobody received this announcement — no matching account has a usable email address. '
+          + 'Check that your families registered with an email (not a phone number or WeChat ID), '
+          + 'then try again. It has NOT been sent.',
+        )
+      }
 
       // Also publish it inside the dashboard, where it translates live from
       // the reader's current IP language.
