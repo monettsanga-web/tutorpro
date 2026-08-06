@@ -10136,3 +10136,13 @@ a.feedback-resource-detail:hover strong {
 .sync-health small { display: block; margin-top: 3px; font-size: .83rem; line-height: 1.55; font-weight: 600; }
 .sync-health--error small { color: #9c4038; }
 .sync-health--warn small { color: #9a6524; }
+
+/* Manual re-upload for work stranded on a disconnected device. */
+.teacher-resync-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+  margin-bottom: 16px; border: 1px solid #d8cef5; background: #f8f6fe;
+}
+.teacher-resync-card strong { display: block; color: var(--portal-navy); font-size: .95rem; font-weight: 850; }
+.teacher-resync-card small { display: block; margin-top: 3px; max-width: 56ch; color: var(--portal-muted); font-size: .81rem; line-height: 1.5; font-weight: 550; }
+.teacher-resync-card__action { display: grid; gap: 7px; justify-items: end; }
+.teacher-resync-card__result { color: #24632a !important; font-weight: 700 !important; text-align: right; }

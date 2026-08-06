@@ -2896,6 +2896,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
 
   return (
     <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
+      <SyncHealthBanner account={account} />
       <div className="family-student-switcher">
         <div><span>Learning as</span>{learners.map((item) => <button className={item.id === learner.id ? 'active' : ''} key={item.id} onClick={() => chooseLearner(item.id)}><ProfilePhoto accountId={`${account.id}-${item.id}`} name={item.name} refreshKey={mediaVersion} className="learner-tab-photo" /><span>{item.name}<small className={account.status === 'suspended' || item.accessStatus === 'suspended' ? 'access-mini access-mini--suspended' : 'access-mini access-mini--active'}>{account.status === 'suspended' || item.accessStatus === 'suspended' ? 'suspended' : 'active'}</small></span></button>)}</div>
         {learners.length < 3 && <button className="add-student-button" onClick={() => setShowAddStudent(true)}><Plus size={15} /> Add student <small>{learners.length}/3</small></button>}
@@ -3434,6 +3435,34 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     refresh()
   }
 
+  const [resyncState, setResyncState] = useState('')
+
+  /**
+   * Re-upload every lesson this teacher owns.
+   *
+   * Anything saved while this device had no Supabase session was rejected by
+   * the database and exists here only. Once the session is working again there
+   * is otherwise no trigger to send it, so the teacher would have to re-type
+   * feedback they already wrote. This pushes the local copies up.
+   */
+  const resyncEverything = async () => {
+    setResyncState('working')
+    const mine = getBookings({ teacherId: account.id })
+    let sent = 0
+    let failed = 0
+    for (const booking of mine) {
+      try {
+        await withTimeout(syncBookingNow(booking), 12000, 'timeout')
+        sent += 1
+      } catch {
+        failed += 1
+      }
+    }
+    setResyncState(failed
+      ? `Uploaded ${sent}, but ${failed} failed. Check the connection banner above and try again.`
+      : `Uploaded ${sent} ${sent === 1 ? 'lesson' : 'lessons'}. Your other devices will show them within a few seconds.`)
+  }
+
   const finishFeedback = (wasNewCompletion) => {
     if (wasNewCompletion && feedbackBooking) recordCompletedLesson(feedbackBooking)
     // Saving feedback also marks the lesson completed. The feedback itself is
@@ -3554,6 +3583,19 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'bookings' && (
         <div className="portal-view">
           <div className="portal-page-heading teacher-bookings-heading"><div><span className="portal-kicker">Lesson management</span><h1>Bookings</h1><p>Keep upcoming, ongoing, completed, absent and cancelled classes clearly separated.</p></div><div className="teacher-booking-view-toggle" role="group" aria-label="Choose booking view"><button type="button" className={bookingView === 'list' ? 'active' : ''} onClick={() => setBookingView('list')}><ClipboardCheck size={15} /> List view</button><button type="button" className={bookingView === 'calendar' ? 'active' : ''} onClick={() => setBookingView('calendar')}><CalendarDays size={15} /> Calendar view</button></div></div>
+          <section className="portal-card teacher-resync-card">
+            <div>
+              <span className="portal-kicker">Not showing on your other devices?</span>
+              <strong>Re-upload everything from this computer</strong>
+              <small>Feedback or statuses saved while this device was disconnected stay here until they are uploaded. This sends them all again. Safe to run any time.</small>
+            </div>
+            <div className="teacher-resync-card__action">
+              <button type="button" className="portal-secondary-button" onClick={resyncEverything} disabled={resyncState === 'working'}>
+                <CloudUpload size={16} /> {resyncState === 'working' ? 'Uploading…' : 'Re-upload my lessons'}
+              </button>
+              {resyncState && resyncState !== 'working' && <small className="teacher-resync-card__result">{resyncState}</small>}
+            </div>
+          </section>
           <section className="portal-card teacher-booking-status-card"><div><span className="portal-kicker">Class status</span><strong>Choose which bookings to show</strong></div><div className="booking-status-filters teacher-booking-status-filters" role="group" aria-label="Filter teacher bookings by status">{BOOKING_STATUS_OPTIONS.map((option) => <button type="button" key={option.id} className={`booking-status-filter booking-status-filter--${option.id} ${bookingStatusFilter === option.id ? 'active' : ''}`} onClick={() => setBookingStatusFilter(option.id)}><span>{option.label}</span><strong>{bookingStatusCount(option.id)}</strong></button>)}</div></section>
           {bookingView === 'list' ? <section className="portal-card lessons-list-card">
             {filteredBookings.length ? filteredBookings.map((booking) => {
@@ -5560,10 +5602,10 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
+      <SyncHealthBanner account={account} />
       {adminActionError && <div className="portal-error admin-action-error" role="alert">{adminActionError}</div>}
       {active === 'overview' && (
         <div className="portal-view">
-          <SyncHealthBanner account={account} />
           <section className="admin-welcome"><div><span className="portal-kicker">TutorPro Online English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
           {cloudError && <div className="portal-error admin-cloud-error" role="alert">{cloudError} Check the Supabase setup and administrator membership.</div>}
           <div className="portal-stat-grid">
