@@ -10114,3 +10114,25 @@ a.feedback-resource-detail:hover strong {
    tap-for-options modes rather than being replaced by the options hint. */
 .schedule-feedback-done { color: #1f7a35 !important; }
 .schedule-feedback-missing { color: #b4610a !important; }
+
+/* Warns when this device cannot reach the shared database. Without a Supabase
+   session every cloud write is rejected while the app still saves locally, so
+   the dashboard looks normal and the teacher's work never leaves the machine. */
+.sync-health {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 18px; padding: 14px 16px; border-radius: 15px;
+}
+.sync-health--error { border: 1px solid #f0b8ae; background: #fff6f3; }
+.sync-health--warn { border: 1px solid #f3cfa2; background: #fff8ef; }
+.sync-health > span {
+  display: grid; place-items: center; width: 38px; height: 38px; flex: none;
+  border-radius: 11px; background: rgba(255,255,255,.7);
+}
+.sync-health--error > span { color: #b4342f; }
+.sync-health--warn > span { color: #b4610a; }
+.sync-health strong { display: block; font-size: .93rem; font-weight: 850; }
+.sync-health--error strong { color: #8a2f28; }
+.sync-health--warn strong { color: #8a4d09; }
+.sync-health small { display: block; margin-top: 3px; font-size: .83rem; line-height: 1.55; font-weight: 600; }
+.sync-health--error small { color: #9c4038; }
+.sync-health--warn small { color: #9a6524; }

@@ -99,6 +99,7 @@ import { onHashRouteChange, readHashRoute, writeHashRoute } from './hashRoute.js
 import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
+import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
@@ -683,6 +684,38 @@ function useHashSection(role, fallback, enabled = true, validSections = null) {
   }, [role, enabled])
 
   return [active, setActive]
+}
+
+/**
+ * Warns when this device cannot write to the shared database.
+ *
+ * Without a Supabase session every cloud write is silently rejected by
+ * row-level security while the app still saves locally, so the dashboard looks
+ * completely normal and the teacher has no way to know their work is stranded.
+ */
+function SyncHealthBanner({ account }) {
+  const [health, setHealth] = useState(null)
+
+  useEffect(() => {
+    let active = true
+    const run = () => { checkSyncHealth(account).then((result) => { if (active) setHealth(result) }) }
+    run()
+    // Re-check periodically so a reconnect clears the warning on its own.
+    const timer = window.setInterval(run, 30000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [account])
+
+  const message = syncHealthMessage(health)
+  if (!message) return null
+  return (
+    <div className={`sync-health sync-health--${message.tone}`} role="status">
+      <span><CloudUpload size={18} /></span>
+      <div>
+        <strong>{message.title}</strong>
+        <small>{message.detail}</small>
+      </div>
+    </div>
+  )
 }
 
 function PortalShell({ account, role, active, onActive, onHome, onLogout, navItems, children, adminPreview = false, mediaVersion = 0 }) {
@@ -3469,6 +3502,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
+      <SyncHealthBanner account={account} />
       {account.status !== 'approved' && <div className={`approval-banner approval-banner--${account.status}`}><ShieldCheck size={21} /><div><strong>{account.status === 'pending' ? 'Profile under review' : `Account ${account.status}`}</strong><span>{account.status === 'pending' ? 'An administrator will review your profile and credentials before students can book you.' : 'Contact the TutorPro Online English administrator if you need help.'}</span></div></div>}
 
       {active === 'overview' && (
@@ -5529,6 +5563,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {adminActionError && <div className="portal-error admin-action-error" role="alert">{adminActionError}</div>}
       {active === 'overview' && (
         <div className="portal-view">
+          <SyncHealthBanner account={account} />
           <section className="admin-welcome"><div><span className="portal-kicker">TutorPro Online English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
           {cloudError && <div className="portal-error admin-cloud-error" role="alert">{cloudError} Check the Supabase setup and administrator membership.</div>}
           <div className="portal-stat-grid">
