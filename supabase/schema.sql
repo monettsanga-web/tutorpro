@@ -157,11 +157,17 @@ create policy "Participants can read bookings"
     or public.is_tutorpro_admin()
   );
 
+-- Teachers must be allowed to insert too. PostgreSQL checks the INSERT policy
+-- for every row an upsert proposes, even when the row already exists and the
+-- UPDATE path is taken, so leaving teachers out of this rule silently rejected
+-- every piece of teacher feedback and every 'completed' status.
 drop policy if exists "Students and admins can create bookings" on public.bookings;
-create policy "Students and admins can create bookings"
+drop policy if exists "Participants and admins can create bookings" on public.bookings;
+create policy "Participants and admins can create bookings"
   on public.bookings for insert
   with check (
     student_id = auth.uid()::text
+    or teacher_id = auth.uid()::text
     or public.is_tutorpro_admin()
   );
 

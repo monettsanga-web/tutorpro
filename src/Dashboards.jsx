@@ -3471,6 +3471,16 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     // A rejection on every single lesson is a permissions or session problem,
     // never bad luck, so say so plainly rather than suggesting a retry.
     const everyOneFailed = sent === 0
+    const permissionProblem = /not allowed|row-level security|row level security|fix_booking_permissions/i.test(firstError)
+    if (everyOneFailed && permissionProblem) {
+      // The database is refusing on permissions, not connectivity. Telling the
+      // teacher to log in again wastes their time — nothing they can do at the
+      // keyboard changes it; an administrator has to adjust the database rule.
+      setResyncState(`None of your ${failed} lessons could be uploaded because the shared database is refusing them on permissions, not because of your connection. `
+        + 'Your work is safe on this computer. An administrator needs to run supabase/fix_booking_permissions.sql once in Supabase, then press this button again. '
+        + `Exact message from the database: "${firstError}"`)
+      return
+    }
     setResyncState(everyOneFailed
       ? `Nothing could be uploaded. The shared database refused all ${failed} lessons: "${firstError}" — this normally means this device is signed in locally only. Log out, log back in, and try again.`
       : `Uploaded ${sent}, but ${failed} failed: "${firstError}"`)

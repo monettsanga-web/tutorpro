@@ -43,6 +43,45 @@ function isDuplicateKeyError(error) {
   return code === '23505' || message.includes('duplicate key value') || message.includes('already exists')
 }
 
+/** A row-level-security refusal, as opposed to a network or data problem. */
+export function isPermissionError(error) {
+  if (!error) return false
+  const code = String(error.code || '')
+  const message = String(error.message || '').toLowerCase()
+  return code === '42501'
+    || message.includes('row-level security')
+    || message.includes('row level security')
+    || message.includes('violates row-level security policy')
+}
+
+const PERMISSION_HELP = 'The shared database refused the change because the account is not allowed to add bookings. '
+  + 'An administrator must run supabase/fix_booking_permissions.sql in the Supabase SQL editor once — '
+  + 'after that this uploads normally and nothing is lost.'
+
+/**
+ * Save one booking to the shared database.
+ *
+ * WHY THIS IS AN UPDATE FIRST AND NOT AN UPSERT
+ * ---------------------------------------------
+ * This used to be a single `.upsert()`, which PostgREST sends as
+ * `INSERT ... ON CONFLICT DO UPDATE`. PostgreSQL checks the table's INSERT
+ * policy WITH CHECK expression for every row proposed for insertion —
+ * *regardless of whether the row is actually inserted or takes the update
+ * path*. The bookings INSERT policy only ever allowed the student:
+ *
+ *     with check (student_id = auth.uid()::text or public.is_tutorpro_admin())
+ *
+ * A teacher saving feedback on an existing lesson therefore failed the INSERT
+ * check every single time, even though the row already existed and the UPDATE
+ * policy explicitly permits teachers. Every teacher write was rejected, 100%
+ * of the time, while the session, the account id and the network were all
+ * perfectly healthy — the reported "Uploaded 0, but 159 failed".
+ *
+ * Existing lessons now take a plain UPDATE, which is governed only by the
+ * UPDATE policy (student OR teacher OR admin). Insert is attempted only when
+ * no row was updated, so the INSERT policy is consulted just for genuinely new
+ * bookings, which are created by students and admins anyway.
+ */
 async function writeCloudBooking(booking) {
   const payload = {
     id: booking.id,
@@ -53,30 +92,42 @@ async function writeCloudBooking(booking) {
     updated_at: new Date().toISOString(),
   }
 
-  // A single atomic upsert removes the select-then-insert race entirely.
-  const { data, error } = await supabase
+  const { data: updated, error: updateError } = await supabase
     .from('bookings')
-    .upsert(payload, { onConflict: 'id' })
+    .update(payload)
+    .eq('id', booking.id)
     .select('*')
     .maybeSingle()
 
-  if (!error) return data ? rowToBooking(data) : { ...booking, cloudBooking: true }
+  if (updateError && !isDuplicateKeyError(updateError)) {
+    throw new Error(isPermissionError(updateError)
+      ? `Shared booking update failed: ${PERMISSION_HELP} (${updateError.message})`
+      : `Shared booking update failed: ${updateError.message}`)
+  }
+  // A row came back, so the lesson already existed and has been saved.
+  if (updated) return rowToBooking(updated)
 
-  // The row was inserted by a parallel write between our upsert and its
-  // conflict check, so fall back to a plain update of the existing row.
-  if (isDuplicateKeyError(error)) {
-    const { data: updated, error: updateError } = await supabase
-      .from('bookings')
-      .update(payload)
-      .eq('id', booking.id)
-      .select('*')
-      .maybeSingle()
-    if (!updateError) return updated ? rowToBooking(updated) : { ...booking, cloudBooking: true }
-    if (isDuplicateKeyError(updateError)) return { ...booking, cloudBooking: true }
-    throw new Error(`Shared booking update failed: ${updateError.message}`)
+  // Nothing was updated: either this lesson is new, or row-level security hid
+  // the existing row from this account. Try to create it.
+  const { data: inserted, error: insertError } = await supabase
+    .from('bookings')
+    .insert(payload)
+    .select('*')
+    .maybeSingle()
+
+  if (!insertError) return inserted ? rowToBooking(inserted) : { ...booking, cloudBooking: true }
+
+  // The row exists but the update matched nothing, which means this account
+  // cannot see it. Saying "duplicate key" would hide the real problem.
+  if (isDuplicateKeyError(insertError)) {
+    throw new Error('Shared booking update failed: this lesson already exists in the shared database '
+      + 'but this account is not allowed to change it. Check that you are signed in as the teacher or '
+      + 'the parent for this lesson.')
   }
 
-  throw new Error(`Shared booking update failed: ${error.message}`)
+  throw new Error(isPermissionError(insertError)
+    ? `Shared booking update failed: ${PERMISSION_HELP} (${insertError.message})`
+    : `Shared booking update failed: ${insertError.message}`)
 }
 
 export async function syncCloudBooking(booking) {
