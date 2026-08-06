@@ -12,7 +12,7 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo",
     "test:core": "node scripts/test-core.mjs",
     "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
@@ -34,7 +34,8 @@
     "test:upload": "node scripts/test-feedback-upload.mjs",
     "test:status": "node scripts/test-status-sync.mjs",
     "test:synchealth": "node scripts/test-sync-health.mjs",
-    "test:writepolicy": "node scripts/test-booking-write-policy.mjs"
+    "test:writepolicy": "node scripts/test-booking-write-policy.mjs",
+    "test:chinavideo": "node scripts/test-china-video.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

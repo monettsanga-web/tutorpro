@@ -5564,3 +5564,42 @@ body {
 .parent-review figcaption strong { color: #321568; font-size: 1.09rem; font-weight: 800; }
 .parent-review figcaption small { color: #7b8794; font-size: 0.978rem; font-weight: 600; }
 
+
+/* A real class clip, hosted on our own domain so it plays inside mainland
+   China where YouTube and its embedded players are blocked. */
+.lesson-video {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 34px;
+  align-items: center;
+  margin-top: 28px;
+  padding: 26px 30px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.lesson-video__copy h3 {
+  margin: 10px 0 8px;
+  font-size: 1.6rem;
+  letter-spacing: -0.03em;
+}
+
+.lesson-video__copy p {
+  margin: 0;
+  color: var(--muted, #5b5470);
+  line-height: 1.65;
+}
+
+.lesson-video__player {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .lesson-video {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+}

@@ -42,6 +42,7 @@ import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.j
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { WEEKDAYS } from './schedule.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
+import ChinaSafeVideo from './ChinaSafeVideo.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import TrustpilotWidget from './TrustpilotWidget.jsx'
 
@@ -440,6 +441,23 @@ function WhyTutorPro() {
               <p>{text}</p>
             </article>
           ))}
+        </div>
+        {/* A real 1-minute clip of a TutorPro lesson. Served from our own
+            domain so it plays for families in mainland China, where YouTube
+            and its embedded players are blocked. */}
+        <div className="lesson-video" id="see-a-class">
+          <div className="lesson-video__copy">
+            <span className="kicker">See a real class</span>
+            <h3>One minute inside a TutorPro lesson.</h3>
+            <p>Phonics, reading and speaking practice with a real teacher and a real student—no actors, no script.</p>
+          </div>
+          <ChinaSafeVideo
+            src={assetUrl('assets/tutorpro-class.mp4')}
+            poster={assetUrl('assets/online-english-lesson.jpg')}
+            shareUrl="https://youtu.be/EQ12J6cxVZo"
+            title="A real TutorPro Online English class"
+            className="lesson-video__player"
+          />
         </div>
         <div className="lesson-note">
           <img src={assetUrl('assets/online-english-lesson.jpg')} alt="A child learning one-to-one with an online tutor" />
