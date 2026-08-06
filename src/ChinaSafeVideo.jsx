@@ -55,8 +55,15 @@ export default function ChinaSafeVideo({
     setStarted(false)
   }
 
-  const { embedUrl, platform, reachableInChina } = toEmbedUrl(shareUrl)
-  const mode = src && !fileFailed ? 'file' : (embedUrl ? 'embed' : 'none')
+  const { embedUrl, platform, reachableInChina, linkOnly } = toEmbedUrl(shareUrl)
+  // Some platforms publish no external player at all (bilibili.tv). Framing
+  // their watch page would show a whole website inside the video box, so we
+  // offer an honest link instead of a broken embed. `linkOnly` says so
+  // explicitly; an empty embedUrl is the belt-and-braces check.
+  const canEmbed = Boolean(embedUrl) && !linkOnly
+  const mode = src && !fileFailed
+    ? 'file'
+    : (canEmbed ? 'embed' : (shareUrl ? 'link' : 'none'))
 
   const frame = {
     position: 'relative',
@@ -123,6 +130,37 @@ export default function ChinaSafeVideo({
           </a>
         )}
       </div>
+    )
+  }
+
+  if (mode === 'link') {
+    return (
+      <a
+        className={`china-safe-video china-safe-video--link ${className}`}
+        href={shareUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          ...frame,
+          display: 'grid',
+          placeItems: 'center',
+          textAlign: 'center',
+          padding: '20px',
+          textDecoration: 'none',
+          backgroundImage: poster ? `url(${poster})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <span style={{ position: 'absolute', inset: 0, background: 'rgba(9,5,16,0.62)' }} aria-hidden="true" />
+        <span style={{ position: 'relative', color: '#fff' }}>
+          <Play size={40} fill="currentColor" />
+          <strong style={{ display: 'block', marginTop: '10px' }}>Watch a real TutorPro class</strong>
+          <small style={{ display: 'block', marginTop: '4px', color: '#d8cceb' }}>
+            Opens on {platform || 'the video site'} in a new tab
+          </small>
+        </span>
+      </a>
     )
   }
 

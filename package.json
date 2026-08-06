@@ -35,7 +35,8 @@
     "test:status": "node scripts/test-status-sync.mjs",
     "test:synchealth": "node scripts/test-sync-health.mjs",
     "test:writepolicy": "node scripts/test-booking-write-policy.mjs",
-    "test:chinavideo": "node scripts/test-china-video.mjs"
+    "test:chinavideo": "node scripts/test-china-video.mjs",
+    "verify:video": "node scripts/verify-video-section.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

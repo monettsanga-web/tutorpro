@@ -104,13 +104,13 @@ const blockedInChina = (url) => {
 {
   const source = readFileSync(resolve(repo, 'src/ChinaSafeVideo.jsx'), 'utf8')
   check('It plays a self-hosted file when one is given',
-    /const mode = src && !fileFailed \? 'file'/.test(source))
+    /const mode = src && !fileFailed\s*\n?\s*\? 'file'/.test(source))
   check('It renders a plain <video> tag for that file', /<video/.test(source))
   check('It falls back to the embed only when the file fails',
     /onError=\{\(\) => setFileFailed\(true\)\}/.test(source)
-      && /!fileFailed \? 'file' : \(embedUrl \? 'embed'/.test(source))
+      && /\(canEmbed \? 'embed'/.test(source))
   check('A failed file never leaves a dead black box',
-    /\(embedUrl \? 'embed' : 'none'\)/.test(source))
+    /\(canEmbed \? 'embed' : \(shareUrl \? 'link' : 'none'\)\)/.test(source))
   check('It syncs on prop change without a cascading effect',
     !/useEffect/.test(source) && /if \(src !== lastSrc\)/.test(source))
   check('It shows an escape-hatch link when the embed is unreachable in China',
@@ -211,6 +211,57 @@ const blockedInChina = (url) => {
       !/youtube[^.\n]{0,60}(will work|works fine|no vpn)/i.test(text))
     check('The guide mentions the real file size constraint', /MB/.test(text))
   }
+}
+
+/* --- 8. bilibili.tv is NOT bilibili.com and must never be iframed --- */
+{
+  const helpers = readFileSync(resolve(repo, 'src/videoEmbeds.js'), 'utf8')
+  const component = readFileSync(resolve(repo, 'src/ChinaSafeVideo.jsx'), 'utf8')
+
+  // Verified live: player.bilibili.tv has no DNS record, while
+  // player.bilibili.com resolves. Only the mainland edition publishes an
+  // external player, so the international edition can only ever be a link.
+  check('bilibili.tv is handled separately from bilibili.com',
+    /trimmed\.includes\('bilibili\.tv'\)/.test(helpers))
+  check('bilibili.tv is never given an embed URL',
+    /bilibili\.tv'\)\) \{[\s\S]{0,200}embedUrl: '',/.test(helpers))
+  check('bilibili.tv is marked link-only', /linkOnly: true/.test(helpers))
+  check('bilibili.tv is not claimed to work in mainland China',
+    /Bilibili International',\s*\n\s*reachableInChina: false/.test(helpers))
+  check('The reason is recorded so nobody re-adds the embed later',
+    /no external player/i.test(helpers) && /geo-restrict/i.test(helpers))
+
+  // The bilibili.tv check must come BEFORE the bilibili.com check, otherwise
+  // a .tv URL containing '/video/' could fall through to the mainland player.
+  check('bilibili.tv is checked before bilibili.com',
+    helpers.indexOf("includes('bilibili.tv')") < helpers.indexOf("includes('bilibili.com/video/')"))
+
+  // A platform with no embed must not render an empty iframe.
+  check('The component has a link-only mode', /mode === 'link'/.test(component))
+  check('An embed-less link never becomes an empty iframe',
+    /\(canEmbed \? 'embed' : \(shareUrl \? 'link' : 'none'\)\)/.test(component))
+  check('linkOnly is actually honoured, not just declared',
+    /const canEmbed = Boolean\(embedUrl\) && !linkOnly/.test(component))
+  check('The link-only card opens in a new tab safely',
+    /rel="noopener noreferrer"/.test(component))
+  check('The link-only card names where it goes',
+    /Opens on \{platform/.test(component))
+}
+
+/* --- 9. The video sits high on the homepage where visitors reach it --- */
+{
+  const app = readFileSync(resolve(repo, 'src/App.jsx'), 'utf8')
+  check('There is a dedicated See-a-class section', /function SeeAClass\(\)/.test(app))
+  check('It is rendered on the homepage', /<SeeAClass \/>/.test(app))
+
+  const order = (needle) => app.indexOf(needle)
+  check('It appears before the pricing section',
+    order('<SeeAClass />') < order('<Pricing onBook'))
+  check('It appears before the FAQ',
+    order('<SeeAClass />') < order('<FAQ onBook'))
+  check('It appears in the first half of the page, not buried at the bottom',
+    order('<SeeAClass />') < order('<HowItWorks onBook'))
+  check('It has an anchor visitors can be linked to', /id="see-a-class"/.test(app))
 }
 
 console.log(`\n${passed} passed, ${failed} failed`)

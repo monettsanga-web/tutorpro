@@ -98,6 +98,32 @@ will give up before it starts.
 
 ---
 
+## About bilibili.tv — I checked, and it will not work
+
+You sent `https://www.bilibili.tv/en/video/4800493496966144`. I tested it
+against the live site rather than guessing, and found three problems:
+
+1. **bilibili.tv is not bilibili.com.** They are two different services.
+   `.tv` is the *international* edition; `.com` is the mainland one. Your
+   students in China use `.com`.
+2. **Your upload is already geo-blocked.** Loading that page returns:
+   *"Sorry, according to the request of the copyright owner, this film is not
+   available in your area."* It has 1 view and the account has 0 followers.
+3. **There is no way to embed it.** `player.bilibili.tv` does not exist — it
+   has no DNS record at all, unlike `player.bilibili.com`. The international
+   edition simply does not publish an external player, so no website can put
+   that video in a frame.
+
+So the site now **links** to bilibili.tv links rather than embedding them. An
+embed would have produced an empty box, which is the exact problem we are
+trying to avoid.
+
+**If you still want to use Bilibili**, upload to **bilibili.com** (the mainland
+site) instead. That one does have a working player and the site already
+embeds it correctly. It needs a Chinese phone number to register.
+
+**Self-hosting is still the better answer** — see Step 1 above.
+
 ## If you would rather use a Chinese video platform
 
 This is optional and more work, but it is what Chinese schools do. The player

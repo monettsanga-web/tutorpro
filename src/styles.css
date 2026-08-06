@@ -5567,39 +5567,34 @@ body {
 
 /* A real class clip, hosted on our own domain so it plays inside mainland
    China where YouTube and its embedded players are blocked. */
-.lesson-video {
+.see-a-class__grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: 34px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 44px;
   align-items: center;
-  margin-top: 28px;
-  padding: 26px 30px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: #fff;
+}
+
+.see-a-class__copy h2 {
+  margin: 12px 0 10px;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.see-a-class__copy p {
+  margin: 0;
+  color: var(--muted, #5b5470);
+  line-height: 1.7;
+}
+
+.see-a-class__player {
+  width: 100%;
   box-shadow: var(--shadow-sm);
 }
 
-.lesson-video__copy h3 {
-  margin: 10px 0 8px;
-  font-size: 1.6rem;
-  letter-spacing: -0.03em;
-}
-
-.lesson-video__copy p {
-  margin: 0;
-  color: var(--muted, #5b5470);
-  line-height: 1.65;
-}
-
-.lesson-video__player {
-  width: 100%;
-}
-
 @media (max-width: 860px) {
-  .lesson-video {
+  .see-a-class__grid {
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 20px;
+    gap: 22px;
   }
 }

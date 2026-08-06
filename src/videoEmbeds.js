@@ -68,6 +68,27 @@ export function toEmbedUrl(url) {
     if (v) return { embedUrl: `https://drive.google.com/file/d/${v}/preview`, platform: 'Google Drive', reachableInChina: false }
   }
 
+  // --- bilibili.tv is the INTERNATIONAL edition, and is not bilibili.com ---
+  // Two things make it unusable as an embed, both verified against the live
+  // site rather than assumed:
+  //   1. There is no player host. player.bilibili.tv has no DNS record at all,
+  //      unlike player.bilibili.com. Only the mainland edition publishes an
+  //      external player endpoint.
+  //   2. The watch page is a full single-page app, not a player. Framing it
+  //      gives a whole website inside a 16:9 box, not a video.
+  // Uploads there are also geo-licensed per region, so a clip can be blocked
+  // in the very country you meant it for. We therefore never iframe it: we
+  // link out, which always works.
+  if (trimmed.includes('bilibili.tv')) {
+    return {
+      embedUrl: '',
+      platform: 'Bilibili International',
+      reachableInChina: false,
+      linkOnly: true,
+      note: 'bilibili.tv has no external player and geo-restricts uploads. Use a self-hosted file instead.',
+    }
+  }
+
   // --- Reachable inside mainland China ---
   if (trimmed.includes('bilibili.com/video/')) {
     const match = trimmed.match(/video\/(BV[a-zA-Z0-9]+)/)

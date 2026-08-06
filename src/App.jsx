@@ -382,6 +382,35 @@ function CurriculumCarousel({ onBook }) {
   )
 }
 
+/**
+ * A real class clip, high on the homepage where visitors actually reach it.
+ *
+ * The video is served from our own domain because YouTube — and its embedded
+ * players on third-party sites — are blocked in mainland China. bilibili.tv is
+ * deliberately NOT embedded: it publishes no external player endpoint and
+ * geo-restricts uploads, so it can only ever be a link.
+ */
+function SeeAClass() {
+  return (
+    <section className="section see-a-class" id="see-a-class">
+      <div className="container see-a-class__grid">
+        <div className="see-a-class__copy">
+          <span className="kicker">See a real class</span>
+          <h2>One minute inside a TutorPro lesson.</h2>
+          <p>Phonics, reading and speaking practice with a real teacher and a real student. No actors, no script — just an ordinary class.</p>
+        </div>
+        <ChinaSafeVideo
+          src={assetUrl('assets/tutorpro-class.mp4')}
+          poster={assetUrl('assets/online-english-lesson.jpg')}
+          shareUrl="https://youtu.be/EQ12J6cxVZo"
+          title="A real TutorPro Online English class"
+          className="see-a-class__player"
+        />
+      </div>
+    </section>
+  )
+}
+
 function WhyTutorPro() {
   const benefits = [
     {
@@ -441,23 +470,6 @@ function WhyTutorPro() {
               <p>{text}</p>
             </article>
           ))}
-        </div>
-        {/* A real 1-minute clip of a TutorPro lesson. Served from our own
-            domain so it plays for families in mainland China, where YouTube
-            and its embedded players are blocked. */}
-        <div className="lesson-video" id="see-a-class">
-          <div className="lesson-video__copy">
-            <span className="kicker">See a real class</span>
-            <h3>One minute inside a TutorPro lesson.</h3>
-            <p>Phonics, reading and speaking practice with a real teacher and a real student—no actors, no script.</p>
-          </div>
-          <ChinaSafeVideo
-            src={assetUrl('assets/tutorpro-class.mp4')}
-            poster={assetUrl('assets/online-english-lesson.jpg')}
-            shareUrl="https://youtu.be/EQ12J6cxVZo"
-            title="A real TutorPro Online English class"
-            className="lesson-video__player"
-          />
         </div>
         <div className="lesson-note">
           <img src={assetUrl('assets/online-english-lesson.jpg')} alt="A child learning one-to-one with an online tutor" />
@@ -1728,6 +1740,7 @@ export default function App() {
         <main>
           <Hero onBook={openRegistration} />
           <Stats />
+          <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />
           <GlobalDiscovery onBook={openRegistration} />
