@@ -5598,3 +5598,53 @@ body {
     gap: 22px;
   }
 }
+
+/* Places the same video is published. For a family in mainland China the
+   player above may be a blank box, so a link they can actually open is the
+   difference between seeing the class and seeing nothing. */
+.china-safe-video-group {
+  display: block;
+  width: 100%;
+}
+
+.china-safe-video__mirrors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.china-safe-video__mirrors li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.china-safe-video__mirrors a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--brand, #6d28d9);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+.china-safe-video__mirrors a:hover {
+  opacity: 0.78;
+}
+
+.china-safe-video__mirrors small {
+  color: var(--muted, #5b5470);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .china-safe-video__mirrors {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

@@ -36,6 +36,13 @@ export default function ChinaSafeVideo({
   src = '',
   poster = '',
   shareUrl = '',
+  /**
+   * Extra places the same video is published, shown as plain links under the
+   * player. A mirror is the whole point for a family in mainland China: when
+   * the player above is a blank box to them, a link they can actually open is
+   * the difference between seeing the class and seeing nothing.
+   */
+  mirrors = [],
   title = 'TutorPro Online English class video',
   captionsSrc = '',
   className = '',
@@ -75,9 +82,44 @@ export default function ChinaSafeVideo({
     border: '1px solid rgba(255,255,255,0.12)',
   }
 
-  if (mode === 'file') {
+  // Mirrors are described, not just linked. A family in mainland China needs
+  // to know which of these will actually open for them before they tap.
+  const describedMirrors = mirrors
+    .filter((mirror) => mirror && mirror.url)
+    .map((mirror) => {
+      const info = toEmbedUrl(mirror.url)
+      return {
+        url: mirror.url,
+        label: mirror.label || info.platform || 'Watch the video',
+        note: mirror.note || '',
+        reachableInChina: mirror.reachableInChina ?? info.reachableInChina,
+      }
+    })
+
+  const withMirrors = (player) => {
+    if (!describedMirrors.length) return player
     return (
-      <div className={`china-safe-video ${className}`} style={frame}>
+      <div className={`china-safe-video-group ${className}`}>
+        {player}
+        <ul className="china-safe-video__mirrors">
+          {describedMirrors.map((mirror) => (
+            <li key={mirror.url}>
+              <a href={mirror.url} target="_blank" rel="noopener noreferrer">
+                <Play size={13} fill="currentColor" /> {mirror.label}
+              </a>
+              {mirror.note && <small>{mirror.note}</small>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  const playerClass = describedMirrors.length ? 'china-safe-video' : `china-safe-video ${className}`
+
+  if (mode === 'file') {
+    return withMirrors(
+      <div className={playerClass} style={frame}>
         <video
           src={src}
           poster={poster || undefined}
@@ -100,13 +142,13 @@ export default function ChinaSafeVideo({
             <Play size={44} fill="currentColor" />
           </span>
         )}
-      </div>
+      </div>,
     )
   }
 
   if (mode === 'embed') {
-    return (
-      <div className={`china-safe-video ${className}`} style={frame}>
+    return withMirrors(
+      <div className={playerClass} style={frame}>
         <iframe
           src={embedUrl}
           title={title}
@@ -129,14 +171,14 @@ export default function ChinaSafeVideo({
             Video not loading? Open it directly{platform ? ` on ${platform}` : ''} →
           </a>
         )}
-      </div>
+      </div>,
     )
   }
 
   if (mode === 'link') {
-    return (
+    return withMirrors(
       <a
-        className={`china-safe-video china-safe-video--link ${className}`}
+        className={`${playerClass} china-safe-video--link`}
         href={shareUrl}
         target="_blank"
         rel="noopener noreferrer"
@@ -160,13 +202,13 @@ export default function ChinaSafeVideo({
             Opens on {platform || 'the video site'} in a new tab
           </small>
         </span>
-      </a>
+      </a>,
     )
   }
 
-  return (
+  return withMirrors(
     <div
-      className={`china-safe-video china-safe-video--empty ${className}`}
+      className={`${playerClass} china-safe-video--empty`}
       style={{ ...frame, display: 'grid', placeItems: 'center', textAlign: 'center', padding: '20px' }}
     >
       <div style={{ color: '#b9adc7' }}>
@@ -174,6 +216,6 @@ export default function ChinaSafeVideo({
         <strong style={{ display: 'block', marginTop: '8px', color: '#fff' }}>Class video coming soon</strong>
         <small style={{ opacity: 0.8 }}>A short video of a real TutorPro lesson is being prepared.</small>
       </div>
-    </div>
+    </div>,
   )
 }

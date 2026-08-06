@@ -264,5 +264,38 @@ const blockedInChina = (url) => {
   check('It has an anchor visitors can be linked to', /id="see-a-class"/.test(app))
 }
 
+/* --- 10. Mirror links: the same video, in places people can reach --- */
+{
+  const component = readFileSync(resolve(repo, 'src/ChinaSafeVideo.jsx'), 'utf8')
+  const app = readFileSync(resolve(repo, 'src/App.jsx'), 'utf8')
+
+  check('The player accepts mirror links', /mirrors = \[\]/.test(component))
+  // 4 call sites (file, embed, link, empty) + 1 definition = 5 occurrences.
+  const callSites = (component.match(/return withMirrors\(/g) || []).length
+  check('Mirrors render under all four player modes', callSites === 4, `${callSites} call sites`)
+  check('Each mirror opens in a new tab safely',
+    /mirrors__[\s\S]{0,400}rel="noopener noreferrer"/.test(component)
+      || /className="china-safe-video__mirrors"[\s\S]{0,400}rel="noopener noreferrer"/.test(component))
+  check('A mirror can carry its own availability note', /mirror\.note/.test(component))
+  check('Mirror reachability is derived, not assumed',
+    /mirror\.reachableInChina \?\? info\.reachableInChina/.test(component))
+  check('Empty or malformed mirrors are ignored',
+    /\.filter\(\(mirror\) => mirror && mirror\.url\)/.test(component))
+
+  // The homepage must offer both places the video lives.
+  const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
+  check('The homepage lists the YouTube mirror', /youtu\.be\/EQ12J6cxVZo/.test(usage))
+  check('The homepage lists the Bilibili mirror', /bilibili\.tv\/en\/video\/4800493496966144/.test(usage))
+  check('The YouTube mirror warns it is blocked in mainland China',
+    /Not available in mainland China/.test(usage))
+  check('The Bilibili mirror does not overpromise availability',
+    /Availability varies by region/.test(usage) && !/works in China/i.test(usage))
+
+  // Honesty check: we verified this upload is currently geo-blocked, so the
+  // site must not claim it is the China-friendly option.
+  check('No copy claims the bilibili.tv link solves China access',
+    !/bilibili[^<]{0,80}(works in china|available in china|for china)/i.test(app))
+}
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed ? 1 : 0)

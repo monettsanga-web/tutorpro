@@ -97,6 +97,23 @@ await section.first().scrollIntoViewIfNeeded()
 await page.waitForTimeout(400)
 await page.screenshot({ path: '/home/user/tutorpro/see-a-class-desktop.png' })
 
+/* --- Mirror links are present and clickable --- */
+const mirrors = page.locator('#see-a-class .china-safe-video__mirrors a')
+const mirrorCount = await mirrors.count()
+check('Both mirror links are rendered', mirrorCount === 2, `${mirrorCount} found`)
+
+const mirrorHrefs = await mirrors.evaluateAll((els) => els.map((e) => e.href))
+check('The YouTube mirror is linked', mirrorHrefs.some((h) => h.includes('EQ12J6cxVZo')))
+check('The Bilibili mirror is linked', mirrorHrefs.some((h) => h.includes('4800493496966144')))
+check('Every mirror opens in a new tab',
+  await mirrors.evaluateAll((els) => els.every((e) => e.target === '_blank' && e.rel.includes('noopener'))))
+check('Every mirror is visible to a visitor',
+  await mirrors.evaluateAll((els) => els.every((e) => e.offsetWidth > 0 && e.offsetHeight > 0)))
+
+const mirrorText = await page.locator('#see-a-class .china-safe-video__mirrors').innerText()
+check('The China limitation is stated next to the YouTube link',
+  /not available in mainland china/i.test(mirrorText), mirrorText.replace(/\n/g, ' | '))
+
 await browser.close()
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed ? 1 : 0)
