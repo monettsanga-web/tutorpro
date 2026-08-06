@@ -525,6 +525,10 @@ export function ScheduleCalendar({
                 const student = bookingCell ? getAccountById(bookingCell.booking.studentId) : null
                 const bookedLearner = student?.children?.find((item) => item.id === bookingCell?.booking.learnerId) || student?.child
                 const feedbackAvailable = Boolean(onBookingFeedback && bookingCell && ['confirmed', 'ongoing', 'completed'].includes(bookingCell.booking.status))
+                // Feedback written on another device arrives through the cloud
+                // merge, so read it from the booking rather than local state.
+                const hasFeedback = Boolean(bookingCell?.booking?.teacherFeedback?.summary?.trim())
+                const needsFeedback = Boolean(bookingCell && bookingCell.booking.status === 'completed' && !hasFeedback)
                 const classes = [
                   'schedule-cell',
                   isAvailable ? 'available' : 'unavailable',
@@ -567,8 +571,15 @@ export function ScheduleCalendar({
                       return (
                         <span className="schedule-booking-label">
                           <strong className={nameActions ? 'schedule-name-action' : feedbackAvailable ? 'schedule-feedback-target' : ''}>{cellName}</strong>
-                          {nameActions && <b className="schedule-feedback-prompt schedule-tap-prompt"><MoreHorizontal size={9} /> Tap for options</b>}
-                          {!nameActions && feedbackAvailable && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> {bookingCell.booking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</b>}
+                          {/* Whether feedback exists is the single most useful thing on
+                              this cell, so it is shown in BOTH modes. Previously the
+                              'Tap for options' hint replaced it entirely on the teacher
+                              calendar, so a teacher could not tell which completed
+                              lessons they had already written up. */}
+                          {hasFeedback && <b className="schedule-feedback-prompt schedule-feedback-done"><CheckCircle2 size={9} /> Feedback saved</b>}
+                          {nameActions && !hasFeedback && <b className="schedule-feedback-prompt schedule-tap-prompt"><MoreHorizontal size={9} /> Tap for options</b>}
+                          {!nameActions && !hasFeedback && feedbackAvailable && <b className="schedule-feedback-prompt"><MessageSquareText size={9} /> Write feedback</b>}
+                          {nameActions && !hasFeedback && needsFeedback && <b className="schedule-feedback-prompt schedule-feedback-missing"><MessageSquareText size={9} /> Needs feedback</b>}
                           {bookingCell.booking.slotComment && <em>Comment</em>}
                         </span>
                       )

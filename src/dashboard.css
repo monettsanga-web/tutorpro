@@ -10108,3 +10108,9 @@ a.feedback-resource-detail:hover strong {
 .announcement-reach__note {
   margin: 12px 0 0; color: var(--portal-muted); font-size: .82rem; line-height: 1.55; font-weight: 550;
 }
+
+/* Calendar feedback state. Whether a lesson has been written up is the most
+   useful thing on the cell, so it is shown in both the read-only and the
+   tap-for-options modes rather than being replaced by the options hint. */
+.schedule-feedback-done { color: #1f7a35 !important; }
+.schedule-feedback-missing { color: #b4610a !important; }

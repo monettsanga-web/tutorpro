@@ -47,7 +47,31 @@ export function mergeCloudBookings(cloudBookings, options = {}) {
     else {
       const localTime = new Date(bookings[index].updatedAt || bookings[index].createdAt || 0).getTime()
       const cloudTime = new Date(cloudBooking.updatedAt || cloudBooking.createdAt || 0).getTime()
-      if (!Number.isFinite(localTime) || cloudTime >= localTime) bookings[index] = { ...bookings[index], ...cloudBooking }
+      if (!Number.isFinite(localTime) || cloudTime >= localTime) {
+        bookings[index] = { ...bookings[index], ...cloudBooking }
+      } else {
+        // The local copy is newer overall, but whole-record last-write-wins
+        // would then discard fields this device has never seen. Teacher
+        // feedback written on another device was being lost exactly this way:
+        // any later local touch, even a status change, hid it permanently.
+        // Merge those fields in individually when we have nothing for them.
+        const rescue = {}
+        if (!bookings[index].teacherFeedback?.summary?.trim() && cloudBooking.teacherFeedback?.summary?.trim()) {
+          rescue.teacherFeedback = cloudBooking.teacherFeedback
+        }
+        if (!bookings[index].studentRating && cloudBooking.studentRating) {
+          rescue.studentRating = cloudBooking.studentRating
+        }
+        if (!bookings[index].sessionRecap && cloudBooking.sessionRecap) {
+          rescue.sessionRecap = cloudBooking.sessionRecap
+        }
+        // A lesson that finished cannot un-finish, so a completed status from
+        // any device wins over a local 'confirmed'.
+        if (cloudBooking.status === 'completed' && ['confirmed', 'ongoing'].includes(bookings[index].status)) {
+          rescue.status = 'completed'
+        }
+        if (Object.keys(rescue).length) bookings[index] = { ...bookings[index], ...rescue }
+      }
     }
   })
   writeBookings(bookings)
