@@ -3375,7 +3375,12 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       syncBookingNow(booking)
         .then(() => notifyBookingParticipants(booking, status === 'confirmed' ? 'confirmed' : 'cancelled'))
         .catch(() => {})
-    } else if (['ongoing', 'absent'].includes(status)) syncBookingNow(booking).catch(() => {})
+    } else if (['ongoing', 'absent', 'completed', 'pending'].includes(status)) {
+      // 'completed' was missing here, so marking a class finished only ever
+      // updated this device. The calendar stayed pink on every other computer
+      // because the status change was never uploaded.
+      syncBookingNow(booking).catch(() => {})
+    }
     refresh()
   }
 
@@ -3398,6 +3403,13 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   const finishFeedback = (wasNewCompletion) => {
     if (wasNewCompletion && feedbackBooking) recordCompletedLesson(feedbackBooking)
+    // Saving feedback also marks the lesson completed. The feedback itself is
+    // uploaded by the dialog, but the status change was left behind, so other
+    // devices kept showing the class as unfinished.
+    if (wasNewCompletion && feedbackBooking) {
+      const finished = getBookings({ teacherId: account.id }).find((item) => item.id === feedbackBooking.id)
+      if (finished) syncBookingNow(finished).catch(() => {})
+    }
     setFeedbackBooking(null)
     refresh()
   }
@@ -5439,7 +5451,11 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       syncBookingNow(updatedBooking)
         .then(() => notifyBookingParticipants(updatedBooking, status === 'confirmed' ? 'confirmed' : 'cancelled'))
         .catch(() => {})
-    } else if (['ongoing', 'absent'].includes(status)) syncBookingNow(updatedBooking).catch(() => {})
+    } else if (['ongoing', 'absent', 'completed', 'pending'].includes(status)) {
+      // Same omission as the teacher dashboard: 'completed' was never synced,
+      // so a class marked finished here stayed unfinished everywhere else.
+      syncBookingNow(updatedBooking).catch(() => {})
+    }
     refresh()
   }
 
