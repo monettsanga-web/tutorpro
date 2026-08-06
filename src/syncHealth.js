@@ -33,6 +33,11 @@ export const SYNC_STATE = {
   WRONG_SESSION: 'wrong-session',
   /** Session exists but the network or database is unreachable. */
   UNREACHABLE: 'unreachable',
+  /**
+   * Signed in correctly, but this account's local id is not the Supabase user
+   * id, so row-level security rejects every write for its bookings.
+   */
+  ID_MISMATCH: 'id-mismatch',
 }
 
 /**
@@ -52,7 +57,19 @@ export async function checkSyncHealth(account) {
       return { state: SYNC_STATE.NO_SESSION, canSync: false }
     }
     if (account?.id && String(session.user.id) !== String(account.id)) {
-      return { state: SYNC_STATE.WRONG_SESSION, canSync: false, sessionUserId: session.user.id }
+      // Registration assigns a random local UUID first and only replaces it
+      // with the Supabase user id when cloud sign-up succeeded. If that step
+      // failed, the account keeps its local id forever. Every booking then
+      // carries a teacherId that can never equal auth.uid(), so row-level
+      // security rejects all of them — which looks exactly like 'sync is
+      // broken' while the session itself is perfectly healthy.
+      const looksLocalOnly = !account.cloudProfile
+      return {
+        state: looksLocalOnly ? SYNC_STATE.ID_MISMATCH : SYNC_STATE.WRONG_SESSION,
+        canSync: false,
+        sessionUserId: session.user.id,
+        accountId: account.id,
+      }
     }
 
     // A session can exist while the project is unreachable, so confirm with a
@@ -82,6 +99,12 @@ export function syncHealthMessage(health) {
         tone: 'error',
         title: 'This device is not connected to the shared database',
         detail: 'You are signed in on this computer only. Feedback, lesson statuses and bookings you change here will NOT appear on your other devices. Log out and log back in to reconnect. If that fails, the email may still need confirming.',
+      }
+    case SYNC_STATE.ID_MISMATCH:
+      return {
+        tone: 'error',
+        title: 'This account was created without a shared-database record',
+        detail: 'You are signed in, but this account was registered while the shared database was unavailable, so it has a different internal id. The database rejects everything saved under it, which is why nothing reaches your other devices. An administrator needs to re-create this teacher account so it is linked properly. Work already saved here stays on this device until then.',
       }
     case SYNC_STATE.WRONG_SESSION:
       return {

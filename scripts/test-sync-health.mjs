@@ -28,6 +28,7 @@ const check = (name, condition, extra = '') => {
 
 const SYNC_STATE = {
   SYNCED: 'synced',
+  ID_MISMATCH: 'id-mismatch',
   OFFLINE_BUILD: 'offline-build',
   NO_SESSION: 'no-session',
   WRONG_SESSION: 'wrong-session',
@@ -40,7 +41,11 @@ async function health({ configured = true, session = null, sessionError = null, 
   if (sessionError) return { state: SYNC_STATE.UNREACHABLE, canSync: false, detail: sessionError }
   if (!session?.user?.id) return { state: SYNC_STATE.NO_SESSION, canSync: false }
   if (account?.id && String(session.user.id) !== String(account.id)) {
-    return { state: SYNC_STATE.WRONG_SESSION, canSync: false, sessionUserId: session.user.id }
+    const looksLocalOnly = !account.cloudProfile
+    return {
+      state: looksLocalOnly ? SYNC_STATE.ID_MISMATCH : SYNC_STATE.WRONG_SESSION,
+      canSync: false, sessionUserId: session.user.id, accountId: account.id,
+    }
   }
   if (reachError) return { state: SYNC_STATE.UNREACHABLE, canSync: false, detail: reachError }
   return { state: SYNC_STATE.SYNCED, canSync: true }
@@ -51,6 +56,7 @@ function message(h) {
     case SYNC_STATE.SYNCED: return null
     case SYNC_STATE.OFFLINE_BUILD: return { tone: 'warn', title: 'Shared database not configured' }
     case SYNC_STATE.NO_SESSION: return { tone: 'error', title: 'This device is not connected to the shared database' }
+    case SYNC_STATE.ID_MISMATCH: return { tone: 'error', title: 'This account was created without a shared-database record' }
     case SYNC_STATE.WRONG_SESSION: return { tone: 'error', title: 'Signed in as a different account' }
     case SYNC_STATE.UNREACHABLE: return { tone: 'warn', title: 'Shared database unreachable' }
     default: return null
@@ -78,7 +84,7 @@ const teacher = { id: 'T1' }
 
 /* --- Signed in as somebody else --- */
 {
-  const h = await health({ session: { user: { id: 'OTHER' } }, account: teacher })
+  const h = await health({ session: { user: { id: 'OTHER' } }, account: { ...teacher, cloudProfile: true } })
   check('mismatched session detected', h.state === SYNC_STATE.WRONG_SESSION)
   check('mismatched session cannot sync', h.canSync === false)
   check('mismatch is reported as an error', message(h).tone === 'error')
@@ -122,6 +128,18 @@ const teacher = { id: 'T1' }
   check('uploads are impossible without a session', canWrite(stranded) === false)
   const working = await health({ session: { user: { id: 'T1' } }, account: teacher })
   check('uploads are possible with one', canWrite(working) === true)
+}
+
+/* --- The 159-failure case: local id never replaced by the Supabase id --- */
+{
+  const localOnlyAccount = { id: 'local-uuid-1234', cloudProfile: false }
+  const h = await health({ session: { user: { id: 'real-supabase-id' } }, account: localOnlyAccount })
+  check('id mismatch detected', h.state === SYNC_STATE.ID_MISMATCH)
+  check('id mismatch cannot sync', h.canSync === false)
+  check('id mismatch is explained, not blamed on the network',
+    message(h).title.includes('without a shared-database record'))
+  check('both ids are reported for diagnosis',
+    h.accountId === 'local-uuid-1234' && h.sessionUserId === 'real-supabase-id')
 }
 
 console.log(`\n${passed} passed, ${failed} failed`)

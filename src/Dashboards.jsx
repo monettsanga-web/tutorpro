@@ -3450,17 +3450,30 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     const mine = getBookings({ teacherId: account.id })
     let sent = 0
     let failed = 0
+    // Report WHY it failed. Swallowing the error made a systematic failure —
+    // no session, a row-level-security rejection, an unreachable project —
+    // indistinguishable from a flaky connection, so the advice to 'try again'
+    // was useless.
+    let firstError = ''
     for (const booking of mine) {
       try {
-        await withTimeout(syncBookingNow(booking), 12000, 'timeout')
+        await withTimeout(syncBookingNow(booking), 12000, 'The shared database did not respond in time.')
         sent += 1
-      } catch {
+      } catch (error) {
         failed += 1
+        if (!firstError) firstError = String(error?.message || error).slice(0, 200)
       }
     }
-    setResyncState(failed
-      ? `Uploaded ${sent}, but ${failed} failed. Check the connection banner above and try again.`
-      : `Uploaded ${sent} ${sent === 1 ? 'lesson' : 'lessons'}. Your other devices will show them within a few seconds.`)
+    if (!failed) {
+      setResyncState(`Uploaded ${sent} ${sent === 1 ? 'lesson' : 'lessons'}. Your other devices will show them within a few seconds.`)
+      return
+    }
+    // A rejection on every single lesson is a permissions or session problem,
+    // never bad luck, so say so plainly rather than suggesting a retry.
+    const everyOneFailed = sent === 0
+    setResyncState(everyOneFailed
+      ? `Nothing could be uploaded. The shared database refused all ${failed} lessons: "${firstError}" — this normally means this device is signed in locally only. Log out, log back in, and try again.`
+      : `Uploaded ${sent}, but ${failed} failed: "${firstError}"`)
   }
 
   const finishFeedback = (wasNewCompletion) => {
