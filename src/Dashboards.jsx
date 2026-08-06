@@ -1469,17 +1469,38 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     }))
   }
 
-  const submit = (event) => {
+  const [saving, setSaving] = useState(false)
+
+  const submit = async (event) => {
     event.preventDefault()
+    setSaving(true)
+    setError('')
     try {
       const pendingWord = wordDraft.trim()
       const feedback = pendingWord && !form.practiceWords.some((item) => item.toLowerCase() === pendingWord.toLowerCase())
         ? { ...form, practiceWords: [...form.practiceWords, pendingWord].slice(0, 12) }
         : form
-      saveTeacherFeedback(booking.id, teacherId, feedback)
+      const saved = saveTeacherFeedback(booking.id, teacherId, feedback)
+
+      // The cloud write used to be fire-and-forget: the dialog closed and the
+      // teacher believed the feedback was shared, but if the upload failed the
+      // error only fired an event that nothing listened to. The feedback then
+      // existed on one laptop and nowhere else, which is exactly the reported
+      // symptom. Wait for the upload and report the truth.
+      if (cloudSyncEnabled()) {
+        try {
+          await withTimeout(syncBookingNow(saved), 12000, 'The shared database did not confirm the feedback in time.')
+        } catch (syncError) {
+          setError(`${syncError.message} It is saved on this device, but other devices will not see it until this succeeds. Check your connection and press Save again.`)
+          setSaving(false)
+          return
+        }
+      }
       onSaved(booking.status !== 'completed')
     } catch (feedbackError) {
       setError(feedbackError.message)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -1572,7 +1593,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
             )}
             {form.resourceLinks.length === 0 && <small style={{ color: '#b9adc7' }}>No resource links added yet.</small>}
           </fieldset>
-          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button">Save feedback & complete class <Check size={16} /></button></div>
+          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose} disabled={saving}>Cancel</button><button type="submit" className="portal-primary-button" disabled={saving}>{saving ? 'Saving and sharing…' : 'Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button></div>
         </form>
       </section>
     </div>
