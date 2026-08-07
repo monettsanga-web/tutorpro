@@ -284,20 +284,16 @@ const blockedInChina = (url) => {
 
   // The homepage must offer both places the video lives.
   const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
-  check('The homepage lists the YouTube mirror', /youtu\.be\/EQ12J6cxVZo/.test(usage))
   check('The homepage lists the Bilibili mirror', /bilibili\.tv\/en\/video\/4800493496966144/.test(usage))
-  check('The YouTube mirror warns it is blocked in mainland China',
-    /Not available in mainland China/.test(usage))
-  // Bilibili is listed first and highlighted: it is the one the owner wants
-  // shown, and the only one with any chance of loading for Asian families.
-  // Compare inside the mirrors array only: `shareUrl` above it also contains
-  // a youtu.be URL, which would make a whole-block index comparison lie.
-  const mirrorsBlock = usage.slice(usage.indexOf('mirrors={['), usage.indexOf(']}', usage.indexOf('mirrors={[')))
-  check('Bilibili is listed before YouTube',
-    mirrorsBlock.indexOf('bilibili.tv') < mirrorsBlock.indexOf('youtu.be'))
   check('Bilibili is the highlighted primary choice', /primary: true/.test(usage))
   check('The Bilibili note does not promise mainland China access',
     !/works in china|available in china/i.test(usage))
+
+  // The owner does not want the business homepage pointing at a personal
+  // YouTube channel published under a different name. Nothing anywhere in the
+  // public site should link to it.
+  check('The homepage does not link to YouTube at all', !/youtu\.be|youtube\.com/.test(usage))
+  check('No YouTube video id remains anywhere in App.jsx', !/EQ12J6cxVZo/.test(app))
 
   // Honesty check: we verified this upload is currently geo-blocked, so the
   // site must not claim it is the China-friendly option.

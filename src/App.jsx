@@ -399,13 +399,15 @@ function SeeAClass() {
           <h2>One minute inside a TutorPro lesson.</h2>
           <p>Phonics, reading and speaking practice with a real teacher and a real student. No actors, no script — just an ordinary class.</p>
         </div>
+        {/* No YouTube link: that upload lives on a personal channel under a
+            different name, which undermines rather than builds trust on a
+            business homepage. Bilibili is the only outside link we point at. */}
         <ChinaSafeVideo
           src={assetUrl('assets/tutorpro-class.mp4')}
           poster={assetUrl('assets/online-english-lesson.jpg')}
-          shareUrl="https://youtu.be/EQ12J6cxVZo"
+          shareUrl="https://www.bilibili.tv/en/video/4800493496966144"
           mirrors={[
-            { url: 'https://www.bilibili.tv/en/video/4800493496966144', label: 'Watch on Bilibili', note: 'Best for families in Asia', primary: true },
-            { url: 'https://youtu.be/EQ12J6cxVZo', label: 'Watch on YouTube', note: 'Not available in mainland China' },
+            { url: 'https://www.bilibili.tv/en/video/4800493496966144', label: 'Watch on Bilibili', note: 'Opens in a new tab', primary: true },
           ]}
           title="A real TutorPro Online English class"
           className="see-a-class__player"
