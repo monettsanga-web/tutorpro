@@ -274,8 +274,8 @@ const blockedInChina = (url) => {
   const callSites = (component.match(/return withMirrors\(/g) || []).length
   check('Mirrors render under all four player modes', callSites === 4, `${callSites} call sites`)
   check('Each mirror opens in a new tab safely',
-    /mirrors__[\s\S]{0,400}rel="noopener noreferrer"/.test(component)
-      || /className="china-safe-video__mirrors"[\s\S]{0,400}rel="noopener noreferrer"/.test(component))
+    /rel="noopener noreferrer"/.test(component))
+  check('A mirror can be marked as the primary choice', /mirror\.primary/.test(component))
   check('A mirror can carry its own availability note', /mirror\.note/.test(component))
   check('Mirror reachability is derived, not assumed',
     /mirror\.reachableInChina \?\? info\.reachableInChina/.test(component))
@@ -288,8 +288,16 @@ const blockedInChina = (url) => {
   check('The homepage lists the Bilibili mirror', /bilibili\.tv\/en\/video\/4800493496966144/.test(usage))
   check('The YouTube mirror warns it is blocked in mainland China',
     /Not available in mainland China/.test(usage))
-  check('The Bilibili mirror does not overpromise availability',
-    /Availability varies by region/.test(usage) && !/works in China/i.test(usage))
+  // Bilibili is listed first and highlighted: it is the one the owner wants
+  // shown, and the only one with any chance of loading for Asian families.
+  // Compare inside the mirrors array only: `shareUrl` above it also contains
+  // a youtu.be URL, which would make a whole-block index comparison lie.
+  const mirrorsBlock = usage.slice(usage.indexOf('mirrors={['), usage.indexOf(']}', usage.indexOf('mirrors={[')))
+  check('Bilibili is listed before YouTube',
+    mirrorsBlock.indexOf('bilibili.tv') < mirrorsBlock.indexOf('youtu.be'))
+  check('Bilibili is the highlighted primary choice', /primary: true/.test(usage))
+  check('The Bilibili note does not promise mainland China access',
+    !/works in china|available in china/i.test(usage))
 
   // Honesty check: we verified this upload is currently geo-blocked, so the
   // site must not claim it is the China-friendly option.

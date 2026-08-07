@@ -92,6 +92,7 @@ export default function ChinaSafeVideo({
         url: mirror.url,
         label: mirror.label || info.platform || 'Watch the video',
         note: mirror.note || '',
+        primary: Boolean(mirror.primary),
         reachableInChina: mirror.reachableInChina ?? info.reachableInChina,
       }
     })
@@ -104,10 +105,20 @@ export default function ChinaSafeVideo({
         <ul className="china-safe-video__mirrors">
           {describedMirrors.map((mirror) => (
             <li key={mirror.url}>
-              <a href={mirror.url} target="_blank" rel="noopener noreferrer">
-                <Play size={13} fill="currentColor" /> {mirror.label}
+              <a
+                className={`china-safe-video__mirror-button${mirror.primary ? ' is-primary' : ''}`}
+                href={mirror.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="china-safe-video__mirror-play" aria-hidden="true">
+                  <Play size={15} fill="currentColor" />
+                </span>
+                <span>
+                  <strong>{mirror.label}</strong>
+                  {mirror.note && <small>{mirror.note}</small>}
+                </span>
               </a>
-              {mirror.note && <small>{mirror.note}</small>}
             </li>
           ))}
         </ul>

@@ -404,8 +404,8 @@ function SeeAClass() {
           poster={assetUrl('assets/online-english-lesson.jpg')}
           shareUrl="https://youtu.be/EQ12J6cxVZo"
           mirrors={[
+            { url: 'https://www.bilibili.tv/en/video/4800493496966144', label: 'Watch on Bilibili', note: 'Best for families in Asia', primary: true },
             { url: 'https://youtu.be/EQ12J6cxVZo', label: 'Watch on YouTube', note: 'Not available in mainland China' },
-            { url: 'https://www.bilibili.tv/en/video/4800493496966144', label: 'Watch on Bilibili', note: 'Availability varies by region' },
           ]}
           title="A real TutorPro Online English class"
           className="see-a-class__player"

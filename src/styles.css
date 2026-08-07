@@ -5608,43 +5608,77 @@ body {
 }
 
 .china-safe-video__mirrors {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.china-safe-video__mirrors li {
+.china-safe-video__mirror-button {
   display: flex;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.china-safe-video__mirrors a {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--brand, #6d28d9);
+  gap: 12px;
+  height: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid currentColor;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.china-safe-video__mirrors a:hover {
-  opacity: 0.78;
+.china-safe-video__mirror-button:hover {
+  transform: translateY(-1px);
+  border-color: transparent;
+  box-shadow: 0 10px 26px rgba(50, 21, 104, 0.16);
 }
 
-.china-safe-video__mirrors small {
+.china-safe-video__mirror-button strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.china-safe-video__mirror-button small {
+  display: block;
+  margin-top: 2px;
   color: var(--muted, #5b5470);
   font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.china-safe-video__mirror-play {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(109, 40, 217, 0.1);
+  color: var(--brand, #6d28d9);
+}
+
+/* The recommended place to watch, called out so it is the obvious choice. */
+.china-safe-video__mirror-button.is-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #321568 0%, #4c1d95 100%);
+  color: #fff;
+}
+
+.china-safe-video__mirror-button.is-primary small {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.china-safe-video__mirror-button.is-primary .china-safe-video__mirror-play {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 @media (max-width: 520px) {
   .china-safe-video__mirrors {
-    flex-direction: column;
-    gap: 8px;
+    grid-template-columns: 1fr;
   }
 }
