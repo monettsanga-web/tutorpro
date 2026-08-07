@@ -777,23 +777,34 @@ h3 {
 }
 
 @media (max-width: 900px) {
-  /* Stacked layout: the copy sits over the middle of the artwork, so the
-     scrim becomes vertical and much stronger. */
-  .hero__bg { object-position: 62% top; }
-
-  .hero--banner::after {
-    /* Was so opaque the artwork disappeared. The top strip now stays clear so
-       the banner is actually visible, and the scrim only firms up behind the
-       copy lower down. */
-    background: linear-gradient(
-      180deg,
-      rgba(253, 250, 242, 0) 0%,
-      rgba(253, 250, 242, 0.18) 14%,
-      rgba(253, 250, 242, 0.86) 30%,
-      rgba(253, 250, 242, 0.96) 46%,
-      rgba(253, 250, 242, 0.98) 100%
-    );
+  /*
+   * On a phone the hero is tall and narrow while the banner is 2.28:1 wide.
+   * 'cover' therefore crops away most of it and enlarges a thin middle slice,
+   * which showed one giant face and none of the wordmark or teachers.
+   *
+   * So on mobile the banner stops being a background and becomes a real image
+   * at the top, shown whole at its own shape, with the copy on a clean
+   * surface underneath. That is the only way the banner is actually seen.
+   */
+  .hero--banner {
+    display: flex;
+    flex-direction: column;
   }
+
+  .hero__bg {
+    position: relative;
+    height: auto;
+    aspect-ratio: 1568 / 688;
+    object-fit: contain;
+    object-position: center;
+    order: -1;
+    margin-bottom: 4px;
+  }
+
+  /* No scrim needed once the copy is no longer sitting on the artwork. */
+  .hero--banner::after { content: none; }
+
+
 }
 
 .hero::before {
@@ -996,6 +1007,15 @@ h3 {
   border-radius: 15px;
   background: #fff;
   box-shadow: var(--shadow-lg);
+}
+
+/* Banner hero: the whole section is the photograph, so there is nowhere for a
+   floating card to land. Over the right it covers the teachers' faces
+   (measured at 54% across, 67% down); over the left it covers the headline.
+   It is also decorative placeholder data rather than a real statistic, so it
+   is dropped here instead of fighting the artwork for space. */
+.hero--banner .progress-card {
+  display: none;
 }
 
 .progress-card__top {
@@ -4090,13 +4110,7 @@ body {
     margin-top: 18px;
   }
 
-  /* Static rather than floating: with no photo to sit on, an absolutely
-     positioned card left a hole in the stacked layout. */
-  .hero--banner .progress-card {
-    position: static;
-    width: 100%;
-    max-width: 320px;
-  }
+  /* Card is hidden on the banner hero at every width; nothing to place. */
 
   .hero__photo-wrap {
     right: 3%;
