@@ -10146,3 +10146,238 @@ a.feedback-resource-detail:hover strong {
 .teacher-resync-card small { display: block; margin-top: 3px; max-width: 56ch; color: var(--portal-muted); font-size: .81rem; line-height: 1.5; font-weight: 550; }
 .teacher-resync-card__action { display: grid; gap: 7px; justify-items: end; }
 .teacher-resync-card__result { color: #24632a !important; font-weight: 700 !important; text-align: right; }
+
+/* ==========================================================================
+   My teachers — where a parent sees who teaches their child and rates them.
+   ========================================================================== */
+
+.ptr-prompt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #321568 0%, #4c1d95 100%);
+  color: #fff;
+}
+
+.ptr-prompt__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fbbf24;
+}
+
+/* Explicit colours: portal-wide `strong` rules would otherwise win on
+   specificity and paint dark text onto this purple banner, which measured
+   as almost unreadable in a browser screenshot. */
+.ptr-prompt strong,
+.ptr-prompt div > strong {
+  display: block;
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.ptr-prompt span,
+.ptr-prompt div > span { color: rgba(255, 255, 255, 0.86); font-size: 0.92rem; }
+
+.ptr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.ptr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(50, 21, 104, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ptr-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(50, 21, 104, 0.11);
+}
+
+/* A class is waiting to be reviewed: make that unmistakable. */
+.ptr-card--awaiting {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.13);
+}
+
+.ptr-card__head { display: flex; gap: 15px; align-items: flex-start; }
+
+.ptr-card__avatar { position: relative; flex: 0 0 auto; }
+
+.ptr-card__photo,
+.ptr-card__avatar img {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ptr-card__verified {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+}
+
+.ptr-card__identity { min-width: 0; flex: 1; }
+.ptr-card__identity h2 { margin: 0 0 3px; font-size: 1.2rem; letter-spacing: -0.02em; }
+.ptr-card__identity > p {
+  margin: 0 0 8px;
+  color: var(--muted, #5b5470);
+  font-size: 0.9rem;
+}
+
+.ptr-stars { display: inline-flex; gap: 2px; color: #fbbf24; }
+.ptr-stars .is-empty { color: rgba(0, 0, 0, 0.16); }
+
+.ptr-card__score { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ptr-card__score strong { font-size: 1.05rem; }
+.ptr-card__score small { color: var(--muted, #5b5470); font-size: 0.82rem; }
+.ptr-card__score--none small { font-style: italic; }
+
+.ptr-card__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin: 0;
+  padding: 15px 0 0;
+  border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+}
+
+.ptr-card__facts div { min-width: 0; }
+
+.ptr-card__facts dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+  color: var(--muted, #5b5470);
+  font-size: 0.8rem;
+}
+
+.ptr-card__facts dd {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.ptr-card__cta { display: flex; flex-direction: column; gap: 6px; }
+
+.ptr-rate-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.ptr-rate-button:hover { filter: brightness(1.07); }
+
+.ptr-card__cta small {
+  color: var(--muted, #5b5470);
+  font-size: 0.83rem;
+  text-align: center;
+}
+
+.ptr-card__cta--done,
+.ptr-card__cta--waiting {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.ptr-card__cta--done { background: rgba(16, 185, 129, 0.1); color: #047857; }
+.ptr-card__cta--waiting { background: rgba(0, 0, 0, 0.04); color: var(--muted, #5b5470); }
+
+.ptr-card__reviews { border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08)); padding-top: 13px; }
+
+.ptr-card__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand, #6d28d9);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.ptr-card__toggle:hover { text-decoration: underline; }
+
+.ptr-review-list { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 11px; }
+
+.ptr-review-list li {
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: rgba(109, 40, 217, 0.05);
+}
+
+.ptr-review-list p { margin: 6px 0 4px; font-size: 0.92rem; line-height: 1.55; }
+.ptr-review-list__silent { color: var(--muted, #5b5470); font-style: italic; }
+.ptr-review-list small { color: var(--muted, #5b5470); font-size: 0.8rem; }
+
+.ptr-footnote {
+  margin-top: 20px;
+  color: var(--muted, #5b5470);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.ptr-empty { display: grid; justify-items: center; gap: 9px; padding: 44px 24px; text-align: center; }
+.ptr-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(109, 40, 217, 0.09);
+  color: var(--brand, #6d28d9);
+}
+.ptr-empty strong { font-size: 1.12rem; }
+.ptr-empty span { color: var(--muted, #5b5470); }
+
+@media (max-width: 560px) {
+  .ptr-grid { grid-template-columns: 1fr; }
+  .ptr-card__facts { grid-template-columns: 1fr; }
+}

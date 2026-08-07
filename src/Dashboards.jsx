@@ -98,6 +98,7 @@ import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { onHashRouteChange, readHashRoute, writeHashRoute } from './hashRoute.js'
 import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
+import ParentTeacherReviews from './ParentTeacherReviews.jsx'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
@@ -1359,15 +1360,35 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   const teacher = getAccountById(booking.teacherId)
 
-  const submit = (event) => {
+  /**
+   * Confirm the review actually reached the shared database before closing.
+   *
+   * This used to save locally and fire the upload without waiting, the same
+   * bug that lost teacher feedback: if the upload failed, the dialog still
+   * closed and the parent believed their review was shared, when it existed
+   * on one device and nowhere else.
+   */
+  const submit = async (event) => {
     event.preventDefault()
+    if (saving) return
+    setError('')
+    setSaving(true)
     try {
-      rateCompletedBooking(booking.id, studentId, rating, comment)
+      const saved = rateCompletedBooking(booking.id, studentId, rating, comment)
+      if (cloudSyncEnabled()) {
+        await withTimeout(
+          syncBookingNow(saved),
+          12000,
+          'The shared database did not confirm your review in time.',
+        )
+      }
       onSaved()
     } catch (ratingError) {
-      setError(ratingError.message)
+      setError(`${ratingError.message} Your review is saved on this device, but your teacher will not see it until this succeeds.`)
+      setSaving(false)
     }
   }
 
@@ -1383,7 +1404,7 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
         <form onSubmit={submit}>
           <div className="rating-stars" role="group" aria-label="Lesson rating">{[1, 2, 3, 4, 5].map((score) => <button type="button" className={score <= rating ? 'active' : ''} onClick={() => setRating(score)} key={score} aria-label={`${score} star${score > 1 ? 's' : ''}`}><Star size={30} fill={score <= rating ? 'currentColor' : 'none'} /></button>)}</div>
           <label><span>Share a short comment <i>optional</i></span><textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="What did your child enjoy or learn?" /></label>
-          <button className="portal-primary-button" type="submit" disabled={!rating}>Submit class rating <ArrowRight size={16} /></button>
+          <button className="portal-primary-button" type="submit" disabled={!rating || saving}>{saving ? 'Sending your review…' : 'Submit class rating'} <ArrowRight size={16} /></button>
         </form>
       </section>
     </div>
@@ -2869,10 +2890,15 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     onAccountChange(updated)
   }
 
+  // Completed classes this family has not reviewed yet. Shown as a badge so a
+  // parent does not have to go looking for something to rate.
+  const unratedCount = bookings.filter((booking) => booking.status === 'completed' && !booking.studentRating?.score).length
+
   const nav = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'book', label: 'Book a class', icon: CalendarPlus },
     { id: 'lessons', label: 'My lessons', icon: CalendarDays, badge: pendingCount },
+    { id: 'my-teachers', label: 'My teachers', icon: Star, badge: unratedCount },
     { id: 'curriculum', label: 'Curriculum Framework', icon: BookOpen },
     { id: 'games', label: 'English games', icon: Gamepad2 },
     { id: 'referrals', label: 'Referrals', icon: Award },
@@ -2943,6 +2969,15 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       )}
 
       {active === 'book' && <BookLessonPanel account={account} learner={learner} onBooked={() => { const refreshed = getAccountById(account.id); if (refreshed) { setAccount(refreshed); onAccountChange(refreshed) } setBookingVersion((value) => value + 1) }} />}
+
+      {active === 'my-teachers' && (
+        <ParentTeacherReviews
+          account={account}
+          mediaVersion={mediaVersion}
+          version={bookingVersion}
+          onRateBooking={setRatingBooking}
+        />
+      )}
 
       {active === 'lessons' && (
         <div className="portal-view">
