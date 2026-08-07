@@ -206,8 +206,15 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
 
 function Hero({ onBook }) {
   return (
-    <section className="hero" id="top">
+    <section className="hero hero--banner" id="top">
       <div className="hero__dots" aria-hidden="true" />
+      {/* Decorative background carries no information the copy does not, but
+          it is the brand image, so it is described rather than hidden. */}
+      <img
+        className="hero__bg"
+        src={assetUrl('assets/tutorpro-hero.webp')}
+        alt="TutorPro Online English E-Learning Academy — our teachers, for ages 5 to 12"
+      />
       <div className="container hero__grid">
         <div className="hero__content">
           <div className="eyebrow">
@@ -234,18 +241,11 @@ function Hero({ onBook }) {
           </div>
         </div>
 
+        {/* The banner artwork is the hero background, not a framed card. It
+            already carries the brand mark, the teachers and the "E-Learning
+            Academy" wordmark, so the old photo frame and its floating badges
+            would sit on top of that same artwork. */}
         <div className="hero__visual">
-          <div className="hero__photo-wrap">
-            <img
-              className="hero__photo"
-              src={assetUrl('assets/tutorpro-hero.webp')}
-              alt="A student taking part in a friendly online English lesson"
-            />
-            <div className="class-pill">
-              <span className="class-pill__icon"><MessageCircle size={18} /></span>
-              <span><strong>1-to-1 attention</strong>Every class, every child</span>
-            </div>
-          </div>
           <div className="progress-card">
             <div className="progress-card__top">
               <span className="progress-card__icon"><Target size={18} /></span>
@@ -254,7 +254,6 @@ function Hero({ onBook }) {
             <div className="progress-card__bar"><span /></div>
             <div className="progress-card__foot"><span>Great progress</span><strong>82%</strong></div>
           </div>
-          <div className="hero__shape" aria-hidden="true" />
         </div>
       </div>
     </section>

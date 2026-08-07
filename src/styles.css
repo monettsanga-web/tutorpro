@@ -729,6 +729,73 @@ h3 {
   background: #e2f7a7;
 }
 
+/* ---------------------------------------------------------------------------
+   Banner hero: the artwork fills the whole section instead of sitting in a
+   framed card. Two things make this safe rather than pretty-but-unreadable:
+   a scrim behind the copy, and a background colour sampled from the artwork
+   so the edges blend when the image does not cover every pixel.
+   --------------------------------------------------------------------------- */
+.hero--banner {
+  background: #fdfaf2;
+}
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  /* cover keeps the artwork edge-to-edge; the focal point is biased right so
+     the teachers stay in frame while the copy sits over the calmer left side. */
+  object-fit: cover;
+  object-position: 72% center;
+  pointer-events: none;
+}
+
+/* The artwork is busy and light. Without this the headline is unreadable over
+   the illustrations, which is the usual failure of a full-bleed hero. */
+.hero--banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    rgba(253, 250, 242, 0.97) 0%,
+    rgba(253, 250, 242, 0.93) 34%,
+    rgba(253, 250, 242, 0.55) 52%,
+    rgba(253, 250, 242, 0.05) 68%,
+    rgba(253, 250, 242, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.hero--banner .hero__grid,
+.hero--banner .hero__dots {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  /* Stacked layout: the copy sits over the middle of the artwork, so the
+     scrim becomes vertical and much stronger. */
+  .hero__bg { object-position: 62% top; }
+
+  .hero--banner::after {
+    /* Was so opaque the artwork disappeared. The top strip now stays clear so
+       the banner is actually visible, and the scrim only firms up behind the
+       copy lower down. */
+    background: linear-gradient(
+      180deg,
+      rgba(253, 250, 242, 0) 0%,
+      rgba(253, 250, 242, 0.18) 14%,
+      rgba(253, 250, 242, 0.86) 30%,
+      rgba(253, 250, 242, 0.96) 46%,
+      rgba(253, 250, 242, 0.98) 100%
+    );
+  }
+}
+
 .hero::before {
   position: absolute;
   top: -120px;
@@ -4016,7 +4083,19 @@ body {
 
   .hero__visual {
     width: 100%;
-    min-height: 260px;
+    /* The framed photo that needed this space is gone; only the small
+       progress card remains, so reserve just enough for it. */
+    min-height: 0;
+    height: auto;
+    margin-top: 18px;
+  }
+
+  /* Static rather than floating: with no photo to sit on, an absolutely
+     positioned card left a hole in the stacked layout. */
+  .hero--banner .progress-card {
+    position: static;
+    width: 100%;
+    max-width: 320px;
   }
 
   .hero__photo-wrap {
