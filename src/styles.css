@@ -741,39 +741,138 @@ h3 {
   background: #fdfaf2;
 }
 
-.hero__bg {
+/* ---------------------------------------------------------------------------
+   Hero depth stage.
+   --px / --py are pointer offsets in the range -1..1, --scroll is 0..1 down
+   the section. They are written by useParallax inside a rAF loop, so every
+   layer below animates on the compositor and React never re-renders.
+   --------------------------------------------------------------------------- */
+.hero--banner {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+.hero__bg-stage {
   position: absolute;
   inset: 0;
   z-index: 0;
-  width: 100%;
-  height: 100%;
-  /* The artwork is 16:9 with a deliberately plain left third, so a full-bleed
-     'cover' crop now loses very little. The previous 2.28:1 version lost 46%
-     here, which is why it had to sit above the copy instead. */
-  object-fit: cover;
-  /* Anchor left. A centred crop trims both edges equally, which pulled the
-     plain left third off-screen and slid the wordmark under the headline.
-     Anchoring left keeps that empty area behind the copy and pushes the
-     badge, wordmark and teachers to the right where there is no text. */
-  object-position: left center;
+  overflow: hidden;
   pointer-events: none;
 }
 
-/* Light veil only. The left third is already near-flat cream (measured
-   variation 0.7), so the copy needs help against tinting, not a heavy mask
-   that would hide the artwork the way the first attempt did. */
+.hero__bg {
+  position: absolute;
+  /* Oversized so the scroll drift never exposes a bare edge. */
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  object-fit: cover;
+  /* Bias right so the teachers land on the clear side of the scrim. */
+  object-position: 78% center;
+  /* Furthest layer: drifts least and scales gently as the page scrolls. */
+  transform:
+    translate3d(0, calc(var(--premium-scroll-ratio, 0) * 26px), 0)
+    scale(calc(1.02 + var(--premium-scroll-ratio, 0) * 0.05));
+  will-change: transform;
+}
+
+/* Soft colour orbs at different depths. Blurred and low-opacity so they read
+   as atmosphere rather than as shapes, and each drifts at its own rate. */
+.hero__orb {
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.45;
+  pointer-events: none;
+  will-change: transform;
+  animation: hero-orb-drift 18s ease-in-out infinite;
+}
+
+.hero__orb--1 {
+  top: -8%;
+  left: 4%;
+  width: min(30vw, 420px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(188, 233, 78, 0.55), transparent 68%);
+  transform: translate3d(0, calc(var(--premium-scroll-ratio, 0) * 18px), 0);
+  animation-duration: 18s;
+  animation-delay: 0s;
+}
+
+.hero__orb--2 {
+  right: 2%;
+  bottom: -14%;
+  width: min(34vw, 480px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.32), transparent 70%);
+  transform: translate3d(0, calc(var(--premium-scroll-ratio, 0) * -26px), 0);
+  animation-duration: 23s;
+  animation-delay: -6s;
+}
+
+.hero__orb--3 {
+  top: 24%;
+  right: 28%;
+  width: min(22vw, 300px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.28), transparent 72%);
+  transform: translate3d(0, calc(var(--premium-scroll-ratio, 0) * 34px), 0);
+  animation-duration: 20s;
+  animation-delay: -11s;
+}
+
+/* The copy is the nearest layer, so it moves most and tilts slightly. The
+   small rotation is what sells depth; more than a degree or two looks gimmicky
+   and makes text harder to read. */
+/* The copy's entry animation and tilt are owned by premium-motion.css, which
+   already animates these elements. A second transform rule here silently lost
+   to its fill-mode 'both' animation, so it is deliberately not duplicated. */
+
+/* Fade and lift the whole hero away as it scrolls, so the next section feels
+   like it arrives over the top rather than simply following. */
+.hero--banner .hero__grid {
+  transform: translate3d(0, calc(var(--premium-scroll-ratio, 0) * -46px), 0);
+  opacity: calc(1 - var(--premium-scroll-ratio, 0) * 0.85);
+  will-change: transform, opacity;
+}
+
+/* Everything above is decoration. A visitor who has asked for less motion
+   gets a completely static hero. */
+@media (prefers-reduced-motion: reduce) {
+  .hero__bg,
+  .hero__orb,
+  .hero--banner .hero__content > *,
+  .hero--banner .hero__grid {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/*
+ * Readability scrim.
+ *
+ * The 2.28:1 artwork has no empty region: the E-Learning Academy wordmark runs
+ * through the centre-left, which is exactly where the headline sits. A light
+ * veil left the copy sitting on top of large bubble letters and it was close
+ * to unreadable, so the left side is masked firmly and the right stays clear
+ * so the teachers and the badge still read as a photograph.
+ */
 .hero--banner::after {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    100deg,
-    rgba(253, 250, 242, 0.72) 0%,
-    rgba(253, 250, 242, 0.5) 26%,
-    rgba(253, 250, 242, 0.12) 44%,
-    rgba(253, 250, 242, 0) 60%
-  );
+  background:
+    linear-gradient(
+      100deg,
+      rgba(253, 250, 242, 0.985) 0%,
+      rgba(253, 250, 242, 0.965) 30%,
+      rgba(253, 250, 242, 0.82) 44%,
+      rgba(253, 250, 242, 0.32) 56%,
+      rgba(253, 250, 242, 0.02) 70%,
+      rgba(253, 250, 242, 0) 100%
+    );
   pointer-events: none;
 }
 
@@ -793,21 +892,18 @@ h3 {
    * at the top, shown whole at its own shape, with the copy on a clean
    * surface underneath. That is the only way the banner is actually seen.
    */
-  /* A phone shows only ~22% of a 16:9 image, so whatever sits behind the copy
-     is what the visitor sees. Centring put the badge and wordmark directly
-     under the headline, which was unreadable. Anchor hard left instead: that
-     is the deliberately plain third of the artwork, so the copy sits on calm
-     cream and the branding is simply out of frame rather than fighting it. */
-  .hero__bg { object-position: left top; }
+  /* A phone shows a narrow slice, so the copy always lands on artwork. Mask
+     vertically: clear at the top so the banner is visible, firm below it. */
+  .hero__bg { object-position: 72% top; }
 
   .hero--banner::after {
     background: linear-gradient(
       180deg,
       rgba(253, 250, 242, 0) 0%,
-      rgba(253, 250, 242, 0.1) 18%,
-      rgba(253, 250, 242, 0.78) 36%,
-      rgba(253, 250, 242, 0.94) 52%,
-      rgba(253, 250, 242, 0.97) 100%
+      rgba(253, 250, 242, 0.08) 15%,
+      rgba(253, 250, 242, 0.9) 30%,
+      rgba(253, 250, 242, 0.975) 44%,
+      rgba(253, 250, 242, 0.99) 100%
     );
   }
 
@@ -5984,3 +6080,16 @@ body {
 
 .hero__trustpilot.trustpilot-link:hover,
 .footer__trustpilot.trustpilot-link:hover { color: #fff; }
+
+
+/* Slow ambient drift for the hero depth orbs. Long durations and small
+   distances: this should read as atmosphere, not as something moving. */
+@keyframes hero-orb-drift {
+  0%, 100% { translate: 0 0; }
+  33%      { translate: 22px -16px; }
+  66%      { translate: -18px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__orb { animation: none; }
+}

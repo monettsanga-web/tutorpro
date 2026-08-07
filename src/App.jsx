@@ -206,15 +206,27 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
 
 function Hero({ onBook }) {
   return (
+    /* Motion for this section is owned by PremiumMotion + premium-motion.css,
+       which already publishes --premium-scroll-ratio globally and animates the
+       hero copy. A second parallax system here silently lost to its
+       fill-mode 'both' animations, so the depth below is driven from those
+       existing variables instead of duplicating the machinery. */
     <section className="hero hero--banner" id="top">
       <div className="hero__dots" aria-hidden="true" />
       {/* Decorative background carries no information the copy does not, but
           it is the brand image, so it is described rather than hidden. */}
-      <img
-        className="hero__bg"
-        src={assetUrl('assets/tutorpro-hero.webp')}
-        alt="TutorPro Online English E-Learning Academy — our teachers, for ages 5 to 12"
-      />
+      <div className="hero__bg-stage" aria-hidden="true">
+        <img
+          className="hero__bg"
+          src={assetUrl('assets/tutorpro-hero.webp')}
+          alt="TutorPro Online English E-Learning Academy — our teachers, for ages 5 to 12"
+        />
+      </div>
+      {/* Depth layers. Each drifts at a different rate, which is what reads as
+          three-dimensional rather than as a flat image sliding about. */}
+      <span className="hero__orb hero__orb--1" aria-hidden="true" />
+      <span className="hero__orb hero__orb--2" aria-hidden="true" />
+      <span className="hero__orb hero__orb--3" aria-hidden="true" />
       <div className="container hero__grid">
         <div className="hero__content">
           <div className="eyebrow">
