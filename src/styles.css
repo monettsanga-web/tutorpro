@@ -742,23 +742,40 @@ h3 {
 }
 
 .hero__bg {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 0;
-  display: block;
   width: 100%;
-  height: auto;
-  /* Measured: a 'cover' background showed only 54% of the artwork, cutting off
-     the badge and the E-Learning Academy wordmark. The banner is the brand
-     image, so it is shown whole at its own 2.28:1 shape rather than cropped to
-     fit a taller container. */
-  aspect-ratio: 1568 / 688;
-  object-fit: contain;
-  object-position: center;
+  height: 100%;
+  /* The artwork is 16:9 with a deliberately plain left third, so a full-bleed
+     'cover' crop now loses very little. The previous 2.28:1 version lost 46%
+     here, which is why it had to sit above the copy instead. */
+  object-fit: cover;
+  /* Anchor left. A centred crop trims both edges equally, which pulled the
+     plain left third off-screen and slid the wordmark under the headline.
+     Anchoring left keeps that empty area behind the copy and pushes the
+     badge, wordmark and teachers to the right where there is no text. */
+  object-position: left center;
   pointer-events: none;
 }
 
-/* The banner now sits above the copy rather than behind it, so no scrim is
-   needed: nothing is written on top of the artwork. */
+/* Light veil only. The left third is already near-flat cream (measured
+   variation 0.7), so the copy needs help against tinting, not a heavy mask
+   that would hide the artwork the way the first attempt did. */
+.hero--banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    rgba(253, 250, 242, 0.72) 0%,
+    rgba(253, 250, 242, 0.5) 26%,
+    rgba(253, 250, 242, 0.12) 44%,
+    rgba(253, 250, 242, 0) 60%
+  );
+  pointer-events: none;
+}
 
 .hero--banner .hero__grid,
 .hero--banner .hero__dots {
@@ -776,23 +793,23 @@ h3 {
    * at the top, shown whole at its own shape, with the copy on a clean
    * surface underneath. That is the only way the banner is actually seen.
    */
-  .hero--banner {
-    display: flex;
-    flex-direction: column;
-  }
+  /* A phone shows only ~22% of a 16:9 image, so whatever sits behind the copy
+     is what the visitor sees. Centring put the badge and wordmark directly
+     under the headline, which was unreadable. Anchor hard left instead: that
+     is the deliberately plain third of the artwork, so the copy sits on calm
+     cream and the branding is simply out of frame rather than fighting it. */
+  .hero__bg { object-position: left top; }
 
-  .hero__bg {
-    position: relative;
-    height: auto;
-    aspect-ratio: 1568 / 688;
-    object-fit: contain;
-    object-position: center;
-    order: -1;
-    margin-bottom: 4px;
+  .hero--banner::after {
+    background: linear-gradient(
+      180deg,
+      rgba(253, 250, 242, 0) 0%,
+      rgba(253, 250, 242, 0.1) 18%,
+      rgba(253, 250, 242, 0.78) 36%,
+      rgba(253, 250, 242, 0.94) 52%,
+      rgba(253, 250, 242, 0.97) 100%
+    );
   }
-
-  /* No scrim needed once the copy is no longer sitting on the artwork. */
-  .hero--banner::after { content: none; }
 
 
 }
