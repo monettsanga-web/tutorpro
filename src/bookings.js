@@ -35,6 +35,28 @@ export function getStableClassroomCredentials(booking) {
   }
 }
 
+/**
+ * Is the incoming copy of a single field newer than the one already here?
+ *
+ * Whole-record timestamps cannot answer this. Two devices touch the same
+ * booking for unrelated reasons — a status change here, a comment there — so
+ * the record's updatedAt says nothing about who last edited a PARTICULAR
+ * field. Each of these sub-objects carries its own createdAt, which does.
+ *
+ * A field we have nothing for is always accepted. A field with no timestamp on
+ * either side is only accepted when we have nothing, so a blind overwrite can
+ * never silently destroy something a teacher wrote.
+ */
+function fieldIsNewer(incoming, existing) {
+  if (!incoming) return false
+  if (!existing) return true
+  const incomingAt = new Date(incoming.createdAt || incoming.updatedAt || 0).getTime()
+  const existingAt = new Date(existing.createdAt || existing.updatedAt || 0).getTime()
+  if (!Number.isFinite(incomingAt) || !incomingAt) return false
+  if (!Number.isFinite(existingAt) || !existingAt) return true
+  return incomingAt > existingAt
+}
+
 export function mergeCloudBookings(cloudBookings, options = {}) {
   if (!Array.isArray(cloudBookings)) return getBookings()
   const cloudIds = new Set(cloudBookings.map((booking) => booking.id))
@@ -56,13 +78,25 @@ export function mergeCloudBookings(cloudBookings, options = {}) {
         // any later local touch, even a status change, hid it permanently.
         // Merge those fields in individually when we have nothing for them.
         const rescue = {}
-        if (!bookings[index].teacherFeedback?.summary?.trim() && cloudBooking.teacherFeedback?.summary?.trim()) {
+        // Compare each field on its OWN timestamp, not the record's.
+        //
+        // The earlier version only rescued a field this device had never seen.
+        // That silently lost EDITS: a teacher correcting feedback on laptop A
+        // produced a newer teacherFeedback.createdAt, but if laptop B had
+        // touched the record later for any reason (a status change, a comment,
+        // opening the classroom), laptop B kept its stale copy forever and the
+        // correction never appeared anywhere else.
+        const newerFeedback = fieldIsNewer(
+          cloudBooking.teacherFeedback,
+          bookings[index].teacherFeedback,
+        )
+        if (cloudBooking.teacherFeedback?.summary?.trim() && newerFeedback) {
           rescue.teacherFeedback = cloudBooking.teacherFeedback
         }
-        if (!bookings[index].studentRating && cloudBooking.studentRating) {
+        if (cloudBooking.studentRating && fieldIsNewer(cloudBooking.studentRating, bookings[index].studentRating)) {
           rescue.studentRating = cloudBooking.studentRating
         }
-        if (!bookings[index].sessionRecap && cloudBooking.sessionRecap) {
+        if (cloudBooking.sessionRecap && fieldIsNewer(cloudBooking.sessionRecap, bookings[index].sessionRecap)) {
           rescue.sessionRecap = cloudBooking.sessionRecap
         }
         // A lesson that finished cannot un-finish, so a completed status from
