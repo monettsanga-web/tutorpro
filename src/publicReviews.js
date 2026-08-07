@@ -88,6 +88,7 @@ function normalizeRow(row) {
     score: Math.round(score),
     quote: comment,
     name: String(row.reviewer || 'TutorPro parent').trim() || 'TutorPro parent',
+    teacherId: String(row.teacher_id || ''),
     teacherName: String(row.teacher_name || '').trim(),
     date: row.created_at || null,
     source: 'Verified TutorPro lesson',
@@ -172,4 +173,19 @@ export function publishedAverage(reviews) {
   if (!scored.length) return null
   const total = scored.reduce((sum, review) => sum + Number(review.score), 0)
   return Math.round((total / scored.length) * 10) / 10
+}
+
+/**
+ * The published reviews for one teacher, newest first.
+ *
+ * The public teacher profile previously read from local storage, so a visitor
+ * who was not logged in saw an empty review list on every teacher — the data
+ * simply was not on their device. These come from the same vetted database
+ * function as the homepage, so they work for anyone.
+ */
+export function reviewsForTeacher(reviews, teacherId) {
+  if (!teacherId) return []
+  return (Array.isArray(reviews) ? reviews : [])
+    .filter((review) => String(review.teacherId || '') === String(teacherId))
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
 }

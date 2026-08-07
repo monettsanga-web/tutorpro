@@ -35,9 +35,10 @@ const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ de
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { canViewTeacherDirectory, loadSiteSettings, publiclyListedTeachers, subscribeToCloudSiteSettings, subscribeToSiteSettings } from './siteSettings.js'
 import { captureAttribution } from './attribution.js'
-import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage } from './publicReviews.js'
+import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage, reviewsForTeacher } from './publicReviews.js'
+import ReviewCarousel from './ReviewCarousel.jsx'
 import { clearHashRoute, readHashRoute } from './hashRoute.js'
-import { getBookings, mergeCloudBookings } from './bookings.js'
+import { mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
@@ -922,30 +923,7 @@ function ParentReviews() {
             </p>
           )}
         </div>
-        <div className="parent-reviews__grid">
-          {reviews.map((review) => {
-            const stars = Number(review.score) || 5
-            return (
-              <figure className="parent-review" key={review.id || `${review.name}-${review.date}`}>
-                <div className="parent-review__stars" aria-label={`${stars} out of 5`}>
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} size={16} fill={i < stars ? 'currentColor' : 'none'} />
-                  ))}
-                </div>
-                <blockquote>{review.quote}</blockquote>
-                <figcaption>
-                  <strong>{review.name}</strong>
-                  <small>
-                    {review.verified && <span className="parent-review__verified"><BadgeCheck size={12} aria-hidden="true" /> Verified lesson</span>}
-                    {review.verified && review.teacherName ? ` · Taught by ${review.teacherName}` : ''}
-                    {!review.verified && review.source}
-                    {review.date ? ` · ${new Date(review.date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}` : ''}
-                  </small>
-                </figcaption>
-              </figure>
-            )
-          })}
-        </div>
+        <ReviewCarousel reviews={reviews} />
       </div>
     </section>
   )
@@ -954,13 +932,20 @@ function ParentReviews() {
 function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
   const [activeMedia, setActiveMedia] = useState('schedule')
   const profile = teacher.teacher || {}
-  const reviews = getBookings({ teacherId: teacher.id })
-    .filter((booking) => booking.studentRating?.score)
-    .sort((a, b) => (b.studentRating?.createdAt || '').localeCompare(a.studentRating?.createdAt || ''))
-    .slice(0, 3)
-  const reviewAverage = reviews.length
-    ? Math.round((reviews.reduce((sum, booking) => sum + Number(booking.studentRating.score || 0), 0) / reviews.length) * 10) / 10
-    : (profile.rating || 0)
+
+  // Same fix as the full profile: getBookings() reads local storage, so a
+  // logged-out visitor browsing the teacher directory saw no reviews at all.
+  const [publishedReviews, setPublishedReviews] = useState(() => cachedPublicReviews())
+  useEffect(() => {
+    let active = true
+    fetchPublicReviews().then((fetched) => {
+      if (active && fetched.length) setPublishedReviews(fetched)
+    })
+    return () => { active = false }
+  }, [])
+
+  const reviews = reviewsForTeacher(publishedReviews, teacher.id).slice(0, 3)
+  const reviewAverage = reviews.length ? publishedAverage(reviews) : (profile.rating || 0)
   const displayRating = reviewAverage || profile.rating || 'New'
   const completedLessons = profile.lessonsCompleted || 0
   const experience = Number(profile.experience || 0)
@@ -1050,9 +1035,9 @@ function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
 
         {parentReview ? (
           <blockquote className="teacher-dashboard-profile-card__testimonial">
-            <div><ProfilePhoto accountId={`${parentReview.studentId}-${parentReview.learnerId || 'student'}`} name={parentReview.learnerName || 'Parent'} className="teacher-dashboard-profile-card__reviewer" /><strong>{parentReview.learnerName || 'TutorPro parent'}</strong></div>
-            <span>{'★'.repeat(Number(parentReview.studentRating.score || 0))}{'☆'.repeat(5 - Number(parentReview.studentRating.score || 0))}</span>
-            <p>{parentReview.studentRating.comment || `Parent rated this class ${parentReview.studentRating.score}/5.`}</p>
+            <div><strong>{parentReview.name || 'TutorPro parent'}</strong></div>
+            <span>{'★'.repeat(Number(parentReview.score || 0))}{'☆'.repeat(5 - Number(parentReview.score || 0))}</span>
+            <p>{parentReview.quote}</p>
           </blockquote>
         ) : (
           <blockquote className="teacher-dashboard-profile-card__testimonial">
@@ -1070,11 +1055,28 @@ function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
 function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
   const [activeMedia, setActiveMedia] = useState('intro')
   const profile = teacher.teacher || {}
-  const reviews = getBookings({ teacherId: teacher.id })
-    .filter((booking) => booking.studentRating?.score)
-    .sort((a, b) => (b.studentRating?.createdAt || '').localeCompare(a.studentRating?.createdAt || ''))
+
+  /**
+   * Published reviews for THIS teacher.
+   *
+   * These used to come from getBookings(), which reads local storage. A
+   * visitor who was not logged in has no bookings on their device, so every
+   * teacher profile showed "No published reviews yet" no matter how many
+   * reviews existed. They now come from the same vetted database function the
+   * homepage uses, so they work for anyone.
+   */
+  const [publishedReviews, setPublishedReviews] = useState(() => cachedPublicReviews())
+  useEffect(() => {
+    let active = true
+    fetchPublicReviews().then((fetched) => {
+      if (active && fetched.length) setPublishedReviews(fetched)
+    })
+    return () => { active = false }
+  }, [])
+
+  const reviews = reviewsForTeacher(publishedReviews, teacher.id)
   const average = reviews.length
-    ? Math.round((reviews.reduce((sum, booking) => sum + Number(booking.studentRating.score || 0), 0) / reviews.length) * 10) / 10
+    ? publishedAverage(reviews)
     : (profile.rating || 0)
   const availabilitySlots = Array.isArray(profile.availabilitySlots) ? profile.availabilitySlots : []
   const availabilityByDay = WEEKDAYS.map((day, dayIndex) => ({
@@ -1140,7 +1142,7 @@ function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
               <section className="public-teacher-profile-panel public-teacher-profile-review-box">
                 <div><span className="kicker">Parent reviews</span><a href="#teacher-reviews">View all</a></div>
                 <strong>{average || 'New'}</strong>
-                <p>{reviews.length ? `${reviews.length} parent review${reviews.length === 1 ? '' : 's'} from completed classes` : 'Reviews from completed classes will appear here.'}</p>
+                <p>{reviews.length ? `${reviews.length} published parent review${reviews.length === 1 ? '' : 's'} from completed classes` : 'Reviews from completed classes will appear here.'}</p>
                 {['Qualification', 'Expertise', 'Communication', 'Value'].map((label, index) => <div className="teacher-dashboard-profile-card__bar" key={label}><span>{label}</span><i><b style={{ width: `${Math.max(70, 95 - index * 7)}%` }} /></i><em>{(4.9 - index * 0.15).toFixed(1)}</em></div>)}
               </section>
 
@@ -1155,7 +1157,11 @@ function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
           <section id="teacher-reviews" className="public-teacher-profile-panel public-teacher-profile-reviews-list">
             <span className="kicker">What parents say</span>
             <h2>Class reviews</h2>
-            {reviews.length ? reviews.map((booking) => <blockquote key={booking.id}><span>{'★'.repeat(Number(booking.studentRating.score || 0))}{'☆'.repeat(5 - Number(booking.studentRating.score || 0))}</span><p>{booking.studentRating.comment || `Parent rated this class ${booking.studentRating.score}/5.`}</p><small>{booking.learnerName || 'TutorPro learner'} · {booking.studentRating.createdAt ? new Date(booking.studentRating.createdAt).toLocaleDateString('en') : 'recently'}</small></blockquote>) : <div className="public-teacher-profile-empty"><strong>No published reviews yet</strong><span>Parent reviews will appear after completed and rated lessons.</span></div>}
+            {/* showTeacherName is off: on a teacher's own page, repeating
+                "Taught by <name>" on every card is noise. */}
+            {reviews.length
+              ? <ReviewCarousel reviews={reviews} showTeacherName={false} className="review-carousel--on-dark" />
+              : <div className="public-teacher-profile-empty"><strong>No published reviews yet</strong><span>Parent reviews will appear after completed and rated lessons.</span></div>}
           </section>
         </article>
       </div>

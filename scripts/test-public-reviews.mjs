@@ -39,6 +39,9 @@ const sql = existsSync(resolve(repo, 'supabase/public_reviews.sql'))
   ? read('supabase/public_reviews.sql') : ''
 const client = read('src/publicReviews.js')
 const app = read('src/App.jsx')
+// The review cards moved into ReviewCarousel.jsx when the grid became a
+// carousel. These assertions follow the behaviour, not the old file.
+const carousel = read('src/ReviewCarousel.jsx')
 
 /* ------------------------------------------------------------------ */
 /* 1. Privacy: what may leave the database                            */
@@ -51,13 +54,16 @@ const app = read('src/App.jsx')
 
   // The returns clause is the contract for what can ever be exposed.
   const returns = sql.slice(sql.indexOf('returns table'), sql.indexOf('language sql'))
-  const allowed = ['review_id', 'score', 'comment', 'reviewer', 'teacher_name', 'created_at']
+  // teacher_id is included on purpose: a teacher's public profile needs it to
+  // show only their own reviews, and get_public_teachers() already exposes the
+  // same id publicly, so it reveals nothing new.
+  const allowed = ['review_id', 'score', 'comment', 'reviewer', 'teacher_id', 'teacher_name', 'created_at']
   const declared = [...returns.matchAll(/^\s{2}(\w+)\s+/gm)].map((m) => m[1])
-  check('It returns only the six safe fields',
+  check('It returns only fields on the safe allow-list',
     declared.length > 0 && declared.every((f) => allowed.includes(f)),
     declared.join(', '))
 
-  for (const leak of ['email', 'student_id', 'teacher_id', 'learner', 'child', 'phone', 'password']) {
+  for (const leak of ['email', 'student_id', 'learner', 'child', 'phone', 'password']) {
     check(`It never returns ${leak}`, !new RegExp(`^\\s{2}${leak}\\b`, 'mi').test(returns))
   }
   check('The real booking id is hashed, not exposed', /md5\(b\.id::text\)/.test(sql))
@@ -108,14 +114,14 @@ const app = read('src/App.jsx')
   check('No aggregateRating is emitted for the organisation',
     !/aggregateRating/i.test(appCode))
 
-  check('Verified lesson reviews are labelled as such', /Verified lesson/.test(app))
+  check('Verified lesson reviews are labelled as such', /Verified lesson/.test(carousel))
   check('Historical Facebook reviews keep their own label',
-    /!review\.verified && review\.source/.test(app))
-  check('Real reviews and imported ones are told apart', /review\.verified/.test(app))
+    /!review\.verified && review\.source/.test(carousel))
+  check('Real reviews and imported ones are told apart', /review\.verified/.test(carousel))
 
   check('Stars reflect the real score, not always five',
-    /fill=\{i < stars \? 'currentColor' : 'none'\}/.test(app))
-  check('The star label matches the real score', /\$\{stars\} out of 5/.test(app))
+    /fill=\{index < filled \? 'currentColor' : 'none'\}/.test(carousel))
+  check('The star label matches the real score', /\$\{filled\} out of 5/.test(carousel))
 
   // The section must never invent content to look busier.
   check('An empty result renders nothing rather than filler',

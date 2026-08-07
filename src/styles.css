@@ -5739,3 +5739,102 @@ body {
   color: #047857;
   font-weight: 700;
 }
+
+/* ==========================================================================
+   Review carousel — used on the homepage and on each teacher profile.
+   Built on native scroll snapping so swipe, trackpad, arrow keys and screen
+   readers all work even if the auto-advance timer never runs.
+   ========================================================================== */
+.review-carousel { position: relative; }
+
+.review-carousel__track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(300px, 1fr);
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 4px 4px 10px;
+  /* The scrollbar is redundant next to dots and arrows. */
+  scrollbar-width: none;
+}
+
+.review-carousel__track::-webkit-scrollbar { display: none; }
+
+.review-carousel__track:focus-visible {
+  outline: 2px solid var(--brand, #6d28d9);
+  outline-offset: 4px;
+  border-radius: 20px;
+}
+
+.review-carousel .parent-review {
+  scroll-snap-align: start;
+  height: 100%;
+  margin: 0;
+}
+
+@media (min-width: 760px) {
+  .review-carousel__track { grid-auto-columns: minmax(340px, calc(50% - 10px)); }
+}
+
+@media (min-width: 1100px) {
+  .review-carousel__track { grid-auto-columns: minmax(320px, calc(33.333% - 14px)); }
+}
+
+.review-carousel__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.review-carousel__arrow {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 50%;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.review-carousel__arrow:hover:not(:disabled) { background: rgba(109, 40, 217, 0.08); }
+.review-carousel__arrow:disabled { opacity: 0.34; cursor: default; }
+
+.review-carousel__dots { display: flex; align-items: center; gap: 8px; }
+
+.review-carousel__dots button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.review-carousel__dots button.is-active {
+  width: 26px;
+  border-radius: 999px;
+  background: var(--brand, #6d28d9);
+}
+
+/* The teacher profile sits on a dark background. */
+.review-carousel--on-dark .review-carousel__arrow {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.review-carousel--on-dark .review-carousel__arrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.review-carousel--on-dark .review-carousel__dots button { background: rgba(255, 255, 255, 0.3); }
+.review-carousel--on-dark .review-carousel__dots button.is-active { background: #bce94e; }

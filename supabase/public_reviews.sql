@@ -30,6 +30,7 @@ returns table (
   score         int,
   comment       text,
   reviewer      text,
+  teacher_id    text,
   teacher_name  text,
   created_at    timestamptz
 )
@@ -57,6 +58,9 @@ as $$
         ''),
       'TutorPro parent'
     )                                                             as reviewer,
+    -- Already public: get_public_teachers() exposes the same id, and it is
+    -- what lets a teacher's own profile page show only their reviews.
+    b.teacher_id                                                  as teacher_id,
     coalesce(
       nullif(split_part(trim(coalesce(t.full_name, '')), ' ', 1), ''),
       'their teacher'
@@ -76,7 +80,7 @@ as $$
     -- The administrator can hide any individual review.
     and coalesce((b.booking_data->>'reviewHidden')::boolean, false) = false
   order by created_at desc
-  limit 24;
+  limit 60;
 $$;
 
 -- Anyone may call it, including logged-out visitors and search engines.
