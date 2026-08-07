@@ -421,6 +421,8 @@ function SeeAClass() {
             shareUrl: a safety net shown if the file itself ever fails. */}
         <ChinaSafeVideo
           src={CLASS_VIDEO_URL}
+          autoPlay
+          loop
           poster={assetUrl('assets/online-english-lesson.jpg')}
           shareUrl="https://www.bilibili.tv/en/video/4800493496966144"
           title="A real TutorPro Online English class"

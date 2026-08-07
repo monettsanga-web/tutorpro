@@ -111,8 +111,13 @@ const blockedInChina = (url) => {
       && /\(canEmbed \? 'embed'/.test(source))
   check('A failed file never leaves a dead black box',
     /\(canEmbed \? 'embed' : \(shareUrl \? 'link' : 'none'\)\)/.test(source))
+  // The point was never "no effects at all" - it was "do not sync state with
+  // an effect". There is now one effect, for the autoplay observer, and it
+  // sets no state. Prop-sync still uses React's adjust-during-render pattern.
+  const effectBodies = [...source.matchAll(/useEffect\(\(\) => \{([\s\S]*?)\n  \}, \[/g)].map((m) => m[1])
   check('It syncs on prop change without a cascading effect',
-    !/useEffect/.test(source) && /if \(src !== lastSrc\)/.test(source))
+    /if \(src !== lastSrc\)/.test(source)
+      && !effectBodies.some((body) => /\bset[A-Z]\w*\(/.test(body)))
   check('It shows an escape-hatch link when the embed is unreachable in China',
     /!reachableInChina &&/.test(source))
   // Strip comments first: the file *explains* why we avoid ytimg, and the
@@ -364,6 +369,37 @@ const blockedInChina = (url) => {
     check('It only ever touches its own bucket',
       !/bucket_id = '(classroom-files|classroom-recordings|support-attachments|teacher-interview-recordings)'/.test(sql))
   }
+}
+
+
+/* --- 14. Autoplay: the only kind browsers actually allow --- */
+{
+  const component = readFileSync(resolve(repo, 'src/ChinaSafeVideo.jsx'), 'utf8')
+  const app = readFileSync(resolve(repo, 'src/App.jsx'), 'utf8')
+
+  // Chrome, Safari and Firefox all refuse autoplay with sound. Muted autoplay
+  // is permitted. Get this wrong and the video silently never starts.
+  check('Autoplay starts muted', /useState\(autoPlay\)/.test(component))
+  check('The muted state is bound to the element', /muted=\{muted\}/.test(component))
+  check('The requirement is written down so nobody "fixes" it later',
+    /blocks autoplay with sound/i.test(component))
+
+  // Playing off-screen wastes data for someone who never scrolls that far.
+  check('Playback waits until the video is on screen', /new IntersectionObserver/.test(component))
+  check('It pauses when scrolled out of view', /video\.pause\(\)/.test(component))
+  check('A refused play() cannot leave a dead frame', /video\.play\(\)\.catch\(/.test(component))
+  check('Reduced-motion preferences are respected', /prefers-reduced-motion/.test(component))
+  check('Autoplaying video preloads enough to actually start',
+    /preload=\{autoPlay \? 'auto' : 'metadata'\}/.test(component))
+
+  // Muted video with no visible control leaves visitors unaware of sound.
+  check('There is a way to turn the sound on', /china-safe-video__unmute/.test(component))
+  check('The unmute control only shows while actually muted', /\{muted && started &&/.test(component))
+  check('Using the native volume control keeps our state in step', /onVolumeChange=/.test(component))
+
+  const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
+  check('The homepage turns autoplay on', /autoPlay/.test(usage))
+  check('The clip loops, since it is only a minute long', /loop/.test(usage))
 }
 
 console.log(`\n${passed} passed, ${failed} failed`)

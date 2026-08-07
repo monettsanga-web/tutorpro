@@ -28,14 +28,27 @@
  * reintroduce the same blank rectangle.
  */
 
-import { useState } from 'react'
-import { Play } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Play, Volume2 } from 'lucide-react'
 import { toEmbedUrl } from './videoEmbeds.js'
 
 export default function ChinaSafeVideo({
   src = '',
   poster = '',
   shareUrl = '',
+  /**
+   * Start playing as soon as the video scrolls into view.
+   *
+   * MUST be muted to work. Every modern browser blocks autoplay with sound —
+   * Chrome, Safari and Firefox all require a user gesture before audio can
+   * start. A muted autoplay is allowed, so the video plays silently and the
+   * visitor taps once to hear it.
+   *
+   * It also waits until the section is actually on screen, so a visitor who
+   * never scrolls that far never downloads 5 MB they did not ask for.
+   */
+  autoPlay = false,
+  loop = false,
   /**
    * Extra places the same video is published, shown as plain links under the
    * player. A mirror is the whole point for a family in mainland China: when
@@ -52,6 +65,10 @@ export default function ChinaSafeVideo({
   // a state-sync effect and the cascading re-render it causes.
   const [fileFailed, setFileFailed] = useState(false)
   const [started, setStarted] = useState(false)
+  // Autoplay is only permitted while muted, so that is how it begins.
+  const [muted, setMuted] = useState(autoPlay)
+  const videoRef = useRef(null)
+  const containerRef = useRef(null)
 
   // Reset the failure flag when the source changes, without an effect: React's
   // documented "adjust state during render" pattern.
@@ -61,6 +78,47 @@ export default function ChinaSafeVideo({
     setFileFailed(false)
     setStarted(false)
   }
+
+  /**
+   * Play only once the section is actually on screen.
+   *
+   * Two reasons this is not a plain `autoplay` attribute:
+   *  1. A visitor who never scrolls this far should not download 5 MB.
+   *  2. Video playing off-screen wastes battery and mobile data.
+   *
+   * play() returns a promise that REJECTS when the browser refuses. Ignoring
+   * it would leave a permanently paused video with no play button showing, so
+   * a refusal falls back to the normal poster-and-controls state.
+   */
+  useEffect(() => {
+    if (!autoPlay || !src || fileFailed) return undefined
+    const node = containerRef.current
+    const video = videoRef.current
+    if (!node || !video) return undefined
+
+    // Respect a visitor who has asked their system for less motion.
+    const reduceMotion = typeof window !== 'undefined'
+      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) return undefined
+
+    if (typeof IntersectionObserver === 'undefined') return undefined
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {
+            // Blocked despite being muted (some data-saver and battery modes
+            // do this). Leave the poster and controls: never a dead frame.
+          })
+        } else if (!video.paused) {
+          video.pause()
+        }
+      })
+    }, { threshold: 0.35 })
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [autoPlay, src, fileFailed])
 
   const { embedUrl, platform, reachableInChina, linkOnly } = toEmbedUrl(shareUrl)
   // Some platforms publish no external player at all (bilibili.tv). Framing
@@ -133,21 +191,45 @@ export default function ChinaSafeVideo({
 
   if (mode === 'file') {
     return withMirrors(
-      <div className={playerClass} style={frame}>
+      <div className={playerClass} style={frame} ref={containerRef}>
         <video
+          ref={videoRef}
           src={src}
           poster={poster || undefined}
           controls
-          preload="metadata"
+          // Autoplaying video should not also fetch nothing: when it will play
+          // itself, load enough to actually start.
+          preload={autoPlay ? 'auto' : 'metadata'}
           playsInline
+          muted={muted}
+          loop={loop}
           onError={() => setFileFailed(true)}
           onPlay={() => setStarted(true)}
+          onVolumeChange={(event) => setMuted(event.currentTarget.muted)}
           title={title}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#000' }}
         >
           {captionsSrc && <track kind="captions" src={captionsSrc} srcLang="en" label="English" default />}
           Your browser cannot play this video.
         </video>
+        {/* Autoplay is only allowed while muted, so most visitors first see a
+            silent video. Without an obvious control many never realise there
+            is sound at all. */}
+        {muted && started && (
+          <button
+            type="button"
+            onClick={() => {
+              const video = videoRef.current
+              if (!video) return
+              video.muted = false
+              setMuted(false)
+              video.play().catch(() => {})
+            }}
+            className="china-safe-video__unmute"
+          >
+            <Volume2 size={16} /> Tap for sound
+          </button>
+        )}
         {!started && !poster && (
           <span
             aria-hidden="true"
