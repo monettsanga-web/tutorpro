@@ -5845,3 +5845,29 @@ body {
   font-size: 1.02rem;
   font-weight: 800;
 }
+
+/* Plain link to the Trustpilot profile, used while TrustBox widgets are not
+   available on the current plan. Deliberately carries no score, no stars and
+   no Trustpilot logo: linking is fine, reproducing their branded review
+   content on your own pages needs a paid plan. */
+.trustpilot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.trustpilot-link:hover { opacity: 1; }
+
+.hero__trustpilot.trustpilot-link,
+.footer__trustpilot.trustpilot-link { color: #d8cceb; }
+
+.hero__trustpilot.trustpilot-link:hover,
+.footer__trustpilot.trustpilot-link:hover { color: #fff; }

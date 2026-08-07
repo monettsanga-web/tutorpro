@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { ArrowUpRight } from 'lucide-react'
 
 /**
  * Trustpilot review widget.
@@ -60,8 +61,32 @@ export default function TrustpilotWidget({ variant = 'mini', theme = 'light', cl
     return () => { cancelled = true }
   }, [])
 
-  // Nothing configured yet — render nothing rather than an empty grey box.
-  if (!BUSINESS_UNIT_ID) return null
+  /**
+   * No Business Unit ID configured, or TrustBox widgets are not on this plan.
+   *
+   * Trustpilot has moved website widgets behind paid plans, so a free profile
+   * gets "BusinessUnit does not have access to that trustbox" for every
+   * template. Rendering the widget anyway would leave an empty grey box, which
+   * is worse than nothing.
+   *
+   * A plain text link is the compliant fallback. Trustpilot encourages linking
+   * to your profile — what needs a paid plan is reproducing review CONTENT,
+   * their logo or their stars on your own pages. This does none of those: no
+   * score, no star graphic, no review text, no Trustpilot logo. Just a link.
+   */
+  if (!BUSINESS_UNIT_ID) {
+    return (
+      <a
+        className={`trustpilot-link ${className}`.trim()}
+        href={`https://www.trustpilot.com/review/${DOMAIN}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Read our reviews on Trustpilot
+        <ArrowUpRight size={14} aria-hidden="true" />
+      </a>
+    )
+  }
 
   const templates = {
     mini: { id: '53aa8807dec7e10d38f59f32', height: '150px', width: '100%' },
