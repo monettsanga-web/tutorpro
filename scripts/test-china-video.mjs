@@ -326,5 +326,40 @@ const blockedInChina = (url) => {
   check('Nothing on the homepage points at YouTube', !/youtu/i.test(usage))
 }
 
+/* --- 12. The owner can supply the video by URL, not just by file --- */
+{
+  const app = readFileSync(resolve(repo, 'src/App.jsx'), 'utf8')
+
+  check('There is a single, obvious place to paste the video link',
+    /const CLASS_VIDEO_URL = /.test(app))
+  check('The player reads that one constant', /src=\{CLASS_VIDEO_URL\}/.test(app))
+  check('It is documented as needing a direct file link, not a page link',
+    /direct link to the video FILE/i.test(app))
+  check('The instructions warn that YouTube and Bilibili page links will not work',
+    /YouTube and Bilibili page links will not work/i.test(app))
+  check('Leaving it empty is explicitly safe', /nothing\s*\n?\s*\* breaks either way/i.test(app))
+
+  // An empty URL must fall through to the Bilibili card, never a dead player.
+  const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
+  check('A fallback still exists when no video URL is set', /shareUrl=/.test(usage))
+  check('Still no YouTube anywhere on the homepage', !/youtu/i.test(usage))
+}
+
+/* --- 13. The storage bucket script is safe and correct --- */
+{
+  const sqlPath = resolve(repo, 'supabase/create_site_media_bucket.sql')
+  check('The storage setup script exists', existsSync(sqlPath))
+  if (existsSync(sqlPath)) {
+    const sql = readFileSync(sqlPath, 'utf8')
+    check('It creates a public bucket so visitors can watch', /public.*true|'site-media', true/.test(sql))
+    check('Only signed-in users can upload', /to authenticated/.test(sql))
+    check('It is re-runnable', /on conflict \(id\) do update/.test(sql))
+    check('It never deletes existing data',
+      !/\bdelete\s+from\b|\bdrop\s+table\b|\btruncate\b/i.test(sql))
+    check('It only ever touches its own bucket',
+      !/bucket_id = '(classroom-files|classroom-recordings|support-attachments|teacher-interview-recordings)'/.test(sql))
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed ? 1 : 0)

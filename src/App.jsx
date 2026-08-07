@@ -383,6 +383,22 @@ function CurriculumCarousel({ onBook }) {
 }
 
 /**
+ * The class video, served from somewhere we control.
+ *
+ * PASTE THE VIDEO LINK HERE. Two options, both fine:
+ *   1. A Supabase storage link (recommended - no file size worries):
+ *      https://losmkvvwzijipqrlelyt.supabase.co/storage/v1/object/public/site-media/tutorpro-class.mp4
+ *   2. A file placed in public/assets/, referenced as 'assets/tutorpro-class.mp4'
+ *
+ * Leave it as '' and the section shows the Bilibili card instead - nothing
+ * breaks either way.
+ *
+ * It must be a direct link to the video FILE (ending .mp4), not a link to a
+ * page that plays it. YouTube and Bilibili page links will not work here.
+ */
+const CLASS_VIDEO_URL = ''
+
+/**
  * A real class clip, high on the homepage where visitors actually reach it.
  *
  * The video is served from our own domain because YouTube — and its embedded
@@ -403,7 +419,7 @@ function SeeAClass() {
             different name, which undermines rather than builds trust on a
             business homepage. Bilibili is the only outside link we point at. */}
         <ChinaSafeVideo
-          src={assetUrl('assets/tutorpro-class.mp4')}
+          src={CLASS_VIDEO_URL}
           poster={assetUrl('assets/online-english-lesson.jpg')}
           shareUrl="https://www.bilibili.tv/en/video/4800493496966144"
           mirrors={[
