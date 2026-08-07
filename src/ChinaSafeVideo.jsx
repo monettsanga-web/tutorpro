@@ -86,6 +86,9 @@ export default function ChinaSafeVideo({
   // to know which of these will actually open for them before they tap.
   const describedMirrors = mirrors
     .filter((mirror) => mirror && mirror.url)
+    // When the player itself has collapsed to a click-through card, a mirror
+    // pointing at that same URL would show the identical link twice.
+    .filter((mirror) => !(mode === 'link' && mirror.url === shareUrl))
     .map((mirror) => {
       const info = toEmbedUrl(mirror.url)
       return {

@@ -226,8 +226,10 @@ const blockedInChina = (url) => {
   check('bilibili.tv is never given an embed URL',
     /bilibili\.tv'\)\) \{[\s\S]{0,200}embedUrl: '',/.test(helpers))
   check('bilibili.tv is marked link-only', /linkOnly: true/.test(helpers))
+  // Assert the property, not the display name: the label is cosmetic and was
+  // renamed once already, but reachableInChina is the load-bearing fact.
   check('bilibili.tv is not claimed to work in mainland China',
-    /Bilibili International',\s*\n\s*reachableInChina: false/.test(helpers))
+    /bilibili\.tv'\)\) \{[\s\S]{0,240}reachableInChina: false/.test(helpers))
   check('The reason is recorded so nobody re-adds the embed later',
     /no external player/i.test(helpers) && /geo-restrict/i.test(helpers))
 
@@ -299,6 +301,29 @@ const blockedInChina = (url) => {
   // site must not claim it is the China-friendly option.
   check('No copy claims the bilibili.tv link solves China access',
     !/bilibili[^<]{0,80}(works in china|available in china|for china)/i.test(app))
+}
+
+/* --- 11. Bilibili only: no duplicate link, no YouTube --- */
+{
+  const component = readFileSync(resolve(repo, 'src/ChinaSafeVideo.jsx'), 'utf8')
+  const helpers = readFileSync(resolve(repo, 'src/videoEmbeds.js'), 'utf8')
+  const app = readFileSync(resolve(repo, 'src/App.jsx'), 'utf8')
+
+  // With YouTube gone there is nothing embeddable left, so the player itself
+  // becomes a click-through card. A mirror repeating that same URL would
+  // render the identical link twice in the same box.
+  check('A mirror duplicating the collapsed player is dropped',
+    /!\(mode === 'link' && mirror\.url === shareUrl\)/.test(component))
+  check('The de-duplication runs after mode is known',
+    component.indexOf('const mode =') < component.indexOf("mode === 'link' && mirror.url"))
+  check('The platform reads as Bilibili, not an internal codename',
+    /platform: 'Bilibili',/.test(helpers) && !/Bilibili International/.test(helpers))
+
+  const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
+  check('The player falls back to Bilibili, not YouTube',
+    /shareUrl="https:\/\/www\.bilibili\.tv/.test(usage))
+  check('Bilibili is the single outside link', (usage.match(/bilibili\.tv/g) || []).length === 2)
+  check('Nothing on the homepage points at YouTube', !/youtu/i.test(usage))
 }
 
 console.log(`\n${passed} passed, ${failed} failed`)

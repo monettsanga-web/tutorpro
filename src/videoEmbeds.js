@@ -82,7 +82,7 @@ export function toEmbedUrl(url) {
   if (trimmed.includes('bilibili.tv')) {
     return {
       embedUrl: '',
-      platform: 'Bilibili International',
+      platform: 'Bilibili',
       reachableInChina: false,
       linkOnly: true,
       note: 'bilibili.tv has no external player and geo-restricts uploads. Use a self-hosted file instead.',
