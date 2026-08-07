@@ -17,7 +17,7 @@
  * at all — correctly, since a booking contains a child's name, a schedule and
  * an account id. get_public_reviews() is a security-definer function that
  * returns ONLY the score, the comment, the month, the teacher's first name and
- * the parent's first name plus last initial. Nothing else ever leaves the
+ * the parent's name as they entered it. Nothing else ever leaves the
  * database.
  *
  * WHAT IS DELIBERATELY NOT PUBLISHED

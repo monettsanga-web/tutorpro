@@ -292,8 +292,8 @@ export default function ParentTeacherReviews({ account, mediaVersion = 0, versio
       {totalReviews > 0 && (
         <p className="ptr-footnote">
           You have written {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}. Reviews of four stars
-          or more that include a comment may appear on the TutorPro website, shown as your first name and
-          last initial.
+          or more that include a comment may appear publicly on the TutorPro website, shown with your name.
+          Contact us any time if you would like a review removed.
         </p>
       )}
     </div>

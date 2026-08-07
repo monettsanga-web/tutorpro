@@ -10432,3 +10432,13 @@ a.feedback-resource-detail:hover strong {
   font-size: 0.83rem;
   line-height: 1.55;
 }
+
+/* Tells a parent their name may be published, before they write. */
+.rating-dialog__notice {
+  display: block;
+  margin: -4px 0 14px;
+  color: var(--muted, #5b5470);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: left;
+}

@@ -12,7 +12,7 @@
 --
 --   This function runs with elevated rights (security definer) and returns
 --   ONLY what is safe to publish: the score, the comment, the month, the
---   teacher's first name, and the parent's first name with a last initial.
+--   teacher's first name, and the parent's name as they entered it.
 --   It never exposes an email address, a full name, a child's name, a booking
 --   id or an account id.
 --
@@ -45,17 +45,14 @@ as $$
     md5(b.id::text)                                              as review_id,
     (b.booking_data->'studentRating'->>'score')::int              as score,
     trim(b.booking_data->'studentRating'->>'comment')             as comment,
-    -- First name plus a last initial: recognisable to the family, not
-    -- identifying to a stranger. "Maria Santos" becomes "Maria S."
+    -- The parent's name as they entered it, at the owner's instruction.
+    --
+    -- This publishes a real person's name on a public page, so two safeguards
+    -- stay in force: only reviews the parent chose to write are published, and
+    -- the rating screen now tells them plainly that their name may appear.
+    -- A parent who left no name shows as 'TutorPro parent' rather than blank.
     coalesce(
-      nullif(
-        split_part(trim(coalesce(p.parent_name, p.full_name, '')), ' ', 1)
-        || case
-             when position(' ' in trim(coalesce(p.parent_name, p.full_name, ''))) > 0
-             then ' ' || left(split_part(trim(coalesce(p.parent_name, p.full_name, '')), ' ', 2), 1) || '.'
-             else ''
-           end,
-        ''),
+      nullif(trim(coalesce(p.parent_name, p.full_name, '')), ''),
       'TutorPro parent'
     )                                                             as reviewer,
     -- Already public: get_public_teachers() exposes the same id, and it is

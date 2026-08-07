@@ -204,9 +204,16 @@ const T2 = 'teacher-co'
 /* --- 10. The parent is told where their words may appear --- */
 {
   check('The parent is warned reviews may be published',
-    /may appear on the TutorPro website/.test(panel))
-  check('They are told how they will be credited',
-    /first name\s*\n?\s*and\s*\n?\s*last initial|first name and last initial/.test(panel))
+    /may appear publicly on the TutorPro website/.test(panel))
+  check('They are told their name will be shown', /shown with your name/.test(panel))
+  check('They are told they can have it removed', /would like a review removed/i.test(panel))
+
+  // The warning must reach them BEFORE they write, not only afterwards.
+  const dashSrc = read('src/Dashboards.jsx')
+  check('The rating box warns about publication before they type',
+    /may appear publicly on the\s*\n?\s*TutorPro website with your name/.test(dashSrc))
+  check('That warning shows for every score, so it is not a nudge',
+    !/rating >= 4[\s\S]{0,120}rating-dialog__notice/.test(dashSrc))
   check('That matches what the website actually publishes',
     /score >= 4/.test(read('src/publicReviews.js')) || /MIN_PUBLISHED_SCORE/.test(read('src/publicReviews.js')))
 }

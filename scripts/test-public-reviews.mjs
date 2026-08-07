@@ -67,8 +67,13 @@ const carousel = read('src/ReviewCarousel.jsx')
     check(`It never returns ${leak}`, !new RegExp(`^\\s{2}${leak}\\b`, 'mi').test(returns))
   }
   check('The real booking id is hashed, not exposed', /md5\(b\.id::text\)/.test(sql))
-  check('The parent is shown as a first name and initial only',
-    /left\(split_part/.test(sql) && /parent_name/.test(sql))
+  // Full names are published at the owner's instruction. The safeguard is no
+  // longer masking, it is informed consent: the rating screen must say so
+  // before the parent writes.
+  check('The parent name comes from their own profile', /parent_name/.test(sql))
+  check('A parent with no name is never shown blank', /'TutorPro parent'/.test(sql))
+  check('Publishing a real name is flagged in the SQL as deliberate',
+    /publishes a real person's name/i.test(sql))
   check('Only the teacher\'s first name is shown',
     /split_part\(trim\(coalesce\(t\.full_name/.test(sql))
   check('Execute is granted to anonymous visitors', /grant execute[\s\S]{0,80}to anon/.test(sql))

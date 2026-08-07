@@ -1480,6 +1480,13 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
         <form onSubmit={submit}>
           <div className="rating-stars" role="group" aria-label="Lesson rating">{[1, 2, 3, 4, 5].map((score) => <button type="button" className={score <= rating ? 'active' : ''} onClick={() => setRating(score)} key={score} aria-label={`${score} star${score > 1 ? 's' : ''}`}><Star size={30} fill={score <= rating ? 'currentColor' : 'none'} /></button>)}</div>
           <label><span>Share a short comment <i>optional</i></span><textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="What did your child enjoy or learn?" /></label>
+          {/* Told BEFORE they write, not after. Publishing a real person's
+              name is only fair if they knew at the moment they chose their
+              words. Shown whatever the score, so it is never a nudge. */}
+          <small className="rating-dialog__notice">
+            If you rate four stars or more and leave a comment, your review may appear publicly on the
+            TutorPro website with your name. Ask us any time to remove it.
+          </small>
           <button className="portal-primary-button" type="submit" disabled={!rating || saving}>{saving ? 'Sending your review…' : 'Submit class rating'} <ArrowRight size={16} /></button>
         </form>
       </section>
