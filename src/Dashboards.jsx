@@ -1485,7 +1485,7 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
               words. Shown whatever the score, so it is never a nudge. */}
           <small className="rating-dialog__notice">
             If you rate four stars or more and leave a comment, your review may appear publicly on the
-            TutorPro website with your name. Ask us any time to remove it.
+            TutorPro website, shown with your child's first name only. Ask us any time to remove it.
           </small>
           <button className="portal-primary-button" type="submit" disabled={!rating || saving}>{saving ? 'Sending your review…' : 'Submit class rating'} <ArrowRight size={16} /></button>
         </form>

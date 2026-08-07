@@ -205,13 +205,16 @@ const T2 = 'teacher-co'
 {
   check('The parent is warned reviews may be published',
     /may appear publicly on the TutorPro website/.test(panel))
-  check('They are told their name will be shown', /shown with your name/.test(panel))
+  // The byline is now the STUDENT's first name, not the account holder's, so
+  // the promise shown to parents must say exactly that.
+  check('They are told the child\'s first name is what appears',
+    /child's first name only/.test(panel))
   check('They are told they can have it removed', /would like a review removed/i.test(panel))
 
   // The warning must reach them BEFORE they write, not only afterwards.
   const dashSrc = read('src/Dashboards.jsx')
   check('The rating box warns about publication before they type',
-    /may appear publicly on the\s*\n?\s*TutorPro website with your name/.test(dashSrc))
+    /may appear publicly on the\s*\n?\s*TutorPro website, shown with your child's first name only/.test(dashSrc))
   check('That warning shows for every score, so it is not a nudge',
     !/rating >= 4[\s\S]{0,120}rating-dialog__notice/.test(dashSrc))
   check('That matches what the website actually publishes',

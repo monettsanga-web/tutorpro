@@ -12,7 +12,7 @@
 --
 --   This function runs with elevated rights (security definer) and returns
 --   ONLY what is safe to publish: the score, the comment, the month, the
---   teacher's first name, and the parent's name as they entered it.
+--   teacher's name, and the STUDENT's first name.
 --   It never exposes an email address, a full name, a child's name, a booking
 --   id or an account id.
 --
@@ -57,9 +57,17 @@ as $$
     -- stay in force: only reviews the parent chose to write are published, and
     -- the rating screen now tells them plainly that their name may appear.
     -- A parent who left no name shows as 'TutorPro parent' rather than blank.
+    -- The STUDENT the class was for, not the account holder who typed it.
+    -- learnerName is written onto the booking when it is created, so it is
+    -- the right name even on a family account with several children.
+    --
+    -- Only the first name is published. These are children, and a full child
+    -- name on a public marketing page is more than a parent has agreed to.
+    -- Falls back to the account name, then to a neutral label.
     coalesce(
-      nullif(trim(coalesce(p.parent_name, p.full_name, '')), ''),
-      'TutorPro parent'
+      nullif(split_part(trim(coalesce(b.booking_data->>'learnerName', '')), ' ', 1), ''),
+      nullif(split_part(trim(coalesce(p.parent_name, p.full_name, '')), ' ', 1), ''),
+      'TutorPro family'
     )                                                             as reviewer,
     -- Already public: get_public_teachers() exposes the same id, and it is
     -- what lets a teacher's own profile page show only their reviews.
