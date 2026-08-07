@@ -58,14 +58,31 @@ as $$
     -- the rating screen now tells them plainly that their name may appear.
     -- A parent who left no name shows as 'TutorPro parent' rather than blank.
     -- The STUDENT the class was for, not the account holder who typed it.
-    -- learnerName is written onto the booking when it is created, so it is
-    -- the right name even on a family account with several children.
     --
-    -- Only the first name is published. These are children, and a full child
+    -- Tried in order, because older bookings predate some of these fields:
+    --   1. learnerName on the booking - set on every booking created today.
+    --   2. The child looked up by learnerId in the account's children list.
+    --      This recovers the name for bookings made before step 1 existed.
+    --   3. The legacy single-child field, older still.
+    --   4. The account holder's first name, so a byline is never blank.
+    --
+    -- Only the FIRST name is published. These are children, and a full child
     -- name on a public marketing page is more than a parent has agreed to.
-    -- Falls back to the account name, then to a neutral label.
     coalesce(
       nullif(split_part(trim(coalesce(b.booking_data->>'learnerName', '')), ' ', 1), ''),
+      nullif(split_part(trim(coalesce((
+        select c->>'name'
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(p.profile_data->'children') = 'array'
+            then p.profile_data->'children'
+            else '[]'::jsonb
+          end
+        ) as c
+        where c->>'id' = b.booking_data->>'learnerId'
+        limit 1
+      ), '')), ' ', 1), ''),
+      nullif(split_part(trim(coalesce(p.profile_data->'child'->>'name', '')), ' ', 1), ''),
       nullif(split_part(trim(coalesce(p.parent_name, p.full_name, '')), ' ', 1), ''),
       'TutorPro family'
     )                                                             as reviewer,
