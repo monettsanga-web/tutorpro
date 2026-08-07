@@ -4,12 +4,14 @@ import {
   ArrowRight,
   AudioLines,
   Award,
+  BadgeCheck,
   Ban,
   Bell,
   BookOpen,
   Bot,
   CalendarCheck2,
   CalendarDays,
+  Copy,
   CalendarPlus,
   Camera,
   Check,
@@ -1361,6 +1363,9 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  // After a successful rating we thank the parent and offer to share it
+  // publicly, rather than closing straight away.
+  const [done, setDone] = useState(false)
   const teacher = getAccountById(booking.teacherId)
 
   /**
@@ -1385,11 +1390,82 @@ function RatingDialog({ booking, studentId, onClose, onSaved }) {
           'The shared database did not confirm your review in time.',
         )
       }
-      onSaved()
+      setSaving(false)
+      setDone(true)
     } catch (ratingError) {
       setError(`${ratingError.message} Your review is saved on this device, but your teacher will not see it until this succeeds.`)
       setSaving(false)
     }
+  }
+
+  const finish = () => onSaved()
+
+  /**
+   * The thank-you step, shown after the rating is safely stored.
+   *
+   * WHY THE PUBLIC LINK IS OFFERED TO EVERYONE
+   * ------------------------------------------
+   * This appears whatever the score. Showing it only to happy parents is
+   * "cherry picking", which Trustpilot names as illegal and which gets a
+   * profile publicly flagged. The wording therefore asks for an honest
+   * experience and never for a number of stars, and no incentive is offered
+   * because Trustpilot forbids all of them.
+   *
+   * WHY THE COMMENT IS OFFERED FOR COPYING
+   * --------------------------------------
+   * Trustpilot makes every reviewer create an account and confirm an email
+   * before they can post. Parents were giving up at that wall, especially on a
+   * phone and especially those who registered with WeChat or WhatsApp and have
+   * no email address. Re-typing their words afterwards is the last straw, so
+   * we hand them the text they already wrote.
+   */
+  if (done) {
+    const shareText = comment.trim()
+    return (
+      <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && finish()}>
+        <section className="portal-dialog rating-dialog rating-thanks" role="dialog" aria-modal="true" aria-labelledby="rating-thanks-title">
+          <button className="portal-dialog__close" onClick={finish} aria-label="Close"><X size={19} /></button>
+          <span className="rating-dialog__icon rating-dialog__icon--done"><BadgeCheck size={29} /></span>
+          <span className="portal-kicker">Thank you</span>
+          <h2 id="rating-thanks-title">Your review is saved</h2>
+          <p>
+            {teacher?.fullName ? `${teacher.fullName.split(' ')[0]} will see this.` : 'Your teacher will see this.'}
+            {' '}It only takes a moment to also share it publicly, which helps other families decide.
+          </p>
+
+          {shareText && (
+            <div className="rating-thanks__copy">
+              <span>Your words, ready to paste:</span>
+              <blockquote>{shareText}</blockquote>
+              <button
+                type="button"
+                className="portal-secondary-button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(shareText).catch(() => {})
+                }}
+              >
+                <Copy size={15} /> Copy my review
+              </button>
+            </div>
+          )}
+
+          <a
+            className="portal-primary-button rating-thanks__share"
+            href="https://www.trustpilot.com/evaluate/tutorpro.site"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Share on Trustpilot <ArrowRight size={16} />
+          </a>
+          <small className="rating-thanks__note">
+            Trustpilot asks you to sign in with an email first — that is their rule, not ours, and it is
+            how they keep reviews genuine. If you would rather not, that is completely fine: your review
+            above is already saved.
+          </small>
+          <button type="button" className="portal-text-button" onClick={finish}>No thanks, I am done</button>
+        </section>
+      </div>
+    )
   }
 
   return (

@@ -12,7 +12,7 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo && npm run test:reviews && npm run test:fbmerge && npm run test:ptreviews",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo && npm run test:reviews && npm run test:fbmerge && npm run test:ptreviews && npm run test:sharereview",
     "test:core": "node scripts/test-core.mjs",
     "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
@@ -39,6 +39,7 @@
     "test:reviews": "node scripts/test-public-reviews.mjs",
     "test:fbmerge": "node scripts/test-feedback-merge.mjs",
     "test:ptreviews": "node scripts/test-parent-teacher-reviews.mjs",
+    "test:sharereview": "node scripts/test-review-share-prompt.mjs",
     "verify:video": "node scripts/verify-video-section.mjs"
   },
   "dependencies": {

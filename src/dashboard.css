@@ -10381,3 +10381,54 @@ a.feedback-resource-detail:hover strong {
   .ptr-grid { grid-template-columns: 1fr; }
   .ptr-card__facts { grid-template-columns: 1fr; }
 }
+
+/* Thank-you step after a parent rates a class, offering the public link.
+   Shown for every score: inviting only happy parents is cherry picking,
+   which Trustpilot names as illegal. */
+.rating-thanks { text-align: center; }
+
+.rating-dialog__icon--done {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #047857 !important;
+}
+
+.rating-thanks__copy {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(109, 40, 217, 0.05);
+  text-align: left;
+}
+
+.rating-thanks__copy > span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted, #5b5470);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.rating-thanks__copy blockquote {
+  margin: 0 0 11px;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+.rating-thanks__share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 4px;
+  text-decoration: none;
+}
+
+.rating-thanks__note {
+  display: block;
+  margin: 12px 0 10px;
+  color: var(--muted, #5b5470);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
