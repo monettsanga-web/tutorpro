@@ -35,6 +35,7 @@ const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ de
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
 import { canViewTeacherDirectory, loadSiteSettings, publiclyListedTeachers, subscribeToCloudSiteSettings, subscribeToSiteSettings } from './siteSettings.js'
 import { captureAttribution } from './attribution.js'
+import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage } from './publicReviews.js'
 import { clearHashRoute, readHashRoute } from './hashRoute.js'
 import { getBookings, mergeCloudBookings } from './bookings.js'
 import { fetchCloudBookings } from './cloudBookings.js'
@@ -872,8 +873,41 @@ const parentReviews = [
   },
 ]
 
+/**
+ * Parent reviews, updated automatically as families rate their lessons.
+ *
+ * A review reaches this section on its own: the teacher completes the lesson,
+ * the parent rates it in the student dashboard, the booking syncs, and
+ * get_public_reviews() returns it here. Nobody has to copy anything by hand.
+ *
+ * Only 4 and 5 star ratings that include a written comment are published, so
+ * the average shown is described as "published reviews" rather than an overall
+ * score. Calling it an overall rating would be untrue, and a self-declared
+ * aggregateRating on an organisation also risks a Google manual action.
+ *
+ * The 2021 Facebook recommendations stay, clearly labelled as such, so a
+ * reader can always tell a historical comment from a verified lesson review.
+ */
 function ParentReviews() {
-  if (!parentReviews.length) return null
+  const [liveReviews, setLiveReviews] = useState(() => cachedPublicReviews())
+
+  useEffect(() => {
+    let active = true
+    fetchPublicReviews().then((reviews) => {
+      // Never replace real content with an empty list: a failed request or a
+      // database function that has not been created yet must leave the
+      // existing reviews on screen.
+      if (active && reviews.length) setLiveReviews(reviews)
+    })
+    return () => { active = false }
+  }, [])
+
+  const reviews = mergeReviews(liveReviews, parentReviews, 6)
+  if (!reviews.length) return null
+
+  const verifiedCount = liveReviews.length
+  const average = publishedAverage(liveReviews)
+
   return (
     <section className="section parent-reviews" id="reviews">
       <div className="container">
@@ -881,20 +915,36 @@ function ParentReviews() {
           <span className="kicker">Parent reviews</span>
           <h2>What families say.</h2>
           <p>Real reviews from parents whose children learn with TutorPro Online English.</p>
+          {verifiedCount > 0 && (
+            <p className="parent-reviews__summary">
+              <BadgeCheck size={16} aria-hidden="true" />
+              {average} out of 5 from {verifiedCount} published {verifiedCount === 1 ? 'review' : 'reviews'} by parents after a real lesson.
+            </p>
+          )}
         </div>
         <div className="parent-reviews__grid">
-          {parentReviews.map((review) => (
-            <figure className="parent-review" key={review.name + review.date}>
-              <div className="parent-review__stars" aria-label="5 out of 5">
-                {[0, 1, 2, 3, 4].map((i) => <Star key={i} size={16} fill="currentColor" />)}
-              </div>
-              <blockquote>{review.quote}</blockquote>
-              <figcaption>
-                <strong>{review.name}</strong>
-                <small>{review.source} · {new Date(review.date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}</small>
-              </figcaption>
-            </figure>
-          ))}
+          {reviews.map((review) => {
+            const stars = Number(review.score) || 5
+            return (
+              <figure className="parent-review" key={review.id || `${review.name}-${review.date}`}>
+                <div className="parent-review__stars" aria-label={`${stars} out of 5`}>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Star key={i} size={16} fill={i < stars ? 'currentColor' : 'none'} />
+                  ))}
+                </div>
+                <blockquote>{review.quote}</blockquote>
+                <figcaption>
+                  <strong>{review.name}</strong>
+                  <small>
+                    {review.verified && <span className="parent-review__verified"><BadgeCheck size={12} aria-hidden="true" /> Verified lesson</span>}
+                    {review.verified && review.teacherName ? ` · Taught by ${review.teacherName}` : ''}
+                    {!review.verified && review.source}
+                    {review.date ? ` · ${new Date(review.date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}` : ''}
+                  </small>
+                </figcaption>
+              </figure>
+            )
+          })}
         </div>
       </div>
     </section>

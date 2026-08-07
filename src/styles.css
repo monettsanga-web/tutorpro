@@ -5558,8 +5558,8 @@ body {
   font-style: normal;
   line-height: 1.6;
 }
-.parent-review blockquote::before { content: '\\201C'; }
-.parent-review blockquote::after { content: '\\201D'; }
+.parent-review blockquote::before { content: '\201C'; }
+.parent-review blockquote::after { content: '\201D'; }
 .parent-review figcaption { display: grid; gap: 2px; }
 .parent-review figcaption strong { color: #321568; font-size: 1.09rem; font-weight: 800; }
 .parent-review figcaption small { color: #7b8794; font-size: 0.978rem; font-weight: 600; }
@@ -5716,4 +5716,26 @@ body {
     padding: 7px 11px;
     font-size: 0.82rem;
   }
+}
+
+/* Verified parent reviews, published automatically as families rate lessons. */
+.parent-reviews__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.parent-review__verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #047857;
+  font-weight: 700;
 }
