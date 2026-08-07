@@ -396,7 +396,7 @@ function CurriculumCarousel({ onBook }) {
  * It must be a direct link to the video FILE (ending .mp4), not a link to a
  * page that plays it. YouTube and Bilibili page links will not work here.
  */
-const CLASS_VIDEO_URL = ''
+const CLASS_VIDEO_URL = 'https://losmkvvwzijipqrlelyt.supabase.co/storage/v1/object/public/site-media/TutorPro%20Class.mp4'
 
 /**
  * A real class clip, high on the homepage where visitors actually reach it.
@@ -415,16 +415,14 @@ function SeeAClass() {
           <h2>One minute inside a TutorPro lesson.</h2>
           <p>Phonics, reading and speaking practice with a real teacher and a real student. No actors, no script — just an ordinary class.</p>
         </div>
-        {/* No YouTube link: that upload lives on a personal channel under a
-            different name, which undermines rather than builds trust on a
-            business homepage. Bilibili is the only outside link we point at. */}
+        {/* The video is served from our own Supabase storage, so it plays in
+            the page for everyone including mainland China - no YouTube, no
+            Bilibili, no third-party branding. The Bilibili link stays only as
+            shareUrl: a safety net shown if the file itself ever fails. */}
         <ChinaSafeVideo
           src={CLASS_VIDEO_URL}
           poster={assetUrl('assets/online-english-lesson.jpg')}
           shareUrl="https://www.bilibili.tv/en/video/4800493496966144"
-          mirrors={[
-            { url: 'https://www.bilibili.tv/en/video/4800493496966144', label: 'Watch on Bilibili', note: 'Opens in a new tab', primary: true },
-          ]}
           title="A real TutorPro Online English class"
           className="see-a-class__player"
         />

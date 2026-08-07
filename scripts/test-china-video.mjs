@@ -286,10 +286,10 @@ const blockedInChina = (url) => {
 
   // The homepage must offer both places the video lives.
   const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
-  check('The homepage lists the Bilibili mirror', /bilibili\.tv\/en\/video\/4800493496966144/.test(usage))
-  check('Bilibili is the highlighted primary choice', /primary: true/.test(usage))
-  check('The Bilibili note does not promise mainland China access',
-    !/works in china|available in china/i.test(usage))
+  // With the file self-hosted the player needs no outside buttons at all.
+  // Bilibili survives only as shareUrl: the safety net if the file ever fails.
+  check('Bilibili remains as the fallback', /shareUrl="https:\/\/www\.bilibili\.tv/.test(usage))
+  check('No mirror buttons clutter the self-hosted player', !/mirrors=\{\[/.test(usage))
 
   // The owner does not want the business homepage pointing at a personal
   // YouTube channel published under a different name. Nothing anywhere in the
@@ -322,7 +322,8 @@ const blockedInChina = (url) => {
   const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
   check('The player falls back to Bilibili, not YouTube',
     /shareUrl="https:\/\/www\.bilibili\.tv/.test(usage))
-  check('Bilibili is the single outside link', (usage.match(/bilibili\.tv/g) || []).length === 2)
+  check('Bilibili is referenced exactly once, as the fallback',
+    (usage.match(/bilibili\.tv/g) || []).length === 1)
   check('Nothing on the homepage points at YouTube', !/youtu/i.test(usage))
 }
 
@@ -338,6 +339,10 @@ const blockedInChina = (url) => {
   check('The instructions warn that YouTube and Bilibili page links will not work',
     /YouTube and Bilibili page links will not work/i.test(app))
   check('Leaving it empty is explicitly safe', /nothing\s*\n?\s*\* breaks either way/i.test(app))
+  check('The video URL is actually filled in', /const CLASS_VIDEO_URL = 'https:\/\//.test(app))
+  check('It points at our own Supabase storage',
+    /CLASS_VIDEO_URL = 'https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\//.test(app))
+  check('It is a direct .mp4 file, not a page', /CLASS_VIDEO_URL = '[^']+\.mp4'/.test(app))
 
   // An empty URL must fall through to the Bilibili card, never a dead player.
   const usage = app.slice(app.indexOf('<ChinaSafeVideo'), app.indexOf('/>', app.indexOf('<ChinaSafeVideo')))
