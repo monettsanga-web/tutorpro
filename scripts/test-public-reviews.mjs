@@ -74,8 +74,11 @@ const carousel = read('src/ReviewCarousel.jsx')
   check('A parent with no name is never shown blank', /'TutorPro parent'/.test(sql))
   check('Publishing a real name is flagged in the SQL as deliberate',
     /publishes a real person's name/i.test(sql))
-  check('Only the teacher\'s first name is shown',
-    /split_part\(trim\(coalesce\(t\.full_name/.test(sql))
+  // The teacher's full name is used now: split_part turned the real account
+  // name "Teacher M" into "Teacher", which read as a label, not a person.
+  check('The teacher name is not truncated to one word',
+    !/split_part\(trim\(coalesce\(t\.full_name/.test(sql))
+  check('The teacher name has a fallback', /'their teacher'/.test(sql))
   check('Execute is granted to anonymous visitors', /grant execute[\s\S]{0,80}to anon/.test(sql))
   check('It never deletes or alters data',
     !/\bdelete\s+from\b|\bdrop\s+table\b|\btruncate\b|\bupdate\s+public\./i.test(sql))
@@ -119,7 +122,7 @@ const carousel = read('src/ReviewCarousel.jsx')
   check('No aggregateRating is emitted for the organisation',
     !/aggregateRating/i.test(appCode))
 
-  check('Verified lesson reviews are labelled as such', /Verified lesson/.test(carousel))
+  check('Verified reviews are labelled as such', /Verified parent/.test(carousel))
   check('Historical Facebook reviews keep their own label',
     /!review\.verified && review\.source/.test(carousel))
   check('Real reviews and imported ones are told apart', /review\.verified/.test(carousel))

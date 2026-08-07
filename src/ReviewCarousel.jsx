@@ -161,15 +161,21 @@ export default function ReviewCarousel({ reviews = [], showTeacherName = true, c
             >
               <ReviewStars score={stars} />
               <blockquote>{review.quote}</blockquote>
+              {/* The byline is the PARENT who wrote the review. The teacher is
+                  mentioned only as context, and never on the teacher's own
+                  page where it would just repeat. Making the author ambiguous
+                  is how a review stops being trustworthy. */}
               <figcaption>
-                <strong>{review.name}</strong>
+                <strong className="parent-review__author">{review.name}</strong>
                 <small>
                   {review.verified && (
                     <span className="parent-review__verified">
-                      <BadgeCheck size={12} aria-hidden="true" /> Verified lesson
+                      <BadgeCheck size={12} aria-hidden="true" /> Verified parent
                     </span>
                   )}
-                  {review.verified && showTeacherName && review.teacherName ? ` · Taught by ${review.teacherName}` : ''}
+                  {review.verified && showTeacherName && review.teacherName
+                    ? ` · on a class with ${review.teacherName}`
+                    : ''}
                   {!review.verified && review.source}
                   {review.date ? ` · ${new Date(review.date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}` : ''}
                 </small>

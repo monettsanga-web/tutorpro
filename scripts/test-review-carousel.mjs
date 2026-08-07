@@ -132,7 +132,14 @@ const css = read('src/styles.css')
 /* --- 7. Honesty carried over from the static version --- */
 {
   check('Stars show the real score', /fill=\{index < filled \? 'currentColor' : 'none'\}/.test(carousel))
-  check('Verified lessons are still labelled', /Verified lesson/.test(carousel))
+  // The badge now reads "Verified parent": the card credits the person who
+  // wrote the review, and "Verified lesson" beside a name read as if the
+  // teacher were the author.
+  check('Verified reviews are still labelled', /Verified parent/.test(carousel))
+  check('The byline is the parent, not the teacher',
+    /<strong className="parent-review__author">\{review\.name\}<\/strong>/.test(carousel))
+  check('The teacher is context, not the author',
+    /on a class with \$\{review\.teacherName\}/.test(carousel))
   check('Imported Facebook reviews keep their own label', /!review\.verified && review\.source/.test(carousel))
   check('The teacher name can be suppressed on their own page',
     /showTeacherName = true/.test(carousel) && /showTeacherName=\{false\}/.test(app))

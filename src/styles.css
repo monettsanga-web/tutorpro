@@ -5838,3 +5838,10 @@ body {
 
 .review-carousel--on-dark .review-carousel__dots button { background: rgba(255, 255, 255, 0.3); }
 .review-carousel--on-dark .review-carousel__dots button.is-active { background: #bce94e; }
+
+/* The review author is the parent. Make that unmistakable at a glance. */
+.parent-review__author {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 800;
+}

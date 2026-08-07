@@ -64,8 +64,11 @@ as $$
     -- Already public: get_public_teachers() exposes the same id, and it is
     -- what lets a teacher's own profile page show only their reviews.
     b.teacher_id                                                  as teacher_id,
+    -- The teacher's name in full. Taking only the first word turned the real
+    -- account name "Teacher M" into "Teacher", which read as a label rather
+    -- than a person.
     coalesce(
-      nullif(split_part(trim(coalesce(t.full_name, '')), ' ', 1), ''),
+      nullif(trim(coalesce(t.full_name, '')), ''),
       'their teacher'
     )                                                             as teacher_name,
     coalesce(

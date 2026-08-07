@@ -36,7 +36,10 @@
 
 import { isSupabaseConfigured, supabase } from './supabaseClient.js'
 
-const CACHE_KEY = 'tutorpro_public_reviews_v1'
+// v2: rows cached before teacher_id existed have no teacher attached, so a
+// teacher profile would filter them all out and look empty. A new key retires
+// them rather than showing a stale, wrong page.
+const CACHE_KEY = 'tutorpro_public_reviews_v2'
 
 /** How long a cached copy stays fresh. Reviews are not time-critical. */
 const CACHE_TTL_MS = 10 * 60 * 1000
