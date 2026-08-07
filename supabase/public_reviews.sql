@@ -24,6 +24,12 @@
 --   * Never a review the admin has hidden (booking_data.reviewHidden = true).
 -- ============================================================================
 
+-- Drop first. An earlier version of this function returned fewer columns, and
+-- PostgreSQL refuses to CREATE OR REPLACE a function whose return type has
+-- changed ("cannot change return type of existing function"). Dropping a
+-- read-only function destroys no data.
+drop function if exists public.get_public_reviews();
+
 create or replace function public.get_public_reviews()
 returns table (
   review_id     text,
