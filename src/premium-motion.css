@@ -223,22 +223,89 @@
   color: transparent;
 }
 
+/* ---------- Curriculum carousel: pointer-driven 3D ----------
+   React writes --pointer-x / --pointer-y (each roughly -0.5..0.5) on the
+   panel as the pointer moves. Everything below is driven from those two
+   numbers, so the tilt runs entirely on the compositor: no React re-render
+   and no layout work on any of those pointer events. */
 .curriculum-carousel {
-  transition: box-shadow 500ms var(--premium-ease), transform 500ms var(--premium-ease);
+  --pointer-x: 0;
+  --pointer-y: 0;
+  transition: box-shadow 500ms var(--premium-ease), transform 600ms var(--premium-ease);
+  transform-style: preserve-3d;
 }
 
 .curriculum-carousel:hover {
-  box-shadow: 0 35px 85px rgba(50, 21, 104, 0.28);
-  transform: translateY(-3px);
+  box-shadow: 0 40px 95px rgba(50, 21, 104, 0.32);
+  transform: translateY(-4px);
 }
 
+.curriculum-carousel:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 4px;
+}
+
+/* The artwork tips away from the pointer, as if the panel were a real
+   surface being looked at from an angle.
+   CAREFUL: the slide-entrance keyframes run on .curriculum-carousel__visual
+   with `fill-mode: both`, which pins that element's transform permanently —
+   an animated transform outranks a normal declaration, so a hover rule on
+   the SAME element is silently ignored (verified: it computed to a bare
+   perspective matrix with no rotation). The tilt therefore lives one level
+   in, on the cover frame, which nothing animates. */
+.curriculum-book-cover {
+  transition: transform 500ms var(--premium-ease);
+  transform-style: preserve-3d;
+}
+
+.curriculum-carousel:hover .curriculum-book-cover {
+  transform:
+    perspective(1500px)
+    rotateY(calc(var(--pointer-x) * 9deg))
+    rotateX(calc(var(--pointer-y) * -7deg))
+    translate3d(calc(var(--pointer-x) * -12px), calc(var(--pointer-y) * -10px), 26px);
+}
+
+/* The cover lifts further than the frame it sits in. That difference in
+   travel is what the eye reads as depth. */
 .curriculum-cover-photo {
   transition: transform 700ms var(--premium-ease), filter 500ms ease;
+  will-change: transform;
 }
 
 .curriculum-carousel:hover .curriculum-cover-photo {
-  filter: saturate(1.08) contrast(1.02);
-  transform: translateY(-5px) rotate(-1deg) scale(1.025);
+  filter: saturate(1.09) contrast(1.03);
+  transform:
+    translate3d(calc(var(--pointer-x) * -22px), calc(var(--pointer-y) * -16px), 45px)
+    scale(1.05);
+}
+
+/* The copy drifts the opposite way to the artwork — a slight counter-parallax
+   that keeps the two halves feeling like separate planes. */
+.curriculum-carousel__copy {
+  transition: transform 650ms var(--premium-ease);
+}
+
+.curriculum-carousel:hover .curriculum-carousel__copy {
+  transform: translate3d(calc(var(--pointer-x) * 9px), calc(var(--pointer-y) * 7px), 0);
+}
+
+.curriculum-arrow {
+  backdrop-filter: blur(6px);
+}
+
+.curriculum-arrow:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curriculum-carousel,
+  .curriculum-carousel:hover,
+  .curriculum-carousel:hover .curriculum-book-cover,
+  .curriculum-carousel:hover .curriculum-carousel__copy,
+  .curriculum-carousel:hover .curriculum-cover-photo {
+    transform: none;
+  }
 }
 
 .portal-main {

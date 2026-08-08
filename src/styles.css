@@ -1566,68 +1566,240 @@ h3 {
   height: 100%;
   border-radius: inherit;
   background: #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
   transform-origin: left;
   animation: curriculum-progress 5.2s linear both;
 }
 
-.curriculum-thumbnails {
+/* The bar must freeze whenever autoplay does, or it promises an advance
+   that is not coming. React mirrors the paused state onto the element. */
+.curriculum-carousel__progress span[data-paused='true'] {
+  animation-play-state: paused;
+}
+
+/* ---------- Carousel dots (replaced the overflowing thumbnail strip) ----------
+   Fifteen labelled thumbnails could never fit the panel width, so the old row
+   grew its own scrollbar and clipped the last covers. Dots sit inside the
+   panel, cost no vertical space and cannot overflow. The active one stretches
+   into a pill so the current position is readable at a glance. */
+.curriculum-dots {
+  position: absolute;
+  z-index: 6;
+  bottom: 26px;
+  left: 65px;
   display: flex;
-  gap: 9px;
-  margin-top: 18px;
-  overflow-x: auto;
-  padding: 4px 2px 12px;
-  scrollbar-width: thin;
-}
-
-.curriculum-thumbnails button {
-  display: grid;
-  min-width: 130px;
-  grid-template-columns: 45px 1fr;
-  gap: 8px;
+  max-width: 46%;
+  flex-wrap: wrap;
   align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  padding: 6px;
-  background: #fff;
-  color: #6e657d;
-  font-size: 0.901rem;
-  font-weight: 750;
-  text-align: left;
-  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  gap: 7px;
 }
 
-.curriculum-thumbnails button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+.curriculum-dot {
+  display: grid;
+  width: 13px;
+  height: 20px;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
 }
 
-.curriculum-thumbnails button.active {
-  border-color: var(--coral);
-  box-shadow: 0 0 0 2px rgba(255, 79, 135, 0.1);
-  color: var(--ink);
-}
-
-.curriculum-thumbnails img {
-  width: 45px;
-  height: 36px;
+.curriculum-dot > span {
+  display: block;
+  width: 7px;
+  height: 7px;
   border-radius: 6px;
-  object-fit: cover;
-  background: #f2f2f2;
+  background: rgba(255, 255, 255, 0.4);
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1), background 300ms ease, transform 300ms ease;
+}
+
+.curriculum-dot:hover > span { background: rgba(255, 255, 255, 0.75); transform: scale(1.25); }
+.curriculum-dot:focus-visible > span { outline: 2px solid #fff; outline-offset: 3px; }
+
+.curriculum-dot.is-active { width: 30px; }
+.curriculum-dot.is-active > span {
+  width: 26px;
+  background: #fff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.55);
+}
+
+/* Screen-reader-only running commentary on which slide is showing. */
+.curriculum-live {
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  margin: -1px;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* ---------- Carousel motion ---------- */
+
+/* Slow-drifting coloured light. It sits behind everything and reacts to the
+   pointer, which is what stops a flat block of colour looking like a slab. */
+.curriculum-aurora {
+  position: absolute;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  inset: 0;
+  pointer-events: none;
+}
+
+.curriculum-aurora i {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.5;
+}
+
+.curriculum-aurora i:nth-child(1) {
+  top: -18%;
+  left: -8%;
+  width: 46%;
+  height: 78%;
+  background: var(--slide-accent);
+  animation: curriculum-drift-a 17s ease-in-out infinite;
+}
+
+.curriculum-aurora i:nth-child(2) {
+  bottom: -26%;
+  left: 18%;
+  width: 40%;
+  height: 70%;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0.22;
+  animation: curriculum-drift-b 21s ease-in-out infinite;
+}
+
+.curriculum-aurora i:nth-child(3) {
+  top: 12%;
+  right: 26%;
+  width: 30%;
+  height: 55%;
+  background: var(--slide-accent);
+  opacity: 0.28;
+  animation: curriculum-drift-c 25s ease-in-out infinite;
+}
+
+/* The panel crossfades between book palettes rather than snapping. */
+.curriculum-carousel {
+  transition: background-color 700ms ease, box-shadow 500ms ease;
+}
+
+/* Direction-aware entrances. Reversing means "back" actually feels like back;
+   a carousel that always animates one way reads as a bug. */
+.curriculum-carousel[data-direction='next'] .curriculum-carousel__copy { animation-name: curriculum-copy-in; }
+.curriculum-carousel[data-direction='prev'] .curriculum-carousel__copy { animation-name: curriculum-copy-in-back; }
+.curriculum-carousel[data-direction='next'] .curriculum-carousel__visual { animation-name: curriculum-image-in; }
+.curriculum-carousel[data-direction='prev'] .curriculum-carousel__visual { animation-name: curriculum-image-in-back; }
+
+/* The words arrive one beat behind the other, which reads as deliberate
+   rather than as one lurch of the whole column. */
+.curriculum-carousel__brand,
+.curriculum-carousel__copy h3,
+.curriculum-carousel__copy > p,
+.curriculum-carousel__actions {
+  animation: curriculum-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.curriculum-carousel__brand { animation-delay: 60ms; }
+.curriculum-carousel__copy h3 { animation-delay: 130ms; }
+.curriculum-carousel__copy > p { animation-delay: 210ms; }
+.curriculum-carousel__actions { animation-delay: 290ms; }
+
+.curriculum-carousel__count em {
+  font-style: normal;
+  opacity: 0.62;
+}
+
+/* A light sweep across the artwork each time a slide lands. */
+.curriculum-carousel__sheen {
+  position: absolute;
+  z-index: 6;
+  width: 44%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  inset: 0 auto 0 -50%;
+  pointer-events: none;
+  animation: curriculum-sheen 1400ms cubic-bezier(0.3, 0, 0.2, 1) 260ms both;
 }
 
 @keyframes curriculum-copy-in {
-  from { opacity: 0; transform: translateX(-18px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translate3d(-34px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+@keyframes curriculum-copy-in-back {
+  from { opacity: 0; transform: translate3d(34px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* The artwork swings in on a hinge rather than sliding flat, which is what
+   gives the panel real depth instead of a paper cut-out feel. */
 @keyframes curriculum-image-in {
-  from { opacity: 0; transform: translateX(25px) scale(0.98); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
+  from { opacity: 0; transform: perspective(1400px) translate3d(64px, 0, -110px) rotateY(-13deg) scale(0.94); }
+  to { opacity: 1; transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0) scale(1); }
+}
+
+@keyframes curriculum-image-in-back {
+  from { opacity: 0; transform: perspective(1400px) translate3d(-64px, 0, -110px) rotateY(13deg) scale(0.94); }
+  to { opacity: 1; transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0) scale(1); }
+}
+
+@keyframes curriculum-rise {
+  from { opacity: 0; filter: blur(5px); transform: translate3d(0, 20px, 0); }
+  to { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0); }
+}
+
+@keyframes curriculum-sheen {
+  from { opacity: 0; transform: translateX(0) skewX(-14deg); }
+  22% { opacity: 1; }
+  to { opacity: 0; transform: translateX(360%) skewX(-14deg); }
+}
+
+@keyframes curriculum-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(16%, 12%, 0) scale(1.18); }
+}
+
+@keyframes curriculum-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(-14%, -16%, 0) scale(0.9); }
+}
+
+@keyframes curriculum-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.95); }
+  50% { transform: translate3d(-10%, 18%, 0) scale(1.2); }
 }
 
 @keyframes curriculum-progress {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
+}
+
+/* Anyone who has asked their operating system for less motion gets a plain,
+   instant carousel. It still works; it simply stops moving on its own. */
+@media (prefers-reduced-motion: reduce) {
+  .curriculum-aurora,
+  .curriculum-carousel__sheen { display: none; }
+
+  .curriculum-carousel__copy,
+  .curriculum-carousel__visual,
+  .curriculum-carousel__brand,
+  .curriculum-carousel__copy h3,
+  .curriculum-carousel__copy > p,
+  .curriculum-carousel__actions,
+  .curriculum-carousel__progress span {
+    animation: none !important;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .curriculum-carousel__visual .curriculum-cover-photo { transform: none !important; }
 }
 
 /* ---------- Benefits ---------- */
@@ -4042,7 +4214,17 @@ body {
 
   .curriculum-carousel__visual {
     height: 410px;
-    margin: 0 22px 22px;
+    margin: 0 22px 52px;
+  }
+
+  /* Single column: the dots move out from beside the copy to under the
+     artwork, where there is room for all fifteen. */
+  .curriculum-dots {
+    right: 0;
+    bottom: 18px;
+    left: 0;
+    max-width: none;
+    justify-content: center;
   }
 
   .curriculum-arrow {
@@ -4128,6 +4310,21 @@ body {
     padding: 63px 24px 35px;
   }
 
+  /* On one column the dots would land on top of the buttons, so they move
+     under the artwork and centre themselves. */
+  .curriculum-dots {
+    bottom: 14px;
+    left: 0;
+    max-width: none;
+    justify-content: center;
+    gap: 6px;
+    right: 0;
+  }
+
+  .curriculum-carousel__visual {
+    margin-bottom: 42px;
+  }
+
   .curriculum-carousel__count {
     top: 24px;
     left: 24px;
@@ -4160,10 +4357,6 @@ body {
 
   .curriculum-arrow--prev { left: 18px; }
   .curriculum-arrow--next { right: 18px; }
-
-  .curriculum-thumbnails button {
-    min-width: 112px;
-  }
 
   h2 {
     font-size: 2.25rem;

@@ -41,7 +41,8 @@
     "test:ptreviews": "node scripts/test-parent-teacher-reviews.mjs",
     "test:sharereview": "node scripts/test-review-share-prompt.mjs",
     "test:carousel": "node scripts/test-review-carousel.mjs",
-    "verify:video": "node scripts/verify-video-section.mjs"
+    "verify:video": "node scripts/verify-video-section.mjs",
+    "verify:carousel": "node scripts/verify-curriculum-carousel.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

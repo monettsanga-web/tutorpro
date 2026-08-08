@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -343,25 +343,105 @@ function CurriculumCover({ slide, compact = false }) {
   )
 }
 
+/**
+ * The curriculum carousel.
+ *
+ * THE MOTION, AND WHY IT IS BUILT THIS WAY
+ * ----------------------------------------
+ * Four things move, and each one is doing a job rather than decoration:
+ *
+ *  1. DIRECTION-AWARE SLIDING. Going forward, the old slide leaves to the
+ *     left and the new one arrives from the right; going back, the reverse.
+ *     A carousel that always animates the same way makes "back" feel broken,
+ *     so `direction` is threaded into a data attribute the CSS reads.
+ *  2. A 3D TILT that follows the pointer across the artwork. The angle is
+ *     published as CSS custom properties and applied with a transform, so
+ *     the browser keeps it on the compositor and never re-lays-out the page.
+ *  3. A STAGGERED REVEAL of the words, badge and buttons, each a beat behind
+ *     the last, which reads as intent rather than a single lurch.
+ *  4. A COLOUR CROSSFADE of the whole panel between the two book palettes.
+ *
+ * WHY NO THUMBNAIL STRIP
+ * ----------------------
+ * Fifteen thumbnails did not fit, so the row grew its own horizontal
+ * scrollbar directly under the panel and cut the last covers in half. Dots
+ * live inside the panel instead: they carry the same "where am I" signal in
+ * a fraction of the space and cannot overflow.
+ *
+ * RESTRAINT
+ * ---------
+ * Everything here is disabled for `prefers-reduced-motion`, autoplay pauses
+ * on hover, on keyboard focus and while the browser tab is hidden, and the
+ * arrows and dots stay fully operable if no animation ever runs.
+ */
 function CurriculumCarousel({ onBook }) {
   const [activeIndex, setActiveIndex] = useState(0)
+  // +1 means the next slide arrives from the right, -1 from the left.
+  const [direction, setDirection] = useState(1)
   const [paused, setPaused] = useState(false)
   const [touchStart, setTouchStart] = useState(null)
+  const panelRef = useRef(null)
   const activeSlide = curriculumSlides[activeIndex]
+  const total = curriculumSlides.length
 
-  const showSlide = (index) => setActiveIndex((index + curriculumSlides.length) % curriculumSlides.length)
+  const showSlide = useCallback((index, hint) => {
+    setActiveIndex((current) => {
+      const next = (index + total) % total
+      if (next === current) return current
+      // Work out the shortest way round the loop so that wrapping from the
+      // last slide to the first still animates forwards, not all the way back.
+      const forward = (next - current + total) % total
+      const backward = (current - next + total) % total
+      setDirection(hint || (forward <= backward ? 1 : -1))
+      return next
+    })
+  }, [total])
 
+  // Autoplay. It stops while a pointer is over the panel, while anything
+  // inside it has keyboard focus, and while the tab is in the background.
   useEffect(() => {
     if (paused) return undefined
-    const timer = window.setInterval(() => showSlide(activeIndex + 1), 5200)
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+    const timer = window.setInterval(() => showSlide(activeIndex + 1, 1), 5200)
     return () => window.clearInterval(timer)
-  }, [activeIndex, paused])
+  }, [activeIndex, paused, showSlide])
+
+  useEffect(() => {
+    const onVisibility = () => setPaused(document.hidden)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
 
   const finishSwipe = (event) => {
     if (touchStart === null) return
     const distance = event.changedTouches[0].clientX - touchStart
-    if (Math.abs(distance) > 50) showSlide(activeIndex + (distance < 0 ? 1 : -1))
+    if (Math.abs(distance) > 50) showSlide(activeIndex + (distance < 0 ? 1 : -1), distance < 0 ? 1 : -1)
     setTouchStart(null)
+  }
+
+  /**
+   * Publish the pointer position as two −1..1 numbers. CSS turns them into
+   * rotation, so React never re-renders while the pointer moves.
+   */
+  const trackPointer = (event) => {
+    const panel = panelRef.current
+    if (!panel) return
+    const box = panel.getBoundingClientRect()
+    panel.style.setProperty('--pointer-x', ((event.clientX - box.left) / box.width - 0.5).toFixed(3))
+    panel.style.setProperty('--pointer-y', ((event.clientY - box.top) / box.height - 0.5).toFixed(3))
+  }
+
+  const releasePointer = () => {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.style.setProperty('--pointer-x', '0')
+    panel.style.setProperty('--pointer-y', '0')
+    setPaused(false)
+  }
+
+  const onKeyDown = (event) => {
+    if (event.key === 'ArrowRight') { event.preventDefault(); showSlide(activeIndex + 1, 1) }
+    if (event.key === 'ArrowLeft') { event.preventDefault(); showSlide(activeIndex - 1, -1) }
   }
 
   return (
@@ -372,25 +452,63 @@ function CurriculumCarousel({ onBook }) {
           <p>Explore the colourful Cambridge, Oxford and international series that inspire our personalised English lessons.</p>
         </div>
 
-        <div className={`curriculum-carousel curriculum-carousel--${activeSlide.tone}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onTouchStart={(event) => setTouchStart(event.touches[0].clientX)} onTouchEnd={finishSwipe}>
+        <div
+          ref={panelRef}
+          className={`curriculum-carousel curriculum-carousel--${activeSlide.tone}`}
+          data-direction={direction > 0 ? 'next' : 'prev'}
+          role="group"
+          aria-roledescription="carousel"
+          aria-label={`${activeSlide.title}, ${activeIndex + 1} of ${total}`}
+          tabIndex={0}
+          onKeyDown={onKeyDown}
+          onMouseEnter={() => setPaused(true)}
+          onMouseMove={trackPointer}
+          onMouseLeave={releasePointer}
+          onFocus={() => setPaused(true)}
+          onBlur={() => setPaused(false)}
+          onTouchStart={(event) => setTouchStart(event.touches[0].clientX)}
+          onTouchEnd={finishSwipe}
+        >
+          {/* Slow-drifting light behind the copy. Purely atmospheric, so it is
+              hidden from assistive technology and killed by reduced motion. */}
+          <div className="curriculum-aurora" aria-hidden="true"><i /><i /><i /></div>
+
           <div className="curriculum-carousel__copy" key={`copy-${activeSlide.id}`}>
-            <span className="curriculum-carousel__count">{String(activeIndex + 1).padStart(2, '0')} / {curriculumSlides.length}</span>
+            <span className="curriculum-carousel__count">{String(activeIndex + 1).padStart(2, '0')} <em>/ {total}</em></span>
             <div className="curriculum-carousel__brand"><BookOpen size={17} /> {activeSlide.publisher}</div>
             <h3>{activeSlide.title}</h3>
             <p>{activeSlide.level} · Carefully matched to each learner’s age, confidence and curriculum goals.</p>
             <div className="curriculum-carousel__actions"><a className="button button--cream" href="#programmes">Explore programmes <ArrowRight size={16} /></a><button className="carousel-text-button" onClick={onBook}>Start with a free class</button></div>
           </div>
+
           <div className="curriculum-carousel__visual" key={`image-${activeSlide.id}`}>
             <CurriculumCover slide={activeSlide} />
+            <span className="curriculum-carousel__sheen" aria-hidden="true" />
           </div>
-          <button className="curriculum-arrow curriculum-arrow--prev" onClick={() => showSlide(activeIndex - 1)} aria-label="Previous curriculum"><ChevronLeft size={23} /></button>
-          <button className="curriculum-arrow curriculum-arrow--next" onClick={() => showSlide(activeIndex + 1)} aria-label="Next curriculum"><ChevronRight size={23} /></button>
-          <div className="curriculum-carousel__progress" aria-hidden="true"><span key={activeIndex} /></div>
+
+          <button className="curriculum-arrow curriculum-arrow--prev" onClick={() => showSlide(activeIndex - 1, -1)} aria-label="Previous curriculum"><ChevronLeft size={23} /></button>
+          <button className="curriculum-arrow curriculum-arrow--next" onClick={() => showSlide(activeIndex + 1, 1)} aria-label="Next curriculum"><ChevronRight size={23} /></button>
+
+          <div className="curriculum-dots" role="tablist" aria-label="Choose curriculum">
+            {curriculumSlides.map((slide, index) => (
+              <button
+                key={slide.id}
+                role="tab"
+                aria-selected={index === activeIndex}
+                aria-label={slide.title}
+                title={slide.title}
+                className={`curriculum-dot ${index === activeIndex ? 'is-active' : ''}`}
+                onClick={() => showSlide(index)}
+              >
+                <span />
+              </button>
+            ))}
+          </div>
+
+          <div className="curriculum-carousel__progress" aria-hidden="true"><span key={activeIndex} data-paused={paused ? 'true' : 'false'} /></div>
         </div>
 
-        <div className="curriculum-thumbnails" role="tablist" aria-label="Choose curriculum slide">
-          {curriculumSlides.map((slide, index) => <button role="tab" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onClick={() => showSlide(index)} key={slide.id}><CurriculumCover slide={slide} compact /><span>{slide.title}</span></button>)}
-        </div>
+        <p className="curriculum-live" aria-live="polite">{activeSlide.title} — {activeSlide.publisher}, {activeSlide.level}</p>
       </div>
     </section>
   )
