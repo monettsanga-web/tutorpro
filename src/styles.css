@@ -896,30 +896,88 @@ h3 {
 
 @media (max-width: 900px) {
   /*
-   * On a phone the hero is tall and narrow while the banner is 2.28:1 wide.
-   * 'cover' therefore crops away most of it and enlarges a thin middle slice,
-   * which showed one giant face and none of the wordmark or teachers.
+   * THE MOBILE BANNER — this is now implemented, not just described.
    *
-   * So on mobile the banner stops being a background and becomes a real image
-   * at the top, shown whole at its own shape, with the copy on a clean
-   * surface underneath. That is the only way the banner is actually seen.
+   * The banner is 2.28:1 (very wide). A phone hero is tall and narrow, so as
+   * a full-bleed background it could only ever fail:
+   *   - 'cover' cropped ~54% away, losing the ESL badge and the wordmark;
+   *   - 'contain' letterboxed it into a ~171px sliver stranded at the top of
+   *     an 881px box, sitting *behind* the headline under a 90% cream scrim,
+   *     with ~700px of empty cream below it. That is what "not visible" was:
+   *     the image was technically painted, but washed out behind the text.
+   *
+   * So on a phone the artwork stops being a background and becomes a real
+   * image in normal flow at the top, shown whole at its own aspect ratio,
+   * with the copy on a clean surface underneath. Nothing overlaps, nothing
+   * is cropped, and the hero is only as tall as its contents.
    */
-  /* A phone shows a narrow slice, so the copy always lands on artwork. Mask
-     vertically: clear at the top so the banner is visible, firm below it. */
-  .hero__bg { object-position: 72% top; }
-
-  .hero--banner::after {
-    background: linear-gradient(
-      180deg,
-      rgba(253, 250, 242, 0) 0%,
-      rgba(253, 250, 242, 0.08) 15%,
-      rgba(253, 250, 242, 0.9) 30%,
-      rgba(253, 250, 242, 0.975) 44%,
-      rgba(253, 250, 242, 0.99) 100%
-    );
+  .hero--banner {
+    display: block;
+    /* The desktop floor (min(74vh, 660px)) is what created the empty cream:
+       the box was held open long after the copy ended. */
+    min-height: 0;
+    /* No 3D stage on mobile — nothing tilts here, and perspective on a
+       scrolling block is a needless compositing cost on a phone. */
+    perspective: none;
   }
 
+  /* From absolutely-positioned backdrop to an ordinary block that occupies
+     real height. aspect-ratio matches the artwork exactly, so 'cover' and
+     'contain' agree and not a pixel is cropped or letterboxed. */
+  .hero__bg-stage {
+    position: relative;
+    z-index: 0;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 2560 / 1123;
+  }
 
+  .hero__bg {
+    object-fit: cover;
+    object-position: center;
+    /* The parallax nudge would slide the artwork inside a box that now fits
+       it exactly, exposing a bare strip at one edge. */
+    transform: none;
+  }
+
+  /* The scrim existed only to make text readable *on top of* the artwork.
+     Nothing sits on the artwork any more, so it would just grey out the photo. */
+  .hero--banner::after { display: none; }
+
+  /* Same reasoning for the frosted card: it was a readability device for copy
+     over a photo. On a plain cream background it is just a box around text. */
+  .hero--banner .hero__content {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  /* The scroll fade assumed the copy sat over a full-height image. Now that
+     the copy is below the image, fading it out on scroll hides the headline
+     and the CTA exactly as the visitor scrolls to read them. */
+  .hero--banner .hero__grid {
+    transform: none;
+    opacity: 1;
+  }
+
+  /* Orbs are absolutely positioned against the whole hero. With the image in
+     flow they would drift across the headline and buttons instead of sitting
+     behind artwork, so the atmosphere layer stands down on phones. */
+  .hero__orb { display: none; }
+
+  /* The dot grid is given `position: relative` further up so it stacks above
+     the artwork. That was harmless while the hero was a flex row, but now the
+     hero is a block it became a 220px-tall block in normal flow and shoved
+     the banner 296px down the page. It is pure decoration, so it goes. */
+  .hero__dots { display: none; }
+
+  .hero--banner .hero__grid {
+    padding-top: 26px;
+  }
 }
 
 .hero::before {
