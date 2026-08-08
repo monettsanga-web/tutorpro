@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   GraduationCap,
+  Loader2,
   LockKeyhole,
   LogOut,
   Mail,
@@ -16,8 +17,11 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { completePasswordReset, loginAccount, logoutAccount, registerAccount, requestPasswordReset } from './auth.js'
+import { adoptSocialAccount, completePasswordReset, completeSocialProfile, loginAccount, logoutAccount, registerAccount, requestPasswordReset } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
+import SocialSignUp from './SocialSignUp.jsx'
+import { clearPendingSocialSignIn, nameFromSocialUser, providerFromSocialUser, readPendingSocialSignIn } from './socialAuth.js'
+import { supabase } from './supabaseClient.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 
 const yearOptions = [
@@ -80,6 +84,16 @@ export default function AuthModal({
   const [showPassword, setShowPassword] = useState(false)
   const [createdAccount, setCreatedAccount] = useState(null)
   const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
+  // A parent who signed up through Facebook/Kakao/Naver/QQ: they already have
+  // an account, but the child's details are still missing.
+  const [socialAccount, setSocialAccount] = useState(null)
+  // Derived at mount, not inside the effect: the answer is already knowable
+  // from the URL and sessionStorage, so setting it in an effect would only add
+  // a cascading render and a frame where the spinner is missing.
+  const [returningFromSocial, setReturningFromSocial] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('social') === '1' || Boolean(readPendingSocialSignIn())
+  })
   const chineseVisitor = isChineseVisitor(visitorLocale)
 
   useEffect(() => {
@@ -100,6 +114,74 @@ export default function AuthModal({
       setForm((current) => current.authProvider === 'gmail' && !current.email ? { ...current, authProvider: 'email' } : current)
     }
   }), [])
+
+  /**
+   * Catch the parent coming back from Facebook, Kakao, Naver or QQ.
+   *
+   * Supabase's client is created with detectSessionInUrl, so by the time this
+   * runs it has already exchanged the code in the URL for a session. What is
+   * left for us is to turn that session into a TutorPro family account and
+   * send the parent to whichever step they still need.
+   *
+   * The `?social=1` marker is what distinguishes a real return from an
+   * ordinary page load that happens to have a session, so an existing signed
+   * in parent opening the modal is never dragged through this.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined' || !supabase) return undefined
+    const pending = readPendingSocialSignIn()
+    const marked = new URLSearchParams(window.location.search).get('social') === '1'
+    if (!pending && !marked) return undefined
+
+    let active = true
+
+    ;(async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (error) throw new Error(error.message)
+        const user = data?.session?.user
+        if (!user) throw new Error('That sign-in did not complete. Please try again, or use the email form.')
+
+        const provider = providerFromSocialUser(user) || pending?.id || 'social'
+        const result = await adoptSocialAccount({
+          user: { ...user, parentName: nameFromSocialUser(user) },
+          provider,
+          selectedPlan: pending?.plan || selectedPlan,
+          referralCode: pending?.referralCode || referralCode,
+        })
+        if (!active) return
+
+        onAuthenticated(result.account)
+        if (result.needsLearner) {
+          // Parent half is done; collect the child on step 2 rather than
+          // making them retype a name the provider already gave us.
+          setSocialAccount(result.account)
+          setForm((current) => ({ ...current, parentName: result.account.parentName || '', authProvider: provider }))
+          setView('register')
+          setRegisterStep(2)
+        } else {
+          // A returning family: straight into the portal, lessons intact.
+          setCreatedAccount(result.account)
+          onEnterPortal(result.account)
+        }
+      } catch (caught) {
+        if (active) { setFormError(caught.message); setView('register'); setRegisterStep(1) }
+      } finally {
+        if (active) setReturningFromSocial(false)
+        clearPendingSocialSignIn()
+        // Strip the marker so a refresh does not replay the whole flow.
+        try {
+          const url = new URL(window.location.href)
+          url.searchParams.delete('social')
+          window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+        } catch { /* History access can be restricted; harmless either way. */ }
+      }
+    })()
+
+    return () => { active = false }
+    // Deliberately runs once, when the modal mounts after the redirect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const updateField = (event) => {
     const { name, value, checked, type } = event.target
@@ -145,7 +227,11 @@ export default function AuthModal({
     setIsSubmitting(true)
     setFormError('')
     try {
-      const account = await registerAccount({ ...form, selectedPlan, referralCode, preferredTeacherId: preferredTeacher?.id || '' })
+      // A social parent is already authenticated, so there is no password to
+      // set and no second Supabase user to create — only the child to attach.
+      const account = socialAccount
+        ? await completeSocialProfile(socialAccount.id, form)
+        : await registerAccount({ ...form, selectedPlan, referralCode, preferredTeacherId: preferredTeacher?.id || '' })
       setCreatedAccount(account)
       onAuthenticated(account)
       setView('success')
@@ -281,8 +367,16 @@ export default function AuthModal({
 
               {formError && <div className="auth-alert" role="alert">{formError}</div>}
 
+              {returningFromSocial && (
+                <div className="auth-alert auth-alert--busy" role="status">
+                  <Loader2 className="auth-alert__spin" size={17} aria-hidden="true" />
+                  {chineseVisitor ? '正在完成登录…' : 'Finishing your sign-in…'}
+                </div>
+              )}
+
               {registerStep === 1 ? (
                 <form className="auth-form" onSubmit={continueRegistration} noValidate>
+                  <SocialSignUp plan={selectedPlan} referralCode={referralCode} chineseVisitor={chineseVisitor} onError={setFormError} />
                   <label>
                     <span>{chineseVisitor ? '家长或监护人姓名' : 'Parent or guardian name'}</span>
                     <div className={`input-wrap ${errors.parentName ? 'input-wrap--error' : ''}`}>
@@ -380,7 +474,10 @@ export default function AuthModal({
                   {preferredTeacher && <div className="selected-teacher"><UserRound size={16} /><span><strong>{preferredTeacher.fullName} selected</strong><small>{preferredTeacher.teacher.specialization}</small></span></div>}
                   {selectedPlan && <div className="selected-plan"><Sparkles size={16} /> {selectedPlan} plan selected</div>}
                   <div className="auth-form__actions">
-                    <button className="button button--outline" type="button" onClick={() => setRegisterStep(1)}><ArrowLeft size={16} /> {chineseVisitor ? '返回' : 'Back'}</button>
+                    {/* A social parent has no step 1 to go back to — their
+                        account already exists — so Back would strand them on
+                        an email form they must not fill in. */}
+                    {!socialAccount && <button className="button button--outline" type="button" onClick={() => setRegisterStep(1)}><ArrowLeft size={16} /> {chineseVisitor ? '返回' : 'Back'}</button>}
                     <button className="button button--primary" type="submit" disabled={isSubmitting}>
                       {isSubmitting ? (chineseVisitor ? '正在创建账户…' : 'Creating account…') : (chineseVisitor ? '创建免费账户' : 'Create my free account')} {!isSubmitting && <ArrowRight size={17} />}
                     </button>

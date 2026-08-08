@@ -388,6 +388,122 @@ export async function registerAccount(details) {
   return publicAccount(account)
 }
 
+/**
+ * Turn a parent who just came back from Facebook, Kakao, Naver or QQ into a
+ * normal TutorPro family account.
+ *
+ * WHY THIS IS NOT registerAccount()
+ * ---------------------------------
+ * registerAccount() assumes a password and a completed learner profile. A
+ * social sign-up has neither: the provider has already proved who the parent
+ * is, and the child's details are collected on the next screen. So this
+ * creates the parent half of the account and reports whether the learner
+ * details are still outstanding, which is what tells the modal where to go.
+ *
+ * SIGNING IN AGAIN MUST NOT CREATE A SECOND ACCOUNT
+ * -------------------------------------------------
+ * Supabase reuses the same user id every time, so that id is matched first.
+ * The email is matched second, which is what links a parent who first signed
+ * up with the email form and later taps the Facebook button — same family,
+ * one account, rather than a duplicate with no lessons in it.
+ */
+export async function adoptSocialAccount({ user, provider, selectedPlan = '', referralCode = '' }) {
+  if (!user?.id) throw new Error('That sign-in did not complete. Please try again.')
+
+  const accounts = readAccounts()
+  const email = normalizeEmail(user.email || '')
+  const existing = accounts.find((account) => account.id === user.id)
+    || (email ? accounts.find((account) => normalizeEmail(account.email || '') === email) : null)
+
+  if (existing) {
+    // Returning parent. Keep every lesson, booking and child already on the
+    // record; only refresh the id so it continues to match the cloud row.
+    existing.id = user.id
+    existing.cloudProfile = true
+    existing.authProvider = provider || existing.authProvider
+    if (email && !existing.email) existing.email = email
+    if (!existing.loginId) existing.loginId = email || user.id
+    writeAccounts(accounts)
+    writeSessionId(existing.id)
+    const account = publicAccount(existing)
+    return { account, needsLearner: !account.children?.length }
+  }
+
+  const parentName = String(user.parentName || '').trim()
+  const account = {
+    id: user.id,
+    role: 'student',
+    status: 'active',
+    parentName: parentName || 'TutorPro family',
+    email,
+    loginId: email || user.id,
+    authProvider: provider || 'social',
+    // No password hash: the provider owns authentication for this account.
+    // Nothing reads passwordHash unless a password login is attempted, and
+    // that path is unreachable for a social account.
+    socialOnly: true,
+    child: null,
+    children: [],
+    selectedPlan: selectedPlan || '',
+    preferredTeacherId: '',
+    referredByCode: readIncomingReferralCode({ referralCode }),
+    referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
+    registrationCountry: readVisitorCountry().toUpperCase(),
+    attribution: attributionSnapshot(),
+    createdAt: new Date().toISOString(),
+  }
+  account.referralCode = createReferralCode(account.parentName, account.id)
+  if (account.referredByCode === account.referralCode) account.referredByCode = ''
+
+  accounts.push(account)
+  writeAccounts(accounts)
+  writeSessionId(account.id)
+  return { account: publicAccount(account), needsLearner: true }
+}
+
+/**
+ * Attach the child's details to a social account once the parent has filled
+ * in the second step. Mirrors the learner shape registerAccount() builds.
+ */
+export async function completeSocialProfile(accountId, details) {
+  const accounts = readAccounts()
+  const account = accounts.find((item) => item.id === accountId)
+  if (!account) throw new Error('That account could not be found. Please sign in again.')
+
+  if (String(details.childName || '').trim().length < 2 || !details.year || !details.curriculum) {
+    throw new Error('Complete the student profile before continuing.')
+  }
+
+  const learner = {
+    id: crypto.randomUUID(),
+    name: details.childName.trim(),
+    year: details.year,
+    curriculum: details.curriculum,
+    goal: details.goal,
+    frequency: details.frequency,
+    accessStatus: 'active',
+    level: 'Building foundations',
+    progress: 18,
+    streak: 0,
+    lessonsCompleted: 0,
+    achievements: ['First step'],
+  }
+
+  if (String(details.parentName || '').trim().length >= 2) account.parentName = details.parentName.trim()
+  account.child = learner
+  account.children = [learner]
+  account.updatedAt = new Date().toISOString()
+  writeAccounts(accounts)
+
+  if (cloudSyncEnabled()) {
+    // A failure here must not lose the profile the parent just typed: it is
+    // already saved locally and the normal sync will retry.
+    try { await updateCloudProfile(account) } catch { account.cloudSyncPending = true; writeAccounts(accounts) }
+  }
+
+  return publicAccount(account)
+}
+
 export async function registerTeacher(details) {
   const accounts = readAccounts()
   const authProvider = details.authProvider || 'email'
