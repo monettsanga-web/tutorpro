@@ -737,7 +737,7 @@ h3 {
    --------------------------------------------------------------------------- */
 .hero--banner {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   background: #fdfaf2;
 }
 
@@ -750,6 +750,17 @@ h3 {
 .hero--banner {
   perspective: 1200px;
   transform-style: preserve-3d;
+  /*
+   * A conventional hero band. Before this the height was simply whatever the
+   * copy happened to need, which measured 915px against a 950px viewport.
+   * Capping it keeps the section in the normal marketing-site range and
+   * guarantees the next section is visible at the bottom of the screen.
+   */
+  min-height: min(74vh, 660px);
+  /* Deliberately no max-height. Capping it clipped the copy: content measured
+     782px against a 660px cap, cutting the eyebrow and the trust row. The
+     floor gives a consistent band; taller copy simply extends it. */
+  align-items: center;
 }
 
 .hero__bg-stage {
@@ -762,17 +773,15 @@ h3 {
 
 .hero__bg {
   position: absolute;
-  /* Oversized so the scroll drift never exposes a bare edge. */
-  inset: -6%;
-  width: 112%;
-  height: 112%;
-  object-fit: cover;
-  /* Bias right so the teachers land on the clear side of the scrim. */
-  object-position: 78% center;
-  /* Furthest layer: drifts least and scales gently as the page scrolls. */
-  transform:
-    translate3d(0, calc(var(--premium-scroll-ratio, 0) * 26px), 0)
-    scale(calc(1.02 + var(--premium-scroll-ratio, 0) * 0.05));
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* 'contain' shows the entire banner. 'cover' cropped roughly 46% of it and
+     had to upscale a 1568px source to 1958px on a wide monitor, which is the
+     softness that read as pixelation. The source is now 2560px too. */
+  object-fit: contain;
+  object-position: center;
+  transform: translate3d(0, calc(var(--premium-scroll-ratio, 0) * 18px), 0);
   will-change: transform;
 }
 
@@ -849,31 +858,34 @@ h3 {
   }
 }
 
-/*
- * Readability scrim.
- *
- * The 2.28:1 artwork has no empty region: the E-Learning Academy wordmark runs
- * through the centre-left, which is exactly where the headline sits. A light
- * veil left the copy sitting on top of large bubble letters and it was close
- * to unreadable, so the left side is masked firmly and the right stays clear
- * so the teachers and the badge still read as a photograph.
- */
+/* The full photo is visible, so its wordmark sits directly behind the copy.
+   A gentle overall wash plus a frosted panel behind the text keeps the whole
+   artwork on show while the words stay readable. */
 .hero--banner::after {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
-  background:
-    linear-gradient(
-      100deg,
-      rgba(253, 250, 242, 0.985) 0%,
-      rgba(253, 250, 242, 0.965) 30%,
-      rgba(253, 250, 242, 0.82) 44%,
-      rgba(253, 250, 242, 0.32) 56%,
-      rgba(253, 250, 242, 0.02) 70%,
-      rgba(253, 250, 242, 0) 100%
-    );
+  background: linear-gradient(
+    100deg,
+    rgba(253, 250, 242, 0.55) 0%,
+    rgba(253, 250, 242, 0.38) 34%,
+    rgba(253, 250, 242, 0.12) 52%,
+    rgba(253, 250, 242, 0) 70%
+  );
   pointer-events: none;
+}
+
+/* Frosted card behind the copy: readable text without hiding the photograph. */
+.hero--banner .hero__content {
+  position: relative;
+  padding: 30px 34px 34px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 26px;
+  background: rgba(253, 250, 242, 0.82);
+  backdrop-filter: blur(9px) saturate(115%);
+  -webkit-backdrop-filter: blur(9px) saturate(115%);
+  box-shadow: 0 20px 60px rgba(50, 21, 104, 0.13);
 }
 
 .hero--banner .hero__grid,
