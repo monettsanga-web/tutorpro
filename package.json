@@ -43,7 +43,8 @@
     "test:carousel": "node scripts/test-review-carousel.mjs",
     "verify:video": "node scripts/verify-video-section.mjs",
     "verify:carousel": "node scripts/verify-curriculum-carousel.mjs",
-    "verify:heromobile": "node scripts/verify-hero-mobile.mjs"
+    "verify:heromobile": "node scripts/verify-hero-mobile.mjs",
+    "verify:panda": "node scripts/verify-panda-companion.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

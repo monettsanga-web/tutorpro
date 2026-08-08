@@ -28,6 +28,7 @@ import {
   X,
 } from 'lucide-react'
 import AuthModal from './AuthModal.jsx'
+import PandaCompanion from './PandaCompanion.jsx'
 import PortalAccess from './PortalAccess.jsx'
 const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.AdminDashboard })))
 const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
@@ -1959,6 +1960,12 @@ export default function App() {
           <Pricing onBook={openRegistration} />
           <FAQ onBook={openRegistration} />
           <FinalCTA onBook={openRegistration} />
+          {/* The mascot belongs to the marketing homepage only. Mounting it
+              here rather than in main.jsx keeps it out of the dashboards, the
+              classroom and the teacher showcase, where a flying panda over
+              someone's lesson would be an intrusion rather than a delight.
+              It also hides itself when a dialog is open (see below). */}
+          {!authOpen && !roleAccess && <PandaCompanion />}
         </main>
       )}
       {currentAccount && <FacebookMessengerContact />}

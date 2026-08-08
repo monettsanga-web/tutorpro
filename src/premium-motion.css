@@ -459,3 +459,169 @@
   }
   .premium-heading { opacity: 1; }
 }
+
+/* ---------------------------------------------------------------------------
+   The flying panda companion.
+
+   PandaCompanion.jsx writes --panda-x (-50..50, percent of the free margin),
+   --panda-y (0..100, percent of the flight band), --panda-rot (degrees of
+   bank) and --panda-flip (1 or -1, facing) onto .panda-layer inside a single
+   rAF loop. Everything below is driven from those four numbers, so scrolling
+   never triggers a React render or a layout pass.
+   --------------------------------------------------------------------------- */
+.panda-layer {
+  --panda-left: 50%;
+  --panda-y: 0;
+  --panda-rot: 0;
+  --panda-flip: 1;
+  --panda-opacity: 0;
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  /* The layer must never intercept a click meant for the page beneath it.
+     Only the panda itself takes pointer events, re-enabled further down. */
+  pointer-events: none;
+  perspective: 1000px;
+}
+
+.panda-companion {
+  position: absolute;
+  /* --panda-left is an absolute pixel position computed from the real width of
+     the content column, so the panda always flies down the middle of a margin
+     and never over the words. Opacity fades it out while it crosses. */
+  top: calc(120px + (var(--panda-y) * 1%) * 0.62);
+  left: var(--panda-left);
+  width: 118px;
+  opacity: var(--panda-opacity);
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+  transition: opacity 220ms ease;
+  will-change: top, left, opacity;
+}
+
+.panda-companion__body {
+  position: relative;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  /* The bank comes from the flight path; the float is its own slow idle so the
+     panda still feels alive when the page is not being scrolled. */
+  transform:
+    rotateZ(calc(var(--panda-rot) * 1deg))
+    rotateY(calc((1 - var(--panda-flip)) * 90deg))
+    scaleX(var(--panda-flip));
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: panda-float 4.6s ease-in-out infinite;
+}
+
+.panda-companion__body img {
+  width: 118px;
+  height: auto;
+  filter: drop-shadow(0 18px 26px rgba(50, 21, 104, 0.28));
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panda-companion__body:hover img { transform: scale(1.07); }
+.panda-companion__body:active img { transform: scale(0.96); }
+
+.panda-companion__body:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 6px;
+  border-radius: 18px;
+}
+
+/* A soft contact shadow that breathes with the float, which is what stops the
+   panda reading as a sticker pasted on the page. */
+.panda-companion__shadow {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  width: 74px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(50, 21, 104, 0.24), transparent 70%);
+  transform: translateX(-50%);
+  animation: panda-shadow 4.6s ease-in-out infinite;
+}
+
+/* A full barrel roll when poked. */
+.panda-companion.is-spinning .panda-companion__body {
+  animation: panda-float 4.6s ease-in-out infinite, panda-spin 1.5s cubic-bezier(0.34, 1.36, 0.44, 1);
+}
+
+.panda-companion__bubble {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  width: max-content;
+  max-width: 190px;
+  border: 1px solid var(--line);
+  border-radius: 16px 16px 16px 5px;
+  padding: 9px 13px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(50, 21, 104, 0.18);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: panda-say 420ms cubic-bezier(0.34, 1.36, 0.44, 1) both;
+}
+
+.panda-companion__dismiss {
+  position: absolute;
+  z-index: 3;
+  top: -4px;
+  right: -2px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(50, 21, 104, 0.16);
+  color: var(--muted);
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.panda-companion:hover .panda-companion__dismiss,
+.panda-companion__dismiss:focus-visible { opacity: 1; }
+.panda-companion__dismiss:hover { color: var(--ink); transform: scale(1.12); }
+
+@keyframes panda-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -13px; }
+}
+
+@keyframes panda-shadow {
+  0%, 100% { opacity: 0.75; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.42; transform: translateX(-50%) scale(0.82); }
+}
+
+@keyframes panda-spin {
+  to { rotate: y 360deg; }
+}
+
+@keyframes panda-say {
+  from { opacity: 0; transform: translateX(-50%) translateY(7px) scale(0.9); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+/* Below 1100px the page has no side margin to fly in, so the panda would have
+   to cross the words. The component does not mount there; this is the belt to
+   that braces, in case the viewport is resized after load. */
+@media (max-width: 1099px) {
+  .panda-layer { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panda-layer { display: none; }
+}
