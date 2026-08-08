@@ -157,37 +157,16 @@ function lessonWindow(offset) {
   return { localStart: '15:00', localEnd: '20:00', manilaStart: shift(15), manilaEnd: shift(20) }
 }
 
-const STYLE = `
-  :root { color-scheme: dark; --lime:#bce94e; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: radial-gradient(circle at 12% 4%, rgba(188,233,78,.14), transparent 32%), linear-gradient(135deg,#090510 0%,#25104d 55%,#111827 100%); color:var(--text); line-height:1.68; }
-  a { color: var(--lime); }
-  .container { width:min(860px, calc(100% - 32px)); margin:auto; }
-  header { border-bottom:1px solid var(--line); background:rgba(9,5,16,.72); }
-  .brandbar { min-height:66px; display:flex; align-items:center; gap:11px; }
-  .brandbar img { width:40px; height:40px; border-radius:12px; }
-  .brandbar strong { font-weight:950; font-size:.98rem; }
-  main { padding:38px 0 64px; }
-  h1 { font-size:clamp(1.85rem,4.4vw,2.6rem); letter-spacing:-.03em; line-height:1.14; margin:0 0 14px; }
-  h2 { font-size:clamp(1.18rem,2.7vw,1.45rem); margin:36px 0 12px; letter-spacing:-.02em; }
-  h3 { font-size:1rem; margin:0 0 6px; color:var(--lime); }
-  p, li { color:var(--muted); }
-  .lede { font-size:clamp(1rem,2.1vw,1.12rem); color:#e9e2f7; }
-  .pill { display:inline-block; border-radius:999px; padding:6px 13px; background:var(--card); border:1px solid var(--line); font-size:.8rem; color:var(--muted); margin:0 6px 10px 0; }
-  .card { border:1px solid var(--line); border-radius:16px; padding:18px 20px; background:var(--card); margin:14px 0; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(236px,1fr)); gap:14px; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.93rem; }
-  th, td { text-align:left; padding:10px; border-bottom:1px solid var(--line); color:var(--muted); }
-  th { color:#fff; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; }
-  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:14px 24px; background:var(--lime); color:#140a29; font-weight:900; text-decoration:none; margin:6px 8px 6px 0; }
-  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; }
-  .others { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
-  .others a { border:1px solid var(--line); border-radius:999px; padding:8px 14px; background:var(--card); text-decoration:none; font-size:.84rem; font-weight:700; }
-  footer { border-top:1px solid var(--line); padding:24px 0; font-size:.85rem; color:#9d92b0; }
-  footer a { margin-right:14px; display:inline-block; }
-  ul { padding-left:20px; }
-  @media (max-width:640px){ .btn{width:100%;justify-content:center;margin-right:0;} }
-`
+/*
+ * Presentation lives in /assets/pages.css, shared by every static page.
+ *
+ * Each page used to carry its own inline dark theme, which had drifted away
+ * from the homepage: near-black backgrounds and white text against the
+ * homepage's warm cream and purple ink. A parent clicking through from the
+ * homepage landed somewhere that looked like a different company. One shared
+ * file also lets the browser cache it once rather than re-downloading the
+ * same rules inside every page.
+ */
 
 function schema(city) {
   return {
@@ -249,20 +228,20 @@ function render(city, all) {
     <meta property="og:description" content="One-to-one lessons for children aged 4-16. Free first class, no card required." />
     <meta property="og:url" content="${url}" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
-    <style>${STYLE}</style>
+    <link rel="stylesheet" href="/assets/pages.css" />
     <script type="application/ld+json">${JSON.stringify(schema(city))}</script>
     <script type="application/ld+json">${JSON.stringify(faqSchema(city))}</script>
   </head>
   <body>
-    <header>
-      <div class="container brandbar">
-        <img src="/assets/tutorpro-panda-logo.webp" alt="" />
-        <strong>TutorPro Online English</strong>
+    <header class="site-head">
+      <div class="wrap site-head__inner">
+        <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+        <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
       </div>
     </header>
 
     <main>
-      <div class="container">
+      <div class="wrap">
         <h1>Online English tutor for children in ${city.city}</h1>
         <p class="lede">One-to-one lessons for children aged 4 to 16 in ${city.city}, taught live by experienced teachers using Cambridge and Oxford coursebooks. The first class is free and needs no card details.</p>
         <p>
@@ -273,7 +252,7 @@ function render(city, all) {
         </p>
         <p>
           <a class="btn" href="/?src=city-${city.slug}&book=1">Book the free class</a>
-          <a class="btn btn--ghost" href="${MESSENGER}" target="_blank" rel="noopener">Ask a question first</a>
+          <a class="btn btn--quiet" href="${MESSENGER}" target="_blank" rel="noopener">Ask a question first</a>
         </p>
 
         <h2>Why families in ${city.city} look for English tuition</h2>
@@ -326,7 +305,7 @@ function render(city, all) {
     </main>
 
     <footer>
-      <div class="container">
+      <div class="wrap">
         <a href="/">Home</a>
         <a href="/is-tutorpro-legitimate.html">Are we legitimate?</a>
         <a href="/pricing.html">Pricing</a>

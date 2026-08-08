@@ -37,49 +37,16 @@ const REVIEWS = [
   { name: 'Sharmila Maniam', date: 'August 2021', quote: 'My 6Yr old loves the classes as the teacher tought Reading, writing & Memorising. I as a parent, Love the method of their teaching.' },
 ]
 
-const STYLE = `
-  :root { color-scheme: dark; --bg:#090510; --violet:#7048df; --lime:#bce94e; --pink:#ff4f87; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 12% 4%, rgba(188,233,78,.15), transparent 32%), linear-gradient(135deg, #090510 0%, #25104d 55%, #111827 100%); color:var(--text); line-height:1.65; }
-  a { color: var(--lime); }
-  .container { width:min(880px, calc(100% - 32px)); margin:auto; }
-  header { border-bottom:1px solid var(--line); background:rgba(9,5,16,.7); }
-  .brandbar { min-height:66px; display:flex; align-items:center; gap:11px; }
-  .brandbar img { width:40px; height:40px; border-radius:12px; }
-  .brandbar strong { font-weight:950; font-size:.98rem; }
-  main { padding:38px 0 60px; }
-  h1 { font-size:clamp(2rem,5vw,3rem); letter-spacing:-.03em; line-height:1.1; margin:0 0 14px; }
-  h2 { font-size:clamp(1.3rem,3vw,1.6rem); margin:40px 0 12px; letter-spacing:-.02em; }
-  h3 { font-size:1rem; margin:0 0 6px; color:var(--lime); }
-  p, li { color:var(--muted); }
-  .lede { font-size:clamp(1.02rem,2.2vw,1.18rem); color:#e9e2f7; margin-bottom:22px; }
-  .pill { display:inline-block; border-radius:999px; padding:6px 13px; background:var(--card); border:1px solid var(--line); font-size:.78rem; color:var(--muted); margin:0 6px 10px 0; }
-  .cta-row { margin:26px 0 10px; }
-  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:15px 26px; background:var(--lime); color:#140a29; font-weight:950; font-size:1.02rem; text-decoration:none; margin:6px 10px 6px 0; box-shadow:0 12px 30px rgba(188,233,78,.22); }
-  .btn:hover { transform:translateY(-1px); }
-  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; box-shadow:none; font-size:.92rem; padding:13px 20px; }
-  .reassure { font-size:.85rem; color:#a99dbd; margin:4px 0 0; }
-  .card { border:1px solid var(--line); border-radius:18px; padding:20px 22px; background:var(--card); margin:16px 0; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(232px,1fr)); gap:14px; }
-  .price { font-size:1.9rem; font-weight:950; color:var(--lime); margin:0; letter-spacing:-.02em; }
-  .review { border-left:3px solid var(--lime); padding:4px 0 4px 16px; margin:16px 0; }
-  .review p { margin:0 0 6px; color:#e2dbef; font-style:italic; }
-  .review span { font-size:.82rem; color:#a99dbd; font-weight:700; }
-  .steps { counter-reset:step; list-style:none; padding:0; }
-  .steps li { counter-increment:step; position:relative; padding:0 0 16px 44px; }
-  .steps li::before { content:counter(step); position:absolute; left:0; top:0; width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:var(--violet); color:#fff; font-weight:900; font-size:.85rem; }
-  .steps strong { color:#fff; display:block; }
-  .trust { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0; }
-  .trust span { border:1px solid var(--line); border-radius:12px; padding:9px 13px; background:var(--card); font-size:.82rem; color:var(--muted); }
-  .faq { border:1px solid var(--line); border-radius:14px; padding:14px 18px; background:var(--card); margin:10px 0; }
-  .faq strong { color:#fff; display:block; margin-bottom:5px; }
-  .final { border:1px solid var(--lime); border-radius:22px; padding:30px 26px; background:linear-gradient(140deg, rgba(188,233,78,.12), rgba(112,72,223,.16)); margin:40px 0 0; text-align:center; }
-  .final h2 { margin-top:0; }
-  footer { border-top:1px solid var(--line); padding:24px 0; font-size:.82rem; color:#9d92b0; }
-  footer a { margin-right:14px; display:inline-block; }
-  ul { padding-left:20px; }
-  @media (max-width:640px){ .btn{width:100%;justify-content:center;margin-right:0;} }
-`
+/*
+ * Presentation lives in /assets/pages.css, shared by every static page.
+ *
+ * Each page used to carry its own inline dark theme, which had drifted away
+ * from the homepage: near-black backgrounds and white text against the
+ * homepage's warm cream and purple ink. A parent clicking through from the
+ * homepage landed somewhere that looked like a different company. One shared
+ * file also lets the browser cache it once rather than re-downloading the
+ * same rules inside every page.
+ */
 
 /** The CTA carries the channel tag so the funnel credits the right source. */
 function cta(page, label = 'Book the free class') {
@@ -275,25 +242,25 @@ function render(page) {
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/assets/pwa-icon-192.png" />
-    <style>${STYLE}</style>
+    <link rel="stylesheet" href="/assets/pages.css" />
     <script type="application/ld+json">${JSON.stringify(schema)}</script>
   </head>
   <body>
-    <header>
-      <div class="container brandbar">
-        <img src="/assets/tutorpro-panda-logo.webp" alt="" />
-        <strong>TutorPro Online English</strong>
+    <header class="site-head">
+      <div class="wrap site-head__inner">
+        <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+        <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
       </div>
     </header>
 
     <main>
-      <div class="container">
+      <div class="wrap">
         <h1>${page.h1}</h1>
         <p class="lede">${page.lede}</p>
         <p>${page.pills.map((pill) => `<span class="pill">${pill}</span>`).join('')}</p>
         <div class="cta-row">
           ${cta(page)}
-          <a class="btn btn--ghost" href="${MESSENGER}" target="_blank" rel="noopener">Ask a question first</a>
+          <a class="btn btn--quiet" href="${MESSENGER}" target="_blank" rel="noopener">Ask a question first</a>
           <p class="reassure">Takes about a minute. No card details, and nothing charged.</p>
         </div>
 ${page.body}
@@ -308,7 +275,7 @@ ${page.body}
     </main>
 
     <footer>
-      <div class="container">
+      <div class="wrap">
         <a href="/">Home</a>
         <a href="/pricing.html">Pricing</a>
         <a href="/about.html">About</a>

@@ -51,37 +51,15 @@ const MONTHLY_ROWS = [3, 4, 5, 6, 7].map((s) => ({
   total: planTotal('monthly', s),
 }))
 
-const STYLE = `
-  :root { color-scheme: dark; --violet:#7048df; --lime:#bce94e; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 15% 5%, rgba(188,233,78,.14), transparent 30%), linear-gradient(135deg,#090510 0%,#25104d 54%,#111827 100%); color:var(--text); line-height:1.65; }
-  a { color: var(--lime); }
-  .container { width:min(940px, calc(100% - 32px)); margin:auto; }
-  header { position:sticky; top:0; z-index:10; backdrop-filter:blur(18px); background:rgba(9,5,16,.74); border-bottom:1px solid var(--line); }
-  nav { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-  .brand { display:flex; align-items:center; gap:11px; font-weight:950; text-decoration:none; color:#fff; }
-  .brand img { width:42px; height:42px; border-radius:13px; }
-  main { padding:40px 0 70px; }
-  h1 { font-size:clamp(1.9rem,4vw,2.8rem); letter-spacing:-.03em; line-height:1.12; margin:0 0 10px; }
-  h2 { font-size:1.25rem; margin:34px 0 10px; }
-  h3 { font-size:1rem; margin:16px 0 6px; color:var(--lime); }
-  p, li, td { color:var(--muted); }
-  .lede { font-size:1.05rem; color:#e6dff5; }
-  .pill { display:inline-block; border-radius:999px; padding:6px 13px; background:var(--card); border:1px solid var(--line); font-size:.78rem; margin:0 6px 18px 0; color:var(--muted); }
-  .card { border:1px solid var(--line); border-radius:18px; padding:18px 20px; background:var(--card); margin:16px 0; }
-  .card--hero { border-color:rgba(188,233,78,.4); background:linear-gradient(135deg, rgba(188,233,78,.12), rgba(112,72,223,.12)); }
-  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:13px 20px; background:var(--lime); color:#140a29; font-weight:900; text-decoration:none; margin:6px 8px 6px 0; }
-  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.92rem; }
-  th, td { text-align:left; padding:11px 10px; border-bottom:1px solid var(--line); }
-  th { color:#fff; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
-  tr.best td { background:rgba(188,233,78,.08); color:#eaffb8; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
-  footer { border-top:1px solid var(--line); padding:26px 0; font-size:.84rem; color:var(--muted); }
-  footer a { margin-right:14px; display:inline-block; }
-  ul { padding-left:20px; }
-  small { color:#9c8fb3; }
-`
+/*
+ * Presentation lives in /assets/pages.css, shared by every static page.
+ *
+ * Each page used to carry its own inline dark theme, which drifted away from
+ * the homepage: near-black backgrounds and white text against the homepage's
+ * warm cream and purple. A parent clicking through from the homepage landed
+ * somewhere that looked like a different company. One shared file also lets
+ * the browser cache it once instead of re-downloading it inside every page.
+ */
 
 const FAQS = [
   ['How much do online English classes for kids cost?',
@@ -204,19 +182,19 @@ function page() {
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <script type="application/ld+json">${JSON.stringify(buildSchema())}</script>
-    <style>${STYLE}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
-    <header>
-      <div class="container">
-        <nav>
-          <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
-          <a class="btn" href="/">Book a free first class</a>
-        </nav>
+    <header class="site-head">
+      <div class="wrap site-head__inner">
+        <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+        <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
       </div>
     </header>
     <main>
-      <div class="container">
+      <div class="wrap page-head">
+        <span class="kicker">Transparent pricing</span>
         <h1>Online English class pricing</h1>
         <p class="lede">One-to-one lessons from <strong>$8 per 25-minute class</strong>. The first class is free, there is no contract, and every price is published here rather than hidden behind a sales call.</p>
         <p>
@@ -226,8 +204,8 @@ function page() {
           <span class="pill">No hidden fees</span>
         </p>
         <p>
-          <a class="btn" href="/">Book a free first class</a>
-          <a class="btn btn--ghost" href="${MESSENGER}" target="_blank" rel="noopener">Ask about pricing</a>
+          <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
+          <a class="btn btn--quiet" href="${MESSENGER}" target="_blank" rel="noopener">Ask about pricing</a>
         </p>
 
         <div class="card card--hero">
@@ -279,14 +257,14 @@ function page() {
         <h2>Start with a free class</h2>
         <p>Every new family gets one free class before paying anything. It is a real lesson with a real teacher — see how your child responds first.</p>
         <p>
-          <a class="btn" href="/">Book a free first class</a>
-          <a class="btn btn--ghost" href="/english-for-kids-ages-8-11.html">Lessons by age</a>
+          <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
+          <a class="btn btn--quiet" href="/english-for-kids-ages-8-11.html">Lessons by age</a>
         </p>
         <p><small>Prices last reviewed: ${UPDATED}</small></p>
       </div>
     </main>
     <footer>
-      <div class="container">
+      <div class="wrap">
         <a href="/">Home</a>
         <a href="/pricing.html">Pricing</a>
         <a href="/english-for-kids-ages-4-7.html">Ages 4–7</a>

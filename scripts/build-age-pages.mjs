@@ -28,37 +28,16 @@ const SITE = 'https://www.tutorpro.site'
 const UPDATED = '4 August 2026'
 const MESSENGER = 'https://m.me/526047974195321'
 
-const STYLE = `
-  :root { color-scheme: dark; --bg:#090510; --violet:#7048df; --lime:#bce94e; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 15% 5%, rgba(188,233,78,.14), transparent 30%), linear-gradient(135deg, #090510 0%, #25104d 54%, #111827 100%); color:var(--text); line-height:1.65; }
-  a { color: var(--lime); }
-  .container { width:min(920px, calc(100% - 32px)); margin:auto; }
-  header { position:sticky; top:0; z-index:10; backdrop-filter: blur(18px); background:rgba(9,5,16,.74); border-bottom:1px solid var(--line); }
-  nav { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-  .brand { display:flex; align-items:center; gap:11px; font-weight:950; text-decoration:none; color:#fff; }
-  .brand img { width:42px; height:42px; border-radius:13px; }
-  main { padding:40px 0 70px; }
-  h1 { font-size:clamp(1.9rem,4vw,2.8rem); letter-spacing:-.03em; line-height:1.12; margin:0 0 10px; }
-  h2 { font-size:1.25rem; margin:34px 0 10px; color:#fff; }
-  h3 { font-size:1rem; margin:18px 0 6px; color:var(--lime); }
-  p, li { color:var(--muted); }
-  .lede { font-size:1.05rem; color:#e6dff5; }
-  .pill { display:inline-block; border-radius:999px; padding:6px 13px; background:var(--card); border:1px solid var(--line); font-size:.78rem; color:var(--muted); margin:0 6px 18px 0; }
-  .card { border:1px solid var(--line); border-radius:18px; padding:18px 20px; background:var(--card); margin:16px 0; }
-  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:13px 20px; background:var(--lime); color:#140a29; font-weight:900; text-decoration:none; margin:6px 8px 6px 0; }
-  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
-  .agenav { display:flex; flex-wrap:wrap; gap:8px; margin:22px 0; }
-  .agenav a { border:1px solid var(--line); border-radius:999px; padding:9px 14px; background:var(--card); text-decoration:none; font-size:.85rem; font-weight:700; }
-  .agenav a[aria-current="page"] { background:var(--lime); color:#140a29; border-color:var(--lime); }
-  footer { border-top:1px solid var(--line); padding:26px 0; font-size:.84rem; color:var(--muted); }
-  footer a { margin-right:14px; display:inline-block; }
-  ul { padding-left:20px; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.9rem; }
-  th, td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); color:var(--muted); }
-  th { color:#fff; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
-`
+/*
+ * Presentation lives in /assets/pages.css, shared by every static page.
+ *
+ * Each page used to carry its own inline dark theme, which had drifted away
+ * from the homepage: near-black backgrounds and white text against the
+ * homepage's warm cream and purple ink. A parent clicking through from the
+ * homepage landed somewhere that looked like a different company. One shared
+ * file also lets the browser cache it once rather than re-downloading the
+ * same rules inside every page.
+ */
 
 const AGES = [
   {
@@ -219,19 +198,17 @@ function page(age) {
     <meta property="og:description" content="${escapeHtml(age.description)}" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <script type="application/ld+json">${JSON.stringify(buildSchema(age))}</script>
-    <style>${STYLE}</style>
+    <link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
-    <header>
-      <div class="container">
-        <nav>
-          <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
-          <a class="btn" href="/">Book a free first class</a>
-        </nav>
+    <header class="site-head">
+      <div class="wrap site-head__inner">
+        <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+        <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
       </div>
     </header>
     <main>
-      <div class="container">
+      <div class="wrap">
         <h1>${escapeHtml(age.heading)}</h1>
         <p class="lede">${escapeHtml(age.lede)}</p>
         <p>
@@ -242,7 +219,7 @@ function page(age) {
         </p>
         <p>
           <a class="btn" href="/">Book a free first class</a>
-          <a class="btn btn--ghost" href="${MESSENGER}" target="_blank" rel="noopener">Ask a question</a>
+          <a class="btn btn--quiet" href="${MESSENGER}" target="_blank" rel="noopener">Ask a question</a>
         </p>
 
         ${ageNav(age.slug)}
@@ -282,13 +259,13 @@ function page(age) {
         <p>Every new family can take one free class before choosing a plan. It is a real lesson with a real teacher — a chance to see how your child responds before paying anything.</p>
         <p>
           <a class="btn" href="/">Book a free first class</a>
-          <a class="btn btn--ghost" href="/about.html">About TutorPro</a>
+          <a class="btn btn--quiet" href="/about.html">About TutorPro</a>
         </p>
         <p><small>Last reviewed: ${UPDATED}</small></p>
       </div>
     </main>
     <footer>
-      <div class="container">
+      <div class="wrap">
         <a href="/">Home</a>
         ${AGES.map((a) => `<a href="/${a.slug}">${a.label}</a>`).join('\n        ')}
         <a href="/about.html">About</a>

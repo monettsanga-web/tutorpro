@@ -33,37 +33,16 @@ const WHATSAPP = 'https://wa.me/639625284849'
 const PHONE = '+63 962 528 4849'
 const UPDATED = '5 August 2026'
 
-const STYLE = `
-  :root { color-scheme: dark; --lime:#bce94e; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: radial-gradient(circle at 12% 4%, rgba(188,233,78,.14), transparent 32%), linear-gradient(135deg,#090510 0%,#25104d 55%,#111827 100%); color:var(--text); line-height:1.68; }
-  a { color: var(--lime); }
-  .container { width:min(860px, calc(100% - 32px)); margin:auto; }
-  header { border-bottom:1px solid var(--line); background:rgba(9,5,16,.72); }
-  .brandbar { min-height:66px; display:flex; align-items:center; gap:11px; }
-  .brandbar img { width:40px; height:40px; border-radius:12px; }
-  .brandbar strong { font-weight:950; font-size:.98rem; }
-  main { padding:38px 0 64px; }
-  h1 { font-size:clamp(1.9rem,4.6vw,2.7rem); letter-spacing:-.03em; line-height:1.14; margin:0 0 14px; }
-  h2 { font-size:clamp(1.2rem,2.8vw,1.5rem); margin:38px 0 12px; letter-spacing:-.02em; }
-  h3 { font-size:1rem; margin:0 0 6px; color:var(--lime); }
-  p, li { color:var(--muted); }
-  .lede { font-size:clamp(1rem,2.1vw,1.14rem); color:#e9e2f7; }
-  .verdict { border:1px solid var(--lime); border-radius:18px; padding:22px 24px; background:linear-gradient(140deg, rgba(188,233,78,.12), rgba(112,72,223,.14)); margin:22px 0 8px; }
-  .verdict strong { color:#fff; font-size:1.05rem; }
-  .card { border:1px solid var(--line); border-radius:16px; padding:18px 20px; background:var(--card); margin:14px 0; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(238px,1fr)); gap:14px; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.94rem; }
-  th, td { text-align:left; padding:11px 10px; border-bottom:1px solid var(--line); color:var(--muted); vertical-align:top; }
-  th { color:#fff; font-size:.84rem; text-transform:uppercase; letter-spacing:.04em; }
-  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:13px 22px; background:var(--lime); color:#140a29; font-weight:900; text-decoration:none; margin:6px 8px 6px 0; }
-  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; }
-  .warn { border-left:3px solid #f0932b; padding:2px 0 2px 15px; margin:14px 0; }
-  footer { border-top:1px solid var(--line); padding:24px 0; font-size:.86rem; color:#9d92b0; }
-  footer a { margin-right:14px; display:inline-block; }
-  ul { padding-left:20px; }
-  @media (max-width:640px){ .btn{width:100%;justify-content:center;margin-right:0;} }
-`
+/*
+ * Presentation lives in /assets/pages.css, shared by every static page.
+ *
+ * Each page used to carry its own inline dark theme, which had drifted away
+ * from the homepage: near-black backgrounds and white text against the
+ * homepage's warm cream and purple ink. A parent clicking through from the
+ * homepage landed somewhere that looked like a different company. One shared
+ * file also lets the browser cache it once rather than re-downloading the
+ * same rules inside every page.
+ */
 
 const FAQ = [
   ['Is TutorPro Online English a registered business?',
@@ -127,20 +106,20 @@ const html = `<!doctype html>
     <meta property="og:description" content="Registered Philippine business, DTI No. ${DTI}. Verify us on the public government register." />
     <meta property="og:url" content="${SITE}/is-tutorpro-legitimate.html" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
-    <style>${STYLE}</style>
+    <link rel="stylesheet" href="/assets/pages.css" />
     <script type="application/ld+json">${JSON.stringify(orgSchema())}</script>
     <script type="application/ld+json">${JSON.stringify(faqSchema())}</script>
   </head>
   <body>
-    <header>
-      <div class="container brandbar">
-        <img src="/assets/tutorpro-panda-logo.webp" alt="" />
-        <strong>TutorPro Online English</strong>
+    <header class="site-head">
+      <div class="wrap site-head__inner">
+        <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+        <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
       </div>
     </header>
 
     <main>
-      <div class="container">
+      <div class="wrap">
         <h1>Is TutorPro Online English legitimate?</h1>
         <p class="lede">Short answer: yes, and you do not have to take our word for it. Here is how to check, in about two minutes.</p>
 
@@ -191,13 +170,13 @@ const html = `<!doctype html>
         <p>The strongest evidence is not a page like this — it is a lesson. Take the free class, meet the teacher, and decide afterwards. If it is not right for your child, nothing is charged and nothing is owed.</p>
         <p>
           <a class="btn" href="/?src=legit&book=1">Book the free class</a>
-          <a class="btn btn--ghost" href="${MESSENGER}" target="_blank" rel="noopener">Ask us a question first</a>
+          <a class="btn btn--quiet" href="${MESSENGER}" target="_blank" rel="noopener">Ask us a question first</a>
         </p>
       </div>
     </main>
 
     <footer>
-      <div class="container">
+      <div class="wrap">
         <a href="/">Home</a>
         <a href="/about.html">About</a>
         <a href="/pricing.html">Pricing</a>

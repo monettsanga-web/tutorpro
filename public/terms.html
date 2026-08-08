@@ -17,44 +17,19 @@
     <meta property="og:description" content="The terms that apply when you book and attend online English lessons with TutorPro Online English, including scheduling, conduct and payment terms." />
     <meta property="og:image" content="https://www.tutorpro.site/assets/tutorpro-hero.webp" />
     
-    <style>
-  :root { color-scheme: dark; --bg:#090510; --violet:#7048df; --lime:#bce94e; --text:#fff; --muted:#c9bddb; --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.14); }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at 15% 5%, rgba(188,233,78,.14), transparent 30%), linear-gradient(135deg, #090510 0%, #25104d 54%, #111827 100%); color:var(--text); line-height:1.65; }
-  a { color: var(--lime); }
-  .container { width:min(880px, calc(100% - 32px)); margin:auto; }
-  header { position:sticky; top:0; z-index:10; backdrop-filter: blur(18px); background:rgba(9,5,16,.74); border-bottom:1px solid var(--line); }
-  nav { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-  .brand { display:flex; align-items:center; gap:11px; font-weight:950; text-decoration:none; color:#fff; }
-  .brand img { width:42px; height:42px; border-radius:13px; }
-  main { padding:44px 0 70px; }
-  h1 { font-size:clamp(1.9rem,4vw,2.7rem); letter-spacing:-.03em; line-height:1.12; margin:0 0 8px; }
-  h2 { font-size:1.2rem; margin:32px 0 10px; color:#fff; }
-  h3 { font-size:1rem; margin:20px 0 6px; color:var(--lime); }
-  p, li { color:var(--muted); }
-  .updated { display:inline-block; border-radius:999px; padding:6px 13px; background:var(--card); border:1px solid var(--line); font-size:.78rem; color:var(--muted); margin-bottom:22px; }
-  .card { border:1px solid var(--line); border-radius:18px; padding:20px 22px; background:var(--card); margin:18px 0; }
-  .btn { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:12px 18px; background:var(--lime); color:#140a29; font-weight:900; text-decoration:none; margin:4px 6px 4px 0; }
-  .btn--ghost { background:transparent; border:1px solid var(--line); color:#fff; }
-  .muted { font-size:.9rem; }
-  footer { border-top:1px solid var(--line); padding:26px 0; font-size:.84rem; color:var(--muted); }
-  footer a { margin-right:14px; display:inline-block; }
-  ul { padding-left:20px; }
-</style>
+    <link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
-    <header>
-      <div class="container">
-        <nav>
-          <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
-          <a class="btn" href="/">Book a free first class</a>
-        </nav>
+    <header class="site-head">
+      <div class="wrap site-head__inner">
+        <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" />TutorPro Online English</a>
+        <a class="btn btn--primary" href="/?book=1">Book a free first class</a>
       </div>
     </header>
     <main>
-      <div class="container">
+      <div class="wrap page-head">
         <h1>Terms of Service</h1>
-        <span class="updated">Last updated: 4 August 2026</span>
+        <span class="stamp">Last updated: 4 August 2026</span>
         
       <p>These terms apply when you create an account or book lessons with TutorPro Online English. By using the service you agree to them.</p>
       <p><strong>Who you are contracting with:</strong> TutorPro Online English, a sole proprietorship based in the Philippines. Registered with the Philippine Department of Trade and Industry (DTI), Registration No. 5274092.</p>
@@ -107,9 +82,17 @@
     
       </div>
     </main>
-    <footer>
-      <div class="container">
-        <a href="/">Home</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/privacy-policy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/refund-policy.html">Refunds</a>
+    <footer class="site-foot">
+      <div class="wrap">
+        <nav>
+          <a href="/">Home</a>
+          <a href="/about.html">About</a>
+          <a href="/pricing.html">Pricing</a>
+          <a href="/contact.html">Contact</a>
+          <a href="/privacy-policy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/refund-policy.html">Refunds</a>
+        </nav>
         <p>© 2026 TutorPro Online English. Online English classes for children and teenagers worldwide.</p>
       </div>
     </footer>
