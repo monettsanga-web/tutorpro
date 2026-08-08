@@ -934,12 +934,16 @@ h3 {
 
 .hero__grid {
   display: grid;
-  min-height: 670px;
+  /* Measured at 1440px: the hero was 1174px, i.e. 1.24 screens tall, which is
+     why it read as oversized. The 670px floor plus 125px of padding was the
+     main cause, so the floor is released and the section is capped below one
+     viewport instead. */
+  min-height: 0;
   grid-template-columns: 1.04fr 0.96fr;
   gap: 65px;
   align-items: center;
-  padding-top: 55px;
-  padding-bottom: 70px;
+  padding-top: 34px;
+  padding-bottom: 44px;
 }
 
 .hero__content {
@@ -949,11 +953,14 @@ h3 {
 }
 
 .hero h1 {
-  max-width: 670px;
-  margin-bottom: 25px;
-  font-size: clamp(3.2rem, 5.7vw, 5rem);
+  /* Was 452px tall on its own at 80px type, over a third of the whole hero.
+     A wider measure and a tighter cap keep the same impact on fewer lines. */
+  max-width: 760px;
+  margin-bottom: 20px;
+  font-size: clamp(2.6rem, 4.2vw, 3.6rem);
+  line-height: 1.06;
   font-weight: 800;
-  letter-spacing: -0.065em;
+  letter-spacing: -0.055em;
 }
 
 .hero h1 em {
@@ -3934,9 +3941,11 @@ body {
 
   .hero__grid {
     grid-template-columns: 1fr;
-    gap: 35px;
-    padding-top: 70px;
-    padding-bottom: 80px;
+    /* Tablet measured 1437px against a 1024px screen, the tallest of any
+       breakpoint. 150px of combined padding was the largest single cause. */
+    gap: 24px;
+    padding-top: 30px;
+    padding-bottom: 36px;
   }
 
   .hero__content {
@@ -3945,12 +3954,14 @@ body {
 
   .hero h1 {
     max-width: 700px;
-    font-size: clamp(3.2rem, 9.2vw, 5rem);
+    /* 9.2vw rendered at 70px here, larger than the desktop size. */
+    font-size: clamp(2.4rem, 5.6vw, 3.2rem);
+    line-height: 1.07;
   }
 
   .hero__visual {
     width: min(620px, 92%);
-    min-height: 360px;
+    min-height: 0;
     margin: 0 auto;
   }
 
@@ -4165,9 +4176,12 @@ body {
   }
 
   .hero__grid {
-    gap: 36px;
-    padding-top: 53px;
-    padding-bottom: 68px;
+    /* Mobile hero measured 958px against an 844px screen, so the buttons sat
+       below the fold. Tighter padding brings the whole section inside one
+       screen. */
+    gap: 22px;
+    padding-top: 26px;
+    padding-bottom: 30px;
   }
 
   .eyebrow {
@@ -4176,9 +4190,12 @@ body {
   }
 
   .hero h1 {
-    margin-bottom: 21px;
-    font-size: clamp(2.65rem, 13vw, 3.55rem);
-    letter-spacing: -0.06em;
+    /* 13vw ran to 269px on a phone. A smaller cap keeps the same weight while
+       freeing enough room for the call to action. */
+    margin-bottom: 16px;
+    font-size: clamp(2.1rem, 8.4vw, 2.7rem);
+    line-height: 1.08;
+    letter-spacing: -0.05em;
   }
 
   .hero h1 em {
