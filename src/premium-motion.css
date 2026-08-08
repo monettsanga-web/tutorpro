@@ -460,38 +460,46 @@
   .premium-heading { opacity: 1; }
 }
 
-/* ---------------------------------------------------------------------------
-   The flying panda companion.
 
-   PandaCompanion.jsx writes --panda-x (-50..50, percent of the free margin),
-   --panda-y (0..100, percent of the flight band), --panda-rot (degrees of
-   bank) and --panda-flip (1 or -1, facing) onto .panda-layer inside a single
-   rAF loop. Everything below is driven from those four numbers, so scrolling
-   never triggers a React render or a layout pass.
+/* ---------------------------------------------------------------------------
+   The panda companion.
+
+   PandaCompanion.jsx writes --panda-left / --panda-top (absolute pixels),
+   --panda-rot (degrees of bank), --panda-flip (facing) and --panda-opacity
+   onto .panda-layer inside a single rAF loop. Everything below is driven from
+   those five numbers, so scrolling never triggers a React render or a layout.
    --------------------------------------------------------------------------- */
+/*
+ * NOTE: no `perspective` here. A perspective (like a transform) makes an
+ * element a containing block for position: fixed descendants, which silently
+ * broke the mobile bubble and close button — they were "fixed" but still
+ * resolving against the panda's off-screen box. The 3D barrel roll gets its
+ * depth from its own perspective() function instead.
+ */
 .panda-layer {
   --panda-left: 50%;
-  --panda-y: 0;
+  --panda-top: 120px;
   --panda-rot: 0;
   --panda-flip: 1;
   --panda-opacity: 0;
+  --panda-size: 190px;
   position: fixed;
   z-index: 30;
   inset: 0;
-  /* The layer must never intercept a click meant for the page beneath it.
-     Only the panda itself takes pointer events, re-enabled further down. */
+  /* The layer must never intercept a tap meant for the page beneath it. Only
+     the panda itself takes pointer events, re-enabled further down. */
   pointer-events: none;
-  perspective: 1000px;
 }
+
+/* On a phone there is no gutter to fly in, so the panda is smaller, hugs the
+   edge and sits below the chat widget's stacking order. */
+.panda-layer--mobile { --panda-size: 108px; }
 
 .panda-companion {
   position: absolute;
-  /* --panda-left is an absolute pixel position computed from the real width of
-     the content column, so the panda always flies down the middle of a margin
-     and never over the words. Opacity fades it out while it crosses. */
-  top: calc(120px + (var(--panda-y) * 1%) * 0.62);
+  top: var(--panda-top);
   left: var(--panda-left);
-  width: 118px;
+  width: var(--panda-size);
   opacity: var(--panda-opacity);
   transform: translate(-50%, -50%);
   transform-style: preserve-3d;
@@ -507,65 +515,78 @@
   background: none;
   cursor: pointer;
   pointer-events: auto;
-  /* The bank comes from the flight path; the float is its own slow idle so the
-     panda still feels alive when the page is not being scrolled. */
+  /* The bank comes from the flight path; the float is its own slow idle, so
+     the panda still feels alive when the page is not being scrolled. */
   transform:
+    perspective(1000px)
     rotateZ(calc(var(--panda-rot) * 1deg))
-    rotateY(calc((1 - var(--panda-flip)) * 90deg))
     scaleX(var(--panda-flip));
   transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   animation: panda-float 4.6s ease-in-out infinite;
 }
 
 .panda-companion__body img {
-  width: 118px;
+  width: var(--panda-size);
   height: auto;
-  filter: drop-shadow(0 18px 26px rgba(50, 21, 104, 0.28));
+  filter: drop-shadow(0 20px 30px rgba(50, 21, 104, 0.3));
   transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: 50% 78%;
 }
 
-.panda-companion__body:hover img { transform: scale(1.07); }
-.panda-companion__body:active img { transform: scale(0.96); }
+.panda-companion__body:hover img { transform: scale(1.06); }
+.panda-companion__body:active img { transform: scale(0.95); }
 
 .panda-companion__body:focus-visible {
   outline: 3px solid var(--coral);
   outline-offset: 6px;
-  border-radius: 18px;
+  border-radius: 20px;
 }
 
 /* A soft contact shadow that breathes with the float, which is what stops the
-   panda reading as a sticker pasted on the page. */
+   panda reading as a sticker pasted onto the page. */
 .panda-companion__shadow {
   position: absolute;
   bottom: -14px;
   left: 50%;
-  width: 74px;
-  height: 13px;
+  width: calc(var(--panda-size) * 0.58);
+  height: 14px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(50, 21, 104, 0.24), transparent 70%);
   transform: translateX(-50%);
   animation: panda-shadow 4.6s ease-in-out infinite;
 }
 
+/*
+ * THE WAVE.
+ * The raised paw is already part of the artwork, so a wave is sold by rocking
+ * the whole body from the feet rather than by trying to move an arm inside a
+ * flat image. Pivoting at 78% height keeps the feet planted while the head
+ * and paw swing, which reads as waving rather than as sliding.
+ */
+.panda-companion.is-waving .panda-companion__body {
+  animation: panda-float 4.6s ease-in-out infinite, panda-wave 1.6s ease-in-out;
+  transform-origin: 50% 78%;
+}
+
 /* A full barrel roll when poked. */
 .panda-companion.is-spinning .panda-companion__body {
-  animation: panda-float 4.6s ease-in-out infinite, panda-spin 1.5s cubic-bezier(0.34, 1.36, 0.44, 1);
+  animation: panda-float 4.6s ease-in-out infinite, panda-spin 1.6s cubic-bezier(0.34, 1.36, 0.44, 1);
 }
 
 .panda-companion__bubble {
   position: absolute;
   z-index: 2;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% - 6px);
   left: 50%;
   width: max-content;
-  max-width: 190px;
+  max-width: 200px;
   border: 1px solid var(--line);
-  border-radius: 16px 16px 16px 5px;
-  padding: 9px 13px;
+  border-radius: 18px 18px 18px 6px;
+  padding: 10px 14px;
   background: #fff;
-  box-shadow: 0 14px 34px rgba(50, 21, 104, 0.18);
+  box-shadow: 0 16px 38px rgba(50, 21, 104, 0.2);
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: 0.93rem;
   font-weight: 750;
   line-height: 1.35;
   text-align: center;
@@ -573,14 +594,20 @@
   animation: panda-say 420ms cubic-bezier(0.34, 1.36, 0.44, 1) both;
 }
 
+/*
+ * Hugging a screen edge, a centred bubble runs off-screen and gets clipped
+ * mid-word. --panda-bubble-side is +1 when the panda is on the left half of
+ * the screen (open rightward) and -1 on the right half (open leftward), so the
+ * bubble always unfolds back toward the middle of the page where there is room.
+ */
 .panda-companion__dismiss {
   position: absolute;
   z-index: 3;
-  top: -4px;
-  right: -2px;
+  top: 2px;
+  right: 4px;
   display: grid;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 50%;
@@ -596,6 +623,19 @@
 .panda-companion__dismiss:focus-visible { opacity: 1; }
 .panda-companion__dismiss:hover { color: var(--ink); transform: scale(1.12); }
 
+/* No hover on a touch screen, so the close button is always available there —
+   a mascot you cannot dismiss on a phone would be a trap. */
+@media (hover: none) {
+  .panda-companion__dismiss { opacity: 1; }
+}
+
+/*
+ * The panda deliberately tucks most of its width off-screen, which took the
+ * close button off-screen with it — leaving no way to dismiss it on a phone.
+ * On mobile the button is therefore pinned to the panda's INBOARD side (the
+ * side facing the middle of the screen), so it is always reachable.
+ */
+
 @keyframes panda-float {
   0%, 100% { translate: 0 0; }
   50% { translate: 0 -13px; }
@@ -606,22 +646,66 @@
   50% { opacity: 0.42; transform: translateX(-50%) scale(0.82); }
 }
 
+@keyframes panda-wave {
+  0%, 100% { rotate: 0deg; }
+  15% { rotate: -9deg; }
+  32% { rotate: 7deg; }
+  50% { rotate: -7deg; }
+  68% { rotate: 6deg; }
+  84% { rotate: -3deg; }
+}
+
 @keyframes panda-spin {
   to { rotate: y 360deg; }
 }
 
 @keyframes panda-say {
-  from { opacity: 0; transform: translateX(-50%) translateY(7px) scale(0.9); }
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.9); }
   to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
-/* Below 1100px the page has no side margin to fly in, so the panda would have
-   to cross the words. The component does not mount there; this is the belt to
-   that braces, in case the viewport is resized after load. */
-@media (max-width: 1099px) {
-  .panda-layer { display: none; }
+/* The mobile bubble is positioned with `translate`, not `transform`, so its
+   entrance must animate opacity only or it would fight the pinning. */
+@keyframes panda-say-mobile {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .panda-layer { display: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Mobile bubble + close button.
+
+   These are siblings of the panda, not children, because the panda carries a
+   transform and a transformed element becomes the containing block for any
+   position: fixed descendant. Nested inside, both were dragged off-screen with
+   the panda. As direct children of the untransformed .panda-layer they can be
+   pinned to the viewport instead.
+   --------------------------------------------------------------------------- */
+.panda-companion__bubble--loose,
+.panda-companion__dismiss--loose {
+  position: absolute;
+  transform: none;
+  translate: none;
+  animation: panda-say-mobile 300ms ease both;
+}
+
+.panda-companion__bubble--loose {
+  top: calc(var(--panda-top) - 74px);
+  width: max-content;
+  max-width: min(210px, 54vw);
+  text-align: left;
+}
+
+.panda-companion__dismiss--loose {
+  top: calc(var(--panda-top) - 74px);
+  opacity: 1;
+}
+
+/* Sit on whichever side the panda is, always inside the screen. */
+.panda-layer--left .panda-companion__bubble--loose { left: 74px; right: auto; }
+.panda-layer--right .panda-companion__bubble--loose { right: 74px; left: auto; }
+.panda-layer--left .panda-companion__dismiss--loose { left: 12px; right: auto; }
+.panda-layer--right .panda-companion__dismiss--loose { right: 12px; left: auto; }
