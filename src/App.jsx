@@ -96,6 +96,7 @@ const curriculumSlides = [
   { id: '1GWmHeEDtpOw1WZQ--rBLiPkAIGKWMnwX', image: 'assets/curriculum/ready-set-sing-drive.jpg', title: 'Ready, Set, Sing!', publisher: 'A-List', level: 'Early learners', tone: 'yellow' },
   { id: '1XXrOahvCyezLd1tX8MIlP8H9-v3yxFlo', image: 'assets/curriculum/smart-up-drive.jpg', title: 'Smart Up', publisher: 'A-List', level: 'Primary series', tone: 'blue' },
   { id: '1v_U1s0cxAV3FTSXdUabk6LxvFQe8fDRj', image: 'assets/curriculum/wonderful-world-drive.jpg', title: 'Wonderful World', publisher: 'National Geographic Learning', level: 'Reading series', tone: 'sky' },
+  { id: '1mEapRjTDxSznfSTHOyokCgQb-3fvzSND', image: 'assets/curriculum/oxford-phonics-world-drive.jpg', title: 'Oxford Phonics World', publisher: 'Oxford', level: 'Phonics', tone: 'cyan' },
 ]
 
 const faqs = [
