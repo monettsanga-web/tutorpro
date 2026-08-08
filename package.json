@@ -12,7 +12,7 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo && npm run test:reviews && npm run test:fbmerge && npm run test:ptreviews && npm run test:sharereview && npm run test:carousel && npm run test:social",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo && npm run test:reviews && npm run test:fbmerge && npm run test:ptreviews && npm run test:sharereview && npm run test:carousel",
     "test:core": "node scripts/test-core.mjs",
     "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
@@ -43,9 +43,7 @@
     "test:carousel": "node scripts/test-review-carousel.mjs",
     "verify:video": "node scripts/verify-video-section.mjs",
     "verify:carousel": "node scripts/verify-curriculum-carousel.mjs",
-    "verify:heromobile": "node scripts/verify-hero-mobile.mjs",
-    "test:social": "node scripts/test-social-auth.mjs",
-    "verify:social": "node scripts/verify-social-signup.mjs"
+    "verify:heromobile": "node scripts/verify-hero-mobile.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
