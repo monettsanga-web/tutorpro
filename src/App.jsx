@@ -39,8 +39,8 @@ import { captureAttribution } from './attribution.js'
 import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage, reviewsForTeacher } from './publicReviews.js'
 import ReviewCarousel from './ReviewCarousel.jsx'
 import { clearHashRoute, readHashRoute } from './hashRoute.js'
-import { mergeCloudBookings } from './bookings.js'
-import { fetchCloudBookings } from './cloudBookings.js'
+/* mergeCloudBookings / fetchCloudBookings were removed here: the public site
+   no longer fetches bookings, because a logged-out visitor cannot see any. */
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { WEEKDAYS } from './schedule.js'
@@ -1791,26 +1791,63 @@ export default function App() {
   void settingsVersion
   const teachersVisible = canViewTeacherDirectory(currentAccount)
 
+  /*
+   * Public teacher directory.
+   *
+   * EGRESS: this was the single most expensive thing on the site. Measured on
+   * the built app, an anonymous visitor simply sitting on the homepage cost
+   * ~23 KB per minute — 1.3 MB an hour, from a page nobody was interacting
+   * with. Two causes:
+   *
+   *   1. `setInterval(refreshTeachers, 10000)` re-downloaded the whole teacher
+   *      directory every ten seconds, forever, even in a background tab.
+   *      Measured 7 calls / 22.9 KB in 60 seconds.
+   *   2. `fetchCloudBookings()` ran for logged-out visitors, who can never see
+   *      a booking — RLS correctly returns an empty array, so it was a pure
+   *      round trip for nothing.
+   *
+   * The teacher list changes when an admin approves a teacher: perhaps weekly.
+   * Polling it every ten seconds to catch that is enormously wasteful, and the
+   * Realtime subscription below already delivers changes instantly anyway.
+   *
+   * So: fetch once on load, keep the Realtime subscription for live updates,
+   * and refresh when the tab is brought back into focus after being away for
+   * more than five minutes. No timer.
+   */
   useEffect(() => {
     let active = true
+    let lastFetch = 0
+
     const refreshTeachers = async () => {
+      if (!active) return
+      lastFetch = Date.now()
       try {
-        const [teachers, sharedBookings] = await Promise.all([fetchPublicTeachers(), fetchCloudBookings().catch(() => [])])
+        // Bookings are deliberately NOT fetched here. A logged-out visitor has
+        // no access to any booking row, and a signed-in user's bookings are
+        // loaded by their own dashboard.
+        const teachers = await fetchPublicTeachers()
         if (!active) return
         mergeCloudAccounts(teachers)
-        if (sharedBookings.length) mergeCloudBookings(sharedBookings)
         setTeacherVersion((value) => value + 1)
       } catch {
         // Existing browser data remains available until Supabase reconnects.
       }
     }
+
+    // Only re-check after a long absence, and never while hidden.
+    const onVisible = () => {
+      if (document.hidden) return
+      if (Date.now() - lastFetch < 5 * 60 * 1000) return
+      refreshTeachers()
+    }
+
     refreshTeachers()
     const unsubscribe = subscribeToCloudProfiles(refreshTeachers)
-    const interval = window.setInterval(refreshTeachers, 10000)
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       active = false
       unsubscribe()
-      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
 

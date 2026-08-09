@@ -46,7 +46,10 @@
     "verify:heromobile": "node scripts/verify-hero-mobile.mjs",
     "verify:panda": "node scripts/verify-panda-companion.mjs",
     "verify:classroomoff": "node scripts/verify-classroom-disabled.mjs",
-    "verify:dashoff": "node scripts/verify-dashboard-classroom-off.mjs"
+    "verify:dashoff": "node scripts/verify-dashboard-classroom-off.mjs",
+    "measure:egress": "node scripts/measure-egress-home.mjs",
+    "measure:egressdash": "node scripts/measure-egress-dashboard.mjs",
+    "verify:dashsync": "node scripts/verify-dashboard-still-syncs.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

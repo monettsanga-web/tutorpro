@@ -100,6 +100,7 @@ const RecordingPlayback = classroomComponents.RecordingPlayback
 import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
 import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED } from './classroomFeature.js'
+import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPolicy.js'
 import { classroomComponents } from './classroomLazy.js'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
@@ -2922,21 +2923,46 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     const synchronizeCloud = async () => {
       try {
         await syncPendingCloudProfile(initialAccount.id).catch(() => null)
-        const [profiles, publicTeachers, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchPublicTeachers().catch(() => []), fetchCloudBookings()])
+        /*
+         * EGRESS: `get_public_teachers` was the largest single response on the
+         * site (measured 85 KB across 26 calls in one idle minute here) and it
+         * was being refetched on every sync tick. The teacher directory only
+         * changes when an admin approves or hides a teacher, and App.jsx
+         * already loads it and keeps it live over Realtime. Refetching it on
+         * the student's sync loop was pure duplication, so it is dropped from
+         * the recurring path and fetched once when this dashboard mounts.
+         */
+        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
         if (active) {
-          mergeCloudAccounts([...profiles, ...publicTeachers])
+          mergeCloudAccounts(profiles)
           mergeCloudBookings(sharedBookings)
         }
       } catch {
         // The local profile remains usable while cloud connectivity recovers.
       }
     }
+    /*
+     * EGRESS: this used to re-download every profile, the whole public teacher
+     * directory and every booking every 3 seconds, on top of two Realtime
+     * subscriptions already delivering the same changes instantly. Measured at
+     * 72 requests / 85 KB per idle minute. The scheduler skips hidden tabs and
+     * collapses bursts; the interval is now a slow backstop, not the main
+     * channel. Realtime is untouched, so cross-device sync is unaffected.
+     */
+    const scheduledSync = createCloudSyncScheduler(synchronizeCloud)
     synchronizeCloud()
-    const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
-    const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
-    const interval = window.setInterval(synchronizeCloud, 3000)
+    /*
+     * The teacher directory is needed to book a class, so it is still loaded —
+     * exactly once, when the dashboard opens, instead of on every sync tick.
+     * Realtime keeps it current from there.
+     */
+    fetchPublicTeachers().then((teachers) => { if (active && teachers.length) mergeCloudAccounts(teachers) }).catch(() => {})
+    const unsubscribeProfiles = subscribeToCloudProfiles(scheduledSync)
+    const unsubscribeBookings = subscribeToCloudBookings(scheduledSync)
+    const interval = window.setInterval(scheduledSync, CLOUD_SYNC_INTERVAL_MS)
     return () => {
       active = false
+      scheduledSync.dispose()
       unsubscribeProfiles()
       unsubscribeBookings()
       window.clearInterval(interval)
@@ -3420,12 +3446,22 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
         // The teacher dashboard keeps its offline copy until cloud connectivity recovers.
       }
     }
+    /*
+     * EGRESS: this used to re-download every profile, the whole public teacher
+     * directory and every booking every 3 seconds, on top of two Realtime
+     * subscriptions already delivering the same changes instantly. Measured at
+     * 72 requests / 85 KB per idle minute. The scheduler skips hidden tabs and
+     * collapses bursts; the interval is now a slow backstop, not the main
+     * channel. Realtime is untouched, so cross-device sync is unaffected.
+     */
+    const scheduledSync = createCloudSyncScheduler(synchronizeCloud)
     synchronizeCloud()
-    const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
-    const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
-    const interval = window.setInterval(synchronizeCloud, 3000)
+    const unsubscribeProfiles = subscribeToCloudProfiles(scheduledSync)
+    const unsubscribeBookings = subscribeToCloudBookings(scheduledSync)
+    const interval = window.setInterval(scheduledSync, CLOUD_SYNC_INTERVAL_MS)
     return () => {
       active = false
+      scheduledSync.dispose()
       unsubscribeProfiles()
       unsubscribeBookings()
       window.clearInterval(interval)
@@ -5332,12 +5368,16 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         }
       }
     }
+    /* EGRESS: see cloudSyncPolicy.js. Realtime keeps the admin view live; the
+       timer is only a backstop and no longer runs in a hidden tab. */
+    const scheduledSync = createCloudSyncScheduler(synchronizeCloud)
     synchronizeCloud()
-    const unsubscribeProfiles = subscribeToCloudProfiles(synchronizeCloud)
-    const unsubscribeBookings = subscribeToCloudBookings(synchronizeCloud)
-    const interval = window.setInterval(synchronizeCloud, 5000)
+    const unsubscribeProfiles = subscribeToCloudProfiles(scheduledSync)
+    const unsubscribeBookings = subscribeToCloudBookings(scheduledSync)
+    const interval = window.setInterval(scheduledSync, CLOUD_SYNC_INTERVAL_MS)
     return () => {
       active = false
+      scheduledSync.dispose()
       unsubscribeProfiles()
       unsubscribeBookings()
       window.clearInterval(interval)
