@@ -518,18 +518,29 @@ function CurriculumCarousel({ onBook }) {
 /**
  * The class video, served from somewhere we control.
  *
- * PASTE THE VIDEO LINK HERE. Two options, both fine:
- *   1. A Supabase storage link (recommended - no file size worries):
- *      https://losmkvvwzijipqrlelyt.supabase.co/storage/v1/object/public/site-media/tutorpro-class.mp4
- *   2. A file placed in public/assets/, referenced as 'assets/tutorpro-class.mp4'
+ * WHERE THIS FILE IS SERVED FROM, AND WHY IT MATTERS
+ * --------------------------------------------------
+ * It used to be a Supabase Storage URL, and that was the single most
+ * expensive object on the site. Supabase served it with `cache-control:
+ * no-cache`, so EVERY view re-downloaded the whole file and billed the egress
+ * again — a browser could not even reuse its own copy on a page refresh.
  *
- * Leave it as '' and the section shows the Bilibili card instead - nothing
- * breaks either way.
+ * It now ships with the site and is served by Vercel's CDN, which is already
+ * hosting every other page and asset here at no extra cost. Vercel sends a
+ * long-lived immutable cache header for hashed static assets, so repeat
+ * visitors and refreshes cost nothing at all, and none of it touches the
+ * Supabase bill.
  *
- * It must be a direct link to the video FILE (ending .mp4), not a link to a
- * page that plays it. YouTube and Bilibili page links will not work here.
+ * The file was also re-encoded at the same 720p resolution: 5.14 MB -> 2.89 MB
+ * (44% smaller) at SSIM 0.975, which is visually indistinguishable — the
+ * courseware text and both faces are unchanged. Still H.264 + AAC with
+ * fast-start, so it begins playing before the whole file has arrived.
+ *
+ * To replace the clip: drop a new .mp4 into public/assets/ and point this at
+ * it. Keep it out of Supabase Storage unless there is a reason it must live
+ * there. It must be a direct link to the FILE, not to a page that plays it.
  */
-const CLASS_VIDEO_URL = 'https://losmkvvwzijipqrlelyt.supabase.co/storage/v1/object/public/site-media/TutorPro%20Class.mp4'
+const CLASS_VIDEO_URL = 'assets/tutorpro-class.mp4'
 
 /**
  * A real class clip, high on the homepage where visitors actually reach it.
@@ -553,7 +564,7 @@ function SeeAClass() {
             Bilibili, no third-party branding. The Bilibili link stays only as
             shareUrl: a safety net shown if the file itself ever fails. */}
         <ChinaSafeVideo
-          src={CLASS_VIDEO_URL}
+          src={CLASS_VIDEO_URL ? assetUrl(CLASS_VIDEO_URL) : ''}
           autoPlay
           loop
           poster={assetUrl('assets/online-english-lesson.jpg')}

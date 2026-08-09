@@ -8,6 +8,13 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
+    },
+    {
+      "comment": "The class video and other media in /assets are large and effectively never change. Files copied from public/ do not get a content hash in their name, so without this they are revalidated on every visit. Supabase served this same video with cache-control: no-cache, which meant every single view re-downloaded all of it and billed the egress again. A year-long immutable cache means a repeat visitor downloads it once, ever. To publish a changed clip, save it under a new filename.",
+      "source": "/assets/(.*)\\.(mp4|webm|webp|jpg|jpeg|png|svg|woff2)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
     }
   ],
   "redirects": [
