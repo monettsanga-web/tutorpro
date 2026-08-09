@@ -84,31 +84,70 @@ loads so booking works, the booking list still renders, no JS errors.
 
 ---
 
-## Still available if you need more
+## Round 2 — video moved off Supabase (`daa8b3b`)
 
-These are real savings I have **not** made, because each changes behaviour and
-I would rather you choose:
+The homepage clip was served from Supabase Storage with
+`cache-control: no-cache`, so **every view re-downloaded the whole 5.14 MB**
+and a browser could not reuse even its own copy across a refresh.
 
-1. **`select('*')` on `bookings` and `profiles`**
-   (`cloudBookings.js:150`, `cloudProfiles.js:114`). Every sync downloads every
-   column of every row, including large JSON blobs — feedback, recording
-   lists, courseware state. Selecting only the needed columns and paginating
-   would cut this substantially. It is the biggest remaining item, and it grows
-   as you take more bookings.
+It now ships with the site and is served by Vercel's CDN, which already hosts
+everything else here at no extra cost. It was also re-encoded at the same 720p:
+**5.14 MB -> 2.89 MB (44% smaller)** at SSIM 0.975 — frames compared side by
+side, courseware text and faces unchanged. `vercel.json` now sends a one-year
+immutable cache header for media under `/assets`, so a repeat visitor
+downloads it once, ever.
 
-2. **Anonymous visitors open a Realtime socket.** `App.jsx` subscribes to
-   site-settings on every page load so an admin toggling teacher visibility
-   sees it live. Every visitor pays for an admin convenience. Subscribing only
-   when an admin is signed in would remove it.
+The original file was **not** deleted from Supabase Storage.
 
-3. **The homepage video** (`TutorPro Class.mp4`, 5.4 MB) is served from
-   Supabase Storage. If it is watched often it will dominate everything else
-   here. Moving it to a free host — YouTube unlisted, Cloudflare R2, or
-   Vercel's own static hosting — would take it off your Supabase bill entirely.
-   Vercel already serves your site, so putting the file in `public/` costs
-   nothing extra.
+## Round 3 — the booking sync can no longer grow forever (`8dbbb8f`)
 
-Say the word on any of these and I will do it.
+**A correction first.** I had suggested trimming `select('*')` to named
+columns. Having checked the schema, that would have saved almost nothing: the
+`bookings` table has seven columns and `rowToBooking` reads all seven, because
+the whole lesson — feedback, ratings, attendance, recordings, courseware state
+— lives inside the `booking_data` JSON. Dropping a column would lose data, not
+bandwidth. `profiles` is the same: eleven of twelve columns are read.
+
+The real defect was that `fetchCloudBookings()` had **no limit at all** and
+ordered oldest-first. Every sync fetched every booking that has ever existed.
+Harmless at fifty lessons; ruinous at five thousand — the cost grows with your
+accumulated history rather than with what anyone is actually looking at.
+
+Now newest-first and capped at 400 rows for routine student and teacher syncs.
+
+**A data-loss bug I introduced and caught before shipping.**
+`mergeCloudBookings(rows, { reconcile: true })` deliberately *deletes* local
+bookings absent from the list it is given — that is how the admin view
+reflects a lesson someone else removed. Feeding it a truncated page would have
+erased every booking past row 400 from the admin's browser. The admin path now
+passes `{ complete: true }`. `npm run test:bookingpage` locks this down with 12
+checks, including one that walks `Dashboards.jsx` and asserts every
+reconciling merge is fed a complete fetch, so the combination cannot come back
+by accident.
+
+## Where you actually stand now
+
+Measured per homepage visit: **3,577 bytes** (teachers 3,275 + reviews 246 +
+settings 56). Idle costs nothing further, on either the homepage or a
+dashboard, and the video is off Supabase entirely.
+
+| Monthly traffic | Supabase egress |
+|---|---|
+| 1,000 visits | ~3.4 MB |
+| 10,000 visits | ~34 MB |
+| 100,000 visits | ~341 MB |
+
+Free tier is 5,120 MB. **You are no longer anywhere near it** — that would now
+take roughly 1.5 million homepage visits.
+
+## One thing left, if you want it
+
+**Anonymous visitors still open a Realtime socket.** `App.jsx` subscribes to
+site-settings on every page load so an admin toggling teacher visibility sees
+it live. Every visitor pays for an admin convenience. Subscribing only when an
+admin is signed in would remove it. It is small — it does not transfer
+meaningful data — so I have left it rather than risk the live-update
+behaviour for a marginal gain. Say the word if you want it done.
 
 ---
 
