@@ -145,9 +145,49 @@ export async function syncCloudBooking(booking) {
   }
 }
 
-export async function fetchCloudBookings() {
+/**
+ * Load the shared lessons this account is allowed to see.
+ *
+ * WHY `select('*')` IS CORRECT HERE, AND THE LIMIT IS NOT OPTIONAL
+ * ----------------------------------------------------------------
+ * Trimming the column list would save nothing. The bookings table has seven
+ * columns and `rowToBooking` reads all seven, because the whole lesson —
+ * feedback, ratings, attendance, recording list, courseware state — lives
+ * inside the `booking_data` JSON blob. Dropping any column would lose data,
+ * not bandwidth.
+ *
+ * The genuine problem is that this query had no bound at all. It fetched every
+ * booking that has ever existed, ordered oldest-first, on every sync. That is
+ * fine at fifty lessons and ruinous at five thousand: the cost grows with your
+ * history rather than with what anyone is looking at, and the oldest-first
+ * ordering meant a growing prefix of ancient lessons was re-downloaded forever
+ * while the newest — the ones dashboards actually show — arrived last.
+ *
+ * So: newest first, and capped. A dashboard shows upcoming lessons and recent
+ * history; it has never needed the whole archive in memory. Nothing is
+ * deleted, and older lessons remain in the database and in this browser's
+ * local copy — `mergeCloudBookings` merges rather than replaces, so a lesson
+ * already known locally is not lost just because it fell outside this page.
+ *
+ * THE LIMIT AND `reconcile` MUST NOT BE COMBINED.
+ * `mergeCloudBookings(rows, { reconcile: true })` DELETES any local booking
+ * whose id is missing from `rows` — that is how the admin view drops lessons
+ * removed by someone else. Handing it a truncated page would therefore erase
+ * every booking beyond the limit from that device. The admin path passes
+ * `complete: true` below to fetch everything, and only the routine student and
+ * teacher syncs use the capped page.
+ */
+const BOOKING_SYNC_LIMIT = 400
+
+export async function fetchCloudBookings({ complete = false } = {}) {
   if (!supabase) return []
-  const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: true })
+  let query = supabase.from('bookings').select('*')
+  query = complete
+    // Reconciling callers need the full set, or they would delete rows that
+    // merely fell outside the page.
+    ? query.order('created_at', { ascending: true })
+    : query.order('created_at', { ascending: false }).limit(BOOKING_SYNC_LIMIT)
+  const { data, error } = await query
   if (error) throw new Error(`Shared bookings could not be loaded: ${error.message}`)
   return (data || []).map(rowToBooking)
 }

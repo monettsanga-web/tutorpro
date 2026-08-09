@@ -5354,7 +5354,14 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       try {
         const authorized = await verifyCloudAdmin()
         if (!authorized) throw new Error('This Supabase user is not listed in admin_members.')
-        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings()])
+        /*
+         * `complete: true` is REQUIRED here. This is the only caller that
+         * reconciles, and reconciling deletes any local booking missing from
+         * the list it is given. Handed the capped page that the student and
+         * teacher dashboards use, it would erase every booking beyond the
+         * limit from the admin's device.
+         */
+        const [profiles, sharedBookings] = await Promise.all([fetchCloudProfiles(), fetchCloudBookings({ complete: true })])
         if (!active) return
         mergeCloudAccounts(profiles, { reconcile: true })
         mergeCloudBookings(sharedBookings, { reconcile: true })
