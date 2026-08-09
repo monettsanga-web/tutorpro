@@ -82,9 +82,25 @@ import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
 import AnnouncementBanner from './AnnouncementBanner.jsx'
-import RecordingPlayback from './RecordingPlayback.jsx'
+/*
+ * Lazily loaded and only behind the classroom flag. A static import would pull
+ * classroomRecording.js (and its Supabase Storage calls) into the main
+ * dashboard bundle even though the player is never rendered while the
+ * classroom is disabled.
+ */
+/*
+ * The classroom-only components are imported through a single indirection in
+ * classroomLazy.js. Keeping the `import()` expressions in one module that is
+ * itself swapped out when the feature is off is what actually removes the
+ * chunks: a ternary around `lazy(() => import(...))` is NOT enough, because
+ * Rollup still records the dynamic import as reachable (verified — the built
+ * Dashboards chunk still referenced OnlineClassroom-*.js).
+ */
+const RecordingPlayback = classroomComponents.RecordingPlayback
 import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
+import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED } from './classroomFeature.js'
+import { classroomComponents } from './classroomLazy.js'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
 const AdminFunnelPanel = lazy(() => import('./AdminFunnelPanel.jsx'))
@@ -92,9 +108,15 @@ const AdminFollowUpPanel = lazy(() => import('./AdminFollowUpPanel.jsx'))
 const AdminLinkBuilder = lazy(() => import('./AdminLinkBuilder.jsx'))
 import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
-const OnlineClassroom = lazy(() => import('./OnlineClassroom.jsx'))
+/*
+ * The classroom is loaded ONLY when the feature flag is on. Keeping the
+ * lazy() call behind the flag means that when the classroom is disabled the
+ * import is never executed, so the ~877 kB OnlineClassroom chunk and the
+ * ~1,031 kB Tencent TRTC SDK chunk are never fetched, and none of the
+ * Realtime, Storage or Edge Function code inside them can run.
+ */
+const OnlineClassroom = classroomComponents.OnlineClassroom
 const CoursewareManager = lazy(() => import('./CoursewareManager.jsx'))
-import { isTencentClassroomConfigured } from './tencentClassroom.js'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { onHashRouteChange, readHashRoute, writeHashRoute } from './hashRoute.js'
@@ -883,7 +905,12 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
             {formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time" style={{ color: '#fff' }}>{formatTime(booking.time)}</strong>
           </span>
         </p>
-        {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} fallback</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
+        {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{CLASSROOM_ENABLED
+          ? (onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>)
+          /* Not a link and not a button: the built-in classroom is switched
+             off, so anything clickable here would be a dead end. The external
+             meeting link beside it is how the lesson actually happens. */
+          : <span className="classroom-coming-soon" title={CLASSROOM_COMING_SOON_NOTE}><Video size={14} /> {CLASSROOM_COMING_SOON_LABEL}</span>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} meeting link</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
         {booking.attendance && (() => {
@@ -904,7 +931,17 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
             </div>
           )
         })()}
-        {booking.classroomRecordings?.length > 0 && <RecordingPlayback recordings={booking.classroomRecordings} canDownload={showStudent} />}
+        {/*
+          * Lesson recordings are classroom Storage objects and can be up to
+          * 1 GB each, so playback is the single largest source of Storage
+          * egress on the site. With the classroom disabled the player is not
+          * rendered, which means no signed-URL request and no download.
+          *
+          * NOTHING IS DELETED: every recording stays in the
+          * `classroom-recordings` bucket and the booking still lists them.
+          * Turning the feature flag back on restores playback untouched.
+          */}
+        {CLASSROOM_ENABLED && RecordingPlayback && booking.classroomRecordings?.length > 0 && <Suspense fallback={null}><RecordingPlayback recordings={booking.classroomRecordings} canDownload={showStudent} /></Suspense>}
         {session && <div className="booking-classroom-summary"><Video size={14} /><div><strong>Classroom recap saved</strong><span>{sessionMinutes ? `${sessionMinutes} min · ` : ''}⭐ {session.classStars || 0} · {session.coursewareTitle || 'Courseware'}{session.presentedFileName ? ` · ${session.presentedFileName}` : ''}{session.lastStudentReaction?.label ? ` · ${session.lastStudentReaction.emoji || ''} ${session.lastStudentReaction.label}` : ''}</span></div></div>}
         <div className="booking-utility-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
           {onManageBooking && <button className="manage-booking-button" onClick={() => onManageBooking(booking)}><MessageSquareText size={14} /> Comment or manage</button>}
@@ -3001,7 +3038,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     )
   }
 
-  if (classroomBooking) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
+  if (CLASSROOM_ENABLED && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   return (
     <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
@@ -3309,7 +3346,13 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const trialNotEnrolledCount = trialCompletedBookings.filter(b => !b.trialEnrolled).length
   const estimatedEarnings = (regularSlotsCount * rate) + (trialEnrolledCount * 100) + (trialNotEnrolledCount * 40)
 
-  const tencentClassroomReady = isTencentClassroomConfigured()
+  /*
+   * The embedded Tencent RTC classroom is part of the disabled feature, so it
+   * is never "ready". This also stops the teacher settings screen advertising
+   * an embedded classroom that cannot open. Importing tencentClassroom.js is
+   * avoided entirely so its `trtc-usersig` Edge Function can never be called.
+   */
+  const tencentClassroomReady = false
   // Booked classrooms previously showed only confirmed/ongoing lessons, so a
   // completed class disappeared and its recap, recording and shared files
   // became unreachable. Upcoming first, then the most recent past lessons.
@@ -3545,6 +3588,15 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   }
 
   const openTeacherClassroom = (booking) => {
+    /*
+     * With the classroom disabled this must do nothing at all. Previously it
+     * flipped the booking to "ongoing" and immediately pushed that to
+     * Supabase — a write, plus the Realtime fan-out it triggers — before
+     * mounting the classroom. Leaving that in would mean the disabled feature
+     * still generated database traffic and, worse, marked lessons as ongoing
+     * that nobody could actually join.
+     */
+    if (!CLASSROOM_ENABLED) return
     const activeClassroomBooking = booking.status === 'confirmed'
       ? updateBooking(booking.id, { status: 'ongoing', classStartedAt: new Date().toISOString() })
       : booking
@@ -3668,7 +3720,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
-  if (classroomBooking) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
+  if (CLASSROOM_ENABLED && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
@@ -5711,7 +5763,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
-  if (classroomBooking) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
+  if (CLASSROOM_ENABLED && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   const managedRole = managedAccount?.role?.toLowerCase()
 

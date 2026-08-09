@@ -2199,3 +2199,27 @@ body.classroom-active .support-widget {
 .classroom-library__list button span {
   flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* ---------------------------------------------------------------------------
+   "Classroom Coming Soon"
+
+   Shown wherever the "Enter private classroom" button used to be. It is
+   deliberately a plain <span>, not a button or a link: the built-in classroom
+   is switched off, so anything clickable would be a dead end. The external
+   meeting link sits beside it and is how the lesson actually happens.
+   --------------------------------------------------------------------------- */
+.classroom-coming-soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px dashed #cdc4dc;
+  border-radius: 10px;
+  padding: 7px 12px;
+  background: #f7f4fc;
+  color: #6d6280;
+  cursor: default;
+  font-size: 0.93rem;
+  font-weight: 750;
+}
+
+.classroom-coming-soon svg { opacity: 0.75; }

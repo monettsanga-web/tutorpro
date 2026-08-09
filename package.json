@@ -44,7 +44,9 @@
     "verify:video": "node scripts/verify-video-section.mjs",
     "verify:carousel": "node scripts/verify-curriculum-carousel.mjs",
     "verify:heromobile": "node scripts/verify-hero-mobile.mjs",
-    "verify:panda": "node scripts/verify-panda-companion.mjs"
+    "verify:panda": "node scripts/verify-panda-companion.mjs",
+    "verify:classroomoff": "node scripts/verify-classroom-disabled.mjs",
+    "verify:dashoff": "node scripts/verify-dashboard-classroom-off.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
