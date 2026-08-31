@@ -12,7 +12,7 @@
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo && npm run test:reviews && npm run test:fbmerge && npm run test:ptreviews && npm run test:sharereview && npm run test:carousel && npm run test:bookingpage",
+    "test": "npm run test:core && npm run test:pdf && npm run test:sync && npm run test:render && npm run test:ice && npm run test:handshake && npm run test:sharing && npm run test:signalling && npm run test:roles && npm run test:presence && npm run test:media && npm run test:reach && npm run test:feedback && npm run test:upload && npm run test:status && npm run test:synchealth && npm run test:writepolicy && npm run test:chinavideo && npm run test:reviews && npm run test:fbmerge && npm run test:ptreviews && npm run test:sharereview && npm run test:carousel && npm run test:bookingpage && npm run test:subjects",
     "test:core": "node scripts/test-core.mjs",
     "test:pdf": "node scripts/test-pdf-compression.mjs",
     "test:sync": "node scripts/test-dashboard-sync.mjs",
@@ -50,7 +50,9 @@
     "measure:egress": "node scripts/measure-egress-home.mjs",
     "measure:egressdash": "node scripts/measure-egress-dashboard.mjs",
     "verify:dashsync": "node scripts/verify-dashboard-still-syncs.mjs",
-    "test:bookingpage": "node scripts/test-booking-page-safety.mjs"
+    "test:bookingpage": "node scripts/test-booking-page-safety.mjs",
+    "test:subjects": "node scripts/test-subjects.mjs",
+    "verify:subjects": "node scripts/verify-subjects.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

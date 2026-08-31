@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { TEACHER_SPECIALIZATIONS } from './subjects.js'
 import {
   ArrowLeft,
   ArrowRight,
@@ -186,7 +187,7 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
                 </form>
               ) : step === 2 ? (
                 <form className="auth-form teacher-profile-form" onSubmit={continueToInterview} noValidate>
-                  <div className="auth-form__row"><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}><option>Both Curricula</option><option>Cambridge</option><option>Oxford</option></select></label><label><span>Years of experience</span><input className={errors.experience ? 'select-error' : ''} type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="e.g. 5" />{errors.experience && <small className="field-error">{errors.experience}</small>}</label></div>
+                  <div className="auth-form__row"><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label><label><span>Years of experience</span><input className={errors.experience ? 'select-error' : ''} type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="e.g. 5" />{errors.experience && <small className="field-error">{errors.experience}</small>}</label></div>
                   <label><span>Short teaching bio</span><textarea className={errors.bio ? 'select-error' : ''} name="bio" value={form.bio} onChange={update} placeholder="Describe your approach, experience and the learners you support…" />{errors.bio && <small className="field-error">{errors.bio}</small>}</label>
                   <div className="auth-form__row"><label><span>Education</span><input className={errors.education ? 'select-error' : ''} name="education" value={form.education} onChange={update} placeholder="Degree or qualification" />{errors.education && <small className="field-error">{errors.education}</small>}</label><label><span>Languages</span><input className={errors.languages ? 'select-error' : ''} name="languages" value={form.languages} onChange={update} placeholder="English, Filipino…" />{errors.languages && <small className="field-error">{errors.languages}</small>}</label></div>
                   <label className="credential-upload"><input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFiles} /><span><Upload size={20} /></span><div><strong>{form.credentials.length ? `${form.credentials.length} file(s) selected` : 'Upload credentials'}</strong><small>Certificates, degree or ID · PDF/JPG/PNG</small></div></label>

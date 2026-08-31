@@ -10442,3 +10442,28 @@ a.feedback-resource-detail:hover strong {
   line-height: 1.5;
   text-align: left;
 }
+
+
+/* ---------------------------------------------------------------------------
+   Subject tag on a booking card.
+   Small and coloured rather than another full row: the focus line is the
+   headline, the subject is context for it.
+   --------------------------------------------------------------------------- */
+.booking-subject {
+  display: inline-block;
+  margin-right: 7px;
+  border-radius: 7px;
+  padding: 2px 8px;
+  background: #ece5fb;
+  color: #4b3a72;
+  font-size: 0.78em;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.booking-subject--english { background: #fbe6e0; color: #8c3a28; }
+.booking-subject--maths { background: #dbeafe; color: #1e457e; }
+.booking-subject--science { background: #dcf5e3; color: #245b38; }
+.booking-subject--ict { background: #eae2fb; color: #4b3a72; }

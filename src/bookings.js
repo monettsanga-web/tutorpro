@@ -1,4 +1,5 @@
 import { getAccountById, repairStudentForBooking, updateTeacherProfile } from './auth.js'
+import { resolveSubject } from './subjects.js'
 import { deleteCloudBooking, syncCloudBooking } from './cloudBookings.js'
 import { lessonSlotKeys, timeToMinutes } from './schedule.js'
 
@@ -203,6 +204,10 @@ export function createBooking(details) {
     date: details.date,
     time: details.time,
     duration: Number(details.duration),
+    // Subject is resolved rather than stored raw, so an old or unexpected
+    // value can never produce a booking that displays as blank. Bookings made
+    // before subjects existed have no field here and read as English.
+    subject: resolveSubject(details.subject).id,
     focus: details.focus,
     note: details.note?.trim() || '',
     teacherNote: '',

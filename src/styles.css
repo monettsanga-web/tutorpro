@@ -2065,6 +2065,34 @@ h3 {
 
 .programme-card__mark--coral { background: #fbe6e0; }
 .programme-card__mark--gold { background: #f8ebc9; }
+/* One tint per subject, so the four cards are distinguishable at a glance
+   without relying on the icon alone. Kept in the same soft pastel family as
+   the existing two so the section still looks like one set. */
+.programme-card__mark--blue { background: #dbeafe; }
+.programme-card__mark--green { background: #dcf5e3; }
+.programme-card__mark--violet { background: #eae2fb; }
+
+/* The "book a free class" link inside the note reads as text, not a button:
+   the note is reassurance, and a second primary button here would compete
+   with the real call to action further down the page. */
+/* The note sits on the dark programmes panel, so this link must be LIGHT.
+   An earlier version used var(--ink) — near-black on near-black, effectively
+   invisible; caught by looking at the rendered section rather than the code. */
+.programme-note__link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.programme-note__link:hover { color: var(--mint); }
+.programme-note__link:focus-visible { outline: 3px solid var(--coral); outline-offset: 3px; border-radius: 4px; }
 
 .programme-card__body > span {
   color: var(--coral-dark);

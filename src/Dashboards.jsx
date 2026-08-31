@@ -101,6 +101,7 @@ import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
 import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED } from './classroomFeature.js'
 import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPolicy.js'
+import { SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
 import { classroomComponents } from './classroomLazy.js'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
@@ -882,7 +883,10 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
             </span>
           )}
         </div>
-        <h3>{booking.focus}</h3>
+        {/* Subject sits above the focus so a parent scanning a list of
+            lessons can tell maths from English at a glance. Older bookings
+            have no subject field and resolve to English. */}
+        <h3><span className={`booking-subject booking-subject--${resolveSubject(booking.subject).id}`}>{subjectName(booking.subject)}</span> {booking.focus}</h3>
         <p className="lesson-card__details" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', margin: '8px 0' }}>
           {person && (
             <strong 
@@ -1249,19 +1253,40 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
   if (!adminBooking && learner?.assignedTeacherId) {
     teachers = teachers.filter((t) => t.id === learner.assignedTeacherId)
   }
-  const [form, setForm] = useState({ teacherId: account.preferredTeacherId || '', duration: '25', focus: learner.goal, note: '' })
+  /*
+   * `subject` drives two things: which teachers can be picked, and which
+   * lesson-focus options are offered. It defaults to English so the flow is
+   * unchanged for every family already using the site.
+   */
+  const [form, setForm] = useState({ teacherId: account.preferredTeacherId || '', duration: '25', focus: learner.goal, note: '', subject: DEFAULT_SUBJECT_ID })
   const [selectedLessons, setSelectedLessons] = useState([])
   const [weekOffset, setWeekOffset] = useState(0)
   const [error, setError] = useState('')
   const [successCount, setSuccessCount] = useState(0)
-  const selectedTeacherId = teachers.some((teacher) => teacher.id === form.teacherId) ? form.teacherId : teachers[0]?.id || ''
-  const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId)
+  /*
+   * Show teachers who cover the chosen subject. If none are recorded for it
+   * yet, fall back to the full list rather than an empty dropdown: a teacher
+   * whose subjects were never filled in still teaches, and an empty picker
+   * would silently block booking altogether.
+   */
+  const subjectTeachers = teachers.filter((teacher) => teacherTeachesSubject(teacher, form.subject))
+  const bookableTeachers = subjectTeachers.length ? subjectTeachers : teachers
+  const selectedTeacherId = bookableTeachers.some((teacher) => teacher.id === form.teacherId) ? form.teacherId : bookableTeachers[0]?.id || ''
+  const selectedTeacher = bookableTeachers.find((teacher) => teacher.id === selectedTeacherId)
   const teacherBookings = selectedTeacherId ? getBookings({ teacherId: selectedTeacherId }) : []
 
   const update = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
-    if (['teacherId', 'duration'].includes(name)) setSelectedLessons([])
+    setForm((current) => {
+      const next = { ...current, [name]: value }
+      // Each subject has its own focus list, so a focus carried over from the
+      // previous subject would be meaningless on the booking.
+      if (name === 'subject' && !focusOptionsFor(value).includes(current.focus)) {
+        next.focus = focusOptionsFor(value)[0]
+      }
+      return next
+    })
+    if (['teacherId', 'duration', 'subject'].includes(name)) setSelectedLessons([])
     setError('')
     setSuccessCount(0)
   }
@@ -1360,8 +1385,11 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
       </div>
       <section className="portal-card booking-calendar-card">
         <div className="booking-controls">
-          <label><span>Teacher</span><select name="teacherId" value={selectedTeacherId} onChange={update}>{teachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}</select></label>
-          <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
+          <label><span>Subject</span><select name="subject" value={form.subject} onChange={update}>{SUBJECTS.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
+          <label><span>Teacher</span><select name="teacherId" value={selectedTeacherId} onChange={update}>{bookableTeachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}</select></label>
+          {/* Focus options change with the subject — "Reading comprehension"
+              makes no sense on a maths lesson. */}
+          <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}>{focusOptionsFor(form.subject).map((option) => <option key={option}>{option}</option>)}</select></label>
           <fieldset className="compact-duration"><legend>Lesson length</legend><div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span>{duration} min</span></label>)}</div></fieldset>
         </div>
 
@@ -4855,7 +4883,7 @@ function AddTeacherDialog({ onClose, onCreated }) {
         {error && <div className="portal-error" role="alert">{error}</div>}
         <form className="admin-teacher-form" onSubmit={submit}>
           <div className="admin-teacher-form__row"><label><span>Full name</span><input autoFocus name="fullName" value={form.fullName} onChange={update} placeholder="Teacher name" /></label><label><span>Email address</span><input type="email" name="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></label></div>
-          <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="password" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}><option>Both Curricula</option><option>Cambridge</option><option>Oxford</option></select></label></div>
+          <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="password" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label></div>
           <div className="admin-teacher-form__row admin-teacher-form__row--three"><label><span>Experience</span><input type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="Years" /></label><label><span>Education</span><input name="education" value={form.education} onChange={update} placeholder="Degree" /></label><label><span>Languages</span><input name="languages" value={form.languages} onChange={update} placeholder="English…" /></label></div>
           <label><span>Short biography</span><textarea name="bio" value={form.bio} onChange={update} placeholder="Teaching background and approach…" /></label>
           <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button" disabled={submitting}>{submitting ? 'Creating teacher…' : 'Create approved teacher'} <ArrowRight size={16} /></button></div>

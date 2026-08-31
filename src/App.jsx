@@ -5,14 +5,17 @@ import {
   BadgeCheck,
   BookOpen,
   CalendarCheck2,
+  Calculator,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  FlaskConical,
   Globe2,
   GraduationCap,
   Heart,
+  Laptop,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -34,6 +37,18 @@ const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ defa
 const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
 const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
+import { SUBJECTS } from './subjects.js'
+
+/*
+ * Subject id -> icon. Kept here rather than in subjects.js so that module
+ * stays free of React and can be imported by plain Node test scripts.
+ */
+const subjectIcons = {
+  english: BookOpen,
+  maths: Calculator,
+  science: FlaskConical,
+  ict: Laptop,
+}
 import { canViewTeacherDirectory, loadSiteSettings, publiclyListedTeachers, subscribeToCloudSiteSettings, subscribeToSiteSettings } from './siteSettings.js'
 import { captureAttribution } from './attribution.js'
 import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage, reviewsForTeacher } from './publicReviews.js'
@@ -51,36 +66,12 @@ import TrustpilotWidget from './TrustpilotWidget.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
-const programmes = {
-  primary: [
-    {
-      name: 'Cambridge Primary',
-      years: 'Years 1–6',
-      description: 'Build strong foundations in reading, writing, speaking and comprehension.',
-      accent: 'coral',
-    },
-    {
-      name: 'Oxford Primary',
-      years: 'Years 1–6',
-      description: 'Grow literacy and a love of language through clear, engaging lessons.',
-      accent: 'gold',
-    },
-  ],
-  secondary: [
-    {
-      name: 'Cambridge Secondary',
-      years: 'Years 7–11',
-      description: 'Develop the analysis and writing skills students need for IGCSE English.',
-      accent: 'coral',
-    },
-    {
-      name: 'Oxford Secondary',
-      years: 'Years 7–11',
-      description: 'Master advanced language and literature with structured one-to-one support.',
-      accent: 'gold',
-    },
-  ],
-}
+/*
+ * Subject copy now lives in src/subjects.js. The old `programmes` constant
+ * held two English curriculum cards (Cambridge/Oxford, primary/secondary);
+ * the Programmes section renders from SUBJECTS instead, so one list drives
+ * the homepage, the booking form and teacher profiles.
+ */
 
 const curriculumSlides = [
   { id: '1ENm8p2-G_glMXNyojA6e180EEWFIELYO', image: 'assets/curriculum/power-up-drive.jpg', title: 'Power Up', publisher: 'Cambridge', level: 'Primary series', tone: 'cyan' },
@@ -157,7 +148,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
       <div className="header-inner">
         <Logo />
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
-          <a href="#programmes" onClick={closeMenu}>Programmes</a>
+          <a href="#programmes" onClick={closeMenu}>Subjects</a>
           {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Teachers</a>}
           <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
@@ -233,18 +224,21 @@ function Hero({ onBook }) {
         <div className="hero__content">
           <div className="eyebrow">
             <span><Sparkles size={14} /></span>
-            Cambridge & Oxford aligned
+            English · Maths · Science · ICT
           </div>
-          <h1>English confidence, built <em>one lesson</em> at a time.</h1>
+          {/* "Confidence" rather than "English confidence": the promise is the
+              same for a child stuck on fractions as for one afraid to speak,
+              and the subjects are named in the eyebrow directly above. */}
+          <h1>Real confidence, built <em>one lesson</em> at a time.</h1>
           <p className="hero__lede">
-            Personalised 1-to-1 online tutoring that helps Primary and Secondary students speak up, write clearly and thrive at school.
+            Personalised 1-to-1 online tutoring in English, Maths, Science and ICT — helping Primary and Secondary students keep up, catch up and thrive at school.
           </p>
           <div className="hero__actions">
             <button className="button button--primary button--large" onClick={onBook}>
               Book a free first class <ArrowRight size={18} />
             </button>
             <a className="button button--quiet button--large" href="#programmes">
-              Explore programmes
+              Explore subjects
             </a>
           </div>
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
@@ -479,7 +473,7 @@ function CurriculumCarousel({ onBook }) {
             <div className="curriculum-carousel__brand"><BookOpen size={17} /> {activeSlide.publisher}</div>
             <h3>{activeSlide.title}</h3>
             <p>{activeSlide.level} · Carefully matched to each learner’s age, confidence and curriculum goals.</p>
-            <div className="curriculum-carousel__actions"><a className="button button--cream" href="#programmes">Explore programmes <ArrowRight size={16} /></a><button className="carousel-text-button" onClick={onBook}>Start with a free class</button></div>
+            <div className="curriculum-carousel__actions"><a className="button button--cream" href="#programmes">Explore subjects <ArrowRight size={16} /></a><button className="carousel-text-button" onClick={onBook}>Start with a free class</button></div>
           </div>
 
           <div className="curriculum-carousel__visual" key={`image-${activeSlide.id}`}>
@@ -644,24 +638,36 @@ function WhyTutorPro() {
             <h3>One child. One tutor. One clear goal.</h3>
             <p>No crowded class and no getting lost in the lesson. Your child has the space to ask, practise and make mistakes safely.</p>
           </div>
-          <a className="text-link text-link--arrow" href="#programmes">Find their programme <ArrowRight size={16} /></a>
+          <a className="text-link text-link--arrow" href="#programmes">Find their subject <ArrowRight size={16} /></a>
         </div>
       </div>
     </section>
   )
 }
 
-function Programmes() {
+/**
+ * What we teach, by subject and school level.
+ *
+ * This used to list two English curricula. It now leads with the four
+ * subjects, because that is the question a parent arrives with — "do you
+ * teach my child's maths?" — and only then narrows by level.
+ *
+ * Each subject's copy comes from src/subjects.js, so adding a fifth subject
+ * needs no change here.
+ */
+function Programmes({ onBook }) {
   const [level, setLevel] = useState('primary')
 
   return (
     <section className="section programmes" id="programmes">
       <div className="container programmes__grid">
         <div className="programmes__intro">
-          <span className="kicker kicker--light">Programmes</span>
-          <h2>Made for their school years.</h2>
+          <span className="kicker kicker--light">Subjects</span>
+          <h2>Four subjects. One patient teacher.</h2>
           <p>
-            Focused English support from first foundations to exam-ready analysis. Choose a level to see the right path.
+            English, Maths, Science and ICT — taught one-to-one and matched to what
+            your child is actually covering at school. Choose a level to see what
+            each subject looks like.
           </p>
           <div className="level-toggle" role="group" aria-label="Choose school level">
             <button
@@ -682,22 +688,25 @@ function Programmes() {
         </div>
 
         <div className="programme-list" aria-live="polite">
-          {programmes[level].map((programme, index) => (
-            <article className="programme-card" key={programme.name}>
-              <div className={`programme-card__mark programme-card__mark--${programme.accent}`}>
-                {index === 0 ? <Globe2 size={25} /> : <BookOpen size={25} />}
-              </div>
-              <div className="programme-card__body">
-                <span>{programme.years}</span>
-                <h3>{programme.name}</h3>
-                <p>{programme.description}</p>
-              </div>
-              <ArrowUpRight className="programme-card__arrow" size={20} />
-            </article>
-          ))}
+          {SUBJECTS.map((subject) => {
+            const Icon = subjectIcons[subject.id] || BookOpen
+            return (
+              <article className="programme-card" key={`${subject.id}-${level}`}>
+                <div className={`programme-card__mark programme-card__mark--${subject.accent}`}>
+                  <Icon size={25} />
+                </div>
+                <div className="programme-card__body">
+                  <span>{level === 'primary' ? 'Years 1–6' : 'Years 7–11'} · {subject.accreditation}</span>
+                  <h3>{subject.name}</h3>
+                  <p>{level === 'primary' ? subject.primary : subject.secondary}</p>
+                </div>
+                <ArrowUpRight className="programme-card__arrow" size={20} />
+              </article>
+            )
+          })}
           <div className="programme-note">
             <BadgeCheck size={20} />
-            <p><strong>Not sure which path fits?</strong> We’ll help you choose during the free first class.</p>
+            <p><strong>Not sure which subject to start with?</strong> Take the free first class and we will help you decide. <button type="button" className="programme-note__link" onClick={() => onBook?.('Subjects section')}>Book a free class</button></p>
           </div>
         </div>
       </div>
@@ -1647,7 +1656,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
             <div>
               <h3>Explore</h3>
               <a href="#why">Why TutorPro Online English</a>
-              <a href="#programmes">Programmes</a>
+              <a href="#programmes">Subjects</a>
               {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>}
               <a href="#journey">How it works</a>
               <a href="#pricing">Pricing</a>
@@ -2001,7 +2010,7 @@ export default function App() {
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />
           <GlobalDiscovery onBook={openRegistration} />
-          <Programmes />
+          <Programmes onBook={openRegistration} />
           <CurriculumFramework />
           <HowItWorks onBook={openRegistration} />
           <ParentReviews />
