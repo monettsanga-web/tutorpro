@@ -10467,3 +10467,39 @@ a.feedback-resource-detail:hover strong {
 .booking-subject--maths { background: #dbeafe; color: #1e457e; }
 .booking-subject--science { background: #dcf5e3; color: #245b38; }
 .booking-subject--ict { background: #eae2fb; color: #4b3a72; }
+
+/* ---------------------------------------------------------------------------
+   "Message" on a lesson card.
+
+   Booking cards render on a LIGHT surface. An earlier version used the dark
+   portal palette (white-on-translucent), which came out as pale grey text on
+   near-white and was barely readable — caught by looking at the rendered card,
+   not the code. Quiet but legible: the primary actions on a booking are
+   accept, cancel and rate, so this must not compete with them.
+   --------------------------------------------------------------------------- */
+.booking-chat-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  border: 1px solid #ddd5e8;
+  border-radius: 9px;
+  padding: 7px 12px;
+  background: #fff;
+  color: #4b3a72;
+  font-size: 0.93rem;
+  font-weight: 750;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.booking-chat-button:hover {
+  border-color: #7048df;
+  background: #f4efff;
+  color: #321568;
+  transform: translateY(-1px);
+}
+
+.booking-chat-button:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 3px;
+}

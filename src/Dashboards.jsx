@@ -102,6 +102,7 @@ import { attendanceSummary, formatPresence, punctuality } from './classroomAtten
 import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED } from './classroomFeature.js'
 import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPolicy.js'
 import { SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
+import { fetchThread, markThreadRead, mergeThread, readLocalThread, sendDirectMessage, subscribeToDirectMessages } from './directMessages.js'
 import { classroomComponents } from './classroomLazy.js'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
@@ -916,6 +917,21 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
              off, so anything clickable here would be a dead end. The external
              meeting link beside it is how the lesson actually happens. */
           : <span className="classroom-coming-soon" title={CLASSROOM_COMING_SOON_NOTE}><Video size={14} /> {CLASSROOM_COMING_SOON_LABEL}</span>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} meeting link</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
+        {/* The Message button. BookingCard has always accepted an onOpenChat
+            prop and five callers pass one, but nothing ever rendered a
+            control for it — so the chat was unreachable from a lesson. */}
+        {onOpenChat && (person || booking.teacherName) && (
+          <button
+            type="button"
+            className="booking-chat-button"
+            onClick={() => onOpenChat(
+              showStudent ? booking.studentId : booking.teacherId,
+              showStudent ? (booking.learnerName || 'Parent') : (booking.teacherName || 'Teacher'),
+            )}
+          >
+            <MessageSquareText size={14} /> Message {showStudent ? (booking.learnerName ? `${booking.learnerName}’s parent` : 'parent') : (booking.teacherName || 'teacher')}
+          </button>
+        )}
         {booking.teacherNote && <small>Lesson note: {booking.teacherNote}</small>}
         {booking.slotComment && <div className="booking-slot-comment"><MessageSquareText size={13} /><span><strong>Booking comment</strong>{booking.slotComment}</span></div>}
         {booking.attendance && (() => {
@@ -962,61 +978,68 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
 }
 
 export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, targetUserName, onClose }) {
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(() => readLocalThread(currentUserId, targetUserId))
   const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  // What actually happened to the last message, so the UI never implies an
+  // email that was not sent.
+  const [notice, setNotice] = useState('')
   const messagesEndRef = useRef(null)
 
-  const getChatKey = () => {
-    return [currentUserId, targetUserId].sort().join('--')
-  }
-
-  const loadMessages = () => {
+  const sendMessage = async (event) => {
+    event.preventDefault()
+    const body = text.trim()
+    if (!body || sending) return
+    setSending(true)
+    setError('')
+    setNotice('')
     try {
-      const chats = JSON.parse(localStorage.getItem('tutorpro_direct_messages_v1') || '{}')
-      const chatKey = getChatKey()
-      setMessages(chats[chatKey] || [])
-    } catch {
-      setMessages([])
-    }
-  }
-
-  const sendMessage = (e) => {
-    e.preventDefault()
-    if (!text.trim()) return
-
-    const newMessage = {
-      id: crypto.randomUUID(),
-      senderId: currentUserId,
-      senderRole: currentUserRole,
-      body: text.trim(),
-      createdAt: new Date().toISOString()
-    }
-
-    try {
-      const chats = JSON.parse(localStorage.getItem('tutorpro_direct_messages_v1') || '{}')
-      const chatKey = getChatKey()
-      const thread = chats[chatKey] || []
-      const updated = [...thread, newMessage]
-      chats[chatKey] = updated
-      localStorage.setItem('tutorpro_direct_messages_v1', JSON.stringify(chats))
-      setMessages(updated)
+      const result = await sendDirectMessage({
+        senderId: currentUserId,
+        senderRole: currentUserRole,
+        recipientId: targetUserId,
+        body,
+      })
+      setMessages(readLocalThread(currentUserId, targetUserId))
       setText('')
-      window.dispatchEvent(new Event('tutorpro:data-change'))
-    } catch (err) {
-      alert("Failed to send message: " + err.message)
+      setNotice(result.emailed
+        ? `Sent · ${targetUserName} has been emailed.`
+        : `Sent. ${result.emailError || 'No email alert was sent.'}`)
+    } catch (caught) {
+      setError(caught.message)
+    } finally {
+      setSending(false)
     }
   }
 
   useEffect(() => {
-    loadMessages()
-    const handleDataChange = () => loadMessages()
-    window.addEventListener('storage', handleDataChange)
-    window.addEventListener('tutorpro:data-change', handleDataChange)
-    const interval = setInterval(loadMessages, 3000)
+    let active = true
+    // Show the cached copy immediately, then reconcile with the server.
+    fetchThread(currentUserId, targetUserId).then((thread) => {
+      if (active) setMessages(thread)
+    })
+    markThreadRead(currentUserId, targetUserId)
+
+    /*
+     * Live delivery replaces the old 3-second localStorage poll. Realtime
+     * pushes a new message the moment it is written, which is both instant
+     * and far cheaper than polling an open dashboard.
+     */
+    const unsubscribe = subscribeToDirectMessages(currentUserId, (incoming) => {
+      if (incoming.senderId !== targetUserId) return
+      setMessages(mergeThread(currentUserId, targetUserId, [incoming]))
+      markThreadRead(currentUserId, targetUserId)
+    })
+
+    const onLocalChange = () => {
+      if (active) setMessages(readLocalThread(currentUserId, targetUserId))
+    }
+    window.addEventListener('tutorpro:data-change', onLocalChange)
     return () => {
-      window.removeEventListener('storage', handleDataChange)
-      window.removeEventListener('tutorpro:data-change', handleDataChange)
-      clearInterval(interval)
+      active = false
+      unsubscribe()
+      window.removeEventListener('tutorpro:data-change', onLocalChange)
     }
   }, [currentUserId, targetUserId])
 
@@ -1060,17 +1083,23 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#b9adc7', textAlign: 'center', padding: '20px' }}>
               <span style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</span>
               <strong>No messages yet</strong>
-              <span style={{ fontSize: '0.956rem', opacity: 0.7, marginTop: '4px' }}>Say hello and start the conversation! Your chats are secure.</span>
+              <span style={{ fontSize: '0.956rem', opacity: 0.7, marginTop: '4px' }}>Say hello and start the conversation.<br />{targetUserName} is emailed whenever you send a message.</span>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Honest feedback: a message can send successfully while its email
+            alert fails, and the two must not be conflated. */}
+        {error && <p role="alert" style={{ margin: '0 0 8px', padding: '9px 12px', borderRadius: '9px', background: 'rgba(255,79,135,0.14)', color: '#ffc2d6', fontSize: '0.95rem' }}>{error}</p>}
+        {notice && !error && <p role="status" style={{ margin: '0 0 8px', padding: '9px 12px', borderRadius: '9px', background: 'rgba(188,233,78,0.12)', color: '#dff7a6', fontSize: '0.95rem' }}>{notice}</p>}
+
         <form onSubmit={sendMessage} style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
           <input
             type="text"
-            placeholder="Type your message..."
+            placeholder={sending ? 'Sending…' : 'Type your message...'}
             value={text}
+            disabled={sending}
             onChange={(e) => setText(e.target.value)}
             style={{
               flex: 1,
@@ -1085,7 +1114,7 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
           />
           <button
             type="submit"
-            disabled={!text.trim()}
+            disabled={!text.trim() || sending}
             style={{
               background: '#bce94e',
               color: '#090510',
