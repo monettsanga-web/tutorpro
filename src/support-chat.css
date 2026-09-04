@@ -441,3 +441,100 @@ body.support-embedded-open .support-widget:not(.support-widget--embedded) { disp
 .support-ai-thread-helper .support-ai-topics {
   margin-top: 8px;
 }
+
+/* ---------------------------------------------------------------------------
+   SUPPORT CHAT LAYOUT FIX
+
+   The problem, measured on a 390x844 phone: the start screen's content was
+   1,462px tall inside a 672px window, and the AI assistant occupied the top
+   of it. The actual message box sat at 1,336px and the Start conversation
+   button at 1,480px — both far below the fold — so writing to the admin meant
+   scrolling past the entire assistant first.
+
+   Two changes:
+     1. The AI assistant is now a collapsed <details> BELOW the message box,
+        so the first thing you see is the box you came to type in.
+     2. The reply row in an open conversation is pinned to the bottom of the
+        panel, so it is always reachable no matter how long the thread grows.
+   --------------------------------------------------------------------------- */
+
+/* The composer never scrolls out of reach. */
+.support-thread {
+  /* meta · helper · messages(flex) · selected-file · reply */
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.support-messages {
+  /* The only part that scrolls. Everything else stays put. */
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+.support-reply {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  /* Matches the thread background so messages do not show through as they
+     scroll underneath the composer. */
+  background: linear-gradient(180deg, rgba(244,240,248,0.86), #f4f0f8 42%);
+  padding-bottom: 2px;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* ---- The collapsed AI assistant on the start screen ---- */
+.support-ai-card--collapsed {
+  margin-top: 4px;
+  border: 1px solid #dfd6ee;
+  border-radius: 14px;
+  padding: 0;
+  background: #f8f5fd;
+  box-shadow: none;
+}
+
+.support-ai-card--collapsed > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  cursor: pointer;
+  color: #4b3a72;
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+.support-ai-card--collapsed > summary::-webkit-details-marker { display: none; }
+
+/* A chevron that flips when opened, so it is obviously expandable. */
+.support-ai-card--collapsed > summary::after {
+  content: '⌄';
+  margin-left: 10px;
+  color: #7d6f92;
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.support-ai-card--collapsed[open] > summary::after { transform: rotate(180deg); }
+
+.support-ai-card--collapsed > summary strong { font-size: 0.9rem; font-weight: 800; }
+
+.support-ai-card__body {
+  display: grid;
+  gap: 9px;
+  border-top: 1px solid #e7dff4;
+  padding: 11px 13px 13px;
+}
+
+.support-ai-card__body > small { color: #6d6180; font-size: 0.85rem; line-height: 1.45; }
+
+/* The Ask row is a plain grid now, not a nested <form>: a form inside the
+   start form would submit the outer one and start a conversation by accident. */
+.support-ai-card__body .support-ai-question { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
+
+/* On a phone the panel should use the full height available. */
+@media (max-width: 650px) {
+  .support-panel {
+    height: min(720px, calc(100dvh - 16px));
+  }
+}

@@ -270,12 +270,6 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
 
         {!credentials && autoStartForAccount && account ? <div className="support-loading">{loading ? (chinese ? '正在打开对话…' : 'Opening your support chat…') : (error || (chinese ? '无法自动打开对话。' : 'Unable to open chat automatically.'))}</div> : !credentials ? <form className="support-start" onSubmit={beginConversation}>
           <div className="support-language-note"><Languages size={15} /><span>{chinese ? '您可以使用中文留言。管理员的回复会保存在这里。' : 'Write in English or Chinese. Replies stay in this private conversation.'}</span></div>
-          <div className="support-ai-card">
-            <div><strong>{chinese ? 'AI 客服助手' : 'AI Support Assistant'}</strong><small>{chinese ? '选择问题类型，或输入您的问题。需要人工帮助时可发送给管理员。' : 'Choose a topic or type your question. If you still need help, send it to admin.'}</small></div>
-            <div className="support-ai-topics">{SUPPORT_TOPICS.map((topic) => <button type="button" key={topic.id} onClick={() => { setAiQuestion(topic.label); askAssistant(topic.id) }}>{topic.label}</button>)}</div>
-            <form className="support-ai-question" onSubmit={(event) => { event.preventDefault(); askAssistant() }}><input value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} placeholder={chinese ? '输入问题…' : 'Ask about booking, payment, classroom…'} /><button type="submit">Ask</button></form>
-            {aiAnswer && <div className="support-ai-answer"><b>{aiAnswer.title}</b><p>{aiAnswer.body}</p><small>{aiAnswer.escalate}</small><button type="button" onClick={useAssistantAnswer}>{chinese ? '发送给管理员' : 'Send this to admin'}</button></div>}
-          </div>
           {account?.role === 'student' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为注册家长账户' : 'Registered family account identified'}</div>}
           {account?.role === 'teacher' && <div className="support-identified"><ShieldCheck size={14} /> {chinese ? '已识别为教师账户' : 'Registered teacher account identified'}</div>}
           <label><span>{chinese ? '家长姓名' : 'Parent name'}</span><input value={form.parentName} onChange={(event) => setForm((current) => ({ ...current, parentName: event.target.value }))} placeholder={chinese ? '请输入您的姓名' : 'Your name'} maxLength="100" /></label>
@@ -283,6 +277,22 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
           <label><span>{chinese ? '您的问题' : 'How can we help?'}</span><textarea value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} onKeyDown={(event) => submitOnEnter(event, beginConversation)} placeholder={chinese ? '请告诉我们您想咨询的问题…' : 'Tell us your question…'} maxLength="1000" /></label>
           {error && <div className="support-error">{error}</div>}
           <button type="submit" disabled={loading}>{loading ? (chinese ? '正在发送…' : 'Sending…') : (chinese ? '开始咨询' : 'Start conversation')} <Send size={16} /></button>
+          {/*
+            * The AI assistant sits BELOW the message box and starts collapsed.
+            * It used to come first and was always expanded, which pushed the
+            * actual message box and Send button to 1,336px and 1,480px inside
+            * a 672px window — you had to scroll past the whole assistant to
+            * say anything. Measured, not guessed.
+            */}
+          <details className="support-ai-card support-ai-card--collapsed">
+            <summary><strong>{chinese ? 'AI 客服助手 · 立即获得答案' : 'AI Support Assistant · get an instant answer'}</strong></summary>
+            <div className="support-ai-card__body">
+              <small>{chinese ? '选择问题类型，或输入您的问题。需要人工帮助时可发送给管理员。' : 'Choose a topic or type your question. If you still need help, send it to admin.'}</small>
+              <div className="support-ai-topics">{SUPPORT_TOPICS.map((topic) => <button type="button" key={topic.id} onClick={() => { setAiQuestion(topic.label); askAssistant(topic.id) }}>{topic.label}</button>)}</div>
+              <div className="support-ai-question"><input value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); askAssistant() } }} placeholder={chinese ? '输入问题…' : 'Ask about booking, payment, classroom…'} /><button type="button" onClick={() => askAssistant()}>Ask</button></div>
+              {aiAnswer && <div className="support-ai-answer"><b>{aiAnswer.title}</b><p>{aiAnswer.body}</p><small>{aiAnswer.escalate}</small><button type="button" onClick={useAssistantAnswer}>{chinese ? '发送给管理员' : 'Send this to admin'}</button></div>}
+            </div>
+          </details>
           <p><ShieldCheck size={13} /> {chinese ? '此对话仅对您和 TutorPro 管理员可见。' : 'Private between you and the TutorPro administrator.'}</p>
         </form> : <div className="support-thread">
           <div className="support-thread-meta"><span className={`support-thread-status support-thread-status--${thread?.status || 'open'}`}>{thread?.status === 'closed' ? (chinese ? '已结束' : 'Closed') : (chinese ? '客服对话' : 'Support conversation')}</span><button onClick={startAgain}><RotateCcw size={13} /> {credentials?.accountMode ? (chinese ? '刷新' : 'Refresh') : (chinese ? '新对话' : 'New')}</button></div>
