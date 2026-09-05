@@ -56,7 +56,8 @@
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:directmsg": "node scripts/test-direct-messages.mjs",
     "verify:directmsg": "node scripts/verify-direct-messages.mjs",
-    "verify:chatlayout": "node scripts/verify-support-chat-layout.mjs"
+    "verify:chatlayout": "node scripts/verify-support-chat-layout.mjs",
+    "verify:portalnav": "node scripts/verify-portal-nav.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

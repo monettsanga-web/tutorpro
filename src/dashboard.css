@@ -330,6 +330,8 @@
     box-shadow: 0 12px 32px rgba(12, 31, 64, 0.16);
   }
 
+  .portal .portal-brand { flex: 0 0 auto; }
+
   .portal .portal-brand {
     min-height: 0;
     padding: 0;
@@ -343,21 +345,83 @@
     border-radius: 13px;
   }
 
+  /*
+   * ONE ROW, NOT FOUR.
+   *
+   * With flex-wrap: wrap the admin's 18 nav buttons spilled onto four rows and
+   * the bar measured 290px tall — 36% of a 1280x800 laptop screen — before any
+   * content appeared. Measured, not estimated.
+   *
+   * The row now scrolls sideways instead of wrapping, so the bar is a fixed
+   * ~60px whatever the role and however many items it has. Teacher and student
+   * dashboards have fewer items and simply never overflow.
+   */
+  /* Brand · nav · account must sit on ONE line. The bar was flex-wrap: wrap,
+     so with a wide nav the three groups stacked into three rows (measured
+     56 + 42 + 69 = 198px). nowrap keeps them side by side and lets the nav
+     itself take the leftover width and scroll. */
+  .portal .portal-sidebar {
+    flex-wrap: nowrap;
+    align-items: center;
+    /*
+     * Without this the bar is as wide as its widest child, and because the nav
+     * now refuses to wrap, that made the whole PAGE scroll sideways by up to
+     * 339px — worse than the tall bar it replaced. Caught by measuring
+     * document.scrollWidth, not by looking. The bar must be exactly the
+     * viewport width and clip its own contents.
+     */
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /* The nav is the only part allowed to shrink, so the brand and the account
+     cluster keep their natural size. min-width: 0 is what actually permits a
+     flex child to shrink below its content width and scroll. */
   .portal .portal-nav {
     display: flex;
+    min-width: 0;
     flex: 1 1 auto;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 4px;
     margin-top: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Momentum scrolling on trackpads/touch without a permanent scrollbar. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
+    scroll-snap-type: x proximity;
+    /* Stops a sideways flick from also scrolling the page behind it. */
+    overscroll-behavior-x: contain;
   }
+
+  .portal .portal-nav::-webkit-scrollbar { height: 5px; }
+  .portal .portal-nav::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .portal .portal-nav::-webkit-scrollbar-track { background: transparent; }
+
+  .portal .portal-nav button { flex: 0 0 auto; scroll-snap-align: start; }
+
+  /* The active item is scrolled into view on load, so you always see where
+     you are even if it sits off to the right. */
+  .portal .portal-nav button.active { scroll-snap-align: center; }
 
   .portal .portal-nav button,
   .portal .portal-sidebar__foot > button {
     width: auto;
     min-height: 42px;
     white-space: nowrap;
+  }
+
+  /* Tighter items so more of the 18 admin sections are reachable without
+     scrolling: 4 visible was too few to feel like a menu. */
+  .portal .portal-nav button {
+    gap: 7px;
+    padding: 0 9px;
+    font-size: 0.95rem;
   }
 
   .portal .portal-nav button:hover,
@@ -374,14 +438,37 @@
     margin-left: 8px;
   }
 
+  /*
+   * The account cluster is allowed to SHRINK, and its email line is dropped,
+   * so the nav keeps most of the width. Pinned at its natural size it ate
+   * ~500px and left room for only two nav items before scrolling.
+   */
   .portal .portal-sidebar__foot {
     display: flex;
+    min-width: 0;
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 4px;
     margin-top: 0;
     margin-left: auto;
     padding-top: 0;
     border-top: 0;
+  }
+
+  /* "Website home" is reachable from the account area and the browser back
+     button; the label is dropped to its icon so the nav gets the space. */
+  .portal .portal-sidebar__foot > button > span { display: none; }
+  .portal .portal-sidebar__foot > button { padding: 0 10px; }
+
+  /* The signed-in email is already on the Admin account page. Showing it in
+     the bar costs ~200px of nav width on every screen. */
+  .portal .portal-mini-user small { display: none; }
+  .portal .portal-mini-user strong {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* Right cluster order: Website home, account profile, Log out. */
