@@ -59,7 +59,9 @@
     "verify:chatlayout": "node scripts/verify-support-chat-layout.mjs",
     "verify:portalnav": "node scripts/verify-portal-nav.mjs",
     "verify:inboundmail": "node scripts/verify-inbound-support-email.mjs",
-    "verify:seo": "node scripts/verify-subject-seo.mjs"
+    "verify:seo": "node scripts/verify-subject-seo.mjs",
+    "test:backup": "node scripts/test-backup.mjs",
+    "verify:backup": "node scripts/verify-backup-panel.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

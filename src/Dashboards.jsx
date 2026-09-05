@@ -31,6 +31,7 @@ import {
   Gamepad2,
   GraduationCap,
   Globe2,
+  HardDrive,
   Home,
   Languages,
   LayoutDashboard,
@@ -139,6 +140,7 @@ import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferra
 import { BADGE_CATALOG, DAILY_MISSIONS, canClaimMission, claimMission, deriveAutomaticBadges, getRewardProfile, rewardProgress } from './rewards.js'
 import { buildLearningReport, skillLabel } from './learningReports.js'
 import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
+import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgradeVerdict, FREE_TIER } from './backup.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -757,7 +759,7 @@ const NAV_GROUPS = {
     { title: '', ids: ['overview'] },
     { title: 'People', ids: ['teachers', 'students', 'support', 'reviews'] },
     { title: 'Teaching', ids: ['bookings', 'courseware', 'homework', 'library'] },
-    { title: 'Business', ids: ['payments', 'funnel', 'analytics'] },
+    { title: 'Business', ids: ['payments', 'funnel', 'analytics', 'backup'] },
     { title: 'Marketing', ids: ['announcements', 'referrals', 'followups', 'sharelinks', 'website'] },
     { title: 'Account', ids: ['profile'] },
   ],
@@ -2532,6 +2534,191 @@ function AdminPaymentsPanel() {
           })}
         </div>
       </section>
+    </div>
+  )
+}
+
+/**
+ * When the last backup was taken, and how many whole days ago that was.
+ * Reads the clock once, on demand, rather than during a render.
+ */
+function describeLastBackup() {
+  let takenAt = ''
+  try { takenAt = localStorage.getItem('tutorpro_last_backup_at') || '' } catch { /* Private mode: treat as never backed up. */ }
+  if (!takenAt) return { takenAt: '', days: null }
+  const time = new Date(takenAt).getTime()
+  if (!Number.isFinite(time)) return { takenAt: '', days: null }
+  return { takenAt, days: Math.max(0, Math.floor((Date.now() - time) / 86400000)) }
+}
+
+/**
+ * Backup and free-tier usage.
+ *
+ * The Supabase free plan has no automatic backups, and that — not the storage
+ * cap — is the real reason people feel pushed onto the $25 plan. This panel
+ * replaces that pressure with two facts: a one-press backup file, and a
+ * measured reading of how much of the free allowance is actually in use.
+ */
+function AdminBackupPanel() {
+  const [loading, setLoading] = useState(true)
+  const [backup, setBackup] = useState(null)
+  const [estimate, setEstimate] = useState(null)
+  const [error, setError] = useState('')
+  const [downloading, setDownloading] = useState(false)
+  const [message, setMessage] = useState('')
+  // The date and its age are stored together, worked out once when the panel
+  // mounts and again after a download. Deriving the age during render would
+  // read the clock on every incidental re-render.
+  const [backupInfo, setBackupInfo] = useState(() => describeLastBackup())
+
+  const measure = useCallback(async () => {
+    // No setState before the first await, so the initial effect run cannot
+    // trigger a cascading re-render.
+    try {
+      const result = await buildBackup()
+      setBackup(result)
+      setEstimate(estimateDatabaseBytes(result))
+      setError('')
+    } catch (measureError) {
+      setError(measureError?.message || 'Usage could not be measured.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const reMeasure = () => {
+    setLoading(true)
+    measure()
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    // Deliberately not awaited here: the effect must return its cleanup
+    // synchronously, and every setState inside `measure` happens after an
+    // await, so no state is written during this render pass.
+    void (async () => {
+      const result = await buildBackup().catch((buildError) => buildError)
+      if (cancelled) return
+      if (result instanceof Error) {
+        setError(result.message || 'Usage could not be measured.')
+      } else {
+        setBackup(result)
+        setEstimate(estimateDatabaseBytes(result))
+      }
+      setLoading(false)
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  const handleDownload = async () => {
+    setDownloading(true)
+    setMessage('')
+    setError('')
+    try {
+      const { bytes } = await downloadBackup()
+      const now = new Date().toISOString()
+      try { localStorage.setItem('tutorpro_last_backup_at', now) } catch { /* Private mode: the file still downloaded. */ }
+      setBackupInfo(describeLastBackup())
+      setMessage(`Backup saved to your downloads folder (${formatBytes(bytes)}). Keep it somewhere safe — Google Drive or an email to yourself.`)
+    } catch (downloadError) {
+      setError(downloadError?.message || 'The backup could not be created.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const verdict = estimate ? upgradeVerdict(estimate) : null
+  const percent = estimate ? Math.min(100, estimate.percentOfFreeTier) : 0
+  const { takenAt: lastBackupAt, days: daysSinceBackup } = backupInfo
+  const backupOverdue = daysSinceBackup === null || daysSinceBackup >= 30
+
+  return (
+    <div className="portal-view backup-view">
+      <div className="portal-page-heading">
+        <div>
+          <span className="portal-kicker">Data safety</span>
+          <h1>Backup and plan usage</h1>
+          <p>Download a full copy of your data, and see whether the free Supabase plan is still enough.</p>
+        </div>
+        <button className="portal-primary-button" onClick={handleDownload} disabled={downloading || loading}>
+          <Download size={16} /> {downloading ? 'Preparing…' : 'Download backup'}
+        </button>
+      </div>
+
+      {error && <p className="portal-error">{error}</p>}
+      {message && <p className="portal-success">{message}</p>}
+
+      <section className={`portal-card backup-alert ${backupOverdue ? 'backup-alert--warn' : 'backup-alert--ok'}`}>
+        <span className="backup-alert__icon">{backupOverdue ? <Bell size={22} /> : <CheckCircle2 size={22} />}</span>
+        <div>
+          <strong>
+            {lastBackupAt
+              ? `Last backup ${daysSinceBackup === 0 ? 'today' : `${daysSinceBackup} day${daysSinceBackup === 1 ? '' : 's'} ago`}`
+              : 'No backup taken yet'}
+          </strong>
+          <small>
+            The free plan does not back anything up for you. Pressing the button above once a month is the whole job —
+            it is the one thing the $25 plan would otherwise be buying you.
+          </small>
+        </div>
+      </section>
+
+      {loading ? (
+        <section className="portal-card"><p>Measuring your database…</p></section>
+      ) : (
+        <>
+          {verdict && (
+            <section className={`portal-card backup-verdict backup-verdict--${verdict.level}`}>
+              <div className="backup-verdict__head">
+                <span className="portal-kicker">Do you need the paid plan?</span>
+                <h2>{verdict.headline}</h2>
+                <p>{verdict.detail}</p>
+              </div>
+              <div className="backup-gauge">
+                <div className="backup-gauge__track"><i style={{ width: `${Math.max(0.6, percent)}%` }} /></div>
+                <div className="backup-gauge__labels">
+                  <span><strong>{formatBytes(estimate.bytes)}</strong> estimated in use</span>
+                  <span>{formatBytes(FREE_TIER.databaseBytes)} free allowance</span>
+                </div>
+                <small>
+                  That is about {percent < 1 ? 'well under 1' : percent.toFixed(1)}% of the free database limit.
+                  The figure is deliberately cautious — it measures the data as the API returns it and adds an
+                  allowance for indexes, so the true usage is lower.
+                </small>
+              </div>
+            </section>
+          )}
+
+          <section className="portal-card">
+            <div className="portal-card__heading portal-card__heading--small">
+              <div><span className="portal-kicker">What is in the backup</span><h2>Rows found in each table</h2></div>
+              <button className="portal-secondary-button" onClick={reMeasure}><RotateCcw size={15} /> Re-measure</button>
+            </div>
+            <div className="backup-table">
+              <div className="backup-table__head"><span>Table</span><span>Rows</span><span>Size</span></div>
+              {Object.entries(estimate?.perTable || {}).map(([name, row]) => (
+                <div className="backup-table__row" key={name}>
+                  <span>{name.replace(/_/g, ' ')}</span>
+                  <strong>{row.rows.toLocaleString()}</strong>
+                  <span>{formatBytes(row.bytes)}</span>
+                </div>
+              ))}
+              <div className="backup-table__row">
+                <span>this browser’s saved data</span>
+                <strong>{backup?.counts?.localKeys ?? 0} sets</strong>
+                <span>—</span>
+              </div>
+            </div>
+            {backup?.warnings?.length > 0 && (
+              <div className="backup-warnings">
+                <strong>Some data could not be read with this login:</strong>
+                <ul>{backup.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+                <small>The backup still saved everything else. This usually just means a table is protected by a rule that this account is not covered by.</small>
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   )
 }
@@ -5928,6 +6115,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'library', label: 'Library', icon: BookOpen },
+    { id: 'backup', label: 'Backup & usage', icon: HardDrive },
     { id: 'profile', label: 'Admin account', icon: ShieldCheck },
   ]
 
@@ -6168,6 +6356,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'payments' && <AdminPaymentsPanel />}
 
       {active === 'analytics' && <AdminAnalyticsPanel />}
+
+      {active === 'backup' && <AdminBackupPanel />}
 
       {active === 'courseware' && <Suspense fallback={<PanelFallback label="Loading courseware…" />}><CoursewareManager account={account} mode="admin" /></Suspense>}
 
