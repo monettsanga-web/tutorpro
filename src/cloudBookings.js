@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js'
+import { isServiceRestriction, serviceRestrictionMessage } from './serviceStatus.js'
 
 const bookingListeners = new Set()
 let bookingChannel = null
@@ -188,6 +189,7 @@ export async function fetchCloudBookings({ complete = false } = {}) {
     ? query.order('created_at', { ascending: true })
     : query.order('created_at', { ascending: false }).limit(BOOKING_SYNC_LIMIT)
   const { data, error } = await query
+  if (error && isServiceRestriction(error)) throw new Error(serviceRestrictionMessage(error))
   if (error) throw new Error(`Shared bookings could not be loaded: ${error.message}`)
   return (data || []).map(rowToBooking)
 }

@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabaseClient.js'
+import { isServiceRestriction, serviceRestrictionMessage } from './serviceStatus.js'
 
 const PROFILE_SYNC_CHANNEL = 'tutorpro-profile-live-updates'
 const profileListeners = new Set()
@@ -74,8 +75,13 @@ export async function signInCloudProfile(login, password) {
     ? { email: identifier.toLowerCase(), password }
     : { phone: identifier.replace(/[\s()-]/g, ''), password }
   const { data, error } = await supabase.auth.signInWithPassword(credentials)
+  // A free-plan service restriction (HTTP 402) would otherwise surface to a
+  // parent as "Supabase login failed", which reads like the site is broken
+  // and their account is gone. Explain it instead.
+  if (error && isServiceRestriction(error)) throw new Error(serviceRestrictionMessage(error))
   if (error) throw new Error(`Supabase login failed: ${error.message}`)
   const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+  if (profileError && isServiceRestriction(profileError)) throw new Error(serviceRestrictionMessage(profileError))
   if (profileError) throw new Error(`Shared profile could not be loaded: ${profileError.message}`)
   return profileRowToAccount(profile)
 }

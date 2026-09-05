@@ -62,7 +62,8 @@
     "verify:seo": "node scripts/verify-subject-seo.mjs",
     "test:backup": "node scripts/test-backup.mjs",
     "verify:backup": "node scripts/verify-backup-panel.mjs",
-    "verify:anonrt": "node scripts/verify-anon-realtime.mjs"
+    "verify:anonrt": "node scripts/verify-anon-realtime.mjs",
+    "test:servicestatus": "node scripts/test-service-status.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
