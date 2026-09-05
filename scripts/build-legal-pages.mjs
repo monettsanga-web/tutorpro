@@ -38,9 +38,20 @@ const REGISTRATION = {
 }
 const REGISTRATION_LINE = `Registered with the Philippine Department of Trade and Industry (${REGISTRATION.authority}), Registration No. ${REGISTRATION.number}.`
 
+// ⚠️ THIS GENERATOR IS NOT IN `npm run build` AND HAS DRIFTED.
+// The committed pages in public/ link an external stylesheet
+// (/assets/pages.css), while the STYLE constant below still inlines one.
+// Running this script therefore OVERWRITES that improvement on all five
+// pages. Until the two are reconciled, edit the HTML in public/ directly and
+// mirror the change here, rather than regenerating.
 const CONTACT = {
   messenger: 'https://m.me/526047974195321',
   facebook: 'https://www.facebook.com/tutorproenglish',
+  whatsapp: 'https://wa.me/639625284849',
+  whatsappNumber: '+63 962 528 4849',
+  // A personal WeChat account has no reliable web deep link, so the ID is
+  // published as text for the reader to add manually.
+  wechat: 't_cora',
   // Published contact address, matching the one shown in the site footer.
   email: 'sejongenglish@yahoo.com',
 }
@@ -48,8 +59,11 @@ const CONTACT = {
 const contactLinksHtml = `
   <p>
     <a class="btn" href="${CONTACT.messenger}" target="_blank" rel="noopener">Message us on Messenger</a>
+    <a class="btn btn--ghost" href="${CONTACT.whatsapp}" target="_blank" rel="noopener">Chat on WhatsApp</a>
     <a class="btn btn--ghost" href="${CONTACT.facebook}" target="_blank" rel="noopener">Facebook page</a>
   </p>
+  <p>WhatsApp: <a href="${CONTACT.whatsapp}" target="_blank" rel="noopener">${CONTACT.whatsappNumber}</a><br>
+  WeChat ID: <strong>${CONTACT.wechat}</strong> (add us on WeChat, then send a message)</p>
   ${CONTACT.email ? `<p>Email: <a href="mailto:${CONTACT.email}">${CONTACT.email}</a></p>` : `<p class="muted">You can also use the live support chat inside the TutorPro Online English website, bottom-right of any page.</p>`}
 `
 
@@ -363,7 +377,7 @@ const PAGES = [
   {
     slug: 'contact.html',
     title: 'Contact TutorPro Online English — Parent & Teacher Support',
-    description: 'Contact TutorPro Online English about lessons, bookings, refunds or teaching opportunities. Reach us on Messenger, Facebook or live chat inside the site.',
+    description: 'Contact TutorPro Online English about lessons, bookings, refunds or teaching opportunities. Reach us on Facebook, WeChat (t_cora), WhatsApp or Messenger.',
     heading: 'Contact us',
     body: `
       <p>Questions about lessons, bookings, payments or teaching with us? We are happy to help — and you will always be talking to a real person.</p>

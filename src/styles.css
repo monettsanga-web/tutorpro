@@ -4742,6 +4742,21 @@ body {
 
 .footer__contact .footer__whatsapp:hover { color: #fff; background: #249f56; }
 
+/* Not a link: a WeChat ID has no reliable web target, so it is presented as
+   selectable text with the same alignment as its neighbours. */
+.footer__wechat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.footer__wechat b {
+  color: #fff;
+  font-weight: 800;
+  user-select: text;
+}
+
 /* SEO-focused global discovery section */
 .global-discovery {
   position: relative;
@@ -6400,4 +6415,254 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .hero__orb { animation: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Contact channels — Facebook, WeChat, WhatsApp                       */
+/* ------------------------------------------------------------------ */
+
+.contact-channels {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(223, 245, 167, 0.5), transparent 42%),
+    radial-gradient(circle at 96% 100%, rgba(255, 79, 135, 0.09), transparent 46%),
+    var(--cream-2);
+}
+
+.contact-channels__head {
+  max-width: 620px;
+  margin-bottom: 52px;
+}
+
+.contact-channels__head h2 {
+  margin-bottom: 16px;
+}
+
+.contact-channels__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.156rem;
+  line-height: 1.7;
+}
+
+.contact-channels__grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* The card is both a link and a button depending on the channel, so every
+   inherited control style is reset back to a common baseline. */
+.contact-card {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 30px 28px 24px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.32s ease;
+}
+
+/* A soft wash of the channel's own colour, revealed on hover. Kept on a
+   child element so it can never fight the card's own transform. */
+.contact-card__glow {
+  position: absolute;
+  z-index: -1;
+  top: -55%;
+  right: -30%;
+  width: 78%;
+  height: 165%;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, var(--brand-soft, rgba(50, 21, 104, 0.14)), transparent 68%);
+  transition: opacity 0.36s ease;
+}
+
+.contact-card--facebook { --brand-soft: rgba(24, 119, 242, 0.2); }
+.contact-card--wechat { --brand-soft: rgba(7, 193, 96, 0.2); }
+.contact-card--whatsapp { --brand-soft: rgba(37, 211, 102, 0.22); }
+
+.contact-card:hover,
+.contact-card:focus-visible {
+  transform: translateY(-6px);
+  border-color: rgba(50, 21, 104, 0.2);
+  box-shadow: var(--shadow-lg);
+}
+
+.contact-card:hover .contact-card__glow,
+.contact-card:focus-visible .contact-card__glow {
+  opacity: 1;
+}
+
+.contact-card:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 3px;
+}
+
+.contact-card:active {
+  transform: translateY(-2px);
+}
+
+.contact-card__icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--brand);
+  color: #fff;
+  /* Tinted to the channel's own colour so the lift reads as that brand. */
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 34%, transparent);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.contact-card:hover .contact-card__icon {
+  transform: scale(1.06) rotate(-4deg);
+}
+
+.contact-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-card__name {
+  color: var(--ink);
+  font-size: 1.32rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.contact-card__handle {
+  color: var(--ink-2);
+  font-size: 1.028rem;
+  font-weight: 700;
+  /* An ID that may be copied by hand must be selectable and unambiguous. */
+  font-variant-ligatures: none;
+  user-select: text;
+  word-break: break-word;
+}
+
+.contact-card__detail {
+  color: var(--muted);
+  font-size: 1.006rem;
+  line-height: 1.6;
+}
+
+/* Always two stacked rows rather than a wrapping flex row. Left to wrap, a
+   short label like "Fastest reply" sat inline while a longer one dropped to
+   its own line, so the three cards disagreed with each other and the divider
+   and call-to-action never lined up across the set. */
+.contact-card__foot {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.contact-card__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.contact-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--coral-dark);
+  font-size: 1.006rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.contact-card__action svg {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.contact-card:hover .contact-card__action svg {
+  transform: translate(3px, -3px);
+}
+
+/* A copy button is not navigation, so its arrow must not drift sideways. */
+.contact-card--wechat:hover .contact-card__action svg {
+  transform: scale(1.12);
+}
+
+.contact-card--copied .contact-card__action {
+  color: #1d7a41;
+}
+
+.contact-channels__assurance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 34px 0 0;
+  color: var(--muted);
+  font-size: 0.995rem;
+}
+
+.contact-channels__assurance svg {
+  flex: 0 0 auto;
+  color: var(--ink-2);
+}
+
+@media (max-width: 980px) {
+  .contact-channels__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .contact-channels__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .contact-channels__head {
+    margin-bottom: 36px;
+  }
+
+  .contact-card {
+    padding: 24px 22px 20px;
+  }
+}
+
+/* Motion is decoration here; the hover colour still conveys the state. */
+@media (prefers-reduced-motion: reduce) {
+  .contact-card,
+  .contact-card__icon,
+  .contact-card__action svg,
+  .contact-card__glow {
+    transition: none;
+  }
+
+  .contact-card:hover,
+  .contact-card:focus-visible {
+    transform: none;
+  }
+
+  .contact-card:hover .contact-card__icon {
+    transform: none;
+  }
 }

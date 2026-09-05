@@ -63,7 +63,8 @@
     "test:backup": "node scripts/test-backup.mjs",
     "verify:backup": "node scripts/verify-backup-panel.mjs",
     "verify:anonrt": "node scripts/verify-anon-realtime.mjs",
-    "test:servicestatus": "node scripts/test-service-status.mjs"
+    "test:servicestatus": "node scripts/test-service-status.mjs",
+    "verify:contact": "node scripts/verify-contact-channels.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

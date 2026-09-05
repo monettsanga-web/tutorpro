@@ -62,6 +62,7 @@ import { WEEKDAYS } from './schedule.js'
 import { IntroVideo, ProfilePhoto, SampleClassPlayer } from './ProfileMedia.jsx'
 import ChinaSafeVideo from './ChinaSafeVideo.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
+import ContactChannels from './ContactChannels.jsx'
 import TrustpilotWidget from './TrustpilotWidget.jsx'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -152,6 +153,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
           {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Teachers</a>}
           <a href="#journey" onClick={closeMenu}>How it works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
+          <a href="#contact" onClick={closeMenu}>Contact</a>
           <div className="nav__mobile-actions">
             {currentAccount ? (
               <>
@@ -1660,6 +1662,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>}
               <a href="#journey">How it works</a>
               <a href="#pricing">Pricing</a>
+              <a href="#contact">Contact us</a>
             </div>
             <div>
               <h3>Get started</h3>
@@ -1706,6 +1709,9 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <a href="https://www.facebook.com/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Facebook Page</span></a>
               <a className="footer__whatsapp" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on Messenger</span></a>
               <a className="footer__whatsapp" href="https://wa.me/639625284849" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on WhatsApp</span></a>
+              {/* A WeChat ID cannot be linked, so it is shown as plain
+                  selectable text rather than a link that would go nowhere. */}
+              <span className="footer__wechat"><MessageCircle size={15} /> <span>WeChat: <b>t_cora</b></span></span>
             </div>
           </div>
         </div>
@@ -2025,6 +2031,7 @@ export default function App() {
           <ParentReviews />
           <Pricing onBook={openRegistration} />
           <FAQ onBook={openRegistration} />
+          <ContactChannels />
           <FinalCTA onBook={openRegistration} />
           {/* The mascot belongs to the marketing homepage only. Mounting it
               here rather than in main.jsx keeps it out of the dashboards, the
