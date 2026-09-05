@@ -207,9 +207,44 @@ export async function updateCloudPassword(newPassword) {
   return true
 }
 
+/**
+ * Listen for profile changes.
+ *
+ * The socket is only opened for a signed-in user. The public homepage used to
+ * hold this channel open for the whole visit so the teacher directory could
+ * update live — but an approved teacher list changes perhaps weekly, and the
+ * page already fetches it on load and again when a hidden tab is revisited.
+ * A logged-out visitor therefore kept a Realtime connection open, and counted
+ * against the Realtime connection allowance, for a change that would almost
+ * never arrive.
+ *
+ * Dashboards, which genuinely need live updates, are always signed in and so
+ * still get the socket immediately.
+ */
 export function subscribeToCloudProfiles(onChange) {
   if (!supabase) return () => {}
   profileListeners.add(onChange)
-  ensureProfileChannel()
-  return () => { profileListeners.delete(onChange) }
+
+  let cancelled = false
+
+  supabase.auth.getSession()
+    .then(({ data }) => { if (!cancelled && data?.session) ensureProfileChannel() })
+    .catch(() => { /* Offline: cached profiles still render. */ })
+
+  // Opens as soon as the visitor signs in, without needing a page reload.
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (cancelled || !session) return
+    ensureProfileChannel()
+  })
+
+  return () => {
+    cancelled = true
+    profileListeners.delete(onChange)
+    try { listener?.subscription?.unsubscribe() } catch { /* Already removed. */ }
+    // The channel is shared, so it is only torn down once nothing is listening.
+    if (!profileListeners.size && profileChannel) {
+      try { supabase.removeChannel(profileChannel) } catch { /* Already closed. */ }
+      profileChannel = null
+    }
+  }
 }

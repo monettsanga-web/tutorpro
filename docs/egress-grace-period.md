@@ -4,10 +4,37 @@
 
 ---
 
-## ✅ RESOLVED — the usage page settles it. Do not pay.
+## ✅ RESOLVED — do not pay. But two screens disagree, so read this.
 
-The billing dashboard was checked on 5 September. **Overage in period: 0 GB
-on both meters.**
+The Usage Summary shows **Egress 6.776 GB**, which is over the 5 GB cap. The
+Egress detail page shows **0.20 GB used in period, 0 GB overage**. Both are
+real; they describe **different billing cycles**.
+
+### Proof that 6.776 GB is the PREVIOUS cycle, not the current one
+
+The detail page's daily bar chart runs 11 Aug → 5 Sep, about 26 days, with
+bars between 5 and 12 MB and a y-axis topping out at 20 MB.
+
+> If 6.776 GB were the current cycle, those bars would have to average
+> **267 MB per day**. The chart's own axis only reaches 20 MB.
+> **267 MB/day is physically impossible on that chart.**
+
+So 6.776 GB must be the earlier window — exactly what the warning email said:
+*"went over its quota in the previous billing cycle."*
+
+### And 6.776 GB matches the old video almost exactly
+
+| | |
+|---|---|
+| Old class video | 5.14 MB, from Supabase Storage, `cache-control: no-cache` |
+| 6.776 GB ÷ 5.14 MB | **≈ 1,350 video views** |
+| Over 30 days | **≈ 45 views a day** |
+
+45 views a day is perfectly normal traffic for a school website. **The video
+alone explains the entire overage.** It now lives on Vercel, so those same
+1,350 views would cost **0 bytes** of Supabase egress today.
+
+### The current cycle
 
 | Meter | Free allowance | Used this cycle | % used | Overage |
 |---|---|---|---|---|
@@ -27,6 +54,30 @@ cap.
 > egress measurement runs, the 30 browser checks for the backup panel, and
 > repeated full-table reads while building the feature. It is not your
 > visitors, and it will not recur.
+
+### Every other meter, from the Usage Summary
+
+| Meter | Used | Free allowance | % |
+|---|---|---|---|
+| Database size | 0.032 GB | 0.5 GB | 6% |
+| Storage size | 0.022 GB | 1 GB | 2% |
+| Monthly active users | 25 | 50,000 | 0.1% |
+| Realtime peak connections | 16 | 200 | 8% |
+| Realtime messages | 45,298 | 2,000,000 | 2% |
+| Edge function invocations | 537 | 500,000 | 0.1% |
+
+Nothing else is close to a limit.
+
+**One thing was worth fixing though.** 45,298 realtime messages against 25
+users, and 16 peak connections, was more than the app should need. The cause:
+the public homepage opened **two Realtime subscriptions for every visitor,
+signed in or not** — one for `site_settings` and one for `profiles`. Neither
+is useful to a logged-out visitor, who cannot change a setting and whose
+teacher directory is already fetched on page load.
+
+Both are now opened **only for signed-in users**, and closed again on sign-out.
+Verified in a real browser: an anonymous visit now opens **0 Realtime sockets**
+(was 1), while the dashboard still opens its socket and works normally.
 
 ### What this means
 

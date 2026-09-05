@@ -158,16 +158,61 @@ export async function saveSiteSettings(changes) {
   }
 }
 
-/** Live updates when another admin device changes a setting. */
-export function subscribeToCloudSiteSettings() {
+/**
+ * Live updates when another admin device changes a setting.
+ *
+ * Only ever opened for a signed-in user. A logged-out visitor cannot change
+ * a setting and gains nothing from hearing about one: they were holding a
+ * Realtime WebSocket open for the whole visit purely to learn about an
+ * admin-only toggle. The settings are still loaded once by `loadSiteSettings`
+ * on every page view, so a visitor always sees the current values — they just
+ * do not keep a socket open waiting for a change that will not come.
+ *
+ * Pass `{ force: true }` where a live socket is genuinely wanted regardless.
+ */
+export function subscribeToCloudSiteSettings({ force = false } = {}) {
   if (!isSupabaseConfigured || !supabase) return () => {}
-  const channel = supabase
-    .channel('tutorpro-site-settings')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, (payload) => {
-      if (payload?.new?.settings) applySettings(payload.new.settings)
-    })
-    .subscribe()
-  return () => { try { supabase.removeChannel(channel) } catch { /* Already closed. */ } }
+
+  let channel = null
+  let cancelled = false
+
+  const open = () => {
+    if (cancelled || channel) return
+    channel = supabase
+      .channel('tutorpro-site-settings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, (payload) => {
+        if (payload?.new?.settings) applySettings(payload.new.settings)
+      })
+      .subscribe()
+  }
+
+  const close = () => {
+    if (!channel) return
+    try { supabase.removeChannel(channel) } catch { /* Already closed. */ }
+    channel = null
+  }
+
+  if (force) {
+    open()
+  } else {
+    // Open only once a session exists, and close again on sign-out so a
+    // logged-out tab never holds the socket.
+    supabase.auth.getSession()
+      .then(({ data }) => { if (data?.session) open() })
+      .catch(() => { /* Offline: the cached settings still apply. */ })
+  }
+
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (cancelled) return
+    if (session) open()
+    else close()
+  })
+
+  return () => {
+    cancelled = true
+    close()
+    try { listener?.subscription?.unsubscribe() } catch { /* Already removed. */ }
+  }
 }
 
 /* ------------------------------------------------------------------ */
