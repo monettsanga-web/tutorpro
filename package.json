@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
+    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -58,7 +58,8 @@
     "verify:directmsg": "node scripts/verify-direct-messages.mjs",
     "verify:chatlayout": "node scripts/verify-support-chat-layout.mjs",
     "verify:portalnav": "node scripts/verify-portal-nav.mjs",
-    "verify:inboundmail": "node scripts/verify-inbound-support-email.mjs"
+    "verify:inboundmail": "node scripts/verify-inbound-support-email.mjs",
+    "verify:seo": "node scripts/verify-subject-seo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

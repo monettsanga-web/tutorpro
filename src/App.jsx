@@ -1674,6 +1674,15 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <button onClick={onTeacherAccess}>Teacher portal</button>
               <button onClick={onAdminAccess}>Admin portal</button>
             </div>
+            {/* Internal links are how Google finds and ranks these pages. A
+                subject page nothing links to is effectively invisible. */}
+            <div>
+              <h3>Subjects</h3>
+              <a href="/english-for-kids-ages-8-11.html">Online English classes</a>
+              <a href="/online-maths-tutor-for-kids.html">Online Maths tutor</a>
+              <a href="/online-science-tutor-for-kids.html">Online Science tutor</a>
+              <a href="/online-ict-computing-classes-for-kids.html">Online ICT &amp; Computing</a>
+            </div>
             <div>
               <h3>By age</h3>
               <a href="/pricing.html">Pricing &amp; plans</a>
