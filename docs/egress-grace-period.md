@@ -2,6 +2,45 @@
 
 **Date:** 5 September 2026 · **Grace ends:** 8 September 2026
 
+---
+
+## ✅ RESOLVED — the usage page settles it. Do not pay.
+
+The billing dashboard was checked on 5 September. **Overage in period: 0 GB
+on both meters.**
+
+| Meter | Free allowance | Used this cycle | % used | Overage |
+|---|---|---|---|---|
+| Egress (uncached) | 5 GB | **0.20 GB** | **4%** | **0 GB** |
+| Cached egress | 5 GB | **0.46 GB** | **9%** | **0 GB** |
+
+Projected to a full 30-day cycle that is **0.23 GB** and **0.53 GB** — about
+**5%** and **11%** of the allowances.
+
+**You have roughly 22× headroom on uncached egress and 9× on cached egress.**
+
+The daily bars sit at 5–12 MB. Even the tallest bar (~20 MB, on 5 September)
+sustained every day for a month would come to 0.59 GB — still only 12% of the
+cap.
+
+> **Note on the 5 September spike:** that bar is my own testing — the two
+> egress measurement runs, the 30 browser checks for the backup panel, and
+> repeated full-table reads while building the feature. It is not your
+> visitors, and it will not recur.
+
+### What this means
+
+The August fixes worked. The breach was the **old code**, in a cycle that ran
+mostly before 9 August. The current cycle shows **zero overage**, so there is
+nothing ongoing for the Fair Use Policy to restrict on 8 September.
+
+**Decision: stay on the free plan. Do not pay the $25.**
+
+Re-check the usage page in early October to confirm a full clean cycle. If it
+is still near 5% then, the matter is closed permanently.
+
+---
+
 You received this from Supabase:
 
 > Your organization went over its quota in the previous billing cycle (Egress
@@ -145,15 +184,26 @@ All three are fixable for free. None require the $25 plan.
 
 ---
 
-## Revised recommendation
+## Final recommendation
 
-**Unchanged, but now conditional and with a deadline.**
+The usage page was checked and answered the question: **0 GB overage, 4% and
+9% of the two egress allowances.**
 
-1. **Before 8 September**, open the usage page and read the current cycle.
-2. If it is under ~1 GB — **stay free**. The breach is history.
-3. If it is high — **tell me the number** and I will find the cause.
-4. Either way: **press the backup button** in Admin → Business → Backup &
-   usage. If restrictions ever do land, you want a copy of your data already
-   downloaded, not to be scrambling behind a 402.
+1. ✅ **Stay on the free plan.** Do not pay the $25.
+2. ✅ Nothing to do before 8 September. There is no ongoing overage to
+   restrict.
+3. **Press the backup button** in Admin → Business → Backup & usage, and once
+   a month after that. That remains the one thing the free plan genuinely does
+   not give you.
+4. **Re-check the usage page in early October** to confirm one full clean
+   cycle. If it still reads ~5%, the matter is closed permanently.
 
-The one thing that changed: **do not ignore this and find out on the 9th.**
+### The rule going forward
+
+The thing that caused the breach was **a large file served from Supabase
+Storage without caching**. Before putting any video, PDF pack or image gallery
+into Supabase Storage, put it in `public/assets/` instead — Vercel serves it
+with a one-year immutable cache and its bandwidth is separate from your
+Supabase quota.
+
+That single habit is what keeps you on the free plan.

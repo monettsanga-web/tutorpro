@@ -10727,7 +10727,7 @@ a.feedback-resource-detail:hover strong {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  border-left: 4px solid var(--portal-orange, #ff7a1a);
+  border-left: 4px solid #1d7a41;
 }
 
 .backup-egress h2 {
@@ -10755,4 +10755,11 @@ a.feedback-resource-detail:hover strong {
 
 @media (max-width: 780px) {
   .backup-egress { flex-direction: column; }
+}
+
+.backup-egress code {
+  border-radius: 5px;
+  padding: 1px 5px;
+  background: #eef1f6;
+  font-size: 0.88em;
 }

@@ -2657,16 +2657,23 @@ function AdminBackupPanel() {
       <section className="portal-card backup-egress">
         <div>
           <span className="portal-kicker">The limit that actually bites</span>
-          <h2>Egress is metered separately</h2>
+          <h2>Egress is metered separately — and it is fine</h2>
           <p>
             The gauge below measures how much data you <em>store</em>. It cannot see <strong>egress</strong> —
             data leaving Supabase — which is capped at 5 GB a month on the free plan. That is the limit
-            this project went over before the August fixes.
+            this project went over on the old code, before the August fixes.
           </p>
           <p className="backup-egress__measured">
-            Measured on the current build: <strong>3,577 bytes</strong> per homepage visit and
-            <strong> 0 bytes</strong> for an idle dashboard, with the class video now served by Vercel
-            instead of Supabase. At that rate 5 GB is about <strong>1.5 million visits</strong> a month.
+            Checked on the Supabase billing page, 5 September 2026: <strong>0.20 GB</strong> of 5 GB
+            uncached and <strong>0.46 GB</strong> of 5 GB cached, with <strong>0 GB overage</strong> —
+            about <strong>4%</strong> and <strong>9%</strong> of the allowances. Roughly
+            <strong> 20× headroom</strong>. The free plan is comfortable.
+          </p>
+          <p>
+            <strong>The rule that keeps it that way:</strong> never serve a large file from Supabase
+            Storage. Put videos, PDF packs and image galleries in <code>public/assets/</code> so Vercel
+            serves them with a one-year cache — its bandwidth does not count against this quota. A
+            5 MB uncached video was what consumed the whole allowance last time.
           </p>
         </div>
         <a
@@ -2675,7 +2682,7 @@ function AdminBackupPanel() {
           target="_blank"
           rel="noreferrer"
         >
-          <ExternalLink size={15} /> Check live egress
+          <ExternalLink size={15} /> Re-check egress
         </a>
       </section>
 
