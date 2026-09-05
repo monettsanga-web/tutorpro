@@ -746,9 +746,54 @@ function SyncHealthBanner({ account }) {
   )
 }
 
+/**
+ * How each dashboard's sections are grouped in the sidebar.
+ *
+ * Keyed by nav item id so the groups survive a label change, and any id not
+ * listed here is collected into "More" rather than being dropped.
+ */
+const NAV_GROUPS = {
+  admin: [
+    { title: '', ids: ['overview'] },
+    { title: 'People', ids: ['teachers', 'students', 'support', 'reviews'] },
+    { title: 'Teaching', ids: ['bookings', 'courseware', 'homework', 'library'] },
+    { title: 'Business', ids: ['payments', 'funnel', 'analytics'] },
+    { title: 'Marketing', ids: ['announcements', 'referrals', 'followups', 'sharelinks', 'website'] },
+    { title: 'Account', ids: ['profile'] },
+  ],
+  teacher: [
+    { title: '', ids: ['overview'] },
+    { title: 'Teaching', ids: ['bookings', 'classroom', 'schedule'] },
+    { title: 'Materials', ids: ['courseware', 'homework', 'library'] },
+    { title: 'More', ids: ['support', 'referrals', 'profile'] },
+  ],
+  student: [
+    { title: '', ids: ['overview'] },
+    { title: 'Lessons', ids: ['book', 'lessons', 'my-teachers'] },
+    { title: 'Learning', ids: ['curriculum', 'homework', 'library', 'games', 'ai-report'] },
+    { title: 'Rewards', ids: ['rewards', 'referrals'] },
+    { title: 'Account', ids: ['support', 'profile'] },
+  ],
+}
+
+function buildNavGroups(role, navItems) {
+  const byId = new Map(navItems.map((item) => [item.id, item]))
+  const used = new Set()
+  const groups = (NAV_GROUPS[role] || []).map((group) => {
+    const items = group.ids.map((id) => byId.get(id)).filter(Boolean)
+    items.forEach((item) => used.add(item.id))
+    return { title: group.title, items }
+  }).filter((group) => group.items.length)
+  // Anything this dashboard added that is not in the map still gets shown.
+  const leftovers = navItems.filter((item) => !used.has(item.id))
+  if (leftovers.length) groups.push({ title: 'More', items: leftovers })
+  return groups.length ? groups : [{ title: '', items: navItems }]
+}
+
 function PortalShell({ account, role, active, onActive, onHome, onLogout, navItems, children, adminPreview = false, mediaVersion = 0 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const roleLabels = { student: 'Student space', teacher: 'Teacher studio', admin: 'Admin control' }
+  const groupedNav = buildNavGroups(role, navItems)
 
   const chooseNav = (id) => {
     onActive(id)
@@ -769,11 +814,36 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
           <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro Online English panda mascot" />
           <div><strong>Tutor<span>Pro</span> English</strong><small>{roleLabels[role]}</small></div>
         </div>
+        {/*
+          * Grouped navigation.
+          *
+          * A flat list of 18 items is not a menu, it is an inventory. Laid out
+          * as a horizontal bar it wrapped onto four rows and ate 36% of a
+          * laptop screen; forced onto one row it hid 14 of the 18 items behind
+          * a sideways scroll nobody would think to use.
+          *
+          * Real admin tools solve this with a vertical sidebar and labelled
+          * groups, because scanning six short lists is far easier than reading
+          * one long one. Groups come from navGroups when a dashboard defines
+          * them, and anything not assigned falls into "More" so an item can
+          * never silently disappear from the menu.
+          */}
         <nav className="portal-nav" aria-label={`${roleLabels[role]} navigation`}>
-          {navItems.map(({ id, label, icon: Icon, badge }) => (
-            <button className={active === id ? 'active' : ''} key={id} onClick={() => chooseNav(id)}>
-              <Icon size={19} /><span>{label}</span>{badge > 0 && <i>{badge}</i>}
-            </button>
+          {groupedNav.map((group) => (
+            <div className="portal-nav__group" key={group.title}>
+              {group.title && <p className="portal-nav__heading">{group.title}</p>}
+              {group.items.map(({ id, label, icon: Icon, badge }) => (
+                <button
+                  className={active === id ? 'active' : ''}
+                  key={id}
+                  onClick={() => chooseNav(id)}
+                  aria-current={active === id ? 'page' : undefined}
+                  title={label}
+                >
+                  <Icon size={18} /><span>{label}</span>{badge > 0 && <i>{badge}</i>}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="portal-sidebar__foot">

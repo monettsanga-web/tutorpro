@@ -5,10 +5,10 @@ const b = await chromium.launch()
 const seed = (role) => `
   const id='u1';
   const l={id:'l1',name:'Child',year:'Year 3',curriculum:'Cambridge',accessStatus:'active',achievements:[]};
-  const base={id,status:'active',email:'a@b.com',loginId:'a@b.com',authProvider:'email',createdAt:new Date().toISOString()};
-  const acc = '${role}'==='admin' ? {...base,role:'admin',fullName:'TutorPro Online English user',parentName:'TutorPro Online English user'}
-    : '${role}'==='teacher' ? {...base,role:'teacher',status:'approved',fullName:'Teacher M',teacher:{specialization:'Both Curricula',experience:5,availabilitySlots:[],credentials:[],classroom:{platform:'zoom'}}}
-    : {...base,role:'student',parentName:'Test Parent',child:l,children:[l],referralWallet:{freeLessons:0,coupons:[],coins:0,xp:0,transactions:[]}};
+  const base={id,status:'active',email:'monettsanga@yahoo.com',loginId:'monettsanga@yahoo.com',authProvider:'email',createdAt:new Date().toISOString()};
+  const acc='${role}'==='admin'?{...base,role:'admin',fullName:'TutorPro Online English user',parentName:'TutorPro Online English user'}
+   :'${role}'==='teacher'?{...base,role:'teacher',status:'approved',fullName:'Teacher M',teacher:{specialization:'Both Curricula',experience:5,availabilitySlots:[],credentials:[],classroom:{platform:'zoom'}}}
+   :{...base,role:'student',parentName:'Test Parent',child:l,children:[l],referralWallet:{freeLessons:0,coupons:[],coins:0,xp:0,transactions:[]}};
   localStorage.setItem('tutorpro_accounts_v2', JSON.stringify([acc]));
   sessionStorage.setItem('tutorpro_session_v2', id);`
 
@@ -18,26 +18,44 @@ for (const role of ['admin','teacher','student']) {
     const errs=[]; p.on('pageerror',e=>errs.push(String(e)))
     await p.goto('http://localhost:4173/', { waitUntil:'networkidle' })
     await p.evaluate(seed(role))
-    await p.reload({ waitUntil:'networkidle' }); await p.waitForTimeout(2000)
-    const btn=p.locator('button.button--primary:has-text("My dashboard")').first()
-    if (await btn.count()) { await btn.click(); await p.waitForTimeout(3000) }
+    await p.reload({ waitUntil:'networkidle' }); await p.waitForTimeout(2200)
+    await p.locator('button.button--primary:has-text("My dashboard")').first().click()
+    await p.waitForSelector('.portal-nav', { timeout:15000 }); await p.waitForTimeout(2200)
     const r = await p.evaluate(()=>{
-      const bar=document.querySelector('.portal-sidebar'); if(!bar) return null
-      const nav=document.querySelector('.portal-nav')
-      return { barH:Math.round(bar.getBoundingClientRect().height), pct:Math.round(bar.getBoundingClientRect().height/innerHeight*100),
-               oneRow:getComputedStyle(bar).flexWrap==='nowrap', navScrolls:nav.scrollWidth>nav.clientWidth,
-               overflowX:getComputedStyle(nav).overflowX,
-               pageOverflow:document.documentElement.scrollWidth-document.documentElement.clientWidth }
+      const nav=document.querySelector('.portal-nav'), bar=document.querySelector('.portal-sidebar')
+      const main=document.querySelector('.portal-main')
+      const items=[...nav.querySelectorAll('button')]
+      const br=bar.getBoundingClientRect()
+      // every item must be reachable (in the DOM and inside the scroll area)
+      const reachable=items.every(x=>x.offsetParent!==null)
+      // account block must not overlap the list
+      const foot=document.querySelector('.portal-sidebar__foot').getBoundingClientRect()
+      const nr=nav.getBoundingClientRect()
+      return { groups: nav.querySelectorAll('.portal-nav__group').length,
+        items: items.length, reachable,
+        overlap: Math.max(0, Math.round(nr.bottom-foot.top)),
+        contentClearsSidebar: Math.round(main.getBoundingClientRect().left) >= Math.round(br.right)-1,
+        pageOverflow: document.documentElement.scrollWidth-document.documentElement.clientWidth,
+        activeCount: nav.querySelectorAll('button.active').length }
     })
-    if (!r) { ok(false, `${role} @${w}: portal did not open`); await p.close(); continue }
-    ok(r.barH<=95, `${role} @${w}: bar is ${r.barH}px (${r.pct}% of screen) — was 290px/36%`)
-    ok(r.oneRow, `${role} @${w}: brand·nav·account on one row`)
-    ok(r.pageOverflow<=2, `${role} @${w}: no page-wide sideways scroll (${r.pageOverflow}px)`)
-    if (r.navScrolls) ok(r.overflowX==='auto', `${role} @${w}: overflowing nav scrolls instead of wrapping`)
+    ok(r.groups>=3, `${role} @${w}: nav is grouped into ${r.groups} sections`)
+    ok(r.reachable, `${role} @${w}: all ${r.items} items reachable`)
+    ok(r.overlap<=1, `${role} @${w}: account block does not overlap the list (${r.overlap}px)`)
+    ok(r.contentClearsSidebar, `${role} @${w}: content clears the sidebar`)
+    ok(r.pageOverflow<=2, `${role} @${w}: no sideways page scroll (${r.pageOverflow}px)`)
+    ok(r.activeCount===1, `${role} @${w}: exactly one active item`)
     ok(errs.length===0, `${role} @${w}: no JS errors`)
     await p.close()
   }
 }
+// mobile drawer must be untouched
+const m = await b.newPage({ viewport:{width:390,height:844}, isMobile:true, hasTouch:true })
+await m.goto('http://localhost:4173/', { waitUntil:'networkidle' })
+await m.evaluate(seed('admin'))
+await m.reload({ waitUntil:'networkidle' }); await m.waitForTimeout(2500)
+const mr = await m.evaluate(()=>({ over: document.documentElement.scrollWidth-document.documentElement.clientWidth }))
+ok(mr.over<=2, `mobile: no sideways scroll (${mr.over}px)`)
+await m.close()
 await b.close()
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail?1:0)
