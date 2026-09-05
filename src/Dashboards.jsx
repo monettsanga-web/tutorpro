@@ -2648,6 +2648,37 @@ function AdminBackupPanel() {
       {error && <p className="portal-error">{error}</p>}
       {message && <p className="portal-success">{message}</p>}
 
+      {/*
+        The database gauge below measures stored data. Egress — data leaving
+        Supabase — is metered separately and is the limit this project has
+        actually hit before, so it gets its own permanent signpost. Only
+        Supabase can report the live figure, hence the direct link.
+      */}
+      <section className="portal-card backup-egress">
+        <div>
+          <span className="portal-kicker">The limit that actually bites</span>
+          <h2>Egress is metered separately</h2>
+          <p>
+            The gauge below measures how much data you <em>store</em>. It cannot see <strong>egress</strong> —
+            data leaving Supabase — which is capped at 5 GB a month on the free plan. That is the limit
+            this project went over before the August fixes.
+          </p>
+          <p className="backup-egress__measured">
+            Measured on the current build: <strong>3,577 bytes</strong> per homepage visit and
+            <strong> 0 bytes</strong> for an idle dashboard, with the class video now served by Vercel
+            instead of Supabase. At that rate 5 GB is about <strong>1.5 million visits</strong> a month.
+          </p>
+        </div>
+        <a
+          className="portal-secondary-button"
+          href="https://supabase.com/dashboard/project/losmkvvwzijipqrlelyt/settings/billing/usage"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <ExternalLink size={15} /> Check live egress
+        </a>
+      </section>
+
       <section className={`portal-card backup-alert ${backupOverdue ? 'backup-alert--warn' : 'backup-alert--ok'}`}>
         <span className="backup-alert__icon">{backupOverdue ? <Bell size={22} /> : <CheckCircle2 size={22} />}</span>
         <div>

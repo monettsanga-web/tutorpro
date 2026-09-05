@@ -10721,3 +10721,38 @@ a.feedback-resource-detail:hover strong {
     font-size: 0.88rem;
   }
 }
+
+.backup-egress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border-left: 4px solid var(--portal-orange, #ff7a1a);
+}
+
+.backup-egress h2 {
+  margin: 2px 0 8px;
+  font-size: 1.2rem;
+}
+
+.backup-egress p {
+  max-width: 74ch;
+  margin-bottom: 8px;
+  color: var(--portal-muted);
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.backup-egress strong { color: var(--portal-navy); }
+
+.backup-egress__measured {
+  border-radius: 10px;
+  padding: 10px 13px;
+  background: #f5f8fc;
+}
+
+.backup-egress .portal-secondary-button { flex: 0 0 auto; }
+
+@media (max-width: 780px) {
+  .backup-egress { flex-direction: column; }
+}
