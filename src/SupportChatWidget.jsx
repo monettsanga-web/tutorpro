@@ -6,6 +6,7 @@ import {
   createSupportConversation,
   downloadSupportAttachment,
   fetchSupportThread,
+  notifyAdminOfSupportMessage,
   readSavedSupportThread,
   sendParentSupportMessage,
   uploadParentSupportAttachment,
@@ -182,8 +183,13 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
         storageKey: supportStorageKey,
       })
       setCredentials(nextCredentials)
+      const firstMessage = form.message.trim()
       setForm((current) => ({ ...current, message: '' }))
       setThread(await fetchSupportThread(nextCredentials))
+      // Email the administrator. Deliberately after the conversation is saved,
+      // and deliberately not awaited into the error path: a failed alert must
+      // never look like a failed message.
+      void notifyAdminOfSupportMessage(nextCredentials, firstMessage)
     } catch (createError) {
       setError(createError.message)
     } finally {
@@ -205,6 +211,7 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
       setAttachment(null)
       if (attachmentInputRef.current) attachmentInputRef.current.value = ''
       setThread(await fetchSupportThread(credentials))
+      void notifyAdminOfSupportMessage(credentials, message)
     } catch (sendError) {
       setError(sendError.message)
     } finally {

@@ -96,6 +96,46 @@ export async function fetchSupportThread(credentials) {
   return data || { status: 'open', messages: [] }
 }
 
+/**
+ * Tell the administrator by email that a parent or teacher has written in.
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * The admin's replies already triggered `support-notification`, so the parent
+ * got an email. The other direction did nothing: a parent could send a
+ * question and it would sit unread in the Support inbox until the admin
+ * happened to open the dashboard. Nobody was told.
+ *
+ * WHY FAILURES ARE SWALLOWED
+ * --------------------------
+ * The message is already saved by the time this runs. If the email provider
+ * is down, the right outcome is a delivered message with no alert — not a
+ * failed send. So this never throws; it reports back instead, and the caller
+ * decides what to say.
+ *
+ * The Edge Function is given only the conversation id and the text it should
+ * quote. It looks the conversation up itself, so this cannot be used to mail
+ * arbitrary addresses.
+ */
+export async function notifyAdminOfSupportMessage(credentials, messageBody) {
+  if (!supabase || !credentials?.conversationId) return { notified: false, reason: 'not connected' }
+  try {
+    const { data, error } = await supabase.functions.invoke('support-notification', {
+      body: {
+        conversationId: credentials.conversationId,
+        messageBody: messageBody || 'Sent an attachment.',
+        // Tells the function this came FROM the parent, so it emails the
+        // administrator rather than emailing the parent their own message.
+        direction: 'to-admin',
+      },
+    })
+    if (error) throw error
+    return { notified: true, data }
+  } catch (error) {
+    return { notified: false, reason: error?.message || 'Email alert could not be sent.' }
+  }
+}
+
 export async function sendParentSupportMessage(credentials, message) {
   requireSupabase()
   if (credentials.accountMode) {
