@@ -19,6 +19,8 @@ import {
 import { completePasswordReset, loginAccount, logoutAccount, registerAccount, requestPasswordReset } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
+import ContactFallback from './ContactFallback.jsx'
+import { shouldOfferContactFallback, signUpFailureMessage } from './serviceStatus.js'
 
 const yearOptions = [
   'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6',
@@ -76,6 +78,10 @@ export default function AuthModal({
   const [form, setForm] = useState(() => ({ ...initialForm, authProvider: isChineseVisitor(currentVisitorLocale()) ? 'email' : 'gmail' }))
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
+  // Set when a failure is OUR fault (database unreachable or restricted)
+  // rather than something the person can correct. Drives the offer of a
+  // human contact route instead of a dead end.
+  const [contactFallback, setContactFallback] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [createdAccount, setCreatedAccount] = useState(null)
@@ -144,14 +150,22 @@ export default function AuthModal({
     if (!validateStudentStep()) return
     setIsSubmitting(true)
     setFormError('')
+    setContactFallback('')
     try {
       const account = await registerAccount({ ...form, selectedPlan, referralCode, preferredTeacherId: preferredTeacher?.id || '' })
       setCreatedAccount(account)
       onAuthenticated(account)
       setView('success')
     } catch (error) {
-      setFormError(error.message)
-      if (error.message.includes('already exists')) setRegisterStep(1)
+      // A parent who has filled in their child's details and then hits a
+      // platform failure must not be left at a dead end. Offer a person.
+      if (shouldOfferContactFallback(error)) {
+        setFormError('')
+        setContactFallback(signUpFailureMessage(error))
+      } else {
+        setFormError(error.message)
+        if (error.message.includes('already exists')) setRegisterStep(1)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -167,12 +181,19 @@ export default function AuthModal({
 
     setIsSubmitting(true)
     setFormError('')
+    setContactFallback('')
     try {
       const account = await loginAccount(form.email, form.password)
       onAuthenticated(account)
       onEnterPortal(account)
     } catch (error) {
-      setFormError(error.message)
+      if (shouldOfferContactFallback(error)) {
+        setFormError('')
+        setContactFallback('We are sorry — we could not sign you in just now. This is a problem on our side, not with your password. '
+          + 'Your account is safe. Please message us below and we will get you back in.')
+      } else {
+        setFormError(error.message)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -222,6 +243,7 @@ export default function AuthModal({
     setRegisterStep(1)
     setErrors({})
     setFormError('')
+    setContactFallback('')
   }
 
   const handleLogout = () => {
@@ -280,6 +302,12 @@ export default function AuthModal({
               </div>
 
               {formError && <div className="auth-alert" role="alert">{formError}</div>}
+              {contactFallback && (
+                <ContactFallback
+                  message={contactFallback}
+                  details={{ parentName: form.parentName, childName: form.childName, email: form.email }}
+                />
+              )}
 
               {registerStep === 1 ? (
                 <form className="auth-form" onSubmit={continueRegistration} noValidate>
@@ -403,6 +431,9 @@ export default function AuthModal({
                 </div>
               </div>
               {formError && <div className="auth-alert" role="alert">{formError}</div>}
+              {contactFallback && (
+                <ContactFallback message={contactFallback} details={{ email: form.email }} compact />
+              )}
               <form className="auth-form auth-form--login" onSubmit={submitLogin} noValidate>
                 <label>
                   <span>Email, WeChat ID or WhatsApp number</span>

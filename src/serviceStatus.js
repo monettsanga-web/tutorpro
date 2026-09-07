@@ -94,3 +94,93 @@ export function describeSupabaseError(error, fallback = 'Something went wrong. P
   const message = error?.message || (typeof error === 'string' ? error : '')
   return message || fallback
 }
+
+/* ------------------------------------------------------------------ */
+/* Is a failure OUR fault, or something the person can fix?            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Phrases that mean the person can correct this themselves. These must never
+ * trigger the "contact us" fallback: telling somebody to message us on
+ * WhatsApp because they typed a weak password would be worse than useless.
+ */
+const USER_CORRECTABLE = [
+  'already exists',
+  'complete the parent',
+  'complete the student',
+  'complete the required',
+  'enter a valid',
+  'enter the',
+  'enter your',
+  'choose a',
+  'passwords must contain',
+  'passwords do not match',
+  'not correct',
+  'invalid login',
+  'is not correct',
+  'waiting for email activation',
+  'use 8+ characters',
+  'password should be at least',
+  'unable to validate email address',
+  'user already registered',
+]
+
+/**
+ * Signals that the platform itself failed — the database is unreachable,
+ * restricted, or refused the write. The person did nothing wrong and cannot
+ * fix it by retyping, so they should be offered a human instead.
+ */
+const SYSTEM_FAILURE = [
+  'shared registration failed',
+  'shared profile',
+  'shared bookings',
+  'failed to fetch',
+  'networkerror',
+  'network error',
+  'load failed',
+  'fetch failed',
+  'timeout',
+  'timed out',
+  'service unavailable',
+  'internal server error',
+  'database',
+  'supabase',
+  'upstream',
+  'gateway',
+]
+
+/**
+ * Should the sign-up form offer a human contact route for this error?
+ *
+ * True only when the platform failed. A restriction always qualifies. A
+ * message the person can act on never does, and that check runs first so a
+ * validation message containing an incidental word like "database" cannot
+ * be misread as an outage.
+ */
+export function shouldOfferContactFallback(error) {
+  if (!error) return false
+  if (isServiceRestriction(error)) return true
+
+  const haystack = textOf(error).toLowerCase()
+  if (!haystack) return false
+  if (USER_CORRECTABLE.some((phrase) => haystack.includes(phrase))) return false
+
+  const status = Number(error.status ?? error.statusCode)
+  if (Number.isFinite(status) && status >= 500) return true
+
+  return SYSTEM_FAILURE.some((phrase) => haystack.includes(phrase))
+}
+
+/**
+ * What to tell somebody whose sign-up failed for a reason that is our fault.
+ * Leads with reassurance and an apology, because from their side they simply
+ * tried to register their child and the site broke.
+ */
+export function signUpFailureMessage(error) {
+  if (isServiceRestriction(error)) {
+    return 'We are sorry — our sign-up system is temporarily unavailable, so your account could not be created. '
+      + 'Nothing you entered was charged or lost. Please message us below and we will set your account up by hand, usually the same day.'
+  }
+  return 'We are sorry — we could not create your account just now. This is a problem on our side, not with anything you typed. '
+    + 'Please message us below and we will set your account up by hand, usually the same day.'
+}

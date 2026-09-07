@@ -6666,3 +6666,110 @@ body {
     transform: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Contact fallback — shown when sign-up fails on our side             */
+/* ------------------------------------------------------------------ */
+
+/* Deliberately NOT styled as an error. The person did nothing wrong, and a
+   red alert box would read as blame. This is a calm offer of help. */
+.contact-fallback {
+  margin-bottom: 18px;
+  border: 1px solid #cfe3f8;
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(160deg, #f4f9ff 0%, #fdfbff 100%);
+}
+
+.contact-fallback--compact {
+  padding: 15px 16px;
+}
+
+.contact-fallback__lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 15px;
+  color: var(--ink);
+  font-size: 1.006rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.contact-fallback__lead svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #2f6fb5;
+}
+
+.contact-fallback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.contact-fallback__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 15px;
+  background: #fff;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.972rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.contact-fallback__button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.contact-fallback__button:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+
+.contact-fallback__button--whatsapp { background: #25d366; color: #08331a; }
+.contact-fallback__button--facebook { background: #1877f2; }
+.contact-fallback__button--wechat { background: #07c160; color: #04301a; }
+.contact-fallback__button--email {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+
+.contact-fallback__button--wechat.is-copied {
+  background: #04913f;
+  color: #fff;
+}
+
+.contact-fallback__note {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 0.917rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 560px) {
+  /* Full-width rows on a phone: four pills wrapping unevenly looked broken,
+     and each target is easier to hit at full width. */
+  .contact-fallback__actions {
+    flex-direction: column;
+  }
+
+  .contact-fallback__button {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-fallback__button { transition: none; }
+  .contact-fallback__button:hover { transform: none; }
+}

@@ -58,5 +58,47 @@ ok(/nothing has been lost/i.test(describeSupabaseError({ status: 402, message: '
 ok(describeSupabaseError(null, 'fallback text') === 'fallback text',
   'a missing error falls back to the supplied text')
 
+
+/* ------------------------------------------------------------------ */
+/* Contact fallback: only offer a human when the failure is OUR fault  */
+/* ------------------------------------------------------------------ */
+const { shouldOfferContactFallback, signUpFailureMessage } = await import('../src/serviceStatus.js')
+
+console.log('\n-- fallback SHOULD appear (platform failed) --')
+const shouldFire = [
+  ['Shared registration failed: Failed to fetch', 'the exact error registration throws when Supabase is down'],
+  [{ status: 402, message: 'exceeded_egress_quota' }, 'a free-plan service restriction'],
+  ['Shared profile could not be loaded: timeout', 'a profile load timeout'],
+  ['NetworkError when attempting to fetch resource.', 'a browser network error'],
+  [{ status: 503, message: 'Service Unavailable' }, 'a 503 from the server'],
+  [{ status: 500, message: 'Internal Server Error' }, 'a 500 from the server'],
+  ['fetch failed', 'a bare fetch failure'],
+]
+shouldFire.forEach(([err, why]) => ok(shouldOfferContactFallback(err), `offers contact for ${why}`))
+
+console.log('\n-- fallback MUST NOT appear (the person can fix it) --')
+const shouldNotFire = [
+  ['An account with this login already exists. Try logging in instead.', 'a duplicate account'],
+  ['Complete the parent and student profile before creating the account.', 'an incomplete profile'],
+  ['Passwords must contain at least eight characters and one number.', 'a weak password'],
+  ['That password is not correct. Please try again.', 'a wrong password'],
+  ['Enter a valid login for the selected provider.', 'an invalid login'],
+  ['Choose a school year.', 'a missing field'],
+  ['User already registered', 'the Supabase duplicate-user message'],
+  ['Password should be at least 6 characters', 'the Supabase weak-password message'],
+  ['This registration is waiting for email activation.', 'an unconfirmed email'],
+  [null, 'no error at all'],
+  ['', 'an empty message'],
+]
+shouldNotFire.forEach(([err, why]) => ok(!shouldOfferContactFallback(err), `stays hidden for ${why}`))
+
+console.log('\n-- the wording apologises and reassures --')
+const signUpMsg = signUpFailureMessage(new Error('Shared registration failed: Failed to fetch'))
+ok(/sorry/i.test(signUpMsg), 'the sign-up failure message apologises')
+ok(/not with anything you typed/i.test(signUpMsg), 'it makes clear the person did nothing wrong')
+ok(/by hand/i.test(signUpMsg), 'it promises a human will finish the job')
+const restrictedMsg = signUpFailureMessage({ status: 402, message: 'exceeded_egress_quota' })
+ok(/nothing you entered was charged or lost/i.test(restrictedMsg), 'the restricted variant confirms nothing was lost or charged')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
