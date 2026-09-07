@@ -172,6 +172,69 @@ export function shouldOfferContactFallback(error) {
 }
 
 /**
+ * Did this error mean "the server never answered", as opposed to "the server
+ * answered and said no"?
+ *
+ * THIS DISTINCTION IS A SECURITY BOUNDARY.
+ *
+ * Offline sign-in trusts the password hash stored in this browser. That is
+ * only safe when Supabase genuinely could not be reached. If Supabase DID
+ * reply and rejected the credentials, the local copy must never be consulted:
+ * a stale hash would otherwise let a changed or revoked password keep working.
+ *
+ * So this returns true only for transport-level failures and platform
+ * restrictions, and explicitly false for any authentication rejection.
+ */
+export function isOfflineError(error) {
+  if (!error) return false
+
+  const haystack = textOf(error).toLowerCase()
+
+  // An explicit refusal from a server that was clearly reachable. Never
+  // offline, regardless of anything else in the message.
+  const AUTH_REJECTION = [
+    'invalid login credentials',
+    'invalid_credentials',
+    'invalid grant',
+    'email not confirmed',
+    'user not found',
+    'invalid password',
+    'wrong password',
+    'too many requests',
+    'rate limit',
+  ]
+  if (AUTH_REJECTION.some((phrase) => haystack.includes(phrase))) return false
+
+  const status = Number(error.status ?? error.statusCode)
+  // 400/401/403 are considered answers, not silence.
+  if (Number.isFinite(status) && status >= 400 && status < 500 && status !== 402) return false
+
+  // A quota restriction is a platform outage from the user's point of view.
+  if (isServiceRestriction(error)) return true
+  if (Number.isFinite(status) && (status === 402 || status >= 500)) return true
+
+  const TRANSPORT = [
+    'failed to fetch',
+    'networkerror',
+    'network error',
+    'load failed',
+    'fetch failed',
+    'timeout',
+    'timed out',
+    'err_network',
+    'err_internet_disconnected',
+    'err_name_not_resolved',
+    'err_connection',
+    'service unavailable',
+    'upstream',
+    'gateway',
+    'econnrefused',
+    'enotfound',
+  ]
+  return TRANSPORT.some((phrase) => haystack.includes(phrase))
+}
+
+/**
  * What to tell somebody whose sign-up failed for a reason that is our fault.
  * Leads with reassurance and an apology, because from their side they simply
  * tried to register their child and the site broke.

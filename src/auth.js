@@ -2,6 +2,7 @@ import { cloudSyncEnabled, deleteCloudProfile, deleteCloudTeacherAccount, regist
 import { buildWeeklySlots, slotsFromAvailabilityRanges } from './schedule.js'
 import { readVisitorCountry } from './visitorLocale.js'
 import { attributionSnapshot } from './attribution.js'
+import { isOfflineError } from './serviceStatus.js'
 
 const ACCOUNTS_KEY = 'tutorpro_accounts_v2'
 const LEGACY_ACCOUNTS_KEY = 'tutorpro_accounts_v1'
@@ -596,7 +597,23 @@ export async function loginAccount(loginValue, password) {
   // Supabase projects with Confirm email enabled do not issue a cloud session
   // immediately. The verified local password still lets a new registration use
   // its pending dashboard on the same device without exposing a Supabase error.
-  if (cloudLoginError && (account.cloudProfile || account.cloudOnly) && !confirmationPending) throw cloudLoginError
+  //
+  // OFFLINE SIGN-IN
+  // ---------------
+  // If Supabase was simply unreachable — paused, restricted with a 402, or the
+  // network is down — a person who has signed in on THIS device before can
+  // still get to their dashboard using the password hash stored here. Without
+  // it the administrator is locked out of their own site during an outage,
+  // exactly when they most need to look at it.
+  //
+  // The security boundary is `isOfflineError`. It is true only when the server
+  // never answered. If Supabase answered and REJECTED the credentials, the
+  // error is rethrown below and the local hash is never consulted, so a
+  // changed or revoked password can never be bypassed. The account must also
+  // already exist on this device with a stored hash, which the check above
+  // guarantees, so this creates no new way in on an unfamiliar machine.
+  const offlineSignInAllowed = cloudLoginError && isOfflineError(cloudLoginError)
+  if (cloudLoginError && (account.cloudProfile || account.cloudOnly) && !confirmationPending && !offlineSignInAllowed) throw cloudLoginError
   if (['suspended', 'rejected', 'removed'].includes(account.status)) {
     throw new Error(`This account is ${account.status}. Please contact the TutorPro Online English administrator.`)
   }

@@ -100,5 +100,41 @@ ok(/by hand/i.test(signUpMsg), 'it promises a human will finish the job')
 const restrictedMsg = signUpFailureMessage({ status: 402, message: 'exceeded_egress_quota' })
 ok(/nothing you entered was charged or lost/i.test(restrictedMsg), 'the restricted variant confirms nothing was lost or charged')
 
+
+/* ------------------------------------------------------------------ */
+/* Offline sign-in: the security boundary                              */
+/* ------------------------------------------------------------------ */
+const { isOfflineError } = await import('../src/serviceStatus.js')
+
+console.log('\n-- OFFLINE: server never answered, local password may be trusted --')
+const offlineCases = [
+  ['Failed to fetch', 'the browser could not reach Supabase'],
+  ['NetworkError when attempting to fetch resource.', 'a network error'],
+  ['Supabase login failed: fetch failed', 'a wrapped fetch failure'],
+  [{ status: 503, message: 'Service Unavailable' }, 'a 503'],
+  [{ status: 500, message: 'Internal Server Error' }, 'a 500'],
+  [{ status: 402, message: 'exceeded_egress_quota' }, 'a free-plan restriction'],
+  ['timeout of 8000ms exceeded', 'a timeout'],
+  ['net::ERR_INTERNET_DISCONNECTED', 'no internet at all'],
+]
+offlineCases.forEach(([e, why]) => ok(isOfflineError(e), `treats ${why} as offline`))
+
+console.log('\n-- NOT OFFLINE: the server answered and said no --')
+const rejections = [
+  ['Supabase login failed: Invalid login credentials', 'a WRONG PASSWORD'],
+  [{ status: 400, message: 'Invalid login credentials' }, 'a 400 credential rejection'],
+  [{ status: 401, message: 'Unauthorized' }, 'a 401'],
+  [{ status: 403, message: 'Forbidden' }, 'a 403'],
+  ['Email not confirmed', 'an unconfirmed email'],
+  ['User not found', 'a missing user'],
+  [{ status: 429, message: 'Too Many Requests' }, 'rate limiting'],
+  [null, 'no error at all'],
+]
+rejections.forEach(([e, why]) => ok(!isOfflineError(e), `refuses to treat ${why} as offline`))
+
+// The single most important assertion in this file.
+ok(!isOfflineError('Supabase login failed: Invalid login credentials'),
+  'CRITICAL: a rejected password can never fall back to the local hash')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
