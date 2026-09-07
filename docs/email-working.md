@@ -49,7 +49,10 @@ saw their own test emails arrive and reasonably concluded the system worked.
 | `resend._domainkey` TXT (DKIM) | ✅ Present, 218 chars, ends `QIDAQAB` — complete |
 | `send` TXT (SPF) | ✅ `v=spf1 include:amazonses.com ~all` |
 | `send` MX | ✅ `10 feedback-smtp.ap-northeast-1.amazonses.com` |
-| `_dmarc` TXT | ⚠️ **MISSING** — see below |
+| `_dmarc` TXT | ✅ `v=DMARC1; p=none; rua=mailto:monettsanga@gmail.com` |
+
+**All four records pass**, confirmed against both Cloudflare and Google DNS
+on 7 September 2026. The email authentication set is complete.
 
 ## Every email feature is now live
 
@@ -62,34 +65,35 @@ All four functions are deployed with `RESEND_API_KEY` present:
 
 ---
 
-## ⚠️ One thing still worth adding: DMARC
+## DMARC — done
 
-There is no `_dmarc` record. Email works without it, but since February 2024
-**Gmail and Yahoo require DMARC from bulk senders**, and QQ Mail treats its
-absence as a spam signal. Given that most of your parents are on QQ, this
-matters more for you than for most sites.
+Added 7 September 2026 and confirmed live on both Cloudflare and Google DNS:
 
-Adding it improves inbox placement and protects the brand from spoofing.
+```
+_dmarc.tutorpro.site  TXT  v=DMARC1; p=none; rua=mailto:monettsanga@gmail.com
+```
 
-### Add this in Vercel
+`p=none` is monitor-only: it does not affect delivery, it only asks receiving
+servers to report what they observe. That is the correct first step — starting
+at `p=reject` risks silently binning legitimate mail.
 
-Vercel → Settings → Domains → tutorpro.site → DNS Records:
+This matters most for the QQ Mail parents, who make up the bulk of the
+recipients seen in the send log. Gmail and Yahoo have required DMARC from bulk
+senders since February 2024, and QQ treats its absence as a spam signal.
 
-| Field | Value |
-|---|---|
-| **Name** | `_dmarc` |
-| **Type** | `TXT` |
-| **Value** | `v=DMARC1; p=none; rua=mailto:monettsanga@gmail.com` |
-| **TTL** | `60` |
+### What to do with the reports
 
-`p=none` is monitor-only: it changes nothing about delivery, it just asks
-receiving servers to report what they see. That is the correct, safe first
-step — never start at `p=reject`.
+Aggregate reports now arrive weekly at `monettsanga@gmail.com` as XML
+attachments. They are not meant to be read by hand — paste one into a free
+viewer such as dmarcian's XML-to-human tool if a delivery problem ever needs
+investigating. Otherwise they can be ignored.
 
-The `rua=` address receives weekly aggregate reports. Use any address you
-actually read.
+### Tightening later (optional, not now)
 
----
+After a few months of clean reports the policy can move to `p=quarantine` and
+eventually `p=reject`, which stops others spoofing the domain. There is no
+hurry, and no benefit until the reports confirm every legitimate sender is
+passing.
 
 ## Notes
 
