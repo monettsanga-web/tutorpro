@@ -131,11 +131,24 @@ function collect() {
     pages.push({ path: '/', name: 'index.html', lastmod: dates[dates.length - 1] })
   }
 
-  // Language sub-sites.
+  // Language sub-sites. Every HTML page inside them is included, not just the
+  // index: the Korean section in particular carries several long-tail pages,
+  // and a page missing from the sitemap is a page Naver and Google have to
+  // find by luck.
   for (const dir of ['kr', 'cn']) {
-    const index = join(publicDir, dir, 'index.html')
-    if (existsSync(index)) {
-      pages.push({ path: `/${dir}/`, name: `${dir}/`, lastmod: lastModified(index) })
+    const dirPath = join(publicDir, dir)
+    if (!existsSync(dirPath)) continue
+    for (const file of readdirSync(dirPath)) {
+      if (!file.endsWith('.html')) continue
+      // EXCLUDE drops index.html because the ROOT index is emitted as '/'.
+      // A language index is a real, separate page, so it is kept and given
+      // the directory URL below.
+      if (file !== 'index.html' && EXCLUDE.some((pattern) => pattern.test(file))) continue
+      const full = join(dirPath, file)
+      // index.html represents the directory itself, so it keeps the tidy
+      // trailing-slash URL that the canonical tag also uses.
+      const path = file === 'index.html' ? `/${dir}/` : `/${dir}/${file}`
+      pages.push({ path, name: `${dir}/${file}`, lastmod: lastModified(full) })
     }
   }
 

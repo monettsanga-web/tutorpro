@@ -1,4 +1,19 @@
 User-agent: *
 Allow: /
 
+# Naver — the search engine that actually matters in South Korea.
+# Naver's crawler is called Yeti and it is NOT Googlebot; it is named
+# explicitly here because Naver's own guidance asks site owners to do so, and
+# because a named Allow removes any ambiguity for a crawler that is known to
+# be conservative about sites it has not seen before.
+User-agent: Yeti
+Allow: /
+
+# Daum / Kakao — the second Korean engine.
+User-agent: Daum
+Allow: /
+
+User-agent: Daumoa
+Allow: /
+
 Sitemap: https://www.tutorpro.site/sitemap.xml
