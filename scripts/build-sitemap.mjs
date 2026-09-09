@@ -65,6 +65,7 @@ const RULES = [
 /** Pages that must never be advertised to search engines. */
 const EXCLUDE = [
   /^google[0-9a-f]+\.html$/i,   // Search Console verification file
+  /^naver[0-9a-f]+\.html$/i,    // Naver Webmaster Tools verification file
   /^404\.html$/,
   /^index\.html$/,              // handled explicitly as '/'
 ]
