@@ -1,0 +1,612 @@
+/* =====================================================================
+   Korean pages — shared stylesheet
+   =====================================================================
+   The Korean section used a dark purple theme that matched nothing else on
+   the site. A parent arriving from Naver, then clicking through to the main
+   site, saw two different companies. This brings Korea onto the same warm,
+   light brand as the homepage.
+
+   KOREAN TYPOGRAPHY NOTES (the part most non-Korean sites get wrong)
+
+   1. word-break: keep-all
+      Korean has no spaces inside a word (어절). Default CSS breaks lines
+      anywhere, so 화상영어를 can split as 화상영/어를. To a Korean reader that
+      looks broken. keep-all forces breaks at spaces only. This single
+      property is the biggest visual tell of a professionally made Korean
+      page.
+
+   2. Line height
+      Hangul is denser than Latin text and needs more vertical room. 1.75+
+      for body copy, not the 1.5 that suits English.
+
+   3. Font stack
+      Pretendard is the de-facto standard Korean web font. It is loaded from
+      a CDN with a full system fallback, so the page still renders correctly
+      in the sandboxed preview or if the CDN is blocked.
+
+   4. Numerals and Latin
+      Prices and brand names stay Latin, so the stack must handle both
+      without the jarring width mismatch older Korean fonts produce.
+   ===================================================================== */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  --ink: #321568;
+  --ink-2: #54338f;
+  --text: #2f2450;
+  --muted: #6b6379;
+  --cream: #e9fac6;
+  --cream-2: #fffef9;
+  --paper: #ffffff;
+  --coral: #ff4f87;
+  --coral-dark: #e73876;
+  --gold: #ffd54a;
+  --sky: #dceeff;
+  --mint: #dff5a7;
+  --line: #e7e3ee;
+  --shadow-sm: 0 8px 24px rgba(50, 21, 104, 0.07);
+  --shadow-md: 0 16px 44px rgba(50, 21, 104, 0.10);
+  --shadow-lg: 0 28px 70px rgba(50, 21, 104, 0.15);
+  --radius-sm: 14px;
+  --radius-md: 22px;
+  --radius-lg: 32px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--cream-2);
+  color: var(--text);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.8;
+  /* See note 1 above. Applied at the root so nothing is missed. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { width: min(1080px, calc(100% - 40px)); margin-inline: auto; }
+.wrap--narrow { width: min(760px, calc(100% - 40px)); }
+
+a { color: var(--coral-dark); }
+
+/* ---------------------------------------------------------------- */
+/* Header                                                            */
+/* ---------------------------------------------------------------- */
+
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 254, 249, 0.88);
+  backdrop-filter: blur(14px);
+}
+
+.site-head__inner {
+  display: flex;
+  min-height: 74px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  font-size: 1.06rem;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.brand img { width: 42px; height: 42px; border-radius: 13px; }
+
+.head-actions { display: flex; align-items: center; gap: 14px; }
+
+.head-lang {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.head-lang:hover { color: var(--ink); }
+
+/* ---------------------------------------------------------------- */
+/* Buttons                                                           */
+/* ---------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 14px 26px;
+  background: var(--coral);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1.006rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 12px 26px rgba(255, 79, 135, 0.28);
+  transition: transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s ease, background .2s ease;
+}
+
+.btn:hover { transform: translateY(-2px); background: var(--coral-dark); box-shadow: 0 16px 32px rgba(255,79,135,.34); }
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.btn--ghost {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--ghost:hover { background: #fff; border-color: #cfc7de; box-shadow: var(--shadow-md); }
+
+.btn--sm { padding: 11px 20px; font-size: .95rem; }
+
+/* ---------------------------------------------------------------- */
+/* Hero                                                              */
+/* ---------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 64px 0 56px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(223,245,167,.55), transparent 44%),
+    radial-gradient(circle at 92% 8%, rgba(255,79,135,.10), transparent 46%),
+    var(--cream-2);
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: 1.08fr .92fr;
+  gap: 52px;
+  align-items: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(50,21,104,.12);
+  border-radius: 999px;
+  padding: 7px 15px;
+  background: rgba(255,255,255,.8);
+  color: var(--ink-2);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0 0 18px;
+  color: var(--ink);
+  font-size: clamp(2rem, 4.2vw, 3rem);
+  font-weight: 800;
+  line-height: 1.32;
+  letter-spacing: -0.03em;
+}
+
+.hero__lede {
+  margin: 0 0 26px;
+  max-width: 30em;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1.85;
+}
+
+.hero__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+
+.hero__note { margin: 0; color: var(--muted); font-size: .93rem; }
+
+.hero__art {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  aspect-ratio: 4 / 3;
+}
+
+.hero__art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------------------------------------------------------------- */
+/* Trust strip                                                       */
+/* ---------------------------------------------------------------- */
+
+.trust {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 46px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.trust div { padding: 20px 18px; background: var(--paper); text-align: center; }
+.trust strong { display: block; color: var(--ink); font-size: 1.32rem; font-weight: 800; letter-spacing: -.02em; }
+.trust span { color: var(--muted); font-size: .88rem; }
+
+/* ---------------------------------------------------------------- */
+/* Sections                                                          */
+/* ---------------------------------------------------------------- */
+
+section { padding: 62px 0; }
+section.tight { padding: 44px 0; }
+section.alt { background: linear-gradient(180deg, #fff 0%, #fcfaff 100%); border-block: 1px solid var(--line); }
+
+.kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--coral-dark);
+  font-size: .88rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: -.025em;
+}
+
+h3 { margin: 0 0 8px; color: var(--ink); font-size: 1.1rem; font-weight: 800; }
+
+p { margin: 0 0 16px; color: var(--muted); }
+
+.section-lede { max-width: 46em; font-size: 1.05rem; }
+
+/* ---------------------------------------------------------------- */
+/* Cards                                                             */
+/* ---------------------------------------------------------------- */
+
+.grid { display: grid; gap: 18px; }
+.grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 26px 24px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s ease;
+}
+
+.card--lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+.card__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 15px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--mint);
+  /* Icons are inline SVG on currentColor rather than emoji: emoji render as
+     empty boxes when the OS lacks the glyph, and look different on every
+     platform even when they work. */
+  color: #3f6212;
+}
+
+.card__icon svg { width: 23px; height: 23px; }
+.card__icon--coral { color: #9d2b52; }
+.card__icon--sky { color: #1f4f82; }
+.card__icon--gold { color: #7a5306; }
+
+.card__icon--coral { background: #ffe3ec; }
+.card__icon--sky { background: var(--sky); }
+.card__icon--gold { background: #fff2c9; }
+
+.card p:last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------- */
+/* Pricing                                                           */
+/* ---------------------------------------------------------------- */
+
+.price-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+
+.price-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 28px 26px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.price-card--feature { border-color: rgba(255,79,135,.4); box-shadow: var(--shadow-md); }
+
+.price-card__tag {
+  position: absolute;
+  top: -12px;
+  left: 26px;
+  border-radius: 999px;
+  padding: 5px 13px;
+  background: var(--coral);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.price-card__amount {
+  display: block;
+  margin: 4px 0 6px;
+  color: var(--ink);
+  font-size: 2.15rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+
+.price-card__amount small { color: var(--muted); font-size: .95rem; font-weight: 600; }
+
+.price-note {
+  margin-top: 18px;
+  border-radius: var(--radius-sm);
+  padding: 15px 18px;
+  background: var(--mint);
+  color: #2f4a12;
+  font-size: .97rem;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- */
+/* Comparison table                                                  */
+/* ---------------------------------------------------------------- */
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+table { width: 100%; border-collapse: collapse; font-size: .98rem; }
+th, td { padding: 15px 18px; text-align: left; border-bottom: 1px solid var(--line); }
+thead th { background: #faf8fd; color: var(--ink); font-size: .88rem; font-weight: 800; }
+tbody tr:last-child td { border-bottom: 0; }
+td strong { color: var(--ink); }
+.yes { color: #1d7a41; font-weight: 800; }
+
+/* ---------------------------------------------------------------- */
+/* Steps                                                             */
+/* ---------------------------------------------------------------- */
+
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; counter-reset: step; }
+
+.step {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 24px 20px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 13px;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--ink);
+  color: var(--gold);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- */
+/* Curriculum strip                                                  */
+/* ---------------------------------------------------------------- */
+
+.books { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 14px; }
+
+.books figure {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.books img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; }
+
+/* ---------------------------------------------------------------- */
+/* FAQ                                                               */
+/* ---------------------------------------------------------------- */
+
+.faq details {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 11px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.faq summary {
+  cursor: pointer;
+  padding: 18px 22px;
+  color: var(--ink);
+  font-size: 1.02rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; float: right; color: var(--coral-dark); font-size: 1.3rem; line-height: 1; }
+.faq details[open] summary::after { content: '\2212'; }
+.faq details[open] summary { border-bottom: 1px solid var(--line); }
+.faq p { margin: 0; padding: 16px 22px 20px; }
+
+/* ---------------------------------------------------------------- */
+/* Contact                                                           */
+/* ---------------------------------------------------------------- */
+
+.contact-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 34px 32px;
+  background:
+    radial-gradient(circle at 6% 0%, rgba(223,245,167,.5), transparent 48%),
+    var(--paper);
+  box-shadow: var(--shadow-md);
+}
+
+.channels { display: flex; flex-wrap: wrap; gap: 11px; margin: 20px 0 16px; }
+
+.channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 20px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: .99rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease;
+}
+
+.channel:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.channel__dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.fine { color: var(--muted); font-size: .89rem; }
+
+/* ---------------------------------------------------------------- */
+/* Related links                                                     */
+/* ---------------------------------------------------------------- */
+
+.related { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+
+.related a {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s ease;
+}
+
+.related a:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.related span { display: block; margin-top: 7px; color: var(--muted); font-size: .93rem; font-weight: 400; }
+
+/* ---------------------------------------------------------------- */
+/* Final CTA                                                         */
+/* ---------------------------------------------------------------- */
+
+.final {
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  background: linear-gradient(135deg, var(--ink) 0%, #4c1d95 60%, #2b1155 100%);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.final h2 { color: #fff; }
+.final p { color: #d8cfe9; max-width: 40em; margin-inline: auto; }
+.final .btn { background: var(--gold); color: #2b1a05; box-shadow: 0 14px 30px rgba(255,213,74,.3); }
+.final .btn:hover { background: #ffc93a; }
+
+/* ---------------------------------------------------------------- */
+/* Footer                                                            */
+/* ---------------------------------------------------------------- */
+
+.site-foot { border-top: 1px solid var(--line); padding: 34px 0 44px; background: #fbf9f4; }
+.site-foot a { display: inline-block; margin-right: 18px; color: var(--ink-2); font-size: .94rem; font-weight: 600; text-decoration: none; }
+.site-foot a:hover { color: var(--coral-dark); }
+.site-foot p { margin: 12px 0 0; color: var(--muted); font-size: .87rem; }
+
+/* ---------------------------------------------------------------- */
+/* Sticky mobile CTA                                                 */
+/* ---------------------------------------------------------------- */
+
+.sticky-cta { display: none; }
+
+/* ---------------------------------------------------------------- */
+/* Responsive                                                        */
+/* ---------------------------------------------------------------- */
+
+@media (max-width: 940px) {
+  .hero__grid { grid-template-columns: 1fr; gap: 34px; }
+  .hero__art { order: -1; aspect-ratio: 16/10; }
+  .grid--3, .steps { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .related { grid-template-columns: 1fr; }
+  .books { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .trust { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 620px) {
+  body { font-size: 16px; }
+
+  /* The header CTA duplicated the sticky bar at the bottom and wrapped onto
+     two lines, crowding the brand. The sticky bar covers this need on a
+     phone, so the header keeps only the brand and the language switch. */
+  .site-head .btn { display: none; }
+  .brand { font-size: .99rem; }
+  .brand img { width: 36px; height: 36px; }
+  .wrap { width: calc(100% - 32px); }
+  section { padding: 46px 0; }
+  .grid--3, .grid--2, .steps, .price-grid { grid-template-columns: 1fr; }
+  .books { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .hero { padding: 40px 0 40px; }
+  .hero__cta .btn { width: 100%; }
+  .contact-card, .final { padding: 28px 22px; }
+  .channel { flex: 1 1 100%; justify-content: center; }
+
+  /* A persistent way to act, without hunting for a button. Padding is added
+     to the footer so it can never cover the last line of text. */
+  .sticky-cta {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 50;
+    display: flex;
+    gap: 10px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: rgba(255,254,249,.96);
+    backdrop-filter: blur(12px);
+  }
+
+  .sticky-cta .btn { flex: 1; padding: 13px 14px; font-size: .96rem; box-shadow: none; }
+  .site-foot { padding-bottom: 96px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn, .card, .channel, .related a { transition: none; }
+  .btn:hover, .card--lift:hover, .channel:hover, .related a:hover { transform: none; }
+}
