@@ -133,7 +133,7 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
+function Header({ onBook, onLogin, onAccount, onLogout, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro Online English user'
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
@@ -164,7 +164,11 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
               <>
                 <button className="mobile-portal-button mobile-portal-button--primary" onClick={() => openAndClose(onBook)}>Student registration</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onLogin)}>Student login</button>
-                <button className="mobile-portal-button" onClick={() => openAndClose(onTeacherAccess)}>Teacher portal</button>
+                {/* The teacher portal is deliberately absent from the public
+                    site. Teachers sign in through Student login: enterPortal
+                    routes on the account's own role, so they still land on
+                    their teacher dashboard. Parents and visitors never see a
+                    staff entrance. */}
                 <button className="mobile-portal-button" onClick={() => openAndClose(onAdminAccess)}>Admin portal</button>
               </>
             )}
@@ -183,7 +187,6 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
           ) : (
             <>
               <button className="header-portal-link" onClick={onLogin}>Student login</button>
-              <button className="header-portal-link" onClick={onTeacherAccess}>Teacher portal</button>
               <button className="header-portal-link header-portal-link--admin" onClick={onAdminAccess}>Admin portal</button>
             </>
           )}
@@ -1643,7 +1646,7 @@ function PWAInstallPrompt() {
   )
 }
 
-function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
+function Footer({ onRegister, onLogin, onAccount, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -1674,14 +1677,14 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
                   <button onClick={onLogin}>Student login</button>
                 </>
               )}
-              <button onClick={onTeacherAccess}>Teacher portal</button>
               <button onClick={onAdminAccess}>Admin portal</button>
             </div>
             {/* Internal links are how Google finds and ranks these pages. A
                 subject page nothing links to is effectively invisible. */}
             <div>
               <h3>Subjects</h3>
-              <a href="/english-for-kids-ages-8-11.html">Online English classes</a>
+              <a href="/online-english-classes-for-kids.html">Online English classes</a>
+              <a href="/online-english-tutor-for-kids.html">Online English tutor</a>
               <a href="/online-maths-tutor-for-kids.html">Online Maths tutor</a>
               <a href="/online-science-tutor-for-kids.html">Online Science tutor</a>
               <a href="/online-ict-computing-classes-for-kids.html">Online ICT &amp; Computing</a>
@@ -1697,6 +1700,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <h3>Company</h3>
               <a href="/about.html">About us</a>
               <a href="/is-tutorpro-legitimate.html">Are we legitimate?</a>
+              <a href="/online-english-class-schedule-time-zones.html">Class times by country</a>
               <a href="/contact.html">Contact</a>
               <a href="/privacy-policy.html">Privacy policy</a>
               <a href="/terms.html">Terms of service</a>
@@ -2001,7 +2005,6 @@ export default function App() {
         onLogin={openLogin}
         onAccount={openAccount}
         onLogout={logout}
-        onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
@@ -2048,7 +2051,6 @@ export default function App() {
         onRegister={openRegistration}
         onLogin={openLogin}
         onAccount={openAccount}
-        onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
@@ -2065,7 +2067,6 @@ export default function App() {
           onAuthenticated={setCurrentAccount}
           onExplore={closeAndExplore}
           onEnterPortal={enterPortal}
-          onTeacherAccess={() => openRoleAccess('teacher')}
         />
       )}
       {roleAccess && (

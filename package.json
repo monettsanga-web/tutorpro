@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-korea-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
+    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-global-pages.mjs && node scripts/build-korea-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -68,7 +68,9 @@
     "verify:signupfallback": "node scripts/verify-signup-fallback.mjs",
     "verify:offlineadmin": "node scripts/verify-offline-admin-login.mjs",
     "verify:korea": "node scripts/verify-korea-pages.mjs",
-    "verify:koreamobile": "node scripts/verify-korea-mobile.mjs"
+    "verify:koreamobile": "node scripts/verify-korea-mobile.mjs",
+    "verify:global": "node scripts/verify-global-pages.mjs",
+    "verify:teacherhidden": "node scripts/verify-teacher-portal-hidden.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
