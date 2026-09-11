@@ -569,40 +569,153 @@ td strong { color: var(--ink); }
   .trust { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ------------------------------------------------------------------ */
+/* Mobile                                                              */
+/* ------------------------------------------------------------------ */
+/*
+   Audited on a real 375px viewport, the narrowest common phone. Three
+   measured faults drove these rules:
+
+   1. The headline began 423px down a 667px screen, because the hero image
+      was reordered above it. A parent arriving from Naver saw a picture and
+      had to scroll before learning what this is. The image now follows the
+      words and is capped in height.
+
+   2. Seven to eight controls were under 44px tall, the Apple HIG minimum:
+      the brand link at 36px, the language switch at 26px, footer links at
+      27px, an inline link at 19px. Anything below that is genuinely
+      mis-tapped by adult thumbs.
+
+   3. Text at 13px and 14px. Korean at small sizes is harder to read than
+      Latin because the glyphs carry more strokes per character.
+*/
+
+@media (max-width: 860px) {
+  /* Words before picture. The eyebrow, headline and lede lead; the image
+     supports them rather than delaying them. */
+  .hero__grid { grid-template-columns: 1fr; gap: 26px; }
+  .hero__art { order: 2; aspect-ratio: 16 / 10; max-height: 230px; }
+  .grid--3, .grid--2, .steps { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .related { grid-template-columns: 1fr; }
+  .books { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .trust { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 620px) {
-  body { font-size: 16px; }
+  body {
+    /* 16px minimum: iOS zooms the page on focus for anything smaller. */
+    font-size: 16px;
+    line-height: 1.85;
+  }
 
-  /* The header CTA duplicated the sticky bar at the bottom and wrapped onto
-     two lines, crowding the brand. The sticky bar covers this need on a
-     phone, so the header keeps only the brand and the language switch. */
-  .site-head .btn { display: none; }
-  .brand { font-size: .99rem; }
-  .brand img { width: 36px; height: 36px; }
   .wrap { width: calc(100% - 32px); }
-  section { padding: 46px 0; }
-  .grid--3, .grid--2, .steps, .price-grid { grid-template-columns: 1fr; }
-  .books { grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .hero { padding: 40px 0 40px; }
-  .hero__cta .btn { width: 100%; }
-  .contact-card, .final { padding: 28px 22px; }
-  .channel { flex: 1 1 100%; justify-content: center; }
 
-  /* A persistent way to act, without hunting for a button. Padding is added
-     to the footer so it can never cover the last line of text. */
+  /* Consistent vertical rhythm. Sections were 40px, which ran the page
+     together; the eye needs a clear gap to know a new idea has started. */
+  section { padding: 44px 0; }
+  section.tight { padding: 34px 0; }
+
+  h1 { font-size: 1.85rem; line-height: 1.36; }
+  h2 { font-size: 1.42rem; }
+  .hero { padding: 26px 0 36px; }
+  .hero__lede { font-size: 1.03rem; margin-bottom: 22px; }
+  .section-lede { font-size: 1.01rem; }
+
+  /* --- tap targets: everything reaches 44px ----------------------- */
+  .site-head__inner { min-height: 62px; }
+  .site-head .btn { display: none; }   /* the sticky bar already covers this */
+
+  .brand {
+    min-height: 44px;
+    padding-block: 4px;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .brand img { width: 36px; height: 36px; }
+
+  .head-lang {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 10px;
+    font-size: .95rem;
+  }
+
+  .btn { width: 100%; padding: 15px 20px; font-size: 1.02rem; }
+  .hero__cta { flex-direction: column; gap: 10px; }
+
+  .faq summary { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; }
+  .faq summary::after { float: none; }
+  .faq p { padding: 15px 18px 18px; }
+
+  .channel { flex: 1 1 100%; justify-content: center; min-height: 50px; }
+
+  .site-foot a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-right: 14px;
+    font-size: .97rem;
+  }
+
+  /* Inline links inside body copy were 19px tall. Padding lifts the target
+     without disturbing the line above or below. */
+  section p > a { display: inline-block; padding-block: 8px; }
+
+  /* --- readable text ---------------------------------------------- */
+  .price-card__tag { font-size: .9rem; padding: 6px 14px; }
+  .fine, .site-foot p, .hero__note { font-size: .92rem; }
+  .trust span { font-size: .9rem; }
+  .related span { font-size: .95rem; }
+
+  /* --- layout ------------------------------------------------------ */
+  .grid--3, .grid--2, .steps, .price-grid { grid-template-columns: 1fr; }
+  .books { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  .card { padding: 22px 20px; }
+  .contact-card, .final { padding: 26px 22px; }
+  .trust { grid-template-columns: repeat(2, 1fr); margin-top: 30px; }
+  .trust div { padding: 16px 12px; }
+  .trust strong { font-size: 1.22rem; }
+
+  /* Wide tables scroll rather than squash, with a hint that they can. */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 460px; }
+  th, td { padding: 13px 14px; }
+
+  /* --- sticky action bar ------------------------------------------- */
   .sticky-cta {
     position: fixed;
     inset: auto 0 0 0;
     z-index: 50;
     display: flex;
-    gap: 10px;
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    gap: 9px;
+    padding: 9px 14px calc(9px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
-    background: rgba(255,254,249,.96);
+    background: rgba(255,254,249,.97);
     backdrop-filter: blur(12px);
+    box-shadow: 0 -6px 20px rgba(50,21,104,.07);
   }
 
-  .sticky-cta .btn { flex: 1; padding: 13px 14px; font-size: .96rem; box-shadow: none; }
-  .site-foot { padding-bottom: 96px; }
+  .sticky-cta .btn {
+    flex: 1;
+    width: auto;
+    min-height: 48px;
+    padding: 12px 10px;
+    font-size: .97rem;
+    box-shadow: none;
+  }
+
+  /* Clears the fixed bar so the last line of the footer is never hidden. */
+  .site-foot { padding-bottom: 104px; }
+}
+
+/* Very narrow phones, 360px and below. */
+@media (max-width: 380px) {
+  h1 { font-size: 1.68rem; }
+  .books { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .sticky-cta .btn { font-size: .92rem; padding: 12px 6px; }
+  .brand { font-size: .94rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
