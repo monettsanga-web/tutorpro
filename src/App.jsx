@@ -133,7 +133,7 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, onLogout, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
+function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro Online English user'
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
@@ -164,11 +164,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onAdminAccess, currentAc
               <>
                 <button className="mobile-portal-button mobile-portal-button--primary" onClick={() => openAndClose(onBook)}>Student registration</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onLogin)}>Student login</button>
-                {/* The teacher portal is deliberately absent from the public
-                    site. Teachers sign in through Student login: enterPortal
-                    routes on the account's own role, so they still land on
-                    their teacher dashboard. Parents and visitors never see a
-                    staff entrance. */}
+                <button className="mobile-portal-button" onClick={() => openAndClose(onTeacherAccess)}>Teacher portal</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onAdminAccess)}>Admin portal</button>
               </>
             )}
@@ -187,6 +183,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onAdminAccess, currentAc
           ) : (
             <>
               <button className="header-portal-link" onClick={onLogin}>Student login</button>
+              <button className="header-portal-link" onClick={onTeacherAccess}>Teacher portal</button>
               <button className="header-portal-link header-portal-link--admin" onClick={onAdminAccess}>Admin portal</button>
             </>
           )}
@@ -1646,7 +1643,7 @@ function PWAInstallPrompt() {
   )
 }
 
-function Footer({ onRegister, onLogin, onAccount, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
+function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -1677,6 +1674,7 @@ function Footer({ onRegister, onLogin, onAccount, onAdminAccess, currentAccount,
                   <button onClick={onLogin}>Student login</button>
                 </>
               )}
+              <button onClick={onTeacherAccess}>Teacher portal</button>
               <button onClick={onAdminAccess}>Admin portal</button>
             </div>
             {/* Internal links are how Google finds and ranks these pages. A
@@ -2005,6 +2003,7 @@ export default function App() {
         onLogin={openLogin}
         onAccount={openAccount}
         onLogout={logout}
+        onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
@@ -2051,6 +2050,7 @@ export default function App() {
         onRegister={openRegistration}
         onLogin={openLogin}
         onAccount={openAccount}
+        onTeacherAccess={() => openRoleAccess('teacher')}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}

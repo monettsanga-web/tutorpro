@@ -78,8 +78,12 @@ ok(app.includes('/online-english-classes-for-kids.html'), 'the homepage footer l
 ok(app.includes('/online-english-tutor-for-kids.html'), 'the homepage footer links to the tutor page')
 ok(app.includes('/online-english-class-schedule-time-zones.html'), 'the homepage footer links to the time-zone guide')
 
-/* --- the teacher portal must not reappear in any generated page ------- */
-for (const f of PAGES) ok(!/teacher portal/i.test(read(f)), `${f}: no teacher portal link`)
+/* --- these are marketing pages: they carry no staff links ------------- */
+// Not a restriction on the site as a whole. The Teacher and Admin portals
+// live in the app's own header and footer, where the people who need them
+// look; a landing page aimed at a searching parent has no reason to carry
+// either, and doing so would dilute its single call to action.
+for (const f of PAGES) ok(!/teacher portal|admin portal/i.test(read(f)), `${f}: no staff portal links on a parent-facing page`)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

@@ -69,8 +69,7 @@
     "verify:offlineadmin": "node scripts/verify-offline-admin-login.mjs",
     "verify:korea": "node scripts/verify-korea-pages.mjs",
     "verify:koreamobile": "node scripts/verify-korea-mobile.mjs",
-    "verify:global": "node scripts/verify-global-pages.mjs",
-    "verify:teacherhidden": "node scripts/verify-teacher-portal-hidden.mjs"
+    "verify:global": "node scripts/verify-global-pages.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",
