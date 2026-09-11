@@ -5853,10 +5853,17 @@
   .availability-calendar-card,
   .booking-calendar-card,
   .student-schedule-card {
+    /* Deliberately edge-to-edge on a phone so the week grid gets every
+       available pixel. The negative margins slightly exceeded the padding
+       they cancel, which pushed the card 3px wider than the screen and gave
+       the whole page a sideways scroll. Clamping the width keeps the effect
+       without the overflow; the grid inside still scrolls on its own. */
+    max-width: 100vw;
     margin-right: -15px;
     margin-left: -15px;
     border-radius: 0;
     padding: 10px;
+    overflow-x: hidden;
   }
 
   .booking-controls,
@@ -10762,4 +10769,119 @@ a.feedback-resource-detail:hover strong {
   padding: 1px 5px;
   background: #eef1f6;
   font-size: 0.88em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Teacher schedule — day by day                                       */
+/* ------------------------------------------------------------------ */
+
+.teacher-day-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.teacher-day {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--portal-line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+/* Today needs to be findable at a glance, without reading dates. */
+.teacher-day--today {
+  border-color: var(--portal-orange, #ff7a1a);
+  box-shadow: 0 0 0 1px var(--portal-orange, #ff7a1a);
+}
+
+.teacher-day > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  border-bottom: 1px solid var(--portal-line);
+  padding: 10px 12px;
+  background: #f8f9fc;
+}
+
+.teacher-day > header strong { color: var(--portal-navy); font-size: 0.95rem; }
+.teacher-day > header small { color: var(--portal-muted); font-size: 0.83rem; }
+
+.teacher-day__today {
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--portal-orange, #ff7a1a);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.teacher-day ul { margin: 0; padding: 8px; list-style: none; }
+.teacher-day li + li { margin-top: 6px; }
+
+.teacher-day li button {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  border: 1px solid var(--portal-line);
+  border-radius: 9px;
+  padding: 8px 9px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.teacher-day li button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(21, 46, 88, 0.09);
+}
+
+.teacher-day li button:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+
+.teacher-day__time { color: var(--portal-navy); font-size: 0.92rem; font-weight: 800; }
+.teacher-day__who { color: #46425a; font-size: 0.88rem; overflow-wrap: anywhere; }
+
+.teacher-day__status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.teacher-day__status--pending { background: #fff2dd; color: #a2600a; }
+.teacher-day__status--confirmed { background: #e2f0ff; color: #1f4f82; }
+.teacher-day__status--ongoing { background: #e6f7ec; color: #1d7a41; }
+.teacher-day__status--completed { background: #eceaf6; color: #46356f; }
+.teacher-day__status--absent,
+.teacher-day__status--cancelled { background: #fdeaea; color: #a33; }
+
+.teacher-day__free {
+  margin: 0;
+  padding: 14px 12px;
+  color: var(--portal-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Seven columns cannot work on a narrow screen; the week becomes a list. */
+@media (max-width: 1100px) {
+  .teacher-day-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .teacher-day-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .teacher-day-list { grid-template-columns: 1fr; }
+  .teacher-day > header { padding: 12px 14px; }
+  .teacher-day li button { min-height: 44px; }
 }

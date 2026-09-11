@@ -765,7 +765,7 @@ const NAV_GROUPS = {
   ],
   teacher: [
     { title: '', ids: ['overview'] },
-    { title: 'Teaching', ids: ['bookings', 'classroom', 'schedule'] },
+    { title: 'Teaching', ids: ['calendar', 'bookings', 'classroom', 'schedule'] },
     { title: 'Materials', ids: ['courseware', 'homework', 'library'] },
     { title: 'More', ids: ['support', 'referrals', 'profile'] },
   ],
@@ -3687,6 +3687,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [availabilitySlots, setAvailabilitySlots] = useState(account.teacher.availabilitySlots || [])
   const [scheduleWeek, setScheduleWeek] = useState(0)
   const [bookingWeek, setBookingWeek] = useState(0)
+  const [calendarWeek, setCalendarWeek] = useState(0)
   const [bookingView, setBookingView] = useState('list')
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all')
   const [saved, setSaved] = useState(false)
@@ -3747,6 +3748,76 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     .filter((booking) => booking.status === 'completed' && !booking.teacherFeedback?.summary?.trim())
     .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
   const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
+
+  /**
+   * Everything the schedule tab needs for the week being viewed.
+   *
+   * Cancelled classes are excluded from the counts but still drawn on the
+   * calendar: a teacher wants to know their real workload, while still being
+   * able to see that a slot was cancelled rather than never booked.
+   *
+   * Hours are computed from each lesson's own duration, because 25 and 50
+   * minute lessons are both common and counting classes alone would misstate
+   * a day made of long lessons.
+   */
+  const weekSchedule = (() => {
+    const dates = weekDates(calendarWeek)
+    const todayKey = formatDateKey(new Date())
+    const keys = dates.map((date) => formatDateKey(date))
+    const counted = bookings.filter((booking) => keys.includes(booking.date) && booking.status !== 'cancelled')
+
+    const minutes = counted.reduce((total, booking) => total + (Number(booking.duration) || 25), 0)
+    const hours = minutes >= 60 ? `${Math.round((minutes / 60) * 10) / 10}h` : `${minutes}m`
+    const students = new Set(counted.map((booking) => booking.learnerName || booking.studentId)).size
+
+    // "Next" means the next class that has not happened yet, searched across
+    // all bookings rather than only this week, so the answer stays useful
+    // when the teacher is looking at a future or past week.
+    const now = new Date()
+    const upcoming = bookings
+      .filter((booking) => ['pending', 'confirmed', 'ongoing'].includes(booking.status))
+      .map((booking) => ({ booking, when: new Date(`${booking.date}T${booking.time || '00:00'}`) }))
+      .filter((entry) => !Number.isNaN(entry.when.getTime()) && entry.when >= now)
+      .sort((a, b) => a.when - b.when)[0]
+
+    const days = dates.map((date) => {
+      const key = formatDateKey(date)
+      const lessons = bookings
+        .filter((booking) => booking.date === key)
+        .sort((a, b) => String(a.time).localeCompare(String(b.time)))
+        .map((booking) => ({
+          id: booking.id,
+          booking,
+          time: booking.time || '--:--',
+          student: booking.learnerName || booking.studentName || 'Student',
+          status: booking.status || 'pending',
+        }))
+      return {
+        key,
+        weekday: date.toLocaleDateString('en', { weekday: 'short' }),
+        dayLabel: date.toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+        isToday: key === todayKey,
+        lessons,
+      }
+    })
+
+    const first = dates[0].toLocaleDateString('en', { day: 'numeric', month: 'short' })
+    const last = dates[6].toLocaleDateString('en', { day: 'numeric', month: 'short' })
+
+    return {
+      total: counted.length,
+      hours,
+      students,
+      days,
+      rangeLabel: `${first} – ${last}`,
+      nextLabel: upcoming
+        ? new Date(upcoming.when).toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'short' })
+        : 'None',
+      nextStudent: upcoming
+        ? `${upcoming.booking.time} · ${upcoming.booking.learnerName || upcoming.booking.studentName || 'Student'}`
+        : 'No upcoming classes',
+    }
+  })()
   const bookingStatusCount = (status) => status === 'all' ? bookings.length : bookings.filter((booking) => booking.status === status).length
   const teacherSyncCallbacks = useRef({ onAccountChange, onLogout })
   void version
@@ -4097,6 +4168,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   const nav = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'calendar', label: 'My schedule', icon: CalendarDays },
     { id: 'bookings', label: 'Bookings', icon: ClipboardCheck, badge: pending },
     { id: 'classroom', label: 'Classroom', icon: Video },
     { id: 'courseware', label: 'Courseware', icon: BookOpen },
@@ -4211,6 +4283,103 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
           <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{classroomHistory.length ? classroomHistory.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} />) : <EmptyState icon={Video} title="No classrooms yet" text="Accept a student booking and its unique classroom will appear here." />}</section>
+        </div>
+      )}
+
+      {active === 'calendar' && (
+        <div className="portal-view teacher-calendar-view">
+          <div className="portal-page-heading">
+            <div>
+              <span className="portal-kicker">Your teaching week</span>
+              <h1>My schedule</h1>
+              <p>Every booked class in one weekly calendar. Click a student to open the lesson, write feedback or cancel.</p>
+            </div>
+            <button className="portal-secondary-button" onClick={() => setCalendarWeek(0)} disabled={calendarWeek === 0}>
+              <CalendarDays size={16} /> Jump to this week
+            </button>
+          </div>
+
+          {/*
+            A calendar alone answers "when", but the questions a teacher
+            actually has first thing are "what is next" and "how busy am I".
+            These four figures answer both without any counting.
+          */}
+          <div className="portal-stat-grid">
+            <article>
+              <span className="stat-icon stat-icon--blue"><CalendarCheck2 size={21} /></span>
+              <div><small>Classes this week</small><strong>{weekSchedule.total}</strong><em>{weekSchedule.rangeLabel}</em></div>
+            </article>
+            <article>
+              <span className="stat-icon stat-icon--green"><Clock3 size={21} /></span>
+              <div><small>Teaching hours</small><strong>{weekSchedule.hours}</strong><em>Scheduled this week</em></div>
+            </article>
+            <article>
+              <span className="stat-icon stat-icon--orange"><Users size={21} /></span>
+              <div><small>Students</small><strong>{weekSchedule.students}</strong><em>Different learners</em></div>
+            </article>
+            <article>
+              <span className="stat-icon stat-icon--gold"><Sparkles size={21} /></span>
+              <div><small>Next class</small><strong>{weekSchedule.nextLabel}</strong><em>{weekSchedule.nextStudent}</em></div>
+            </article>
+          </div>
+
+          <section className="portal-card booking-calendar-card teacher-booking-calendar">
+            <div className="drag-instruction teacher-feedback-instruction">
+              <span><CalendarDays size={18} /></span>
+              <div>
+                <strong>Your booked classes</strong>
+                <small>Colours separate ongoing, completed, absent and cancelled classes. Click a student name to open the lesson, write feedback or unbook it. Use the arrows to move between weeks.</small>
+              </div>
+            </div>
+            <ScheduleCalendar
+              weekOffset={calendarWeek}
+              onWeekOffset={setCalendarWeek}
+              availabilitySlots={availabilitySlots}
+              bookings={bookings}
+              onBookingOpen={setManagedBooking}
+              onBookingFeedback={setFeedbackBooking}
+              onBookingCancel={unbookCalendarClass}
+              showInactiveBookings
+            />
+          </section>
+
+          <section className="portal-card">
+            <div className="portal-card__heading portal-card__heading--small">
+              <div><span className="portal-kicker">Day by day</span><h2>{weekSchedule.rangeLabel}</h2></div>
+            </div>
+            {weekSchedule.total ? (
+              <div className="teacher-day-list">
+                {weekSchedule.days.map((day) => (
+                  <article className={`teacher-day ${day.isToday ? 'teacher-day--today' : ''}`} key={day.key}>
+                    <header>
+                      <strong>{day.weekday}</strong>
+                      <small>{day.dayLabel}</small>
+                      {day.isToday && <span className="teacher-day__today">Today</span>}
+                    </header>
+                    {day.lessons.length ? (
+                      <ul>
+                        {day.lessons.map((lesson) => (
+                          <li key={lesson.id}>
+                            <button type="button" onClick={() => setManagedBooking(lesson.booking)}>
+                              <span className="teacher-day__time">{lesson.time}</span>
+                              <span className="teacher-day__who">{lesson.student}</span>
+                              <span className={`teacher-day__status teacher-day__status--${lesson.status}`}>{lesson.status}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p className="teacher-day__free">No classes</p>}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={CalendarDays}
+                title="No classes booked this week"
+                text="When a family books you, the class appears here and in the calendar above."
+              />
+            )}
+          </section>
         </div>
       )}
 
