@@ -169,6 +169,68 @@ async function openSchedule(page) {
   await page.close()
 }
 
+/* --- availability can be added from the schedule tab itself ----------- */
+{
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+  const errors = []
+  page.on('pageerror', (e) => errors.push(String(e)))
+  await openSchedule(page)
+  await page.locator('.portal-nav button:has-text("My schedule")').click()
+  await page.waitForSelector('.teacher-calendar-view', { timeout: 15000 })
+  await page.waitForTimeout(700)
+
+  // Two modes over one calendar.
+  const modes = page.locator('.calendar-mode-switch button')
+  ok(await modes.count() === 2, 'the calendar offers both viewing and editing modes')
+  ok(await modes.first().getAttribute('aria-pressed') === 'true', 'it opens on Booked classes, not in edit mode')
+
+  // Editing controls must be absent until the teacher asks for them.
+  ok(await page.locator('.calendar-mode-actions').count() === 0, 'no save button is shown while only viewing')
+
+  await page.locator('.calendar-mode-switch button:has-text("Add availability")').click()
+  await page.waitForTimeout(600)
+
+  ok(await page.locator('.calendar-mode-actions').count() === 1, 'switching to Add availability reveals the save action')
+  const hint = await page.locator('.drag-instruction').textContent()
+  ok(/Paint your available time/i.test(hint), 'the instruction changes to explain painting')
+  ok(/booked lessons are locked/i.test(hint), 'it warns that booked lessons cannot be painted over')
+
+  const before = await page.evaluate(() =>
+    document.querySelector('.calendar-mode-count')?.textContent?.trim() || '')
+  ok(/0 slots/.test(before), `the slot count starts empty (${before})`)
+
+  // Paint a free cell by dragging, exactly as a teacher would.
+  // Cells are buttons inside .schedule-row. Painting is driven by real
+  // pointer events, so a synthetic click would not exercise the same path.
+  const cells = page.locator('.schedule-row button:not([disabled])')
+  const count = await cells.count()
+  ok(count > 0, `the calendar has paintable cells in edit mode (${count})`)
+  // A click paints one 30-minute cell, which is the smallest real action and
+  // the one that must work. Synthesised mouse drags do not reliably fire the
+  // pointerenter sequence the component listens for.
+  if (count) {
+    await cells.nth(0).click()
+    await page.waitForTimeout(400)
+    await cells.nth(1).click()
+    await page.waitForTimeout(500)
+  }
+  const after = await page.evaluate(() =>
+    document.querySelector('.calendar-mode-count')?.textContent?.trim() || '')
+  ok(after !== before, `painting adds availability (${before} -> ${after})`)
+
+  // Save, then confirm it survives a reload.
+  await page.locator('.calendar-mode-actions .portal-primary-button').click()
+  await page.waitForTimeout(900)
+  const stored = await page.evaluate(() => {
+    const accounts = JSON.parse(localStorage.getItem('tutorpro_accounts_v2') || '[]')
+    return (accounts[0]?.teacher?.availabilitySlots || []).length
+  })
+  ok(stored > 0, `saving persists the availability (${stored} slots stored)`)
+
+  ok(errors.length === 0, `no JavaScript errors while editing (${errors.slice(0, 1).join('') || 'none'})`)
+  await page.close()
+}
+
 await browser.close()
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

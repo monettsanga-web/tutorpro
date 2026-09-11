@@ -3688,6 +3688,10 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [scheduleWeek, setScheduleWeek] = useState(0)
   const [bookingWeek, setBookingWeek] = useState(0)
   const [calendarWeek, setCalendarWeek] = useState(0)
+  // Lets the schedule tab switch between viewing booked classes and painting
+  // availability, so a teacher never has to leave the calendar they are
+  // looking at to open up more time.
+  const [calendarEditing, setCalendarEditing] = useState(false)
   const [bookingView, setBookingView] = useState('list')
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all')
   const [saved, setSaved] = useState(false)
@@ -4324,22 +4328,72 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           </div>
 
           <section className="portal-card booking-calendar-card teacher-booking-calendar">
+            {/*
+              Two modes over one calendar. Viewing answers "who am I teaching";
+              editing answers "when else am I free". Keeping them on the same
+              grid means a teacher can see a gap and open it up immediately,
+              instead of memorising the gap and going to another tab.
+            */}
+            <div className="calendar-mode-bar" role="group" aria-label="Calendar mode">
+              <div className="calendar-mode-switch">
+                <button
+                  type="button"
+                  className={calendarEditing ? '' : 'active'}
+                  aria-pressed={!calendarEditing}
+                  onClick={() => setCalendarEditing(false)}
+                >
+                  <CalendarCheck2 size={15} /> Booked classes
+                </button>
+                <button
+                  type="button"
+                  className={calendarEditing ? 'active' : ''}
+                  aria-pressed={calendarEditing}
+                  onClick={() => setCalendarEditing(true)}
+                >
+                  <CalendarPlus size={15} /> Add availability
+                </button>
+              </div>
+              {calendarEditing && (
+                <div className="calendar-mode-actions">
+                  <span className="calendar-mode-count">
+                    {availabilitySlots.length} slots · {(availabilitySlots.length / 2).toFixed(1)} hours/week
+                  </span>
+                  {saved && <span className="saved-label"><Check size={14} /> Saved</span>}
+                  <button className="portal-primary-button" onClick={saveAvailability}>
+                    <Save size={16} /> Save availability
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="drag-instruction teacher-feedback-instruction">
-              <span><CalendarDays size={18} /></span>
+              <span>{calendarEditing ? <CalendarPlus size={18} /> : <CalendarDays size={18} />}</span>
               <div>
-                <strong>Your booked classes</strong>
-                <small>Colours separate ongoing, completed, absent and cancelled classes. Click a student name to open the lesson, write feedback or unbook it. Use the arrows to move between weeks.</small>
+                {calendarEditing ? (
+                  <>
+                    <strong>Paint your available time</strong>
+                    <small>Click and drag across the calendar to add time. Drag across green slots to remove them. Each cell is 30 minutes, and booked lessons are locked so they cannot be painted over. Remember to save when you are done.</small>
+                  </>
+                ) : (
+                  <>
+                    <strong>Your booked classes</strong>
+                    <small>Colours separate ongoing, completed, absent and cancelled classes. Click a student name to open the lesson, write feedback or unbook it. Use the arrows to move between weeks.</small>
+                  </>
+                )}
               </div>
             </div>
+
             <ScheduleCalendar
               weekOffset={calendarWeek}
               onWeekOffset={setCalendarWeek}
               availabilitySlots={availabilitySlots}
               bookings={bookings}
+              editable={calendarEditing}
+              onPaint={calendarEditing ? paintAvailability : undefined}
               onBookingOpen={setManagedBooking}
-              onBookingFeedback={setFeedbackBooking}
-              onBookingCancel={unbookCalendarClass}
-              showInactiveBookings
+              onBookingFeedback={calendarEditing ? undefined : setFeedbackBooking}
+              onBookingCancel={calendarEditing ? undefined : unbookCalendarClass}
+              showInactiveBookings={!calendarEditing}
             />
           </section>
 

@@ -10885,3 +10885,69 @@ a.feedback-resource-detail:hover strong {
   .teacher-day > header { padding: 12px 14px; }
   .teacher-day li button { min-height: 44px; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Schedule tab — viewing vs editing availability                      */
+/* ------------------------------------------------------------------ */
+
+.calendar-mode-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.calendar-mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid var(--portal-line);
+  border-radius: 999px;
+  padding: 4px;
+  background: #f4f6fa;
+}
+
+.calendar-mode-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--portal-muted);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+
+.calendar-mode-switch button:hover { color: var(--portal-navy); }
+
+.calendar-mode-switch button.active {
+  background: #fff;
+  color: var(--portal-navy);
+  box-shadow: 0 2px 8px rgba(21, 46, 88, 0.12);
+}
+
+.calendar-mode-switch button:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+
+.calendar-mode-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 11px;
+}
+
+.calendar-mode-count { color: var(--portal-muted); font-size: 0.9rem; font-weight: 600; }
+
+@media (max-width: 700px) {
+  .calendar-mode-bar { flex-direction: column; align-items: stretch; }
+  .calendar-mode-switch { justify-content: stretch; }
+  .calendar-mode-switch button { flex: 1; justify-content: center; padding: 8px 10px; }
+  .calendar-mode-actions { justify-content: space-between; }
+  .calendar-mode-actions .portal-primary-button { flex: 1; justify-content: center; min-height: 44px; }
+}
