@@ -71,7 +71,8 @@
     "verify:koreamobile": "node scripts/verify-korea-mobile.mjs",
     "verify:global": "node scripts/verify-global-pages.mjs",
     "verify:teachercalendar": "node scripts/verify-teacher-calendar.mjs",
-    "verify:adminmobile": "node scripts/verify-admin-mobile.mjs"
+    "verify:adminmobile": "node scripts/verify-admin-mobile.mjs",
+    "verify:sidebarscroll": "node scripts/verify-sidebar-scroll.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

@@ -11084,3 +11084,72 @@ a.feedback-resource-detail:hover strong {
   .portal-stat-grid { grid-template-columns: 1fr; }
   .portal-page-heading h1 { font-size: 1.5rem; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Mobile sidebar — the drawer must scroll                             */
+/* ------------------------------------------------------------------ */
+/*
+   Measured on an iPhone SE: the admin sidebar holds 19 items totalling
+   1,433px inside a 667px screen, so 10 of them sat below the fold with
+   overflow-y: visible and could not be reached at all. Log out was at
+   1,235px. The same fault affected teacher and student dashboards, just
+   with fewer items hidden.
+
+   The scrolling treatment already existed but was written inside
+   @media (min-width: 901px), so it only ever applied to desktop. The rules
+   below give the drawer the same behaviour, which is exactly where it was
+   needed most.
+
+   Only the list scrolls. The brand stays pinned at the top and the account
+   block with Log out stays pinned at the bottom, so the two things a person
+   looks for are always in the same place.
+*/
+
+@media (max-width: 900px) {
+  .portal-sidebar {
+    /* A fixed element with top:0;bottom:0 already spans the screen, but the
+       explicit height makes the flex column's free space unambiguous so the
+       nav can be told to fill it. Using dvh avoids the mobile browser's
+       collapsing address bar cutting the last item off. */
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .portal-sidebar .portal-brand,
+  .portal-sidebar__foot {
+    flex: 0 0 auto;
+  }
+
+  .portal-sidebar .portal-nav {
+    display: block;
+    /* min-height:0 is required: a flex child defaults to min-height:auto and
+       refuses to shrink below its content, which is why the list grew past
+       the screen instead of scrolling. */
+    min-height: 0;
+    flex: 1 1 auto;
+    margin-top: 18px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Stops a flick at the end of the list scrolling the page behind it. */
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
+
+  .portal-sidebar .portal-nav::-webkit-scrollbar { width: 5px; }
+  .portal-sidebar .portal-nav::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255, 255, 255, 0.2); }
+  .portal-sidebar .portal-nav::-webkit-scrollbar-track { background: transparent; }
+
+  /* A soft fade tells the reader there is more below. A hard cut-off looks
+     like the list simply ends. */
+  .portal-sidebar .portal-nav {
+    mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent);
+  }
+
+  /* Breathing room so the final item is never flush against the fade. */
+  .portal-sidebar .portal-nav > *:last-child { padding-bottom: 10px; }
+}
