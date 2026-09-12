@@ -10951,3 +10951,136 @@ a.feedback-resource-detail:hover strong {
   .calendar-mode-actions { justify-content: space-between; }
   .calendar-mode-actions .portal-primary-button { flex: 1; justify-content: center; min-height: 44px; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin dashboard on phones                                           */
+/* ------------------------------------------------------------------ */
+/*
+   Audited at 390px across every admin tab. Four measured faults, not
+   cosmetic ones:
+
+   1. Payments overflowed by 522px and Analytics by 502px. The page heading
+      stacks correctly, but a flex item defaults to min-width:auto, so it
+      refuses to shrink below its longest unbreakable content. "Payments,
+      credits and QR verification" therefore forced the row to 819px and
+      dragged the whole page sideways. This is the single biggest fault and
+      it affects every heading, so the fix is applied to the container.
+
+   2. The funnel channel table kept five fixed columns at 390px.
+
+   3. Teachers and Students had 13 and 4 controls under the 44px minimum.
+
+   4. Bookings dropped text to 13px, which is below comfortable reading size.
+*/
+
+@media (max-width: 650px) {
+  /* THE BIG ONE. Without min-width:0 a long heading cannot wrap and takes
+     the page with it. */
+  .portal-page-heading,
+  .portal-page-heading > div,
+  .portal-card__heading,
+  .portal-card__heading > div {
+    min-width: 0;
+  }
+
+  .portal-page-heading h1,
+  .portal-card__heading h2 {
+    overflow-wrap: anywhere;
+    /* clamp() was resolving against the viewport and still ran long. */
+    font-size: 1.62rem;
+    letter-spacing: -0.03em;
+    line-height: 1.25;
+  }
+
+  .portal-page-heading p { overflow-wrap: anywhere; font-size: 0.97rem; }
+
+  /* A stacked heading's action should span the width rather than sit in a
+     narrow column beside nothing. */
+  .portal-page-heading > button,
+  .portal-page-heading .portal-secondary-button,
+  .portal-page-heading a.portal-primary-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  /* Nothing inside a dashboard panel may exceed the screen. */
+  .portal-view,
+  .portal-view * {
+    max-width: 100%;
+  }
+
+  /*
+     .admin-payments-view and .admin-analytics-view are grids with no declared
+     columns, so the implicit track is auto-sized and grows to its widest
+     content. min-width:0 on the CHILD cannot help, because it is the TRACK
+     that is too wide. Declaring a single minmax(0, 1fr) column caps the track
+     itself, which is what finally lets the long heading wrap.
+  */
+  .portal-view[class*="admin-"],
+  .admin-payments-view,
+  .admin-analytics-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Five columns cannot fit a phone. Two rows of readable pairs instead. */
+  .funnel-channel-table__head { display: none; }
+
+  .funnel-channel-table__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 10px;
+    padding: 12px 13px;
+    font-size: 0.97rem;
+  }
+
+  .funnel-channel-table__row > *:first-child {
+    grid-column: 1 / -1;
+    font-size: 1.02rem;
+  }
+
+  .funnel-split { grid-template-columns: 1fr; }
+
+  /* Tap targets. 13 controls on Teachers alone were under 44px. */
+  .portal-view button,
+  .portal-view select,
+  .portal-view .portal-secondary-button,
+  .portal-view .portal-danger-link {
+    min-height: 44px;
+  }
+
+  /* Inline chips and filter pills are exempt: forcing 44px on those makes
+     a filter row taller than the content it filters. They stay tappable
+     through padding instead. */
+  .portal-view .booking-status-filters button,
+  .portal-view .teacher-booking-status-filters button {
+    min-height: 38px;
+    padding: 8px 14px;
+  }
+
+  /* Readable text. Nothing below 13px on a phone. */
+  .portal-view small,
+  .portal-view em,
+  .portal-view td,
+  .portal-view .stat-icon + div small { font-size: 0.86rem; }
+
+  /* Stat cards: two across works at 390px, one across below that. */
+  .portal-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .portal-stat-grid article { padding: 14px 12px; }
+  .portal-stat-grid strong { font-size: 1.32rem; }
+
+  /* Wide tables scroll inside themselves rather than moving the page. */
+  .admin-analytics-table,
+  .payment-table-wrap,
+  .portal-view table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .homework-card__head { flex-direction: column; gap: 8px; }
+}
+
+@media (max-width: 400px) {
+  .portal-stat-grid { grid-template-columns: 1fr; }
+  .portal-page-heading h1 { font-size: 1.5rem; }
+}

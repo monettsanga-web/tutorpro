@@ -54,14 +54,31 @@ export default function PremiumMotion() {
             entry.target.classList.add('premium-heading--visible')
             headingObserver.unobserve(entry.target)
           })
-        }, { threshold: 0.3 })
+        // A heading only reveals once 30% of it is on screen. On a phone a tall
+        // two-line dashboard heading sitting under the sticky topbar can fail
+        // to reach that, and because the observer then never fires the heading
+        // stays at opacity 0 permanently - invisible, not merely unanimated.
+        // A small rootMargin plus a lower threshold keeps the effect while
+        // making it impossible for a heading to be stranded.
+        }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' })
 
     const attachHeading = (heading) => {
       if (observedHeadings.has(heading)) return
       observedHeadings.add(heading)
       heading.classList.add('premium-heading')
-      if (headingObserver) headingObserver.observe(heading)
-      else heading.classList.add('premium-heading--visible')
+      if (headingObserver) {
+        headingObserver.observe(heading)
+        // Safety net. If the observer has not fired within a second - because
+        // the element is clipped, in a scroll container the observer cannot
+        // see, or laid out oddly - show the heading anyway. Losing a fade is
+        // acceptable; losing the words is not.
+        window.setTimeout(() => {
+          if (!heading.classList.contains('premium-heading--visible')) {
+            heading.classList.add('premium-heading--visible')
+            headingObserver.unobserve(heading)
+          }
+        }, 1000)
+      } else heading.classList.add('premium-heading--visible')
     }
 
     const attachSurface = (surface) => {
