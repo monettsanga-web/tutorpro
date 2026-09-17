@@ -1699,6 +1699,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <a href="/about.html">About us</a>
               <a href="/is-tutorpro-legitimate.html">Are we legitimate?</a>
               <a href="/online-english-class-schedule-time-zones.html">Class times by country</a>
+              <a href="/tw/">台灣家長專頁 (Taiwan)</a>
               <a href="/contact.html">Contact</a>
               <a href="/privacy-policy.html">Privacy policy</a>
               <a href="/terms.html">Terms of service</a>

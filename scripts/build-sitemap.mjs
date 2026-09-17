@@ -136,7 +136,7 @@ function collect() {
   // index: the Korean section in particular carries several long-tail pages,
   // and a page missing from the sitemap is a page Naver and Google have to
   // find by luck.
-  for (const dir of ['kr', 'cn']) {
+  for (const dir of ['kr', 'cn', 'tw']) {
     const dirPath = join(publicDir, dir)
     if (!existsSync(dirPath)) continue
     for (const file of readdirSync(dirPath)) {

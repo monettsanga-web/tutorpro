@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-global-pages.mjs && node scripts/build-korea-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
+    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-global-pages.mjs && node scripts/build-korea-pages.mjs && node scripts/build-taiwan-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -72,7 +72,8 @@
     "verify:global": "node scripts/verify-global-pages.mjs",
     "verify:teachercalendar": "node scripts/verify-teacher-calendar.mjs",
     "verify:adminmobile": "node scripts/verify-admin-mobile.mjs",
-    "verify:sidebarscroll": "node scripts/verify-sidebar-scroll.mjs"
+    "verify:sidebarscroll": "node scripts/verify-sidebar-scroll.mjs",
+    "verify:taiwan": "node scripts/verify-taiwan-pages.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

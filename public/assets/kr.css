@@ -595,7 +595,7 @@ td strong { color: var(--ink); }
      supports them rather than delaying them. */
   .hero__grid { grid-template-columns: 1fr; gap: 26px; }
   .hero__art { order: 2; aspect-ratio: 16 / 10; max-height: 230px; }
-  .grid--3, .grid--2, .steps { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid--3, .grid--2, .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .related { grid-template-columns: 1fr; }
   .books { grid-template-columns: repeat(3, minmax(0,1fr)); }
   .trust { grid-template-columns: repeat(2, 1fr); }
@@ -670,7 +670,12 @@ td strong { color: var(--ink); }
   .related span { font-size: .95rem; }
 
   /* --- layout ------------------------------------------------------ */
-  .grid--3, .grid--2, .steps, .price-grid { grid-template-columns: 1fr; }
+  /* minmax(0, 1fr), not 1fr. A bare 1fr track is min-content sized, so one
+     long unbreakable run of Latin text - a book title, a URL, "Power Up,
+     Global English, Family and Friends" - pushes the track wider than its
+     parent and the whole page scrolls sideways. Measured at 377px inside a
+     343px column on the Taiwan page. */
+  .grid--3, .grid--2, .steps, .price-grid, .grid { grid-template-columns: minmax(0, 1fr); }
   .books { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
   .card { padding: 22px 20px; }
   .contact-card, .final { padding: 26px 22px; }
@@ -686,7 +691,13 @@ td strong { color: var(--ink); }
   /* --- sticky action bar ------------------------------------------- */
   .sticky-cta {
     position: fixed;
-    inset: auto 0 0 0;
+    /* inset:0 resolves against the viewport INCLUDING the scrollbar gutter,
+       so the bar came out 18px wider than the visible area and dragged the
+       page sideways. Pinning left only, with an explicit 100% width, keeps
+       it inside the content box. */
+    position: fixed;
+    inset: auto auto 0 0;
+    width: 100%;
     z-index: 50;
     display: flex;
     gap: 9px;

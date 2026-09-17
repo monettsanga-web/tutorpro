@@ -86,6 +86,7 @@ function head({ title, description, keywords, url, schema }) {
     <link rel="canonical" href="${url}" />
     <link rel="alternate" hreflang="en" href="${SITE}/" />
     <link rel="alternate" hreflang="zh-Hans" href="${SITE}/cn/" />
+    <link rel="alternate" hreflang="zh-Hant-TW" href="${SITE}/tw/" />
     <link rel="alternate" hreflang="ko" href="${SITE}/kr/" />
     <link rel="alternate" hreflang="x-default" href="${SITE}/" />
     <meta property="og:type" content="article" />
