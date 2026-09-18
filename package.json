@@ -73,7 +73,8 @@
     "verify:teachercalendar": "node scripts/verify-teacher-calendar.mjs",
     "verify:adminmobile": "node scripts/verify-admin-mobile.mjs",
     "verify:sidebarscroll": "node scripts/verify-sidebar-scroll.mjs",
-    "verify:taiwan": "node scripts/verify-taiwan-pages.mjs"
+    "verify:taiwan": "node scripts/verify-taiwan-pages.mjs",
+    "verify:adventure": "node scripts/verify-english-adventure.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.7",

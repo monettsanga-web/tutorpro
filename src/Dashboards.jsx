@@ -137,12 +137,13 @@ import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES
 import { currentVisitorLocale, isChineseVisitor, isKoreanVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { supabase } from './supabaseClient.js'
 import { getAmbassadorLevel, getNextAmbassadorLevel, getReferralCode, getReferralLink, getReferralStats, getShareTargets, referralActivity } from './referrals.js'
-import { BADGE_CATALOG, DAILY_MISSIONS, canClaimMission, claimMission, deriveAutomaticBadges, getRewardProfile, rewardProgress } from './rewards.js'
+import { BADGE_CATALOG, DAILY_MISSIONS, addBadge, addReward, canClaimMission, claimMission, deriveAutomaticBadges, getRewardProfile, rewardProgress } from './rewards.js'
 import { buildLearningReport, skillLabel } from './learningReports.js'
 import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
 import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgradeVerdict, FREE_TIER } from './backup.js'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
+const EnglishAdventure = lazy(() => import('./EnglishAdventure.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro Online English user'
@@ -3378,6 +3379,27 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     setBookingVersion((value) => value + 1)
   }, [onAccountChange])
 
+  /**
+   * Bank a completed Adventure world into the rewards profile that already
+   * drives levels, badges and the parent report. The Adventure deliberately
+   * does not keep its own separate score: one XP total, one place to look.
+   */
+  const earnAdventureReward = ({ xp = 0, stars = 0, world = '' }) => {
+    const latestAccount = getAccountById(account.id)
+    const latestLearner = latestAccount.children.find((item) => item.id === learner.id) || latestAccount.child
+    let profile = addReward(getRewardProfile(latestLearner), { xp, stars, coins: Math.round(xp / 2) },
+      `English Adventure: ${world}`)
+    // The existing "game-starter" badge is exactly this achievement, so it is
+    // reused rather than adding a near-duplicate.
+    profile = addBadge(profile, 'game-starter')
+    const updated = updateStudentProfile(account.id, {
+      rewardProfile: profile,
+      gameStars: (latestLearner.gameStars || 0) + stars,
+    }, learner.id)
+    setAccount(updated)
+    onAccountChange(updated)
+  }
+
   const earnGameStars = (stars) => {
     const latestAccount = getAccountById(account.id)
     const latestLearner = latestAccount.children.find((item) => item.id === learner.id) || latestAccount.child
@@ -3398,6 +3420,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'lessons', label: 'My lessons', icon: CalendarDays, badge: pendingCount },
     { id: 'my-teachers', label: 'My teachers', icon: Star, badge: unratedCount },
     { id: 'curriculum', label: 'Curriculum Framework', icon: BookOpen },
+    { id: 'adventure', label: 'English Adventure', icon: Sparkles },
     { id: 'games', label: 'English games', icon: Gamepad2 },
     { id: 'referrals', label: 'Referrals', icon: Award },
     { id: 'homework', label: 'Homework', icon: BookOpen },
@@ -3488,6 +3511,17 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
           </section>
         </div>
+      )}
+
+      {active === 'adventure' && (
+        <Suspense fallback={<div className="game-loading"><i /><strong>Opening the English Adventure…</strong><span>Loading {learner.name}'s worlds</span></div>}>
+          <EnglishAdventure
+            key={learner.id}
+            learner={learner}
+            totalXp={getRewardProfile(learner).xp}
+            onEarn={earnAdventureReward}
+          />
+        </Suspense>
       )}
 
       {active === 'games' && <Suspense fallback={<div className="game-loading"><i /><strong>Launching 3D English Game Zone…</strong><span>Preparing the world for {learner.name}</span></div>}><StudentGames key={learner.id} learner={learner} onEarnStars={earnGameStars} /></Suspense>}
