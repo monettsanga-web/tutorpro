@@ -1,156 +1,125 @@
-# The payment button: what was wrong and what you must do
+# Why the payment button still does not work
 
-**There were TWO separate problems.** I have fixed one of them; the other one
-only you can fix.
+**I have now proved this is not a website problem.** PayPal is refusing to let
+your account receive money. Your website, your keys and your setup are all
+correct — PayPal itself is saying no.
 
-| # | Problem | Who fixes it | Status |
-|---|---|---|---|
-| 1 | The dashboard crashed, so the button never appeared | Me | ✅ **Fixed and live** |
-| 2 | PayPal has restricted your account | **You** | ⏳ **Waiting on you** |
-
-## Problem 1 — the dashboard was crashing (fixed)
-
-This is the one I missed the first time, and it is probably what you were
-actually seeing. For any account without a parent name saved, the dashboard
-hit an error while drawing the page:
-
-```
-account.parentName.split(' ')[0]
-TypeError: Cannot read properties of undefined (reading 'split')
-```
-
-The whole page was then replaced by *"Something didn't load correctly."* The
-payment box lives on that same page, so **the PayPal button was never drawn at
-all.** Nothing was wrong with the button — the page it sits on had already
-died before it got a chance to appear.
-
-I reproduced this on the live site with a real logged-in account, fixed it,
-and added a test that covers four variations so it cannot come back. **The
-buttons now render correctly.**
-
-## Problem 2 — PayPal has restricted your account (needs you)
-
-Even with the page fixed, PayPal itself still refuses the payment. I checked
-again just now, from inside a real logged-in session on your live site:
-
-```
-POST /api/paypal/create-order
-400  {"error":"PAYEE_ACCOUNT_RESTRICTED: The merchant account is restricted."}
-```
-
-Only you can lift this — see the steps below.
+Your PayPal dashboard looks perfectly normal, which is exactly what makes this
+confusing. **A restriction can be active even when no warning banner is
+shown.** That is why I tested it directly instead of trusting the dashboard.
 
 ---
 
-## What "payee restricted" means
+## The proof
 
-"Payee" means the account **receiving** the money — yours. PayPal is saying:
-this account is not allowed to take payments right now.
+I asked PayPal's own servers to create a simple $10 order using your live keys.
+PayPal replied:
 
-Everything else was verified working, so we can rule it out:
+```
+HTTP 422
+issue:       PAYEE_ACCOUNT_RESTRICTED
+description: The merchant account is restricted.
+debug id:    77a4a0e7a1400
+```
 
-| Checked | Result |
-|---|---|
-| Your live PayPal Client ID on the site | ✅ correct and loading |
-| PayPal's SDK script | ✅ loads (200, 100 KB) |
-| `/api/paypal/create-order` deployed | ✅ responding |
-| `/api/paypal/capture-order` deployed | ✅ responding |
-| Login/security checks | ✅ working |
-| Dashboard renders the button | ✅ **fixed — was crashing** |
-| **PayPal accepting an order** | ❌ **blocked — account restricted** |
+I then ruled out every other possible cause:
 
-## Why nobody saw an error
-
-Two reasons stacked on top of each other. The dashboard crash replaced the
-page before the button existed. And when the button *did* appear, PayPal's
-own sealed window quietly swallowed the failure, so a parent saw a spinner
-and then nothing. Both of those are fixed: the page no longer crashes, and a
-failed payment now explains itself.
-
----
-
-## 🔴 What YOU need to do (only you can do this)
-
-This cannot be fixed with code. Roughly 10 minutes:
-
-1. Go to **https://www.paypal.com** and sign in to the **business** account
-   that receives your class payments.
-2. Look for a **red or yellow banner** at the top of the dashboard.
-3. Open the **Resolution Center** (top menu), or go directly to
-   **https://www.paypal.com/restore/dashboard**
-4. Complete **every open item** it lists. The usual ones are:
-   - Confirm your identity (photo ID)
-   - Confirm your address
-   - Confirm your bank account or card
-   - Answer questions about what your business sells
-5. Submit and wait. PayPal usually clears it in **1–3 business days**.
-
-**Checkout starts working again by itself the moment the restriction lifts.**
-Nothing needs to be redeployed.
-
-### If the Resolution Center looks empty
-Contact PayPal directly and use the exact words:
-
-> My business account is returning PAYEE_ACCOUNT_RESTRICTED when customers try
-> to pay on my website. Please tell me what restriction is on my account and
-> how to remove it.
-
-Message them on Facebook or X — people usually get a faster reply there than
-by phone.
-
----
-
-## What the website does now (already live)
-
-Parents no longer hit a dead end. When card payment cannot work they see:
-
-> **Card payment is temporarily unavailable**
-> Our payment provider has put a hold on our account, so online card payment
-> cannot be completed right now. This is a problem on our side — nothing is
-> wrong with your card and you have not been charged.
-
-…followed by **WhatsApp, Messenger, WeChat and Email** buttons, with the
-parent's and child's names already filled into the message. **So you can still
-take the booking and the payment by hand while PayPal is sorted out.** You do
-not lose the sale.
-
-Three deliberate decisions:
-
-- **No "try again" button** for this error. Retrying can never succeed, and
-  telling a parent to keep trying would waste their time and their trust.
-- **The parent never sees `PAYEE_ACCOUNT_RESTRICTED`.** Jargon in front of
-  someone holding a card is how you lose them.
-- **If a payment ever succeeds but credits fail to appear**, the message says
-  *"Do not pay again"* and routes them to you. That is the only failure that
-  can cost a parent real money twice.
-
-## Other failures now handled properly
-
-| What happens | What the parent sees | Retry offered? |
+| Possible cause | Ruled out how | Result |
 |---|---|---|
-| Your account restricted | We explain it is our side, offer contact | No |
-| Card declined by their bank | Try another card or call your bank | Yes |
-| They closed the PayPal window | Nothing charged, start again anytime | Yes |
-| Ad-blocker blocked PayPal | Turn off the blocker and refresh | Yes |
-| Sign-in expired | Sign in again and retry | Yes |
-| Paid but credits missing | **Do not pay again** — contact us | No |
+| Wrong/expired keys | PayPal accepted the login | ✅ keys valid |
+| Sandbox vs live mix-up | Confirmed mode = **live** | ✅ correct |
+| Browser key ≠ server key | Both end `…F5ZhT1` | ✅ same account |
+| Our order format was wrong | Retried a bare $10 order, no extras | ❌ still blocked |
+| The website crashing | Fixed earlier; buttons now render | ✅ fixed |
+| **PayPal blocking the account** | PayPal's own reply | ❌ **this is it** |
 
-## Tests
+That fourth row is the important one. A **completely plain $10 order with no
+items, no description and no custom fields was still refused.** Nothing about
+how the website asks for money is the problem.
 
+---
+
+## 🔴 What you need to do
+
+### 1. Check the right account
+Your keys end in **`…F5ZhT1`**. In PayPal go to
+**Settings (⚙️) → Account Settings → API access**, and confirm a live REST app
+exists whose Client ID ends in those characters. If it does not, the keys in
+the website belong to a *different* PayPal account and that is the restricted
+one.
+
+### 2. Look where the banner does not show
+The homepage can look fine while a restriction is active. Check all of these:
+
+- **https://www.paypal.com/restore/dashboard** ← the direct restriction page
+- **Resolution Center** (top menu) → look at **Your open cases**
+- **Notifications** — the bell icon (yours shows **4 unread**)
+- **Settings → Account Settings → Account limitations**
+
+Complete every open item. Usually photo ID, proof of address, bank
+confirmation, or questions about what your business sells.
+
+### 3. If you find nothing, contact PayPal
+This is the most likely outcome, since your dashboard looks clean. Send them
+exactly this:
+
+> My business account cannot accept payments on my website. The PayPal API
+> returns `PAYEE_ACCOUNT_RESTRICTED — The merchant account is restricted` for
+> every order, including a plain $10 order with no line items.
+>
+> PayPal debug ID: **77a4a0e7a1400**
+> My REST Client ID ends in: **F5ZhT1**
+>
+> There is no banner or open case in my dashboard. Please tell me what
+> restriction is on my account and exactly how to remove it.
+
+**Message them on Facebook or X — replies are much faster than by phone.**
+
+Typical causes for a new business account: the account is new and selling
+services, identity or bank details were never fully confirmed, or the account
+was auto-flagged during review. It is usually cleared in **1–3 business days.**
+
+---
+
+## Check it yourself anytime — no developer needed
+
+I built this into your dashboard so you never have to wait for me:
+
+> **Admin → Payments → "Is PayPal accepting payments?" → Run check**
+
+It tells you in plain words whether PayPal is accepting orders, which PayPal
+account your keys belong to, and the debug ID to quote to support. Nothing is
+charged when you run it.
+
+**Run it after PayPal tells you the restriction is lifted.** When it turns
+green, real parents can pay.
+
+---
+
+## Meanwhile, you are not losing bookings
+
+When card payment fails, parents now see a clear explanation plus
+**WhatsApp, Messenger, WeChat and Email buttons** with their name and their
+child's name already filled in. They message you, and you take the booking and
+payment directly. Nobody hits a dead end.
+
+---
+
+## What I fixed along the way
+
+**1. The dashboard was crashing (fixed).** For accounts with no parent name
+saved, `account.parentName.split(...)` threw and the error boundary replaced
+the whole page with *"Something didn't load correctly."* The payment box lives
+on that page, so the button was never drawn. Fixed, with 22 tests covering
+missing, empty and null names.
+
+**2. Failures were silent (fixed).** PayPal's button hid the error inside its
+own window. Now every failure is explained, and only failures a parent can
+actually fix offer a "try again".
+
+**3. No way to check (fixed).** Hence the Run check button above.
+
+### Tests
 - `npm run test:paymenterrors` — 47 checks
-- `npm run verify:paymentfailure` — 38 browser checks, driving the exact live
-  error through a real headless browser
-- `npm run verify:nocrash` — 22 checks that the dashboard survives accounts
-  with a missing, empty or null name (the crash in Problem 1)
-
-## How to confirm it is fixed later
-
-Once PayPal clears the restriction, run this and look for `orderId`:
-
-```bash
-curl -s -X POST https://www.tutorpro.site/api/paypal/create-order \
-  -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_TOKEN' \
-  -d '{"accountId":"YOUR_ID","billingPlan":"weekly","weeklySessions":2}'
-```
-
-Or just ask me and I will check it for you.
+- `npm run verify:paymentfailure` — 38 browser checks
+- `npm run verify:nocrash` — 22 checks
