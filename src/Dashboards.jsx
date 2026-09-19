@@ -150,7 +150,22 @@ const EnglishAdventure = lazy(() => import('./EnglishAdventure.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 const today = () => formatDateKey(new Date())
 const displayName = (account) => account.parentName || account.fullName || 'TutorPro Online English user'
-const initials = (name = '') => name.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase()
+/**
+ * First name for a greeting, never throwing.
+ *
+ * `account.parentName.split(' ')` crashed the ENTIRE student dashboard for any
+ * account without a parent name — the error boundary replaced the whole page,
+ * so the payment button never rendered at all. A missing display name must
+ * degrade to a plain greeting, never take the dashboard down with it.
+ */
+const firstName = (account = {}) => {
+  const full = account.parentName || account.fullName || ''
+  const first = String(full).trim().split(/\s+/)[0]
+  return first || 'there'
+}
+// A default parameter only covers `undefined`, so a null name from the
+// database still threw here. Coerced instead.
+const initials = (name) => String(name || '').split(' ').filter(Boolean).map((word) => word[0]).join('').slice(0, 2).toUpperCase()
 const COUNTRY_NAMES = typeof Intl !== 'undefined' && Intl.DisplayNames
   ? new Intl.DisplayNames(['en'], { type: 'region' })
   : null
@@ -870,7 +885,7 @@ function PortalShell({ account, role, active, onActive, onHome, onLogout, navIte
             <button aria-label="Notifications"><Bell size={19} /><i /></button>
             <button className="portal-user-chip" onClick={() => onActive('profile')}>
               <ProfilePhoto accountId={account.id} name={displayName(account)} refreshKey={mediaVersion} className="portal-avatar-media" />
-              <div><strong>{displayName(account).split(' ')[0]}</strong><small>{role}</small></div>
+              <div><strong>{firstName(account)}</strong><small>{role}</small></div>
             </button>
           </div>
         </header>
@@ -3500,7 +3515,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <AnnouncementBanner account={account} />
           <section className="student-welcome">
             <div>
-              <span className="portal-kicker">Welcome back, {account.parentName.split(' ')[0]}</span>
+              <span className="portal-kicker">Welcome back, {firstName(account)}</span>
               <h1>{learner.name} is building something brilliant.</h1>
               <p>Every lesson is another step toward confident, clear English.</p>
               <button className="portal-primary-button" onClick={() => setActive('book')}>Book the next class <ArrowRight size={17} /></button>
@@ -4275,7 +4290,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'overview' && (
         <div className="portal-view">
           <AnnouncementBanner account={account} />
-          <div className="portal-page-heading"><div><span className="portal-kicker">Teacher studio</span><h1>Good day, {account.fullName.split(' ')[0]}.</h1><p>Keep every learner, booking and teaching hour in view.</p></div><button className="portal-primary-button" onClick={() => setActive('schedule')}><CalendarDays size={17} /> Update availability</button></div>
+          <div className="portal-page-heading"><div><span className="portal-kicker">Teacher studio</span><h1>Good day, {firstName(account)}.</h1><p>Keep every learner, booking and teaching hour in view.</p></div><button className="portal-primary-button" onClick={() => setActive('schedule')}><CalendarDays size={17} /> Update availability</button></div>
           <div className="portal-stat-grid portal-stat-grid--four" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             <article><span className="stat-icon stat-icon--orange"><ClipboardCheck size={21} /></span><div><small>Pending requests</small><strong>{pending}</strong><em>Needs attention</em></div></article>
             <article><span className="stat-icon stat-icon--blue"><Video size={21} /></span><div><small>Lessons completed</small><strong>{account.teacher.lessonsCompleted || 0}</strong><em>All time</em></div></article>
