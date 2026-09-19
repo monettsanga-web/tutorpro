@@ -2397,6 +2397,31 @@ function AdminPaymentsPanel() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  // PayPal self-check: lets the owner confirm whether card payment is
+  // actually working without needing a developer to run a script.
+  const [gatewayCheck, setGatewayCheck] = useState(null)
+  const [checkingGateway, setCheckingGateway] = useState(false)
+
+  const runGatewayCheck = async () => {
+    setCheckingGateway(true)
+    setGatewayCheck(null)
+    try {
+      const { data } = supabase ? await supabase.auth.getSession() : { data: null }
+      const token = data?.session?.access_token
+      if (!token) throw new Error('Please sign in again before running the check.')
+      const response = await fetch('/api/paypal/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: '{}',
+      })
+      setGatewayCheck(await response.json())
+    } catch (checkError) {
+      setGatewayCheck({ verdict: `The check could not run: ${checkError.message}`, steps: [] })
+    } finally {
+      setCheckingGateway(false)
+    }
+  }
+
   const students = getAccounts('student')
   const studentRows = students.flatMap((student) => {
     const learners = student.children?.length ? student.children : student.child ? [student.child] : []
@@ -2525,6 +2550,25 @@ function AdminPaymentsPanel() {
         <article><span className="stat-icon stat-icon--orange"><Clock3 size={21} /></span><div><small>Zero-credit accounts</small><strong>{zeroCreditStudents}</strong><em>Need payment or reward</em></div></article>
         <article><span className="stat-icon stat-icon--gold"><CheckCircle2 size={21} /></span><div><small>Manual verifications</small><strong>{manualVerifiedCount}</strong><em>QR/receipt credits</em></div></article>
       </div>
+
+      <section className="portal-card admin-gateway-check">
+        <div className="portal-card__heading portal-card__heading--small">
+          <div><span className="portal-kicker">Card payment health</span><h2>Is PayPal accepting payments?</h2><p>Checks your live PayPal setup and tells you in plain words what to do. Nothing is charged.</p></div>
+          <button className="portal-primary-button" type="button" onClick={runGatewayCheck} disabled={checkingGateway}>
+            {checkingGateway ? 'Checking…' : 'Run check'} <ShieldCheck size={16} />
+          </button>
+        </div>
+        {gatewayCheck && (
+          <div className={`admin-gateway-check__result ${gatewayCheck.orderAttempt?.ok ? 'is-ok' : 'is-bad'}`} role="status">
+            <strong>{gatewayCheck.orderAttempt?.ok ? '✅ ' : '⚠️ '}{gatewayCheck.verdict}</strong>
+            {gatewayCheck.merchantAccount?.email && <p>PayPal account in use: <b>{gatewayCheck.merchantAccount.email}</b></p>}
+            {gatewayCheck.steps?.length > 0 && (
+              <ol>{gatewayCheck.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+            )}
+            <small>Mode: {gatewayCheck.environment} · Key ending {gatewayCheck.serverClientId || 'not set'}</small>
+          </div>
+        )}
+      </section>
 
       <section className="portal-card admin-manual-payment-card">
         <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Manual QR verification</span><h2>Add credits after receipt review</h2><p>Use this for GCash, AUB PayMate, WeChat Pay or special admin adjustments.</p></div></div>

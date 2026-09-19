@@ -11473,3 +11473,48 @@ a.feedback-resource-detail:hover strong {
   .adv-world, .adv-option, .adv-letter, .adv-progress i { transition: none; }
   .adv-world:hover:not(:disabled), .adv-option:hover:not(:disabled), .adv-letter:hover:not(:disabled) { transform: none; }
 }
+
+/* Admin → Payments → "Is PayPal accepting payments?"
+   The owner should be able to answer that question without a developer. */
+.admin-gateway-check__result {
+  margin-top: 14px;
+  padding: 15px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--portal-line, #e4e0eb);
+  background: #fff;
+}
+
+.admin-gateway-check__result.is-ok {
+  border-color: rgba(22, 163, 74, 0.3);
+  background: linear-gradient(180deg, #f0fdf4, #fff);
+}
+
+.admin-gateway-check__result.is-bad {
+  border-color: rgba(217, 119, 6, 0.3);
+  background: linear-gradient(180deg, #fffbeb, #fff);
+}
+
+.admin-gateway-check__result strong {
+  display: block;
+  font-size: 1.02rem;
+  line-height: 1.4;
+  color: var(--portal-navy, #321568);
+}
+
+.admin-gateway-check__result p { margin: 9px 0 0; font-size: 0.97rem; }
+
+.admin-gateway-check__result ol {
+  margin: 11px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 7px;
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+.admin-gateway-check__result small {
+  display: block;
+  margin-top: 11px;
+  color: var(--portal-muted, #716981);
+  font-size: 0.87rem;
+}
