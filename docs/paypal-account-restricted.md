@@ -1,19 +1,48 @@
 # The payment button: what was wrong and what you must do
 
-**Short version:** your code was fine. **PayPal has restricted your business
-account**, so it is refusing to accept money. Only you can lift that, by
-signing in to PayPal. I have fixed what the website does when it happens.
+**There were TWO separate problems.** I have fixed one of them; the other one
+only you can fix.
+
+| # | Problem | Who fixes it | Status |
+|---|---|---|---|
+| 1 | The dashboard crashed, so the button never appeared | Me | ✅ **Fixed and live** |
+| 2 | PayPal has restricted your account | **You** | ⏳ **Waiting on you** |
+
+## Problem 1 — the dashboard was crashing (fixed)
+
+This is the one I missed the first time, and it is probably what you were
+actually seeing. For any account without a parent name saved, the dashboard
+hit an error while drawing the page:
+
+```
+account.parentName.split(' ')[0]
+TypeError: Cannot read properties of undefined (reading 'split')
+```
+
+The whole page was then replaced by *"Something didn't load correctly."* The
+payment box lives on that same page, so **the PayPal button was never drawn at
+all.** Nothing was wrong with the button — the page it sits on had already
+died before it got a chance to appear.
+
+I reproduced this on the live site with a real logged-in account, fixed it,
+and added a test that covers four variations so it cannot come back. **The
+buttons now render correctly.**
+
+## Problem 2 — PayPal has restricted your account (needs you)
+
+Even with the page fixed, PayPal itself still refuses the payment. I checked
+again just now, from inside a real logged-in session on your live site:
+
+```
+POST /api/paypal/create-order
+400  {"error":"PAYEE_ACCOUNT_RESTRICTED: The merchant account is restricted."}
+```
+
+Only you can lift this — see the steps below.
 
 ---
 
-## What I found
-
-I called your live payment API the same way the website does. This came back:
-
-```
-POST https://www.tutorpro.site/api/paypal/create-order
-400  {"error":"PAYEE_ACCOUNT_RESTRICTED: The merchant account is restricted."}
-```
+## What "payee restricted" means
 
 "Payee" means the account **receiving** the money — yours. PayPal is saying:
 this account is not allowed to take payments right now.
@@ -27,14 +56,16 @@ Everything else was verified working, so we can rule it out:
 | `/api/paypal/create-order` deployed | ✅ responding |
 | `/api/paypal/capture-order` deployed | ✅ responding |
 | Login/security checks | ✅ working |
+| Dashboard renders the button | ✅ **fixed — was crashing** |
 | **PayPal accepting an order** | ❌ **blocked — account restricted** |
 
 ## Why nobody saw an error
 
-PayPal's button runs inside its own sealed window. When our server said the
-order failed, the button quietly gave up. A parent saw the loading spinner,
-then nothing at all. No message, no explanation, no way forward — they just
-left. That part was ours to fix, and it is fixed.
+Two reasons stacked on top of each other. The dashboard crash replaced the
+page before the button existed. And when the button *did* appear, PayPal's
+own sealed window quietly swallowed the failure, so a parent saw a spinner
+and then nothing. Both of those are fixed: the page no longer crashes, and a
+failed payment now explains itself.
 
 ---
 
@@ -109,6 +140,8 @@ Three deliberate decisions:
 - `npm run test:paymenterrors` — 47 checks
 - `npm run verify:paymentfailure` — 38 browser checks, driving the exact live
   error through a real headless browser
+- `npm run verify:nocrash` — 22 checks that the dashboard survives accounts
+  with a missing, empty or null name (the crash in Problem 1)
 
 ## How to confirm it is fixed later
 
