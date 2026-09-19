@@ -6728,6 +6728,75 @@
   margin-top: 12px !important;
 }
 
+/* Checkout failure panel.
+   Amber rather than red: most of these are "we will sort this out for you",
+   not "you did something wrong", and a parent who is told their card failed
+   in alarm-red does not come back. `minmax(0, 1fr)` on the head keeps long
+   provider sentences inside the card on a phone. */
+.student-payment-pro__failure {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(217, 119, 6, 0.28);
+  background: linear-gradient(180deg, #fffbeb, #fff);
+  box-shadow: 0 14px 30px rgba(217, 119, 6, 0.1);
+}
+
+.student-payment-pro__failure-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 11px;
+  align-items: start;
+}
+
+.student-payment-pro__failure-head > svg {
+  color: #b45309;
+  flex: none;
+  margin-top: 2px;
+}
+
+.student-payment-pro__failure-head strong {
+  display: block;
+  color: #92400e;
+  font-size: 1.04rem;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.student-payment-pro__failure-head p {
+  margin: 5px 0 0;
+  color: #7c5410;
+  font-size: 0.99rem;
+  line-height: 1.5;
+}
+
+.student-payment-pro__retry {
+  margin-top: 13px;
+  min-height: 44px;
+}
+
+.student-payment-pro__failure .contact-fallback {
+  margin-top: 14px;
+}
+
+.student-payment-pro__admin-fix {
+  display: flex;
+  gap: 8px;
+  align-items: start;
+  margin-top: 13px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  background: rgba(50, 21, 104, 0.06);
+  border: 1px dashed rgba(50, 21, 104, 0.25);
+  color: var(--portal-navy, #321568);
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+
+.student-payment-pro__admin-fix svg { flex: none; margin-top: 2px; }
+
 @media (max-width: 1040px) {
   .student-payment-pro__layout {
     grid-template-columns: 1fr;

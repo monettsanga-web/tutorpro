@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  AlertTriangle,
   ArrowRight,
   AudioLines,
   Award,
@@ -141,6 +142,8 @@ import { BADGE_CATALOG, DAILY_MISSIONS, addBadge, addReward, canClaimMission, cl
 import { buildLearningReport, skillLabel } from './learningReports.js'
 import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
 import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgradeVerdict, FREE_TIER } from './backup.js'
+import { describePaymentError } from './paymentErrors.js'
+import ContactFallback from './ContactFallback.jsx'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
 const EnglishAdventure = lazy(() => import('./EnglishAdventure.jsx'))
@@ -2799,6 +2802,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const [paymentMethod, setPaymentMethod] = useState(chinaQrAllowed ? 'chinaQr' : 'paypal')
   const [gatewayError, setGatewayError] = useState('')
   const [gatewayReady, setGatewayReady] = useState(false)
+  const [checkoutAttempt, setCheckoutAttempt] = useState(0)
   const [lastPaymentMessage, setLastPaymentMessage] = useState('')
   const paypalContainerId = `paypal-weekly-plan-${String(account.id || 'student').replace(/[^a-zA-Z0-9_-]/g, '')}`
   const sessionOptions = billingPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
@@ -2817,6 +2821,16 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
   const isPayPalTestMode = !configuredPayPalClientId || paypalClientId === 'sb' || import.meta.env.VITE_PAYPAL_ENV === 'sandbox'
   const selectedMethodName = paymentMethodLabel[paymentMethod] || 'Selected gateway'
+  // Raw gateway strings are never rendered: they are translated into an
+  // explanation plus the right next step. See src/paymentErrors.js.
+  const paymentFailure = gatewayError ? describePaymentError(gatewayError) : null
+  // Remounting the button container is what actually clears a failed PayPal
+  // render, so the retry bumps a key rather than only hiding the message.
+  const retryPayment = () => {
+    setGatewayError('')
+    setGatewayReady(false)
+    setCheckoutAttempt((value) => value + 1)
+  }
 
   useEffect(() => subscribeToVisitorLocale(setVisitorLocale), [])
 
@@ -2962,7 +2976,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       const container = document.getElementById(paypalContainerId)
       if (container) container.innerHTML = ''
     }
-  }, [account.id, billingPlan, creditCount, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
+  }, [account.id, billingPlan, checkoutAttempt, creditCount, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
 
   const methodCards = [
     { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal / Card Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal and debit/credit card checkout is active.', enabled: true },
@@ -3184,7 +3198,40 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. Hidden outside China except for admin preview.</span>}
         <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>
-      {gatewayError && <div className="portal-error student-payment-pro__message" role="alert">{gatewayError}</div>}
+      {paymentFailure && (
+        <div className="student-payment-pro__failure" role="alert">
+          <div className="student-payment-pro__failure-head">
+            <AlertTriangle size={18} />
+            <div>
+              <strong>{paymentFailure.title}</strong>
+              <p>{paymentFailure.message}</p>
+            </div>
+          </div>
+
+          {/* Only offer a retry when retrying can actually succeed. */}
+          {paymentFailure.canRetry && (
+            <button type="button" className="portal-secondary-button student-payment-pro__retry" onClick={retryPayment}>
+              Try again
+            </button>
+          )}
+
+          {/* A merchant-side failure is ours, so hand the parent a human. */}
+          {paymentFailure.showContact && (
+            <ContactFallback
+              compact
+              message="You can still book — message us and we will take your booking and payment directly."
+              details={{ parentName: account.parentName || '', childName: account.child?.name || '', email: account.email || account.loginId || '' }}
+            />
+          )}
+
+          {/* Never shown to parents: the sentence the owner needs to fix it. */}
+          {adminPreview && paymentFailure.adminHint && (
+            <p className="student-payment-pro__admin-note student-payment-pro__admin-fix">
+              <ShieldCheck size={15} /> <span><strong>Admin only:</strong> {paymentFailure.adminHint}</span>
+            </p>
+          )}
+        </div>
+      )}
       {lastPaymentMessage && <div className="portal-success student-payment-pro__message" role="status"><CheckCircle2 size={16} /> {lastPaymentMessage}</div>}
     </section>
   )
