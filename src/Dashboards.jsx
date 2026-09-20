@@ -111,7 +111,7 @@ const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
 const AdminFunnelPanel = lazy(() => import('./AdminFunnelPanel.jsx'))
 const AdminFollowUpPanel = lazy(() => import('./AdminFollowUpPanel.jsx'))
 const AdminLinkBuilder = lazy(() => import('./AdminLinkBuilder.jsx'))
-import { LANGUAGE_LABELS, languageForCountry, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
+import { ANNOUNCEMENT_LIFETIME_DAYS, LANGUAGE_LABELS, announcementCountdownLabel, clearAnnouncements, getAnnouncements, languageForCountry, removeAnnouncement, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 /*
  * The classroom is loaded ONLY when the feature flag is on. Keeping the
@@ -5724,6 +5724,18 @@ function announcementReach() {
   }
 }
 
+/**
+ * Attach a human countdown to each posted announcement.
+ *
+ * Done outside the component on purpose: reading the clock during render is
+ * an impure call and an error under this repo's react-hooks/purity rule, so
+ * the label is baked in whenever the list is (re)built.
+ */
+function withCountdown(items) {
+  const now = Date.now()
+  return items.map((item) => ({ ...item, countdownLabel: announcementCountdownLabel(item, now) }))
+}
+
 export function AdminAnnouncementsPanel() {
   const [target, setTarget] = useState('ALL')
   const [subject, setSubject] = useState('')
@@ -5736,6 +5748,25 @@ export function AdminAnnouncementsPanel() {
   const [error, setError] = useState('')
   const [autoTranslate, setAutoTranslate] = useState(true)
   const stats = campaignStats(campaignLog)
+  // Currently-posted dashboard announcements, so the admin can take one down
+  // early instead of waiting for it to expire.
+  // Each entry carries its own countdown label, computed in announcements.js
+  // so the clock is never read during render (react-hooks/purity).
+  const [posted, setPosted] = useState(() => withCountdown(getAnnouncements()))
+
+  const refreshPosted = () => setPosted(withCountdown(getAnnouncements()))
+
+  const takeDownAnnouncement = (id) => {
+    removeAnnouncement(id)
+    refreshPosted()
+    setMessage('Announcement removed from the dashboards on this device.')
+  }
+
+  const takeDownAll = () => {
+    clearAnnouncements()
+    refreshPosted()
+    setMessage('All dashboard announcements removed on this device.')
+  }
 
   const applyMarketingTemplate = (templateId) => {
     setSelectedTemplateId(templateId)
@@ -5812,6 +5843,7 @@ export function AdminAnnouncementsPanel() {
       // Also publish it inside the dashboard, where it translates live from
       // the reader's current IP language.
       saveAnnouncement({ subject: cleanSubject, body: cleanBody, target, translations })
+      refreshPosted()
 
       setMessage(`🎉 Successfully sent campaign to ${recipients} active registered emails!${languageNote} It is also posted on their dashboards.`)
       setCampaignLog(saveCampaignLog({ target, subject: cleanSubject, templateId: selectedTemplateId, recipients, status: 'sent' }))
@@ -5863,6 +5895,48 @@ export function AdminAnnouncementsPanel() {
             {reach.unreachableFamilies.length > 5 ? ` +${reach.unreachableFamilies.length - 5} more` : ''}.
           </p>
         )}
+      </section>
+
+      <section className="portal-card posted-announcements">
+        <div className="portal-card__heading portal-card__heading--small">
+          <div>
+            <span className="portal-kicker">Showing on dashboards now</span>
+            <h2>Posted announcements</h2>
+            <p>Announcements disappear on their own after {ANNOUNCEMENT_LIFETIME_DAYS} days. Take one down sooner here.</p>
+          </div>
+          {posted.length > 0 && (
+            <button type="button" className="portal-text-button" onClick={takeDownAll}>
+              <Trash2 size={15} /> Remove all
+            </button>
+          )}
+        </div>
+        {posted.length ? (
+          <ul className="posted-announcements__list">
+            {posted.map((item) => {
+              return (
+                <li key={item.id}>
+                  <div>
+                    <strong>{item.subject}</strong>
+                    <small>
+                      {item.target === 'ALL' ? 'Everyone' : item.target === 'TEACHER' ? 'Teachers' : 'Parents'}
+                      {' · '}
+                      {item.countdownLabel}
+                    </small>
+                  </div>
+                  <button type="button" onClick={() => takeDownAnnouncement(item.id)} aria-label={`Remove ${item.subject}`}>
+                    <Trash2 size={15} /> Remove
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="posted-announcements__empty">No announcements are showing on dashboards right now.</p>
+        )}
+        <p className="posted-announcements__note">
+          Dashboard announcements are stored in each person&apos;s own browser, so removing one here clears it
+          from this device. On other devices it disappears automatically at the {ANNOUNCEMENT_LIFETIME_DAYS}-day mark.
+        </p>
       </section>
 
       <section className="portal-card marketing-template-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Campaign templates</span><h2>Choose a ready-made automation message</h2></div></div><div className="marketing-template-grid">{MARKETING_TEMPLATES.map((template) => <button key={template.id} type="button" className={selectedTemplateId === template.id ? 'active' : ''} onClick={() => applyMarketingTemplate(template.id)}><strong>{template.name}</strong><span>{template.audience}</span></button>)}</div></section>

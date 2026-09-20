@@ -4,6 +4,7 @@ import {
   announcementLabel,
   dismissAnnouncement,
   originalLabel,
+  pruneExpiredAnnouncements,
   translateAnnouncement,
   viewerLanguage,
   visibleAnnouncements,
@@ -27,9 +28,21 @@ export default function AnnouncementBanner({ account }) {
     }
     window.addEventListener('tutorpro:data-change', refresh)
     window.addEventListener('tutorpro:language-change', refresh)
+
+    // Announcements expire after two days. A dashboard left open on a tablet
+    // would otherwise keep showing one indefinitely, because nothing would
+    // re-read storage. Re-checking hourly also drops the stale record from
+    // this device, so expiry does not depend on the parent reloading.
+    pruneExpiredAnnouncements()
+    const timer = window.setInterval(() => {
+      pruneExpiredAnnouncements()
+      refresh()
+    }, 60 * 60 * 1000)
+
     return () => {
       window.removeEventListener('tutorpro:data-change', refresh)
       window.removeEventListener('tutorpro:language-change', refresh)
+      window.clearInterval(timer)
     }
   }, [account])
 

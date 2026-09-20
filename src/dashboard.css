@@ -11518,3 +11518,70 @@ a.feedback-resource-detail:hover strong {
   color: var(--portal-muted, #716981);
   font-size: 0.87rem;
 }
+
+/* Admin → Announcements → currently posted, with a take-down control. */
+.posted-announcements__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.posted-announcements__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--portal-line, #e4e0eb);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.posted-announcements__list strong {
+  display: block;
+  color: var(--portal-navy, #321568);
+  font-size: 0.99rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.posted-announcements__list small {
+  display: block;
+  margin-top: 3px;
+  color: var(--portal-muted, #716981);
+  font-size: 0.88rem;
+}
+
+.posted-announcements__list button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  background: #fff;
+  color: #b91c1c;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.posted-announcements__list button:hover { background: #fef2f2; }
+
+.posted-announcements__empty,
+.posted-announcements__note {
+  margin: 0;
+  color: var(--portal-muted, #716981);
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+
+.posted-announcements__note { margin-top: 12px; }
+
+@media (max-width: 640px) {
+  .posted-announcements__list li { grid-template-columns: minmax(0, 1fr); }
+  .posted-announcements__list button { justify-content: center; }
+}

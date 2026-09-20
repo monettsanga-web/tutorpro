@@ -128,20 +128,104 @@ function readStore(key) {
   }
 }
 
-export function getAnnouncements() {
+/**
+ * How long a dashboard announcement stays visible.
+ *
+ * Announcements are news, not permanent notices. Left forever they become
+ * wallpaper: parents stop reading the banner, so the one message that really
+ * matters gets ignored too. Two days is long enough that somebody who logs in
+ * once over a weekend still sees it.
+ */
+export const ANNOUNCEMENT_LIFETIME_DAYS = 2
+export const ANNOUNCEMENT_LIFETIME_MS = ANNOUNCEMENT_LIFETIME_DAYS * 24 * 60 * 60 * 1000
+
+/**
+ * When an announcement stops being shown.
+ *
+ * Falls back to `createdAt + lifetime` when `expiresAt` is absent, so
+ * announcements saved BEFORE this feature existed also expire — that is what
+ * makes old banners disappear on their own without anyone clearing them.
+ * An unparseable or missing date is treated as already expired rather than
+ * immortal: a record with no timestamp is broken, and a broken record should
+ * not outlive every valid one.
+ */
+export function announcementExpiry(item) {
+  if (!item) return 0
+  const explicit = Date.parse(item.expiresAt || '')
+  if (Number.isFinite(explicit)) return explicit
+  const created = Date.parse(item.createdAt || '')
+  if (!Number.isFinite(created)) return 0
+  return created + ANNOUNCEMENT_LIFETIME_MS
+}
+
+/** Has this announcement passed its visible lifetime? */
+export function isAnnouncementExpired(item, now = Date.now()) {
+  return announcementExpiry(item) <= now
+}
+
+/**
+ * "disappears in 2 days" / "disappears in 5 hours", for the admin list.
+ *
+ * The clock is read here rather than in the component because calling
+ * `Date.now()` during render is an impure call and an error under this
+ * repo's `react-hooks/purity` rule.
+ */
+export function announcementCountdownLabel(item, now = Date.now()) {
+  const hours = Math.max(0, Math.ceil((announcementExpiry(item) - now) / (60 * 60 * 1000)))
+  if (hours === 0) return 'disappearing now'
+  if (hours > 24) return `disappears in ${Math.ceil(hours / 24)} days`
+  return `disappears in ${hours} hour${hours === 1 ? '' : 's'}`
+}
+
+/**
+ * Delete expired announcements from storage.
+ *
+ * Filtering on read is what users see; this is the housekeeping that stops
+ * the list growing forever in a device's localStorage. Returns how many were
+ * removed so callers can avoid pointless writes.
+ */
+export function pruneExpiredAnnouncements(now = Date.now()) {
+  const stored = readStore(ANNOUNCEMENTS_KEY)
+  const kept = stored.filter((item) => item && item.id && !isAnnouncementExpired(item, now))
+  if (kept.length === stored.length) return 0
+  try { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(kept)) } catch { /* Non-critical. */ }
+  return stored.length - kept.length
+}
+
+export function getAnnouncements(now = Date.now()) {
   return readStore(ANNOUNCEMENTS_KEY)
-    .filter((item) => item && item.id)
+    .filter((item) => item && item.id && !isAnnouncementExpired(item, now))
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
 }
 
+/** Remove one announcement from this device immediately. */
+export function removeAnnouncement(id) {
+  const kept = readStore(ANNOUNCEMENTS_KEY).filter((item) => item?.id !== id)
+  try { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(kept)) } catch { /* Non-critical. */ }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('tutorpro:data-change'))
+}
+
+/** Remove every announcement from this device immediately. */
+export function clearAnnouncements() {
+  try { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify([])) } catch { /* Non-critical. */ }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('tutorpro:data-change'))
+}
+
 export function saveAnnouncement(entry) {
+  const now = Date.now()
+  // Sending a new announcement is the natural moment to clear out old ones,
+  // so a device that is used regularly never accumulates stale records.
   const announcements = readStore(ANNOUNCEMENTS_KEY)
+    .filter((item) => item && item.id && !isAnnouncementExpired(item, now))
   const record = {
-    id: `ann_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: `ann_${now}_${Math.random().toString(36).slice(2, 8)}`,
     subject: entry.subject,
     body: entry.body,
     target: entry.target || 'ALL',
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(now).toISOString(),
+    // Stored explicitly so the deadline is fixed when the announcement is
+    // sent, rather than recomputed from a constant that might change later.
+    expiresAt: new Date(now + ANNOUNCEMENT_LIFETIME_MS).toISOString(),
     // Pre-translated copies so viewers do not each hit the translation API.
     translations: entry.translations || {},
   }
