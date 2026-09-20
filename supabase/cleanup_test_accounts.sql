@@ -43,17 +43,25 @@ left join public.profiles p on p.id = u.id
 where u.email like '%@example.com'
 order by u.created_at desc;
 
--- Expect only addresses such as:
---   paypal.diag.1789…@example.com
---   pp.diag.1789…@example.com
---   realpay.1789…@example.com
---   insp.1789…@example.com / insp2. / insp3. / insp4.
---   final.1789…@example.com
---   f2.1789…@example.com
---   rc.1789…@example.com
---   hdr.1789…@example.com
---   cf.1789…@example.com
---   dg.1789…@example.com
+-- I created 17 of these. Every one uses a timestamp, so the numbers differ,
+-- but the prefix before the dot will be one of exactly these 13:
+--
+--   paypal.diag.…@example.com   (x2)  first PayPal API test
+--   pp.diag.…@example.com       (x1)
+--   realpay.…@example.com       (x2)  real-session checkout test
+--   insp.…@example.com          (x1)  dashboard crash hunt
+--   insp2.…@example.com         (x1)
+--   insp3.…@example.com         (x1)  ← this one found the crash
+--   insp4.…@example.com         (x1)
+--   final.…@example.com         (x2)  post-fix verification
+--   f2.…@example.com            (x1)
+--   rc.…@example.com            (x1)  re-check after your screenshot
+--   hdr.…@example.com           (x1)  PayPal response headers
+--   cf.…@example.com            (x1)
+--   dg.…@example.com            (x2)  the /api/paypal/diagnose endpoint
+--
+-- Step 1 shows you the true number. If it says 17, that is all of them and
+-- nothing else has been affected.
 --
 -- 🔴 STOP if you see ANY address that is not @example.com.
 --    Do not run Step 2. Tell me instead.
