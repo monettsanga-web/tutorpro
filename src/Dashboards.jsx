@@ -5902,7 +5902,7 @@ export function AdminAnnouncementsPanel() {
           <div>
             <span className="portal-kicker">Showing on dashboards now</span>
             <h2>Posted announcements</h2>
-            <p>Announcements disappear on their own after {ANNOUNCEMENT_LIFETIME_DAYS} days. Take one down sooner here.</p>
+            <p>Sending a new announcement replaces the previous one, and any announcement disappears on its own after {ANNOUNCEMENT_LIFETIME_DAYS} days. Take one down sooner here.</p>
           </div>
           {posted.length > 0 && (
             <button type="button" className="portal-text-button" onClick={takeDownAll}>

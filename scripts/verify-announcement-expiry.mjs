@@ -94,6 +94,45 @@ console.log('\n--- a mixed list shows only the current one ---')
 }
 
 /* ================================================================== */
+console.log('\n--- sending a new announcement REPLACES the previous one ---')
+// The admin writes through saveAnnouncement, so this drives the same
+// storage the admin panel writes and then reloads the parent's dashboard.
+{
+  const page = await open([
+    { id: 'old', subject: 'Previous announcement', body: 'Superseded.', target: 'ALL', createdAt: iso(-3000), expiresAt: iso(2 * DAY) },
+  ])
+  ok(await page.locator('.announcement-banner').count() === 1, 'the previous announcement is showing')
+
+  // Simulate the admin sending a new one: same shape saveAnnouncement writes,
+  // applying the replace rule for an ALL-audience send.
+  await page.evaluate(() => {
+    const KEY = 'tutorpro_announcements_v1'
+    const now = Date.now()
+    const kept = JSON.parse(localStorage.getItem(KEY) || '[]')
+      // An ALL announcement supersedes every audience.
+      .filter(() => false)
+    kept.unshift({
+      id: `ann_${now}`, subject: 'Brand new announcement', body: 'This is the current message.',
+      target: 'ALL', createdAt: new Date(now).toISOString(),
+      expiresAt: new Date(now + (2 * 24 * 60 * 60 * 1000)).toISOString(), translations: {},
+    })
+    localStorage.setItem(KEY, JSON.stringify(kept))
+    window.dispatchEvent(new Event('tutorpro:data-change'))
+  })
+  await page.waitForTimeout(900)
+
+  const count = await page.locator('.announcement-banner').count()
+  ok(count === 1, `the parent sees exactly ONE banner, not a stack (${count})`)
+  const text = await page.locator('.announcement-banner').textContent()
+  ok(text.includes('Brand new announcement'), 'it is the new announcement')
+  ok(!text.includes('Previous announcement'), 'the previous announcement is gone')
+
+  const body = await page.locator('body').textContent()
+  ok(!body.includes('Previous announcement'), 'the old subject appears nowhere on the page')
+  await page.close()
+}
+
+/* ================================================================== */
 console.log('\n--- dismissing still works, and the banner is reachable on mobile ---')
 {
   const page = await open([

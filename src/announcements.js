@@ -211,12 +211,39 @@ export function clearAnnouncements() {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('tutorpro:data-change'))
 }
 
+/** Which roles actually see an announcement with this target. */
+function audienceOf(target) {
+  const value = String(target || 'ALL').toUpperCase()
+  if (value === 'STUDENT' || value === 'STUDENTS') return new Set(['STUDENT'])
+  if (value === 'TEACHER' || value === 'TEACHERS') return new Set(['TEACHER'])
+  return new Set(['STUDENT', 'TEACHER'])
+}
+
+/**
+ * Does a new announcement replace an older one?
+ *
+ * Only when everybody who could see the OLD one will also see the NEW one.
+ * Otherwise sending a note to teachers would silently delete a notice the
+ * parents still needed — removing a message from an audience that was never
+ * given a replacement is the one genuinely destructive outcome here.
+ *
+ *   new ALL      replaces ALL, Students, Teachers
+ *   new Students replaces Students only  (an ALL notice still stands for teachers)
+ *   new Teachers replaces Teachers only
+ */
+export function supersedesAnnouncement(newTarget, oldTarget) {
+  const incoming = audienceOf(newTarget)
+  return [...audienceOf(oldTarget)].every((role) => incoming.has(role))
+}
+
 export function saveAnnouncement(entry) {
   const now = Date.now()
-  // Sending a new announcement is the natural moment to clear out old ones,
-  // so a device that is used regularly never accumulates stale records.
+  // A new announcement replaces the previous one rather than stacking on top
+  // of it: parents should open their dashboard and see the current message,
+  // not a pile of history they have to read through to find what changed.
   const announcements = readStore(ANNOUNCEMENTS_KEY)
     .filter((item) => item && item.id && !isAnnouncementExpired(item, now))
+    .filter((item) => !supersedesAnnouncement(entry.target || 'ALL', item.target))
   const record = {
     id: `ann_${now}_${Math.random().toString(36).slice(2, 8)}`,
     subject: entry.subject,

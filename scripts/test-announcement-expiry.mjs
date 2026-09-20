@@ -29,7 +29,7 @@ const {
   ANNOUNCEMENT_LIFETIME_DAYS, ANNOUNCEMENT_LIFETIME_MS,
   announcementCountdownLabel, announcementExpiry, clearAnnouncements,
   getAnnouncements, isAnnouncementExpired, pruneExpiredAnnouncements,
-  removeAnnouncement, saveAnnouncement, visibleAnnouncements,
+  removeAnnouncement, saveAnnouncement, supersedesAnnouncement, visibleAnnouncements,
 } = await import('../src/announcements.js')
 
 let pass = 0, fail = 0
@@ -107,11 +107,66 @@ const afterSave = JSON.parse(store.get(KEY))
 ok(afterSave.length === 1, 'sending a new announcement drops expired ones from storage')
 ok(afterSave[0].subject === 'Fresh', 'only the new announcement remains')
 
-/* --- manual take-down ------------------------------------------------ */
+/* --- a NEW announcement REPLACES the previous one -------------------- */
+// The reported behaviour: parents should see the current message, not a
+// stack of every announcement ever sent.
 reset()
-const one = saveAnnouncement({ subject: 'One', body: '', target: 'ALL' })
+saveAnnouncement({ subject: 'First notice', body: 'Old info', target: 'ALL' })
+saveAnnouncement({ subject: 'Second notice', body: 'New info', target: 'ALL' })
+const afterReplace = getAnnouncements()
+ok(afterReplace.length === 1, `only one announcement remains after sending a second (${afterReplace.length})`)
+ok(afterReplace[0].subject === 'Second notice', 'the newest announcement is the one kept')
+ok(visibleAnnouncements(student).length === 1, 'a parent sees exactly one banner')
+ok(visibleAnnouncements(student)[0].subject === 'Second notice', 'the parent sees the newest message')
+
+reset()
+saveAnnouncement({ subject: 'One', body: '', target: 'ALL' })
 saveAnnouncement({ subject: 'Two', body: '', target: 'ALL' })
-ok(getAnnouncements().length === 2, 'two announcements are posted')
+saveAnnouncement({ subject: 'Three', body: '', target: 'ALL' })
+ok(getAnnouncements().length === 1, 'sending three in a row still leaves one')
+ok(getAnnouncements()[0].subject === 'Three', 'the latest wins')
+
+/* --- but replacing must NOT silently delete another audience's notice */
+reset()
+saveAnnouncement({ subject: 'For everyone', body: '', target: 'ALL' })
+saveAnnouncement({ subject: 'For teachers', body: '', target: 'TEACHER' })
+ok(getAnnouncements().length === 2, 'a teacher-only notice does not wipe the all-audience one')
+ok(visibleAnnouncements({ role: 'teacher' }).length === 2, 'teachers see both')
+ok(visibleAnnouncements({ role: 'student' }).length === 1, 'parents still see the all-audience notice')
+ok(visibleAnnouncements({ role: 'student' })[0].subject === 'For everyone', 'parents keep the notice meant for them')
+
+reset()
+saveAnnouncement({ subject: 'Teachers only', body: '', target: 'TEACHER' })
+saveAnnouncement({ subject: 'Parents only', body: '', target: 'STUDENT' })
+ok(getAnnouncements().length === 2, 'a parent notice does not wipe a teacher notice')
+ok(visibleAnnouncements({ role: 'student' }).length === 1, 'parents see only theirs')
+ok(visibleAnnouncements({ role: 'teacher' }).length === 1, 'teachers see only theirs')
+
+reset()
+saveAnnouncement({ subject: 'Teachers', body: '', target: 'TEACHER' })
+saveAnnouncement({ subject: 'Parents', body: '', target: 'STUDENT' })
+saveAnnouncement({ subject: 'Everyone', body: '', target: 'ALL' })
+ok(getAnnouncements().length === 1, 'an all-audience notice replaces both narrower ones')
+ok(getAnnouncements()[0].subject === 'Everyone', 'the all-audience notice is what remains')
+
+/* --- the supersede rule itself --------------------------------------- */
+ok(supersedesAnnouncement('ALL', 'ALL') === true, 'ALL replaces ALL')
+ok(supersedesAnnouncement('ALL', 'STUDENT') === true, 'ALL replaces a parent notice')
+ok(supersedesAnnouncement('ALL', 'TEACHER') === true, 'ALL replaces a teacher notice')
+ok(supersedesAnnouncement('STUDENT', 'ALL') === false, 'a parent notice does NOT replace an ALL notice')
+ok(supersedesAnnouncement('TEACHER', 'ALL') === false, 'a teacher notice does NOT replace an ALL notice')
+ok(supersedesAnnouncement('STUDENT', 'TEACHER') === false, 'a parent notice does NOT replace a teacher notice')
+ok(supersedesAnnouncement('STUDENT', 'STUDENT') === true, 'a parent notice replaces a parent notice')
+ok(supersedesAnnouncement('TEACHER', 'TEACHERS') === true, 'plural target spellings are handled')
+ok(supersedesAnnouncement('STUDENTS', 'STUDENT') === true, 'singular and plural match')
+
+/* --- manual take-down ------------------------------------------------ */
+// Two different audiences, so both legitimately coexist and either can be
+// taken down individually. (Same-audience sends now replace, tested above.)
+reset()
+const one = saveAnnouncement({ subject: 'One', body: '', target: 'STUDENT' })
+saveAnnouncement({ subject: 'Two', body: '', target: 'TEACHER' })
+ok(getAnnouncements().length === 2, 'two announcements for different audiences coexist')
 removeAnnouncement(one.id)
 ok(getAnnouncements().length === 1, 'removing one takes it down immediately')
 ok(getAnnouncements()[0].subject === 'Two', 'the correct one was removed')
