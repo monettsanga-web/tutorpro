@@ -262,7 +262,7 @@ function page(subject) {
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
           <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
-          <tr><td>Monthly package</td><td>4–7</td><td>$8</td></tr>
+          <tr><td>Monthly package</td><td>4–7</td><td>$7</td></tr>
         </table>
         <p>The first class is free for every new family and no card is required to try it. Unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full. Full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>
 

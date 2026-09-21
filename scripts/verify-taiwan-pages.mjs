@@ -54,7 +54,7 @@ for (const f of PAGES) {
   ok(h.includes('"areaServed": "TW"'), `${f}: schema says it serves Taiwan`)
 
   /* --- honesty --------------------------------------------------------- */
-  ok(h.includes('US$10') && h.includes('US$20'), `${f}: real USD pricing shown`)
+  ok(h.includes('US$8') && h.includes('US$16'), `${f}: real USD pricing shown ($8 / $16 for 50 min)`)
   ok(/匯率/.test(t), `${f}: NT$ figures are labelled as approximate, tied to the exchange rate`)
   ok(!/aggregateRating|ratingValue|reviewCount/i.test(h), `${f}: no fabricated ratings`)
   ok(!/[0-9,]{3,}\s*(位|名)\s*(學生|學員|家長)/.test(t), `${f}: no invented student numbers`)
