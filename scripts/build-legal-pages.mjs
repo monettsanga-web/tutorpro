@@ -327,7 +327,7 @@ const PAGES = [
       </div>
 
       <h2>Pricing you can see up front</h2>
-      <p>Our rates are published on the website, not hidden behind a sales call. Classes start from $8 per 25-minute lesson, and every new family can take a free first class before paying anything. Full terms are on our <a href="/refund-policy.html">Refund Policy</a> page.</p>
+      <p>Our rates are published on the website, not hidden behind a sales call. Classes start from $7 per 25-minute lesson, and every new family can take a free first class before paying anything. Full terms are on our <a href="/refund-policy.html">Refund Policy</a> page.</p>
 
       <h2>How teachers apply — and what we never do</h2>
       <p>We are aware that fake recruiters use the names of small online schools, including ours, to run job scams on messaging apps. Please read this before responding to any offer that claims to be from us.</p>

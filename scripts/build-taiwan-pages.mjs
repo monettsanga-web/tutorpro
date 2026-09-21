@@ -21,7 +21,7 @@
  *
  * ACCURACY
  * --------
- * Pricing mirrors the real rates: $10 per lesson on 1–3 a week, $8 on 4+.
+ * Pricing mirrors the real rates: $8 per lesson on 1–3 a week, $8 on 4+.
  * NT$ figures are given as approximate conversions and labelled as such,
  * because the platform charges in USD and an exact NT$ price would be a
  * claim we cannot honour. Free first class, 12-hour cancellation and 14-day
@@ -184,7 +184,7 @@ ${siteHeader()}
                 <a class="btn" href="/">預約免費體驗課</a>
                 <a class="btn btn--ghost" href="#pricing">查看課程費用</a>
               </div>
-              <p class="hero__note">25 分鐘 US$10．50 分鐘 US$20．不需填信用卡．不綁約</p>
+              <p class="hero__note">25 分鐘 US$8．50 分鐘 US$16．不需填信用卡．不綁約</p>
             </div>
             <div class="hero__art">
               <img src="/assets/tutorpro-hero.webp" alt="孩子在線上學英語" width="800" height="600" loading="eager" />
@@ -232,7 +232,7 @@ const faqSchema = (url, qa) => ({
         courseMode: 'online',
         courseWorkload: 'PT25M',
         location: { '@type': 'VirtualLocation', url: SITE },
-        offers: { '@type': 'Offer', price: '10', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
+        offers: { '@type': 'Offer', price: '8', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
       }],
     },
     {
@@ -257,12 +257,12 @@ const PRICING_BLOCK = `      <section class="alt" id="pricing">
             <div class="price-card price-card--feature">
               <span class="price-card__tag">幼兒與國小低年級推薦</span>
               <h3>25 分鐘</h3>
-              <span class="price-card__amount">US$10 <small>／堂</small></span>
+              <span class="price-card__amount">US$8 <small>／堂</small></span>
               <p>約新台幣 320 元，依當日匯率而定。配合孩子的專注時間。</p>
             </div>
             <div class="price-card">
               <h3>50 分鐘</h3>
-              <span class="price-card__amount">US$20 <small>／堂</small></span>
+              <span class="price-card__amount">US$16 <small>／堂</small></span>
               <p>約新台幣 640 元，依當日匯率而定。適合國小高年級與國高中生。</p>
             </div>
           </div>
@@ -277,7 +277,7 @@ const PAGES = [
     file: 'tw/index.html',
     title: 'TutorPro 線上英語 — 兒童一對一線上英語 | 首堂免費',
     description:
-      '專為台灣家庭設計的兒童一對一線上英語課程。劍橋與牛津教材，25 分鐘 US$10 起，與台灣零時差。第一堂免費體驗，不需填信用卡。',
+      '專為台灣家庭設計的兒童一對一線上英語課程。劍橋與牛津教材，25 分鐘 US$8 起，與台灣零時差。第一堂免費體驗，不需填信用卡。',
     keywords: '線上英語, 兒童線上英語, 國小英語, 一對一英語, 線上英文家教, 兒童英文, 菲律賓線上英語, 英文會話',
     hero: { eyebrow: '台灣家長專頁' },
     heading: '讓孩子<br />真正開口說英語',
@@ -341,7 +341,7 @@ ${PRICING_BLOCK}
           <span class="kicker">常見問題</span>
           <h2>家長常問的問題</h2>
           <details open><summary>第一堂課真的免費嗎？</summary><p>是的，而且不需要填寫信用卡。是由真人老師上的完整課程，上完再決定要不要繼續。</p></details>
-          <details><summary>課程費用是多少？</summary><p>25 分鐘 US$10，50 分鐘 US$20。每週上 4 堂以上，每堂降為 US$8。沒有報名費與教材費。</p></details>
+          <details><summary>課程費用是多少？</summary><p>25 分鐘 US$8，50 分鐘 US$16。每週上 4 堂以上，每堂降為 US$7。沒有報名費與教材費。</p></details>
           <details><summary>幾歲可以開始上課？</summary><p>我們的學生從 4 歲到 16 歲，會依年齡與程度調整課程內容與教材。</p></details>
           <details><summary>上課時間怎麼安排？</summary><p>菲律賓與台灣同為 UTC+8，完全沒有時差，放學後與晚上時段都很順暢。</p></details>
           <details><summary>需要安裝什麼軟體嗎？</summary><p>不需要。課程在我們自己開發的瀏覽器教室進行，點開連結就能上課。</p></details>
@@ -350,7 +350,7 @@ ${PRICING_BLOCK}
       </section>`,
     schema: faqSchema(`${SITE}/tw/`, [
       ['第一堂課真的免費嗎？', '是的，而且不需要填寫信用卡。是由真人老師上的完整課程，上完再決定要不要繼續。'],
-      ['課程費用是多少？', '25 分鐘 US$10，50 分鐘 US$20。每週上 4 堂以上，每堂降為 US$8。沒有報名費與教材費。'],
+      ['課程費用是多少？', '25 分鐘 US$8，50 分鐘 US$16。每週上 4 堂以上，每堂降為 US$7。沒有報名費與教材費。'],
       ['幾歲可以開始上課？', '我們的學生從 4 歲到 16 歲，會依年齡與程度調整課程內容與教材。'],
       ['上課時間怎麼安排？', '菲律賓與台灣同為 UTC+8，完全沒有時差，放學後與晚上時段都很順暢。'],
       ['需要安裝什麼軟體嗎？', '不需要。課程在我們自己開發的瀏覽器教室進行，點開連結就能上課。'],
@@ -445,14 +445,14 @@ ${PRICING_BLOCK}
           <h2>家長常問的問題</h2>
           <details open><summary>線上英語是什麼？</summary><p>透過視訊進行的英語課程。TutorPro 全部採一對一，沒有團體班，整堂課孩子都在用英語表達。</p></details>
           <details><summary>和團體班差在哪裡？</summary><p>團體班中孩子開口的時間會降到全堂的五分之一以下。一對一整堂課只有孩子在說，節奏也配合孩子的程度。</p></details>
-          <details><summary>課程費用是多少？</summary><p>25 分鐘 US$10，50 分鐘 US$20，沒有報名費與教材費，第一堂免費。</p></details>
+          <details><summary>課程費用是多少？</summary><p>25 分鐘 US$8，50 分鐘 US$16，沒有報名費與教材費，第一堂免費。</p></details>
           <details><summary>第一堂課真的免費嗎？</summary><p>是的，不需要填寫信用卡，上完再決定要不要繼續。</p></details>
         </div>
       </section>`,
     schema: faqSchema(`${SITE}/tw/xianshang-yingyu.html`, [
       ['線上英語是什麼？', '透過視訊進行的英語課程。TutorPro 全部採一對一，沒有團體班，整堂課孩子都在用英語表達。'],
       ['和團體班差在哪裡？', '團體班中孩子開口的時間會降到全堂的五分之一以下。一對一整堂課只有孩子在說，節奏也配合孩子的程度。'],
-      ['課程費用是多少？', '25 分鐘 US$10，50 分鐘 US$20，沒有報名費與教材費，第一堂免費。'],
+      ['課程費用是多少？', '25 分鐘 US$8，50 分鐘 US$16，沒有報名費與教材費，第一堂免費。'],
       ['第一堂課真的免費嗎？', '是的，不需要填寫信用卡，上完再決定要不要繼續。'],
     ]),
   },
@@ -462,7 +462,7 @@ ${PRICING_BLOCK}
     file: 'tw/guoxiao-yingyu.html',
     title: '國小英語線上家教 — 各年級學習重點 | TutorPro',
     description:
-      '國小英語一對一線上家教。低年級自然發音到高年級閱讀、文法與口說，說明各年級的學習目標與上課方式。25 分鐘 US$10，第一堂免費。',
+      '國小英語一對一線上家教。低年級自然發音到高年級閱讀、文法與口說，說明各年級的學習目標與上課方式。25 分鐘 US$8，第一堂免費。',
     keywords: '國小英語, 國小英文家教, 兒童線上英語, 自然發音, 小學英語, 線上英文家教, 國小英文',
     hero: { eyebrow: '國小一年級到六年級' },
     heading: '國小英語，<br />依年級一對一指導',

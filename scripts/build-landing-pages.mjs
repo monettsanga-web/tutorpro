@@ -11,7 +11,7 @@
  *   - a tagged CTA link so the funnel dashboard credits the right channel
  *
  * ACCURACY: every claim is verified against the live platform —
- *   - pricing from planSessionRate() in src/Dashboards.jsx ($10 for 1-3/wk, $8 for 4+)
+ *   - pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/wk, $7 for 4+)
  *   - the four testimonials are real, from Facebook, quoted verbatim including typos
  *   - DTI 5274092 is the real registration number
  *   - free first class, 12-hour cancellation and 14-day refund are real policy
@@ -71,10 +71,10 @@ const PAGES = [
     slug: 'free-english-class',
     tag: 'lp-free',
     title: 'Free English Class for Your Child · TutorPro Online English',
-    description: 'Book a free 25-minute one-to-one online English class for your child. No card required, no contract. Cambridge and Oxford aligned teachers. From $8 per lesson after.',
+    description: 'Book a free 25-minute one-to-one online English class for your child. No card required, no contract. Cambridge and Oxford aligned teachers. from $7 per lesson after.',
     h1: 'A free English class for your child. No card, no catch.',
     lede: 'One-to-one online lessons with real teachers, built around Cambridge and Oxford coursebooks. Try a full 25-minute class for free and decide afterwards.',
-    pills: ['Free first class', 'No card required', 'Ages 4–16', 'From $8 per lesson'],
+    pills: ['Free first class', 'No card required', 'Ages 4–16', 'from $7 per lesson'],
     body: `
         <h2>Why parents choose one-to-one</h2>
         <div class="grid">
@@ -94,7 +94,7 @@ const PAGES = [
 
         <h2>What it costs if you continue</h2>
         <div class="card">
-          <p class="price">$10 per lesson</p>
+          <p class="price">$8 per lesson</p>
           <p>One to three lessons a week, billed weekly.</p>
           <p class="price" style="margin-top:16px">$8 per lesson</p>
           <p>Four or more lessons a week on a monthly plan.</p>
@@ -150,7 +150,7 @@ const PAGES = [
           ['Can I sit with my child during the lesson?', 'Yes, especially at the start. Many parents sit nearby for the first few lessons and then step back once the child settles.'],
           ['What if the teacher is not a good match?', 'Tell us and we will change them. Fit matters more than anything else for a quiet child.'],
           ['Is the first class really free?', 'Yes — a full 25-minute lesson, no card required. If your child hates it, you have lost nothing.'],
-          ['What does it cost afterwards?', '$10 per lesson for one to three a week, or $8 per lesson on a monthly plan of four or more. No registration, materials or platform fees.'],
+          ['What does it cost afterwards?', '$8 per lesson for one to three a week, or $8 per lesson on a monthly plan of four or more. No registration, materials or platform fees.'],
         ])}`,
   },
   {
@@ -178,7 +178,7 @@ const PAGES = [
 
         <h2>Simple pricing</h2>
         <div class="card">
-          <p class="price">$10 per lesson</p>
+          <p class="price">$8 per lesson</p>
           <p>One to three lessons a week, billed weekly.</p>
           <p class="price" style="margin-top:16px">$8 per lesson</p>
           <p>Four or more lessons a week on a monthly plan.</p>
@@ -220,7 +220,7 @@ function render(page) {
         category: 'Partially Free',
         price: '0',
         priceCurrency: 'USD',
-        description: 'First 25-minute one-to-one class is free. Lessons from $8 afterwards.',
+        description: 'First 25-minute one-to-one class is free. Lessons from $7 afterwards.',
         url,
       },
     },

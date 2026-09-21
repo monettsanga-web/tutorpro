@@ -16,7 +16,7 @@
  * HONESTY RULES OBSERVED
  * ----------------------
  * - Pricing mirrors the real rates: 25min ₩15,000, 50min ₩30,000, matching
- *   the $10 / $20 shown everywhere else.
+ *   the $8 / $16 shown everywhere else.
  * - No invented reviews, no star ratings, no fabricated student counts.
  * - Only English claims Cambridge/Oxford alignment, matching the English site.
  * - Teachers are described as Philippine-based, because they are, and because

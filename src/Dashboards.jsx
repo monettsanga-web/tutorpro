@@ -192,8 +192,13 @@ const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
 const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 const MONTHLY_BILLING_WEEKS = 4
 const MAX_CUSTOM_WEEKLY_SESSIONS = 12
-const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
-const planSessionRate = (billingPlan, sessions) => billingPlan === 'monthly' ? (Number(sessions) <= 3 ? 10 : 8) : weeklySessionRate(sessions)
+// Must match api/_paypal.js exactly. scripts/test-pricing.mjs enforces it.
+const SESSION_RATE_STANDARD = 8
+const SESSION_RATE_PACKAGE = 7
+const PACKAGE_MIN_SESSIONS = 4
+const LONG_LESSON_MULTIPLIER = 2
+const weeklySessionRate = (sessions) => Number(sessions) < PACKAGE_MIN_SESSIONS ? SESSION_RATE_STANDARD : SESSION_RATE_PACKAGE
+const planSessionRate = (billingPlan, sessions) => weeklySessionRate(sessions)
 const planCreditCount = (billingPlan, sessions) => Number(sessions) * (billingPlan === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
 const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
 const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)
@@ -3253,7 +3258,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       </div>
 
       <div className="student-payment-pro__footer-notes">
-        <span>USD pricing: Weekly plan is $10 per 25-minute class. Monthly package is 3–7 sessions/week billed for 4 weeks: 3/week at $10 per class, 4–7/week at $8 per class.</span>
+        <span>USD pricing: $8 per 25-minute class for 1–3 classes a week. Monthly package is 3–7 classes/week billed for 4 weeks: 3/week at $8 per class, 4–7/week at $7 per class. A 50-minute class is double.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. Hidden outside China except for admin preview.</span>}
         <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>

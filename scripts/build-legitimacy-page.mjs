@@ -60,7 +60,7 @@ const FAQ = [
   ['Do I have to enter card details for the free class?',
    'No. The first 25-minute class is genuinely free and requires no card details. You are not enrolled in anything by taking it, and nothing is charged unless you later choose a plan yourself.'],
   ['How much does it actually cost?',
-   'Lessons are $10 each for one to three lessons a week, or $8 each on a monthly plan of four or more lessons a week. There is no registration fee, no materials fee, no platform fee and no contract. Those are the only prices; there are no hidden extras.'],
+   'Lessons are $8 each for one to three lessons a week, or $8 each on a monthly plan of four or more lessons a week. There is no registration fee, no materials fee, no platform fee and no contract. Those are the only prices; there are no hidden extras.'],
   ['Who can I contact to check you are real?',
    `You can message us on Facebook at facebook.com/tutorproenglish, on Messenger, on WhatsApp, or call ${PHONE}. A real person answers, in Philippine time.`],
 ]
@@ -158,7 +158,7 @@ const html = `<!doctype html>
         <h2>How the money works</h2>
         <div class="grid">
           <div class="card"><h3>The first class is free</h3><p>A full 25-minute one-to-one lesson, with no card details required. Nothing is charged unless you later choose a plan yourself.</p></div>
-          <div class="card"><h3>$10 or $8 per lesson</h3><p>$10 each for one to three lessons a week, $8 each on a monthly plan of four or more. No registration, materials or platform fees.</p></div>
+          <div class="card"><h3>$8 or $7 per lesson</h3><p>$8 each for one to three lessons a week, $7 each on a monthly plan of four or more. No registration, materials or platform fees.</p></div>
           <div class="card"><h3>Cancel and get the credit back</h3><p>Cancel at least 12 hours ahead and the credit returns in full. If a lesson fails on our side, you always get the credit back.</p></div>
           <div class="card"><h3>14-day refunds</h3><p>Unused credits are refundable within 14 days of purchase. No contract, no lock-in, cancel whenever you like.</p></div>
         </div>

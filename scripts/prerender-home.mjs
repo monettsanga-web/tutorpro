@@ -70,7 +70,7 @@ const SECTIONS = [
   },
   {
     heading: 'Choose your child’s rhythm.',
-    body: 'The Weekly plan suits 1–3 classes a week at $10 per class and is paid weekly. The Monthly Package covers 4–7 classes of 25 minutes each week at $8 per class, billed monthly, with priority scheduling and a dedicated tutor. Lesson times shown in your dashboard are automatically converted to your own local timezone, so there is no mental arithmetic when booking from another country.',
+    body: 'The Weekly plan suits 1–3 classes a week at $8 per class and is paid weekly. The Monthly Package covers 4–7 classes of 25 minutes each week at $7 per class, billed monthly, with priority scheduling and a dedicated tutor. Lesson times shown in your dashboard are automatically converted to your own local timezone, so there is no mental arithmetic when booking from another country.',
   },
   {
     heading: 'Simple, honest pricing.',
@@ -138,7 +138,7 @@ const FAQS = [
   },
   {
     question: 'How much do online English classes for kids cost?',
-    answer: 'Classes start from $8 per 25-minute one-to-one lesson on the Monthly Package (4–7 classes a week), or $10 per class on the Weekly plan (1–3 classes a week). The first class is free and no card is required to try it.',
+    answer: 'Classes start from $7 per 25-minute one-to-one lesson on the Monthly Package (4–7 classes a week), or $8 per class on the Weekly plan (1–3 classes a week). A 50-minute lesson is double. The first class is free and no card is required to try it.',
   },
   {
     question: 'What age should my child start learning English?',
@@ -236,7 +236,7 @@ ${faqItems}
  * matching course below. Never publish a rating that is not genuinely earned.
  *
  * Content mirrors the `programmes` object in src/App.jsx and the pricing helpers in
- * src/Dashboards.jsx ($10/class for 1-3 lessons a week, $8/class for 4 or more).
+ * src/Dashboards.jsx ($8/class for 1-3 lessons a week, $7/class for 4 or more).
  */
 const COURSES = [
   {

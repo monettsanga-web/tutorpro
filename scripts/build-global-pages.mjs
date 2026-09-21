@@ -29,7 +29,7 @@
  *
  * ACCURACY
  * --------
- * Pricing from planSessionRate() in src/Dashboards.jsx ($10 for 1-3/week, $8
+ * Pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/week, $8
  * for 4+). Free first class, 12-hour cancellation and 14-day refund from the
  * real booking rules. Only English claims Cambridge and Oxford alignment.
  * No invented reviews, ratings or student counts.
@@ -73,7 +73,7 @@ const PAGES = [
     label: 'Online English classes',
     title: 'Online English Classes for Kids — 1-to-1 Lessons Worldwide | TutorPro',
     description:
-      'One-to-one online English classes for children aged 4–16, taught live by qualified teachers. Cambridge and Oxford-aligned lessons from $8. Free first class, no card required.',
+      'One-to-one online English classes for children aged 4–16, taught live by qualified teachers. Cambridge and Oxford-aligned lessons from $7. Free first class, no card required.',
     heading: 'Online English classes for kids, one-to-one',
     lede:
       'Live video lessons for children aged 4 to 16, with one teacher and one child. No group classes, no waiting for a turn to speak — your child talks for the whole lesson.',
@@ -100,7 +100,7 @@ const PAGES = [
         <h2>After every lesson</h2>
         <p>Teachers write feedback covering what was practised, what went well, what to work on, and the words worth revising at home. It is written in plain language, so you can follow your child's progress without knowing the subject yourself.</p>`,
     faqs: [
-      ['How much do online English classes cost?', 'Classes are $10 each on a weekly plan of 1–3 lessons, or $8 each on a monthly package of 4 or more. There are no registration fees, materials fees or platform fees. The first class is free.'],
+      ['How much do online English classes cost?', 'Classes are $8 each on a weekly plan of 1–3 lessons, or $7 each on a monthly package of 4 or more. There are no registration fees, materials fees or platform fees. The first class is free.'],
       ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher, so you can see how your child responds before paying anything.'],
       ['What age can my child start?', 'We teach children from 4 to 16. Lessons for younger children are usually 25 minutes to match their concentration span.'],
       ['Do we need to install anything?', 'No. Lessons run in our own browser classroom. You click a link and the lesson opens.'],
@@ -114,7 +114,7 @@ const PAGES = [
     label: 'Online English tutor',
     title: 'Online English Tutor for Children — Qualified, Vetted Teachers | TutorPro',
     description:
-      'Find a qualified online English tutor for your child. Every teacher passes a recorded teaching interview and credential check. One-to-one lessons from $8, free first class.',
+      'Find a qualified online English tutor for your child. Every teacher passes a recorded teaching interview and credential check. One-to-one lessons from $7, free first class.',
     heading: 'Finding an online English tutor you can actually trust',
     lede:
       'Choosing a tutor for your child online means trusting someone you have never met. Here is exactly how our teachers are selected, and how to judge any tutor you are considering.',
@@ -295,7 +295,7 @@ function page(spec) {
           <span class="pill">Ages 4–16</span>
           <span class="pill">One-to-one, always</span>
           <span class="pill">25 or 50 minute lessons</span>
-          <span class="pill">From $8 per class</span>
+          <span class="pill">from $7 per class</span>
           <span class="pill">Free first class</span>
         </p>
         <p>
@@ -309,7 +309,7 @@ ${spec.body}
         <h2>Pricing</h2>
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
-          <tr><td>Weekly plan</td><td>1–3</td><td>$10</td></tr>
+          <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
           <tr><td>Monthly package</td><td>4–7</td><td>$8</td></tr>
         </table>
         <p>No registration fee, no materials fee, no platform fee. The first class is free for every new family and no card is required. Cancelling at least 12 hours before a lesson returns the credit in full, and unused credits can be refunded within 14 days — the full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>

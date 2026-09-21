@@ -12,7 +12,7 @@
  *
  * ACCURACY: every claim below is drawn from the real platform —
  *  - coursebooks come from the curriculum list in src/App.jsx
- *  - pricing comes from planSessionRate() in src/Dashboards.jsx ($10 for 1-3/wk, $8 for 4+)
+ *  - pricing comes from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/wk, $7 for 4+)
  *  - lesson lengths, free trial, recordings and the AI speech coach are shipped features
  * Nothing here is aspirational or invented.
  */
@@ -45,7 +45,7 @@ const AGES = [
     range: '4–7',
     label: 'Ages 4–7',
     title: 'Online English Classes for Kids Ages 4–7 | TutorPro Online English',
-    description: 'One-to-one online English lessons for children aged 4–7. Phonics, first words and speaking confidence in 25-minute classes. Free first class, from $8 per lesson.',
+    description: 'One-to-one online English lessons for children aged 4–7. Phonics, first words and speaking confidence in 25-minute classes. Free first class, from $7 per lesson.',
     heading: 'Online English classes for children aged 4–7',
     lede: 'Short, playful one-to-one lessons that build first words, phonics and the confidence to speak out loud — before your child ever worries about getting it wrong.',
     stage: 'Early years and lower Primary',
@@ -214,7 +214,7 @@ function page(age) {
         <p>
           <span class="pill">${escapeHtml(age.stage)}</span>
           <span class="pill">25 or 50 minute lessons</span>
-          <span class="pill">From $8 per class</span>
+          <span class="pill">from $7 per class</span>
           <span class="pill">Free first class</span>
         </p>
         <p>
@@ -247,7 +247,7 @@ function page(age) {
         <h2>Pricing</h2>
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
-          <tr><td>Weekly plan</td><td>1–3</td><td>$10</td></tr>
+          <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
           <tr><td>Monthly package</td><td>4–7</td><td>$8</td></tr>
         </table>
         <p>The first class is free for every new family and no card is required to try it. Unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full. Full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>

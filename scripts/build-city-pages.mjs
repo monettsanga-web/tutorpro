@@ -20,8 +20,8 @@
  * Only cities with real, verifiable detail are included. Five good pages beat
  * a thousand thin ones.
  *
- * ACCURACY: pricing from planSessionRate() in src/Dashboards.jsx ($10 for 1-3
- * lessons a week, $8 for 4+), coursebooks from src/App.jsx, DTI 5274092, and
+ * ACCURACY: pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3
+ * lessons a week, $7 for 4+), coursebooks from src/App.jsx, DTI 5274092, and
  * the real 12-hour cancellation and 14-day refund terms. Nothing invented.
  */
 
@@ -173,7 +173,7 @@ function schema(city) {
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: `Online English lessons for children in ${city.city}`,
-    description: `One-to-one online English lessons for children aged 4 to 16 in ${city.city}. Cambridge and Oxford coursebooks, free first class, from $8 per lesson.`,
+    description: `One-to-one online English lessons for children aged 4 to 16 in ${city.city}. Cambridge and Oxford coursebooks, free first class, from $7 per lesson.`,
     provider: {
       '@type': 'EducationalOrganization',
       name: 'TutorPro Online English',
@@ -190,7 +190,7 @@ function schema(city) {
         category: 'Partially Free',
         price: '0',
         priceCurrency: 'USD',
-        description: 'First 25-minute one-to-one class free. Lessons from $8 afterwards.',
+        description: 'First 25-minute one-to-one class free. Lessons from $7 afterwards.',
         url: `${SITE}/${city.slug}.html`,
       },
     },
@@ -221,7 +221,7 @@ function render(city, all) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Online English Tutor for Kids in ${city.city} · Free First Class</title>
-    <meta name="description" content="One-to-one online English lessons for children aged 4-16 in ${city.city}. Cambridge and Oxford coursebooks, ${w.localStart}-${w.localEnd} after-school slots, free first class, no card required. From $8 per lesson." />
+    <meta name="description" content="One-to-one online English lessons for children aged 4-16 in ${city.city}. Cambridge and Oxford coursebooks, ${w.localStart}-${w.localEnd} after-school slots, free first class, no card required. from $7 per lesson." />
     <link rel="canonical" href="${url}" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Online English Tutor for Kids in ${city.city}" />
@@ -247,7 +247,7 @@ function render(city, all) {
         <p>
           <span class="pill">${city.region}</span>
           <span class="pill">Free first class</span>
-          <span class="pill">From $8 per lesson</span>
+          <span class="pill">from $7 per lesson</span>
           <span class="pill">Ages 4–16</span>
         </p>
         <p>
@@ -282,7 +282,7 @@ function render(city, all) {
         <p>${city.localNote} Our lessons are one-to-one throughout:</p>
         <table>
           <tr><th>Plan</th><th>Price per lesson</th></tr>
-          <tr><td>1–3 lessons a week, billed weekly</td><td><strong>$10</strong></td></tr>
+          <tr><td>1–3 lessons a week, billed weekly</td><td><strong>$8</strong></td></tr>
           <tr><td>4 or more a week, monthly plan</td><td><strong>$8</strong></td></tr>
         </table>
         <p><strong style="color:#fff">No registration fee, no materials fee, no platform fee, no contract.</strong> Cancel at least 12 hours before a lesson and the credit returns in full. Unused credits are refundable within 14 days. ${city.payment}</p>

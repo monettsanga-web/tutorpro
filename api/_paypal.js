@@ -9,9 +9,18 @@ export const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
 export const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 export const MONTHLY_BILLING_WEEKS = 4
 export const MAX_CUSTOM_WEEKLY_SESSIONS = 12
-export const weeklySessionRate = (sessions) => Number(sessions) <= 3 ? 10 : 8
+// Published rates. 1-3 lessons/week pay the standard rate; 4 or more unlock
+// the package rate. Mirrored EXACTLY in src/Dashboards.jsx — scripts/test-pricing.mjs
+// fails the build if the two ever drift, because a mismatch would show a
+// parent one price and charge them another.
+export const SESSION_RATE_STANDARD = 8
+export const SESSION_RATE_PACKAGE = 7
+export const PACKAGE_MIN_SESSIONS = 4
+/** A 50-minute lesson is exactly two 25-minute blocks, so it costs double. */
+export const LONG_LESSON_MULTIPLIER = 2
+export const weeklySessionRate = (sessions) => Number(sessions) < PACKAGE_MIN_SESSIONS ? SESSION_RATE_STANDARD : SESSION_RATE_PACKAGE
 export const parseBillingPlan = (value = 'weekly') => value === 'monthly' ? 'monthly' : 'weekly'
-export const planSessionRate = (billingPlan, sessions) => parseBillingPlan(billingPlan) === 'monthly' ? (Number(sessions) <= 3 ? 10 : 8) : weeklySessionRate(sessions)
+export const planSessionRate = (billingPlan, sessions) => weeklySessionRate(sessions)
 export const planCreditCount = (billingPlan, sessions) => Number(sessions) * (parseBillingPlan(billingPlan) === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
 export const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
 export const weeklyPlanTotal = (sessions) => planTotal('weekly', sessions)

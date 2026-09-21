@@ -16,7 +16,7 @@
  * ACCURACY
  * --------
  * Every claim is drawn from the real platform: pricing from planSessionRate()
- * in src/Dashboards.jsx ($10 for 1-3/wk, $8 for 4+), subjects and level copy
+ * in src/Dashboards.jsx ($8 for 1-3/wk, $7 for 4+), subjects and level copy
  * from src/subjects.js, lesson lengths and the free first class from the
  * booking rules. Only English claims Cambridge and Oxford alignment, because
  * that is the only published alignment we can evidence. Nothing here is
@@ -40,7 +40,7 @@ const SUBJECTS = [
     name: 'Maths',
     label: 'Maths',
     title: 'Online Maths Tutor for Kids & Teens | 1-to-1 Classes | TutorPro',
-    description: 'One-to-one online maths lessons for children aged 4–16. Times tables, fractions, algebra and exam preparation, matched to your child’s school curriculum. Free first class, from $8.',
+    description: 'One-to-one online maths lessons for children aged 4–16. Times tables, fractions, algebra and exam preparation, matched to your child’s school curriculum. Free first class, from $7.',
     heading: 'Online maths tutoring for children and teenagers',
     lede: 'One-to-one maths lessons that go at your child’s pace — the steps worked through slowly until the idea actually clicks, not just the answer copied down.',
     stage: 'Primary and Secondary · Ages 4–16',
@@ -65,7 +65,7 @@ const SUBJECTS = [
     name: 'Science',
     label: 'Science',
     title: 'Online Science Tutor for Kids & Teens | 1-to-1 Classes | TutorPro',
-    description: 'One-to-one online science lessons for children aged 4–16. Biology, chemistry and physics explained clearly, matched to your child’s school curriculum. Free first class, from $8.',
+    description: 'One-to-one online science lessons for children aged 4–16. Biology, chemistry and physics explained clearly, matched to your child’s school curriculum. Free first class, from $7.',
     heading: 'Online science tutoring for children and teenagers',
     lede: 'Biology, chemistry and physics explained in plain language — with the reasoning made visible, so your child understands why an answer is right instead of memorising it.',
     stage: 'Primary and Secondary · Ages 4–16',
@@ -90,7 +90,7 @@ const SUBJECTS = [
     name: 'ICT',
     label: 'ICT & Computing',
     title: 'Online ICT & Computing Classes for Kids | 1-to-1 | TutorPro',
-    description: 'One-to-one online ICT and computing lessons for children aged 4–16. Typing, spreadsheets, coding, algorithms and online safety. Free first class, from $8 per lesson.',
+    description: 'One-to-one online ICT and computing lessons for children aged 4–16. Typing, spreadsheets, coding, algorithms and online safety. Free first class, from $7 per lesson.',
     heading: 'Online ICT and computing classes for children',
     lede: 'The digital skills school and homework now assume your child already has — taught properly, one-to-one, from first typing to real coding.',
     stage: 'Primary and Secondary · Ages 4–16',
@@ -232,7 +232,7 @@ function page(subject) {
           <span class="pill">${escapeHtml(subject.stage)}</span>
           <span class="pill">${escapeHtml(subject.accreditation)}</span>
           <span class="pill">25 or 50 minute lessons</span>
-          <span class="pill">From $8 per class</span>
+          <span class="pill">from $7 per class</span>
           <span class="pill">Free first class</span>
         </p>
         <p>
@@ -261,7 +261,7 @@ function page(subject) {
         <h2>Pricing</h2>
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
-          <tr><td>Weekly plan</td><td>1–3</td><td>$10</td></tr>
+          <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
           <tr><td>Monthly package</td><td>4–7</td><td>$8</td></tr>
         </table>
         <p>The first class is free for every new family and no card is required to try it. Unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full. Full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>
