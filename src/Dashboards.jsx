@@ -5957,8 +5957,8 @@ export function AdminAnnouncementsPanel() {
           <p className="posted-announcements__empty">No announcements are showing on dashboards right now.</p>
         )}
         <p className="posted-announcements__note">
-          Dashboard announcements are stored in each person&apos;s own browser, so removing one here clears it
-          from this device. On other devices it disappears automatically at the {ANNOUNCEMENT_LIFETIME_DAYS}-day mark.
+          Announcements are shared through your database, so posting or removing one here updates every parent
+          and teacher dashboard. Anyone with the dashboard already open sees the change without refreshing.
         </p>
       </section>
 

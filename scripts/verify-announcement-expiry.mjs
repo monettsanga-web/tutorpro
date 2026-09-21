@@ -18,10 +18,26 @@ const DAY = 24 * 60 * 60 * 1000
 
 const browser = await chromium.launch()
 
-/** Open the student dashboard with a given set of stored announcements. */
+/**
+ * Open the student dashboard with a given set of announcements.
+ *
+ * Announcements are now served from the shared `site_settings` row, so the
+ * cloud is the source of truth and the test must seed THAT, not just
+ * localStorage. Seeding only the cache would prove nothing: a confirmed
+ * remote read legitimately replaces it.
+ */
 async function open(announcements) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
   await page.route('**/paypal.com/sdk/**', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }))
+
+  // Serve the announcements as the shared settings row.
+  await page.route('**/rest/v1/site_settings**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    headers: { 'Content-Range': '0-0/1' },
+    body: JSON.stringify({ settings: { teacherDirectoryVisibility: 'public', announcements } }),
+  }))
+
   await page.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
   await page.evaluate(`
     localStorage.setItem('tutorpro_accounts_v2', JSON.stringify([${STUDENT}]));
@@ -103,23 +119,29 @@ console.log('\n--- sending a new announcement REPLACES the previous one ---')
   ])
   ok(await page.locator('.announcement-banner').count() === 1, 'the previous announcement is showing')
 
-  // Simulate the admin sending a new one: same shape saveAnnouncement writes,
-  // applying the replace rule for an ALL-audience send.
-  await page.evaluate(() => {
-    const KEY = 'tutorpro_announcements_v1'
-    const now = Date.now()
-    const kept = JSON.parse(localStorage.getItem(KEY) || '[]')
-      // An ALL announcement supersedes every audience.
-      .filter(() => false)
-    kept.unshift({
-      id: `ann_${now}`, subject: 'Brand new announcement', body: 'This is the current message.',
-      target: 'ALL', createdAt: new Date(now).toISOString(),
-      expiresAt: new Date(now + (2 * 24 * 60 * 60 * 1000)).toISOString(), translations: {},
-    })
-    localStorage.setItem(KEY, JSON.stringify(kept))
-    window.dispatchEvent(new Event('tutorpro:data-change'))
-  })
-  await page.waitForTimeout(900)
+  // The admin sends a new ALL announcement, which supersedes every earlier
+  // one. Re-point the shared row at the new list, then make the parent's
+  // dashboard re-read it exactly as the hourly refresh or Realtime would.
+  await page.unroute('**/rest/v1/site_settings**')
+  await page.route('**/rest/v1/site_settings**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    headers: { 'Content-Range': '0-0/1' },
+    body: JSON.stringify({
+      settings: {
+        teacherDirectoryVisibility: 'public',
+        announcements: [{
+          id: 'brand-new', subject: 'Brand new announcement', body: 'This is the current message.',
+          target: 'ALL', createdAt: iso(0), expiresAt: iso(2 * DAY), translations: {},
+        }],
+      },
+    }),
+  }))
+  // `networkidle` never settles once the Realtime socket is open. The hash
+  // route means the dashboard is restored directly, with no button to press.
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.waitForSelector('.announcement-banner', { timeout: 20000 })
+  await page.waitForTimeout(1200)
 
   const count = await page.locator('.announcement-banner').count()
   ok(count === 1, `the parent sees exactly ONE banner, not a stack (${count})`)
@@ -146,6 +168,21 @@ console.log('\n--- dismissing still works, and the banner is reachable on mobile
 
   const phone = await browser.newPage({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true })
   await phone.route('**/paypal.com/sdk/**', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }))
+  // The shared row is the source of truth, so the phone must be served it too.
+  await phone.route('**/rest/v1/site_settings**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    headers: { 'Content-Range': '0-0/1' },
+    body: JSON.stringify({
+      settings: {
+        teacherDirectoryVisibility: 'public',
+        announcements: [{
+          id: 'm', subject: 'Mobile notice', body: 'Readable on a phone.', target: 'ALL',
+          createdAt: iso(0), expiresAt: iso(2 * DAY), translations: {},
+        }],
+      },
+    }),
+  }))
   await phone.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
   await phone.evaluate(`
     localStorage.setItem('tutorpro_accounts_v2', JSON.stringify([${STUDENT}]));

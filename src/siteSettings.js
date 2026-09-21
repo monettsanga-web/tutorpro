@@ -42,10 +42,32 @@ export const TEACHER_VISIBILITY_OPTIONS = [
 
 export const DEFAULT_SITE_SETTINGS = {
   teacherDirectoryVisibility: TEACHER_VISIBILITY.PUBLIC,
+  // Dashboard announcements travel inside this row. They live here rather
+  // than in a table of their own so no extra SQL has to be run before
+  // announcements reach families — this row already exists, is already
+  // readable by the app and is already admin-only for writes.
+  announcements: [],
 }
 
 let cachedSettings = null
 const listeners = new Set()
+
+/** Keep only the fields an announcement needs, and drop anything malformed. */
+function normalizeAnnouncements(raw) {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((item) => item && typeof item === 'object' && item.id && item.subject)
+    .map((item) => ({
+      id: String(item.id),
+      subject: String(item.subject || ''),
+      body: String(item.body || ''),
+      target: String(item.target || 'ALL').toUpperCase(),
+      translations: item.translations && typeof item.translations === 'object' ? item.translations : {},
+      createdAt: item.createdAt || new Date().toISOString(),
+      expiresAt: item.expiresAt || undefined,
+    }))
+    .slice(0, 20)
+}
 
 function normalize(raw) {
   const value = raw && typeof raw === 'object' ? raw : {}
@@ -54,6 +76,7 @@ function normalize(raw) {
     teacherDirectoryVisibility: Object.values(TEACHER_VISIBILITY).includes(visibility)
       ? visibility
       : DEFAULT_SITE_SETTINGS.teacherDirectoryVisibility,
+    announcements: normalizeAnnouncements(value.announcements),
   }
 }
 
@@ -139,10 +162,29 @@ export async function loadSiteSettings() {
  * instantly, then writes to Supabase so every other device follows.
  */
 export async function saveSiteSettings(changes) {
-  const next = applySettings({ ...getSiteSettings(), ...changes })
   if (!isSupabaseConfigured || !supabase) {
-    return { settings: next, synced: false, error: 'Shared database is not configured, so this change applies to this browser only.' }
+    const offline = applySettings({ ...getSiteSettings(), ...changes })
+    return { settings: offline, synced: false, error: 'Shared database is not configured, so this change applies to this browser only.' }
   }
+  // Merge onto the CURRENT remote row, not the local cache.
+  //
+  // This row now carries announcements as well as the directory setting. If a
+  // browser's cache were stale or empty — a first load that never completed,
+  // say — merging onto it would silently wipe every announcement for every
+  // family the moment an unrelated toggle was saved. One extra read on a rare
+  // admin action is cheap insurance against that.
+  let base = getSiteSettings()
+  try {
+    const { data } = await supabase
+      .from('site_settings')
+      .select('settings')
+      .eq('id', SETTINGS_ROW_ID)
+      .maybeSingle()
+    if (data?.settings) base = normalize(data.settings)
+  } catch {
+    // Unreachable: fall back to the cache rather than refusing the change.
+  }
+  const next = applySettings({ ...base, ...changes })
   try {
     const { error } = await supabase
       .from('site_settings')

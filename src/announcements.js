@@ -217,84 +217,85 @@ export function clearAnnouncements() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Announcements are stored in Supabase so they actually reach families.
+ * Announcements are shared through Supabase so they actually reach families.
  *
- * Previously they lived only in localStorage, which meant an announcement
- * was written into the ADMIN's browser and never travelled: parents saw
- * nothing on their dashboards. The local copy is now only a cache, so the
- * banner still renders instantly and still works offline.
+ * Previously they lived only in localStorage, which meant an announcement was
+ * written into the ADMIN's browser and never travelled: parents saw nothing on
+ * their dashboards, and the expiry and replacement rules were being applied to
+ * a message with no audience.
  *
- * Every cloud call fails soft. If the table has not been created yet, or the
- * network is down, the cached copy keeps working exactly as before.
+ * They ride inside the existing `site_settings` row rather than a table of
+ * their own. That is a deliberate trade: a dedicated table would be tidier,
+ * but it would need a migration run by hand before anything worked, and that
+ * step is exactly where this kept stalling. This row already exists, is
+ * already world-readable, and is already admin-only for writes.
+ *
+ * localStorage remains a cache so the banner paints instantly and still works
+ * offline. Every cloud call fails soft.
  */
 
-const rowToAnnouncement = (row) => ({
-  id: row.id,
-  subject: row.subject || '',
-  body: row.body || '',
-  target: row.target || 'ALL',
-  translations: row.translations && typeof row.translations === 'object' ? row.translations : {},
-  createdAt: row.created_at || new Date().toISOString(),
-  expiresAt: row.expires_at || undefined,
-})
-
 function writeCache(items) {
-  try { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(items.slice(0, 30))) } catch { /* Non-critical. */ }
+  const next = JSON.stringify(items.slice(0, 20))
+  // Only announce a real change. Firing the event unconditionally made every
+  // refresh re-enter this path and produced a storm of identical reads.
+  let previous = null
+  try { previous = localStorage.getItem(ANNOUNCEMENTS_KEY) } catch { /* Non-critical. */ }
+  if (previous === next) return
+  try { localStorage.setItem(ANNOUNCEMENTS_KEY, next) } catch { /* Non-critical. */ }
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('tutorpro:data-change'))
 }
 
 /**
- * Pull the current announcements from Supabase into the local cache.
+ * Pull the shared announcements into the local cache.
  * Returns the fresh list, or the cached one when the cloud is unavailable.
  */
 export async function loadCloudAnnouncements() {
   if (!isSupabaseConfigured || !supabase) return getAnnouncements()
   try {
+    // Read the row directly rather than going through loadSiteSettings, which
+    // falls back to the cache on failure. That fallback is right for a
+    // settings toggle but wrong here: an empty result from a failed read
+    // would overwrite the cache and erase announcements this device already
+    // holds. Only a CONFIRMED remote read is allowed to replace the cache.
     const { data, error } = await supabase
-      .from('announcements')
-      .select('id, subject, body, target, translations, created_at, expires_at')
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(30)
+      .from('site_settings')
+      .select('settings')
+      .eq('id', 'public')
+      .maybeSingle()
     if (error) throw error
-    const items = (data || []).map(rowToAnnouncement)
-    writeCache(items)
-    return items
+    const raw = Array.isArray(data?.settings?.announcements) ? data.settings.announcements : []
+    const live = raw.filter((item) => item && item.id && !isAnnouncementExpired(item))
+    writeCache(live)
+    return live
   } catch {
-    // Table missing or offline: the cache keeps the banner working.
+    // Offline or unreachable: keep whatever this device already had.
     return getAnnouncements()
   }
 }
 
-/** Publish an announcement for every device. */
-export async function publishCloudAnnouncement(record) {
-  if (!isSupabaseConfigured || !supabase) {
-    return { synced: false, error: 'Shared database is not configured, so this announcement stays on this device only.' }
-  }
-  try {
-    // Remove what this announcement supersedes, so parents see the current
-    // message rather than a stack, on every device and not just this one.
-    const { error: clearError } = await supabase
-      .from('announcements')
-      .delete()
-      .in('target', supersededTargets(record.target))
-    if (clearError) throw clearError
+/** Write the announcement list back to the shared row. */
+async function saveCloudList(items) {
+  const { saveSiteSettings } = await import('./siteSettings.js')
+  const { synced, error } = await saveSiteSettings({ announcements: items.slice(0, 20) })
+  writeCache(items)
+  return { synced, error }
+}
 
-    const { error } = await supabase.from('announcements').insert({
-      id: record.id,
-      subject: record.subject,
-      body: record.body,
-      target: record.target,
-      translations: record.translations || {},
-      created_at: record.createdAt,
-      expires_at: record.expiresAt,
-    })
-    if (error) throw error
-    return { synced: true, error: '' }
+/** Publish an announcement to every device. */
+export async function publishCloudAnnouncement(record) {
+  try {
+    const { loadSiteSettings } = await import('./siteSettings.js')
+    const settings = await loadSiteSettings().catch(() => ({ announcements: [] }))
+    const kept = (settings.announcements || [])
+      .filter((item) => !isAnnouncementExpired(item))
+      // Replacement is applied to the SHARED list, so the previous
+      // announcement disappears from every parent's dashboard, not just here.
+      .filter((item) => !supersedesAnnouncement(record.target, item.target))
+    return await saveCloudList([record, ...kept])
   } catch (error) {
     return {
       synced: false,
-      error: `Posted on this device, but the shared database rejected it: ${error.message || error}. Run supabase/announcements.sql in Supabase.`,
+      error: `Posted on this device only: ${error.message || error}`,
     }
   }
 }
@@ -302,11 +303,11 @@ export async function publishCloudAnnouncement(record) {
 /** Withdraw one announcement from every device. */
 export async function removeCloudAnnouncement(id) {
   removeAnnouncement(id)
-  if (!isSupabaseConfigured || !supabase) return { synced: false }
   try {
-    const { error } = await supabase.from('announcements').delete().eq('id', id)
-    if (error) throw error
-    return { synced: true }
+    const { loadSiteSettings } = await import('./siteSettings.js')
+    const settings = await loadSiteSettings().catch(() => ({ announcements: [] }))
+    const kept = (settings.announcements || []).filter((item) => item.id !== id)
+    return await saveCloudList(kept)
   } catch {
     return { synced: false }
   }
@@ -315,13 +316,8 @@ export async function removeCloudAnnouncement(id) {
 /** Withdraw every announcement from every device. */
 export async function clearCloudAnnouncements() {
   clearAnnouncements()
-  if (!isSupabaseConfigured || !supabase) return { synced: false }
   try {
-    // `neq` on the primary key matches every row while satisfying PostgREST's
-    // requirement that a delete carry a filter.
-    const { error } = await supabase.from('announcements').delete().neq('id', '')
-    if (error) throw error
-    return { synced: true }
+    return await saveCloudList([])
   } catch {
     return { synced: false }
   }
@@ -330,49 +326,28 @@ export async function clearCloudAnnouncements() {
 /**
  * Live updates for signed-in readers, so a parent with the dashboard already
  * open sees a new announcement appear and a withdrawn one vanish.
- * Only opened for a signed-in user, matching the site-settings policy that
- * keeps logged-out visitors off the Realtime socket.
+ * Rides the existing site-settings subscription, which is only opened for a
+ * signed-in user and so never puts a logged-out visitor on a socket.
  */
 export function subscribeToCloudAnnouncements() {
   if (!isSupabaseConfigured || !supabase) return () => {}
-  let channel = null
+  let stopSettings = () => {}
   let cancelled = false
 
-  const open = () => {
-    if (cancelled || channel) return
-    channel = supabase
-      .channel('tutorpro-announcements')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
-        loadCloudAnnouncements().catch(() => {})
-      })
-      .subscribe()
-  }
-  const close = () => {
-    if (!channel) return
-    try { supabase.removeChannel(channel) } catch { /* Already closed. */ }
-    channel = null
-  }
-
-  supabase.auth.getSession()
-    .then(({ data }) => { if (data?.session) { open(); loadCloudAnnouncements().catch(() => {}) } })
-    .catch(() => { /* Offline: the cache still applies. */ })
-
-  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+  import('./siteSettings.js').then(({ subscribeToCloudSiteSettings, subscribeToSiteSettings }) => {
     if (cancelled) return
-    if (session) { open(); loadCloudAnnouncements().catch(() => {}) } else close()
-  })
+    const stopSocket = subscribeToCloudSiteSettings()
+    const stopLocal = subscribeToSiteSettings((settings) => {
+      const live = (settings.announcements || []).filter((item) => !isAnnouncementExpired(item))
+      writeCache(live)
+    })
+    stopSettings = () => { stopSocket(); stopLocal() }
+  }).catch(() => {})
 
   return () => {
     cancelled = true
-    close()
-    try { listener?.subscription?.unsubscribe() } catch { /* Already removed. */ }
+    stopSettings()
   }
-}
-
-/** Which stored targets a new announcement replaces. */
-function supersededTargets(newTarget) {
-  return ['ALL', 'STUDENT', 'STUDENTS', 'TEACHER', 'TEACHERS']
-    .filter((old) => supersedesAnnouncement(newTarget, old))
 }
 
 /** Which roles actually see an announcement with this target. */
