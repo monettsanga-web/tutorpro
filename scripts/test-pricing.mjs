@@ -68,6 +68,12 @@ ok(num('LONG_LESSON_MULTIPLIER') === server.LONG_LESSON_MULTIPLIER,
 // published price the checkout no longer honours.
 const priceCopy = readFileSync(new URL('../public/pricing.html', import.meta.url), 'utf8')
 ok(!/\$10 per (25-minute|class|lesson)/.test(priceCopy), 'the pricing page no longer advertises the old $10 rate')
+// The comparison TABLE is computed, so a prose-only check missed it once:
+// the page read "$8 per class" in the copy while the table below still said
+// "$10.00" in every row. Assert on the rendered figures too.
+ok(!/\$10\.00/.test(priceCopy), 'the pricing table contains no $10.00 rows')
+ok(!/\$128\.00|\$160\.00|\$192\.00|\$224\.00/.test(priceCopy), 'no monthly totals computed from the old rate')
+ok(/\$8\.00/.test(priceCopy) && /\$7\.00/.test(priceCopy), 'the table shows the current $8 and $7 rates')
 ok(/\$8/.test(priceCopy), 'the pricing page shows the new $8 rate')
 ok(/\$7/.test(priceCopy), 'the pricing page shows the new $7 package rate')
 

@@ -23,6 +23,7 @@
 import { writeFile, mkdir } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { STANDARD, PACKAGE, PACKAGE_MIN } from './pricing.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const publicDir = resolve(here, '..', 'public')
@@ -31,9 +32,12 @@ const SITE = 'https://www.tutorpro.site'
 const UPDATED = '4 August 2026'
 const MESSENGER = 'https://m.me/526047974195321'
 
-/* Mirrors src/Dashboards.jsx exactly. */
+/* Rates come from scripts/pricing.mjs, which test-pricing.mjs asserts against
+   api/_paypal.js — the code that actually charges the card. Previously this
+   file kept its own copy of the rate function, so a price change edited
+   everywhere else silently left this table advertising the old numbers. */
 const MONTHLY_BILLING_WEEKS = 4
-const sessionRate = (sessions) => (Number(sessions) <= 3 ? 10 : 8)
+const sessionRate = (sessions) => (Number(sessions) < PACKAGE_MIN ? STANDARD : PACKAGE)
 const creditCount = (plan, sessions) => Number(sessions) * (plan === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
 const planTotal = (plan, sessions) => creditCount(plan, sessions) * sessionRate(sessions)
 
@@ -222,7 +226,7 @@ function page() {
         </table>
 
         <h2>Monthly package — 4 to 7 classes a week</h2>
-        <p>Billed monthly over 4 weeks, with priority scheduling and a dedicated tutor. This is where the $8 rate applies.</p>
+        <p>Billed monthly over 4 weeks, with priority scheduling and a dedicated tutor. This is where the ${PACKAGE} rate applies.</p>
         <table>
           <tr><th>Frequency</th><th>Lessons per month</th><th>Per class</th><th>Total</th></tr>${monthlyRows}
         </table>
