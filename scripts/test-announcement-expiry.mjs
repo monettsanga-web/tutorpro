@@ -24,6 +24,12 @@ globalThis.localStorage = {
 // The module dispatches a DOM event on save; make that a no-op.
 globalThis.window = { dispatchEvent() {}, addEventListener() {}, removeEventListener() {} }
 globalThis.Event = class { constructor(type) { this.type = type } }
+// announcements.js imports the Supabase client, which constructs a Realtime
+// client on load. Sandbox Node is v20 and has no native WebSocket, so give it
+// a stub: these are offline unit checks and never open a socket.
+if (typeof globalThis.WebSocket === 'undefined') {
+  globalThis.WebSocket = class { constructor() { throw new Error('sockets unused in unit tests') } }
+}
 
 const {
   ANNOUNCEMENT_LIFETIME_DAYS, ANNOUNCEMENT_LIFETIME_MS,

@@ -111,7 +111,7 @@ const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
 const AdminFunnelPanel = lazy(() => import('./AdminFunnelPanel.jsx'))
 const AdminFollowUpPanel = lazy(() => import('./AdminFollowUpPanel.jsx'))
 const AdminLinkBuilder = lazy(() => import('./AdminLinkBuilder.jsx'))
-import { ANNOUNCEMENT_LIFETIME_DAYS, LANGUAGE_LABELS, announcementCountdownLabel, clearAnnouncements, getAnnouncements, languageForCountry, removeAnnouncement, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
+import { ANNOUNCEMENT_LIFETIME_DAYS, LANGUAGE_LABELS, announcementCountdownLabel, clearCloudAnnouncements, getAnnouncements, languageForCountry, loadCloudAnnouncements, publishCloudAnnouncement, removeCloudAnnouncement, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
 import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 /*
  * The classroom is loaded ONLY when the feature flag is on. Keeping the
@@ -5756,16 +5756,30 @@ export function AdminAnnouncementsPanel() {
 
   const refreshPosted = () => setPosted(withCountdown(getAnnouncements()))
 
-  const takeDownAnnouncement = (id) => {
-    removeAnnouncement(id)
+  // Pull the shared list on open, so the admin sees what is really posted
+  // rather than whatever happens to be cached in this browser.
+  useEffect(() => {
+    let cancelled = false
+    loadCloudAnnouncements()
+      .then(() => { if (!cancelled) setPosted(withCountdown(getAnnouncements())) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  const takeDownAnnouncement = async (id) => {
+    const { synced } = await removeCloudAnnouncement(id)
     refreshPosted()
-    setMessage('Announcement removed from the dashboards on this device.')
+    setMessage(synced
+      ? 'Announcement removed from every parent and teacher dashboard.'
+      : 'Removed on this device. The shared database could not be reached, so it will disappear elsewhere when it expires.')
   }
 
-  const takeDownAll = () => {
-    clearAnnouncements()
+  const takeDownAll = async () => {
+    const { synced } = await clearCloudAnnouncements()
     refreshPosted()
-    setMessage('All dashboard announcements removed on this device.')
+    setMessage(synced
+      ? 'All announcements removed from every dashboard.'
+      : 'Removed on this device. The shared database could not be reached, so they will disappear elsewhere when they expire.')
   }
 
   const applyMarketingTemplate = (templateId) => {
@@ -5841,11 +5855,20 @@ export function AdminAnnouncementsPanel() {
       }
 
       // Also publish it inside the dashboard, where it translates live from
-      // the reader's current IP language.
-      saveAnnouncement({ subject: cleanSubject, body: cleanBody, target, translations })
+      // the reader's current IP language. saveAnnouncement writes the local
+      // cache; publishCloudAnnouncement is what actually carries it to the
+      // families' own devices and replaces what it supersedes there too.
+      const record = saveAnnouncement({ subject: cleanSubject, body: cleanBody, target, translations })
+      const { synced, error: syncError } = await publishCloudAnnouncement(record)
       refreshPosted()
 
-      setMessage(`🎉 Successfully sent campaign to ${recipients} active registered emails!${languageNote} It is also posted on their dashboards.`)
+      // A dashboard post that never left this browser must not be reported as
+      // if it reached anybody: that is the failure this whole change fixes.
+      const dashboardNote = synced
+        ? ' It is also posted on their dashboards.'
+        : ` ⚠️ The dashboard banner could NOT be shared: ${syncError} The email was still delivered.`
+
+      setMessage(`🎉 Successfully sent campaign to ${recipients} active registered emails!${languageNote}${dashboardNote}`)
       setCampaignLog(saveCampaignLog({ target, subject: cleanSubject, templateId: selectedTemplateId, recipients, status: 'sent' }))
       setSubject('')
       setBody('')

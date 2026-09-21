@@ -3,8 +3,10 @@ import { Bell, Globe2, X } from 'lucide-react'
 import {
   announcementLabel,
   dismissAnnouncement,
+  loadCloudAnnouncements,
   originalLabel,
   pruneExpiredAnnouncements,
+  subscribeToCloudAnnouncements,
   translateAnnouncement,
   viewerLanguage,
   visibleAnnouncements,
@@ -29,10 +31,16 @@ export default function AnnouncementBanner({ account }) {
     window.addEventListener('tutorpro:data-change', refresh)
     window.addEventListener('tutorpro:language-change', refresh)
 
-    // Announcements expire after two days. A dashboard left open on a tablet
-    // would otherwise keep showing one indefinitely, because nothing would
-    // re-read storage. Re-checking hourly also drops the stale record from
-    // this device, so expiry does not depend on the parent reloading.
+    // Announcements live in Supabase so they actually reach this device;
+    // the local copy is only a cache. Fetching on mount is what makes a
+    // parent see an announcement the admin posted on a different computer.
+    loadCloudAnnouncements().then(refresh).catch(() => {})
+    const unsubscribe = subscribeToCloudAnnouncements()
+
+    // Expiry after two days. A dashboard left open on a tablet would
+    // otherwise keep showing one indefinitely, because nothing would re-read
+    // storage. Re-checking hourly also drops the stale record from this
+    // device, so expiry does not depend on the parent reloading.
     pruneExpiredAnnouncements()
     const timer = window.setInterval(() => {
       pruneExpiredAnnouncements()
@@ -43,6 +51,7 @@ export default function AnnouncementBanner({ account }) {
       window.removeEventListener('tutorpro:data-change', refresh)
       window.removeEventListener('tutorpro:language-change', refresh)
       window.clearInterval(timer)
+      unsubscribe()
     }
   }, [account])
 

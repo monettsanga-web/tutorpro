@@ -1,5 +1,6 @@
 import { translateSupportText } from './supportTranslation.js'
 import { readVisitorCountry } from './visitorLocale.js'
+import { isSupabaseConfigured, supabase } from './supabaseClient.js'
 
 const ANNOUNCEMENTS_KEY = 'tutorpro_announcements_v1'
 const DISMISSED_KEY = 'tutorpro_announcements_dismissed_v1'
@@ -209,6 +210,169 @@ export function removeAnnouncement(id) {
 export function clearAnnouncements() {
   try { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify([])) } catch { /* Non-critical. */ }
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('tutorpro:data-change'))
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared storage (Supabase)                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Announcements are stored in Supabase so they actually reach families.
+ *
+ * Previously they lived only in localStorage, which meant an announcement
+ * was written into the ADMIN's browser and never travelled: parents saw
+ * nothing on their dashboards. The local copy is now only a cache, so the
+ * banner still renders instantly and still works offline.
+ *
+ * Every cloud call fails soft. If the table has not been created yet, or the
+ * network is down, the cached copy keeps working exactly as before.
+ */
+
+const rowToAnnouncement = (row) => ({
+  id: row.id,
+  subject: row.subject || '',
+  body: row.body || '',
+  target: row.target || 'ALL',
+  translations: row.translations && typeof row.translations === 'object' ? row.translations : {},
+  createdAt: row.created_at || new Date().toISOString(),
+  expiresAt: row.expires_at || undefined,
+})
+
+function writeCache(items) {
+  try { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(items.slice(0, 30))) } catch { /* Non-critical. */ }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('tutorpro:data-change'))
+}
+
+/**
+ * Pull the current announcements from Supabase into the local cache.
+ * Returns the fresh list, or the cached one when the cloud is unavailable.
+ */
+export async function loadCloudAnnouncements() {
+  if (!isSupabaseConfigured || !supabase) return getAnnouncements()
+  try {
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('id, subject, body, target, translations, created_at, expires_at')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(30)
+    if (error) throw error
+    const items = (data || []).map(rowToAnnouncement)
+    writeCache(items)
+    return items
+  } catch {
+    // Table missing or offline: the cache keeps the banner working.
+    return getAnnouncements()
+  }
+}
+
+/** Publish an announcement for every device. */
+export async function publishCloudAnnouncement(record) {
+  if (!isSupabaseConfigured || !supabase) {
+    return { synced: false, error: 'Shared database is not configured, so this announcement stays on this device only.' }
+  }
+  try {
+    // Remove what this announcement supersedes, so parents see the current
+    // message rather than a stack, on every device and not just this one.
+    const { error: clearError } = await supabase
+      .from('announcements')
+      .delete()
+      .in('target', supersededTargets(record.target))
+    if (clearError) throw clearError
+
+    const { error } = await supabase.from('announcements').insert({
+      id: record.id,
+      subject: record.subject,
+      body: record.body,
+      target: record.target,
+      translations: record.translations || {},
+      created_at: record.createdAt,
+      expires_at: record.expiresAt,
+    })
+    if (error) throw error
+    return { synced: true, error: '' }
+  } catch (error) {
+    return {
+      synced: false,
+      error: `Posted on this device, but the shared database rejected it: ${error.message || error}. Run supabase/announcements.sql in Supabase.`,
+    }
+  }
+}
+
+/** Withdraw one announcement from every device. */
+export async function removeCloudAnnouncement(id) {
+  removeAnnouncement(id)
+  if (!isSupabaseConfigured || !supabase) return { synced: false }
+  try {
+    const { error } = await supabase.from('announcements').delete().eq('id', id)
+    if (error) throw error
+    return { synced: true }
+  } catch {
+    return { synced: false }
+  }
+}
+
+/** Withdraw every announcement from every device. */
+export async function clearCloudAnnouncements() {
+  clearAnnouncements()
+  if (!isSupabaseConfigured || !supabase) return { synced: false }
+  try {
+    // `neq` on the primary key matches every row while satisfying PostgREST's
+    // requirement that a delete carry a filter.
+    const { error } = await supabase.from('announcements').delete().neq('id', '')
+    if (error) throw error
+    return { synced: true }
+  } catch {
+    return { synced: false }
+  }
+}
+
+/**
+ * Live updates for signed-in readers, so a parent with the dashboard already
+ * open sees a new announcement appear and a withdrawn one vanish.
+ * Only opened for a signed-in user, matching the site-settings policy that
+ * keeps logged-out visitors off the Realtime socket.
+ */
+export function subscribeToCloudAnnouncements() {
+  if (!isSupabaseConfigured || !supabase) return () => {}
+  let channel = null
+  let cancelled = false
+
+  const open = () => {
+    if (cancelled || channel) return
+    channel = supabase
+      .channel('tutorpro-announcements')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+        loadCloudAnnouncements().catch(() => {})
+      })
+      .subscribe()
+  }
+  const close = () => {
+    if (!channel) return
+    try { supabase.removeChannel(channel) } catch { /* Already closed. */ }
+    channel = null
+  }
+
+  supabase.auth.getSession()
+    .then(({ data }) => { if (data?.session) { open(); loadCloudAnnouncements().catch(() => {}) } })
+    .catch(() => { /* Offline: the cache still applies. */ })
+
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (cancelled) return
+    if (session) { open(); loadCloudAnnouncements().catch(() => {}) } else close()
+  })
+
+  return () => {
+    cancelled = true
+    close()
+    try { listener?.subscription?.unsubscribe() } catch { /* Already removed. */ }
+  }
+}
+
+/** Which stored targets a new announcement replaces. */
+function supersededTargets(newTarget) {
+  return ['ALL', 'STUDENT', 'STUDENTS', 'TEACHER', 'TEACHERS']
+    .filter((old) => supersedesAnnouncement(newTarget, old))
 }
 
 /** Which roles actually see an announcement with this target. */
