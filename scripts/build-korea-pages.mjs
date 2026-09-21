@@ -40,9 +40,22 @@ const CONTACT = {
   whatsapp: 'https://wa.me/639625284849',
   whatsappLabel: '+63 962 528 4849',
   email: 'sejongenglish@yahoo.com',
-  // Korean parents overwhelmingly expect KakaoTalk. Set this the moment a
-  // KakaoTalk Channel exists and it appears on every Korean page at once.
-  kakao: '',
+  // Korean parents overwhelmingly expect KakaoTalk.
+  //
+  // This is a personal KakaoTalk account reached by phone number, not a
+  // KakaoTalk Channel, and KakaoTalk has no dependable web link that opens a
+  // chat with a given number — there is no public URL scheme for it, and the
+  // owner must also have "allow friend requests by phone number" enabled.
+  // So the honest action is the same one WeChat gets: put the number on the
+  // parent's clipboard and tell them to add it in KakaoTalk. A link that
+  // silently failed would be worse than no link.
+  //
+  // `kakaoChannel` stays empty until a real KakaoTalk Channel exists at
+  // https://center-pf.kakao.com; setting it upgrades every Korean page to a
+  // one-tap chat button automatically.
+  kakaoPhone: '+63 962 528 4849',
+  kakaoPhoneRaw: '+639625284849',
+  kakaoChannel: '',
 }
 
 
@@ -115,11 +128,45 @@ function siteHeader() {
     </header>`
 }
 
+/**
+ * Copy-to-clipboard for the KakaoTalk number.
+ *
+ * Kept tiny and inline: these are static pages with no bundle, and a parent
+ * should never be left with a button that does nothing. If the clipboard is
+ * refused — it is on insecure origins and in some in-app browsers — the
+ * number is selected instead so it can still be copied by hand.
+ */
+function copyScript() {
+  return `    <script>
+      document.addEventListener('click', function (event) {
+        var button = event.target.closest('.channel--copy');
+        if (!button) return;
+        var value = button.getAttribute('data-copy');
+        var label = button.querySelector('.channel__text');
+        var original = label ? label.textContent : '';
+        var done = function () {
+          if (!label) return;
+          label.textContent = button.getAttribute('data-copied');
+          setTimeout(function () { label.textContent = original; }, 2600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(value).then(done).catch(function () {
+            window.prompt('카카오톡에서 추가할 번호', value);
+          });
+        } else {
+          window.prompt('카카오톡에서 추가할 번호', value);
+        }
+      });
+    </script>`
+}
+
 /** Contact block. Shared so the channels can never drift between pages. */
 function contactSection() {
-  const kakao = CONTACT.kakao
-    ? `<a class="channel" href="${CONTACT.kakao}" target="_blank" rel="noopener"><span class="channel__dot" style="background:#fee500"></span>카카오톡 상담</a>`
-    : ''
+  // A real Channel gets a link; a personal number gets a copy button, because
+  // no KakaoTalk URL reliably opens a chat with a phone number.
+  const kakao = CONTACT.kakaoChannel
+    ? `<a class="channel" href="${CONTACT.kakaoChannel}" target="_blank" rel="noopener"><span class="channel__dot" style="background:#fee500"></span>카카오톡 상담</a>`
+    : `<button type="button" class="channel channel--copy" data-copy="${CONTACT.kakaoPhoneRaw}" data-copied="복사 완료! 카카오톡에서 추가하세요"><span class="channel__dot" style="background:#fee500"></span><span class="channel__text">카카오톡 ${CONTACT.kakaoPhone}</span></button>`
   return `    <section class="tight">
       <div class="wrap">
         <div class="contact-card">
@@ -229,6 +276,7 @@ ${relatedSection(slug)}
 ${finalCta()}
     </main>
 ${siteFooter()}
+${copyScript()}
   </body>
 </html>
 `

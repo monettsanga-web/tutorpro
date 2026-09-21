@@ -289,7 +289,7 @@
           <h2>궁금한 점은 편하게 물어보세요</h2>
           <p class="section-lede">실제 담당자가 직접 답변드립니다. 상담 후 반드시 등록하실 필요는 없고, 아이에게 맞지 않는다고 판단되면 솔직하게 말씀드립니다.</p>
           <div class="channels">
-            
+            <button type="button" class="channel channel--copy" data-copy="+639625284849" data-copied="복사 완료! 카카오톡에서 추가하세요"><span class="channel__dot" style="background:#fee500"></span><span class="channel__text">카카오톡 +63 962 528 4849</span></button>
             <a class="channel" href="https://m.me/526047974195321" target="_blank" rel="noopener"><span class="channel__dot" style="background:#1877f2"></span>페이스북 메신저</a>
             <a class="channel" href="https://wa.me/639625284849" target="_blank" rel="noopener"><span class="channel__dot" style="background:#25d366"></span>WhatsApp +63 962 528 4849</a>
             <a class="channel" href="https://www.facebook.com/tutorproenglish" target="_blank" rel="noopener"><span class="channel__dot" style="background:#1877f2"></span>페이스북 페이지</a>
@@ -336,5 +336,26 @@
       <a class="btn" href="/">첫 수업 무료 신청</a>
       <a class="btn btn--ghost" href="https://m.me/526047974195321" target="_blank" rel="noopener">상담하기</a>
     </div>
+    <script>
+      document.addEventListener('click', function (event) {
+        var button = event.target.closest('.channel--copy');
+        if (!button) return;
+        var value = button.getAttribute('data-copy');
+        var label = button.querySelector('.channel__text');
+        var original = label ? label.textContent : '';
+        var done = function () {
+          if (!label) return;
+          label.textContent = button.getAttribute('data-copied');
+          setTimeout(function () { label.textContent = original; }, 2600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(value).then(done).catch(function () {
+            window.prompt('카카오톡에서 추가할 번호', value);
+          });
+        } else {
+          window.prompt('카카오톡에서 추가할 번호', value);
+        }
+      });
+    </script>
   </body>
 </html>

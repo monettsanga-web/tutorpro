@@ -1,7 +1,7 @@
 /**
  * Contact section — real headless-browser verification.
  *
- * The three channels are not equivalent: Facebook and WhatsApp are links,
+ * The four channels are not equivalent: Facebook and WhatsApp are links,
  * WeChat is an ID that must be copied. The checks below prove each one uses
  * the right element and the right target, that the exact handles the owner
  * gave are present, and that the layout holds on a phone.
@@ -26,7 +26,7 @@ await page.waitForSelector('.contact-channels', { timeout: 20000 })
 /* --- the section exists and is reachable ----------------------------- */
 ok(await page.locator('#contact').count() === 1, 'the contact section exists with id="contact"')
 ok(await page.locator('.contact-channels h2').textContent() === 'Contact us', 'the heading reads "Contact us"')
-ok(await page.locator('.contact-card').count() === 3, 'exactly three channels are shown')
+ok(await page.locator('.contact-card').count() === 4, 'exactly four channels are shown')
 
 const navLink = page.locator('.nav a[href="#contact"]')
 ok(await navLink.count() === 1, 'a Contact link exists in the main navigation')
@@ -76,7 +76,7 @@ ok(labels.some((l) => /copy/i.test(l)), 'the WeChat card announces that it copie
 // Keyboard focus must be possible on all three.
 const focusable = await page.locator('.contact-card').evaluateAll(
   (nodes) => nodes.filter((n) => n.tagName === 'A' ? n.hasAttribute('href') : !n.disabled).length)
-ok(focusable === 3, 'all three cards are keyboard reachable')
+ok(focusable === 4, 'all four cards are keyboard reachable')
 
 /* --- layout ------------------------------------------------------------ */
 const desktop = await page.evaluate(() => {
@@ -87,7 +87,7 @@ const desktop = await page.evaluate(() => {
     overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }
 })
-ok(desktop.sameRow, 'desktop: the three cards sit on one row')
+ok(desktop.sameRow, 'desktop: the cards sit on one row')
 ok(desktop.equalHeight, 'desktop: the cards are equal height')
 ok(desktop.overflow <= 2, `desktop: no sideways page scroll (${desktop.overflow}px)`)
 

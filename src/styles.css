@@ -6449,7 +6449,11 @@ body {
 .contact-channels__grid {
   display: grid;
   gap: 22px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Four channels. A fixed 3-across grid stranded the fourth card alone on a
+     second row with two empty cells beside it, which read as a mistake.
+     `auto-fit` with a floor keeps them balanced: 4-across on a wide screen,
+     2x2 on a laptop, one column on a phone. */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 /* The card is both a link and a button depending on the channel, so every
@@ -6526,7 +6530,9 @@ body {
   place-items: center;
   border-radius: 16px;
   background: var(--brand);
-  color: #fff;
+  /* Defaults to white; a light brand (KakaoTalk yellow) overrides it, where
+     white would measure 1.28:1 and be unreadable. */
+  color: var(--brand-ink, #fff);
   /* Tinted to the channel's own colour so the lift reads as that brand. */
   box-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 34%, transparent);
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);

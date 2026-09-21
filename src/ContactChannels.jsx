@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { SiFacebook, SiWechat, SiWhatsapp } from 'react-icons/si'
+import { SiFacebook, SiKakaotalk, SiWechat, SiWhatsapp } from 'react-icons/si'
 import { ArrowUpRight, Check, Copy, Clock3, ShieldCheck } from 'lucide-react'
 
 /**
@@ -63,6 +63,23 @@ const CHANNELS = [
     meta: 'Fastest reply',
     brand: '#25d366',
   },
+  {
+    id: 'kakao',
+    Icon: SiKakaotalk,
+    name: 'KakaoTalk',
+    handle: '+63 962 528 4849',
+    // Same reasoning as WeChat: KakaoTalk has no dependable web link that
+    // opens a chat with a phone number, so copying it is the action that
+    // actually helps. A link that quietly failed would be worse than none.
+    copy: '+639625284849',
+    action: 'Copy KakaoTalk number',
+    detail: 'Add this number in KakaoTalk, then send a message.',
+    meta: 'Best for families in Korea',
+    brand: '#fee500',
+    // KakaoTalk yellow is very light: a white glyph on it measures 1.28:1,
+    // effectively invisible. KakaoTalk's own dark brown gives 11.76:1.
+    ink: '#3c1e1e',
+  },
 ]
 
 function ChannelCard({ channel }) {
@@ -99,7 +116,7 @@ function ChannelCard({ channel }) {
   const inner = (
     <>
       <span className="contact-card__glow" aria-hidden="true" />
-      <span className="contact-card__icon" style={{ '--brand': channel.brand }}>
+      <span className="contact-card__icon" style={{ '--brand': channel.brand, '--brand-ink': channel.ink || '#fff' }}>
         <Icon size={23} />
       </span>
       <span className="contact-card__body">

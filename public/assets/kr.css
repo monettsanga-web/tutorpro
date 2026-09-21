@@ -497,6 +497,13 @@ td strong { color: var(--ink); }
 }
 
 .channel:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+/* The KakaoTalk tile is a <button> because no KakaoTalk link reliably opens a
+   chat with a phone number, so it copies instead. It must look identical to
+   the surrounding links: a button that looked different would read as a
+   different kind of action. */
+.channel--copy { font-family: inherit; cursor: pointer; }
+.channel--copy:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .channel__dot { width: 10px; height: 10px; border-radius: 50%; }
 
 .fine { color: var(--muted); font-size: .89rem; }
