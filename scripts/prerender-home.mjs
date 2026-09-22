@@ -26,7 +26,13 @@ const distIndex = resolve(here, '..', 'dist', 'index.html')
 /* Copy mirrored from src/App.jsx — keep these in sync. */
 const HERO = {
   eyebrow: 'Cambridge & Oxford aligned',
-  heading: 'English confidence, built one lesson at a time.',
+  // The H1 must carry the query, not a slogan. "English confidence, built one
+  // lesson at a time" says nothing a parent would ever type into Google, and
+  // the homepage is the highest-authority page on the site — wasting its H1
+  // on a tagline is the single most expensive on-page mistake available.
+  // The tagline still appears as the lede, so nothing is lost.
+  heading: 'Online English Classes for Primary and Secondary Students',
+  tagline: 'English confidence, built one lesson at a time.',
   lede: 'Personalised 1-to-1 online tutoring that helps Primary and Secondary students speak up, write clearly and thrive at school.',
   proof: ['No commitment', 'From $8 per class', 'Flexible times'],
 }
@@ -197,6 +203,7 @@ function buildStaticHtml() {
       <header>
         <p>${escapeHtml(HERO.eyebrow)}</p>
         <h1>${escapeHtml(HERO.heading)}</h1>
+        <p>${escapeHtml(HERO.tagline)}</p>
         <p>${escapeHtml(HERO.lede)}</p>
         <p>${HERO.proof.map(escapeHtml).join(' · ')}</p>
         <p><a href="/?action=book">Book a free first class</a> · <a href="#programmes">Explore programmes</a></p>
@@ -217,6 +224,7 @@ ${faqItems}
       <footer>
         <p>TutorPro Online English — registered with the Philippine Department of Trade and Industry (DTI), Registration No. 5274092. Online English classes for kids and teens worldwide. Cambridge and Oxford aligned tutors, flexible scheduling, free first class.</p>
         <p><a href="/free-trial.html">Free trial class</a> · <a href="/how-it-works.html">How lessons work</a> · <a href="/pricing.html">Pricing and plans</a> · <a href="/teachers.html">Our teachers</a> · <a href="/faq.html">Questions and answers</a></p>
+        <p><a href="/blog/">Learning resources for parents</a> · <a href="/blog/help-child-speak-english-at-home.html">Helping your child speak English at home</a> · <a href="/blog/english-reading-activities-primary.html">Reading activities for primary students</a> · <a href="/blog/common-english-grammar-mistakes-children.html">Common grammar mistakes children make</a></p>
         <p><a href="/cambridge-english.html">Cambridge English classes</a> · <a href="/oxford-english.html">Oxford English classes</a> · <a href="/english-reading.html">English reading</a> · <a href="/english-speaking.html">English speaking</a> · <a href="/english-grammar.html">English grammar</a> · <a href="/english-vocabulary.html">English vocabulary</a></p>
         <p><a href="/primary-english.html">Primary English for ages 4–11</a> · <a href="/secondary-english.html">Secondary English for ages 12–16</a> · <a href="/english-for-kids-ages-4-7.html">English classes for ages 4–7</a> · <a href="/english-for-kids-ages-8-11.html">English classes for ages 8–11</a> · <a href="/english-for-teens-ages-12-16.html">English for teenagers 12–16</a></p>
         <p><a href="/free-english-class.html">Free English class</a> · <a href="/english-tutor-for-shy-child.html">Help for a shy child</a> · <a href="/online-english-for-filipino-families.html">For Filipino families</a> · <a href="/cn/">中文学生版</a> · <a href="/kr/">한국 학부모 페이지</a> · <a href="/tw/">台灣家長專頁</a></p>

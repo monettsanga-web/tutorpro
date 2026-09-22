@@ -1706,6 +1706,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
             </div>
             <div>
               <h3>Getting started</h3>
+              <a href="/blog/">Learning resources</a>
               <a href="/free-trial.html">Free trial class</a>
               <a href="/free-english-class.html">Free English class</a>
               <a href="/how-it-works.html">How lessons work</a>

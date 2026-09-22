@@ -58,6 +58,8 @@ const RULES = [
   // Curriculum and skill pages: high-intent queries with their own landing page.
   { match: /^(cambridge|oxford)-english\.html$/, changefreq: 'monthly', priority: '0.9' },
   { match: /^english-(reading|speaking|grammar|vocabulary)\.html$/, changefreq: 'monthly', priority: '0.8' },
+  { match: /^blog\/$/, changefreq: 'weekly', priority: '0.8' },
+  { match: /^blog\//, changefreq: 'monthly', priority: '0.7' },
   { match: /^english-for-/, changefreq: 'monthly', priority: '0.9' },
   { match: /^(kr|cn)\/$/, changefreq: 'monthly', priority: '0.8' },
   { match: /^english-tutor-/, changefreq: 'monthly', priority: '0.7' },
@@ -142,7 +144,9 @@ function collect() {
   // index: the Korean section in particular carries several long-tail pages,
   // and a page missing from the sitemap is a page Naver and Google have to
   // find by luck.
-  for (const dir of ['kr', 'cn', 'tw']) {
+  // 'blog' is included here too: the articles are a real section, not a
+  // language variant, but the same per-file walk is exactly what they need.
+  for (const dir of ['kr', 'cn', 'tw', 'blog']) {
     const dirPath = join(publicDir, dir)
     if (!existsSync(dirPath)) continue
     for (const file of readdirSync(dirPath)) {

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-global-pages.mjs && node scripts/build-core-pages.mjs && node scripts/build-topic-pages.mjs && node scripts/build-korea-pages.mjs && node scripts/build-taiwan-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
+    "build": "node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && node scripts/build-subject-pages.mjs && node scripts/build-global-pages.mjs && node scripts/build-core-pages.mjs && node scripts/build-topic-pages.mjs && node scripts/build-blog.mjs && node scripts/build-korea-pages.mjs && node scripts/build-taiwan-pages.mjs && node scripts/build-sitemap.mjs && vite build && node scripts/prerender-home.mjs",
     "build:edgeone": "node scripts/sync-curriculum-images.mjs && node scripts/build-age-pages.mjs && node scripts/build-pricing-page.mjs && node scripts/build-landing-pages.mjs && node scripts/build-legitimacy-page.mjs && node scripts/build-city-pages.mjs && vite build && node scripts/prerender-home.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -65,6 +65,7 @@
     "verify:kakao": "node scripts/verify-kakao-contact.mjs",
     "verify:corepages": "node scripts/verify-core-pages.mjs",
     "verify:seohealth": "node scripts/verify-seo-health.mjs",
+    "verify:blog": "node scripts/verify-blog.mjs",
     "verify:paymentfailure": "node scripts/verify-payment-failure.mjs",
     "verify:portalnav": "node scripts/verify-portal-nav.mjs",
     "verify:inboundmail": "node scripts/verify-inbound-support-email.mjs",
