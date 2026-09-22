@@ -9,11 +9,34 @@ Allow: /
 User-agent: Yeti
 Allow: /
 
+# Bing powers Bing, Yahoo, DuckDuckGo and Microsoft Copilot. Named
+# explicitly, and given a crawl-delay of 1 second: Bingbot is noticeably more
+# aggressive than Googlebot, and this site runs on a free Supabase tier where
+# egress matters. One second is slow enough to be polite and fast enough that
+# 53 pages are still crawled in under a minute.
+User-agent: bingbot
+Allow: /
+Crawl-delay: 1
+
 # Daum / Kakao — the second Korean engine.
 User-agent: Daum
 Allow: /
 
 User-agent: Daumoa
+Allow: /
+
+# AI assistants that CITE sources and send real referral traffic, as distinct
+# from crawlers that only harvest training data. ChatGPT Search, Perplexity
+# and Claude all surface a link a parent can click, and parents increasingly
+# ask an assistant "find an online English tutor for my child" instead of
+# typing it into a search box. These are allowed deliberately.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
 Allow: /
 
 Sitemap: https://www.tutorpro.site/sitemap.xml

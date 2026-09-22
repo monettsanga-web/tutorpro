@@ -129,6 +129,25 @@ ok(dead.length === 0, `no sitemap entry points at a missing page (${dead.join(',
 const robots = readFileSync(join(dist, 'robots.txt'), 'utf8')
 ok(/Sitemap:\s*https:\/\/www\.tutorpro\.site\/sitemap\.xml/.test(robots), 'robots.txt declares the sitemap')
 ok(!/^Disallow: \/$/m.test(robots), 'robots.txt does not block the whole site')
+// Bing powers Bing, Yahoo, DuckDuckGo and Copilot; Naver and Daum matter in
+// Korea. Each is named rather than left to the wildcard, because several are
+// conservative about sites they have not crawled before.
+for (const bot of ['bingbot', 'Yeti', 'Daum']) {
+  ok(new RegExp(`User-agent: ${bot}`, 'i').test(robots), `robots.txt names ${bot}`)
+}
+// AI assistants that cite sources send real, clickable referrals.
+for (const bot of ['OAI-SearchBot', 'PerplexityBot', 'ClaudeBot']) {
+  ok(robots.includes(bot), `robots.txt allows ${bot}`)
+}
+
+/* --- two-way linking between topic pages and the articles ------------- */
+// A hub that links out but never gets linked back is a dead end for crawlers
+// and for parents. Each topic page should offer its matching free guide.
+const topicPages = ['english-reading', 'english-speaking', 'english-grammar', 'english-vocabulary', 'cambridge-english', 'oxford-english']
+for (const slug of topicPages) {
+  const html = pages.find((p) => p.path === `${slug}.html`)?.html || ''
+  ok(/href="\/blog\/[a-z-]+\.html"/.test(html), `${slug}.html links into a learning-resources article`)
+}
 
 ok(existsSync(join(dist, '404.html')), 'a 404 page exists')
 const notFound = readFileSync(join(dist, '404.html'), 'utf8')

@@ -53,6 +53,7 @@ const PAGES = [
   /* ---------------------------------------------------------------- */
   {
     slug: 'cambridge-english.html',
+    guide: ['online-english-classes-what-parents-should-know', 'what to check before booking any online English school'],
     label: 'Cambridge English',
     title: 'Cambridge English Classes for Kids Online | TutorPro English PH',
     description:
@@ -95,6 +96,7 @@ const PAGES = [
   /* ---------------------------------------------------------------- */
   {
     slug: 'oxford-english.html',
+    guide: ['english-reading-activities-primary', 'reading activities you can do at home'],
     label: 'Oxford English',
     title: 'Oxford English Classes for Kids Online | TutorPro English PH',
     description:
@@ -137,6 +139,7 @@ const PAGES = [
   /* ---------------------------------------------------------------- */
   {
     slug: 'english-reading.html',
+    guide: ['english-reading-activities-primary', 'reading activities for primary students'],
     label: 'Reading',
     title: 'English Reading Lessons for Children Online | TutorPro English PH',
     description:
@@ -177,6 +180,7 @@ const PAGES = [
   /* ---------------------------------------------------------------- */
   {
     slug: 'english-speaking.html',
+    guide: ['help-child-speak-english-at-home', 'how to help your child speak English at home'],
     label: 'Speaking',
     title: 'English Speaking Classes for Kids Online | TutorPro English PH',
     description:
@@ -217,6 +221,7 @@ const PAGES = [
   /* ---------------------------------------------------------------- */
   {
     slug: 'english-grammar.html',
+    guide: ['common-english-grammar-mistakes-children', 'the grammar mistakes children make most often'],
     label: 'Grammar',
     title: 'English Grammar Lessons for Kids Online | TutorPro English PH',
     description:
@@ -259,6 +264,7 @@ const PAGES = [
   /* ---------------------------------------------------------------- */
   {
     slug: 'english-vocabulary.html',
+    guide: ['build-english-vocabulary-children', 'how to build your child\u2019s vocabulary at home'],
     label: 'Vocabulary',
     title: 'English Vocabulary Lessons for Kids Online | TutorPro English PH',
     description:
@@ -410,6 +416,9 @@ function render(spec) {
 
         ${topicNav(spec.slug)}
 ${spec.body}
+
+        <h2>Free guide for parents</h2>
+        <p>You do not need to book anything to start helping at home. Our guide on ${escapeHtml(spec.guide[1])} is free to read and written for parents rather than teachers: <a href="/blog/${spec.guide[0]}.html">read the guide</a>, or browse all our <a href="/blog/">learning resources</a>.</p>
 
         <h2>Pricing</h2>
         <table>
