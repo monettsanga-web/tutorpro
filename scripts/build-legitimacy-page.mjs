@@ -65,6 +65,18 @@ const FAQ = [
    `You can message us on Facebook at facebook.com/tutorproenglish, on Messenger, on WhatsApp, or call ${PHONE}. A real person answers, in Philippine time.`],
 ]
 
+/** Breadcrumbs for the search result crumb trail. */
+function crumbSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+      { '@type': 'ListItem', position: 2, name: 'Is TutorPro legitimate?', item: `${SITE}/is-tutorpro-legitimate.html` },
+    ],
+  }
+}
+
 function faqSchema() {
   return {
     '@context': 'https://schema.org',
@@ -107,7 +119,10 @@ const html = `<!doctype html>
     <meta property="og:url" content="${SITE}/is-tutorpro-legitimate.html" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="stylesheet" href="/assets/pages.css" />
+    <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">${JSON.stringify(orgSchema())}</script>
+    <script type="application/ld+json">${JSON.stringify(crumbSchema())}</script>
     <script type="application/ld+json">${JSON.stringify(faqSchema())}</script>
   </head>
   <body>

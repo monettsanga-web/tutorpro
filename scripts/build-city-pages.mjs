@@ -209,6 +209,22 @@ function faqSchema(city) {
   }
 }
 
+/**
+ * Breadcrumbs. Google uses these for the crumb trail shown under a result,
+ * and they were missing from every city page.
+ */
+function breadcrumbSchema(city) {
+  const url = `${SITE}/${city.slug}.html`
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+      { '@type': 'ListItem', position: 2, name: `English tutor in ${city.city}`, item: url },
+    ],
+  }
+}
+
 function render(city, all) {
   const url = `${SITE}/${city.slug}.html`
   const w = lessonWindow(city.offset)
@@ -229,8 +245,11 @@ function render(city, all) {
     <meta property="og:url" content="${url}" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="stylesheet" href="/assets/pages.css" />
+    <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">${JSON.stringify(schema(city))}</script>
     <script type="application/ld+json">${JSON.stringify(faqSchema(city))}</script>
+    <script type="application/ld+json">${JSON.stringify(breadcrumbSchema(city))}</script>
   </head>
   <body>
     <header class="site-head">

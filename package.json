@@ -64,6 +64,7 @@
     "verify:annexpiry": "node scripts/verify-announcement-expiry.mjs",
     "verify:kakao": "node scripts/verify-kakao-contact.mjs",
     "verify:corepages": "node scripts/verify-core-pages.mjs",
+    "verify:seohealth": "node scripts/verify-seo-health.mjs",
     "verify:paymentfailure": "node scripts/verify-payment-failure.mjs",
     "verify:portalnav": "node scripts/verify-portal-nav.mjs",
     "verify:inboundmail": "node scripts/verify-inbound-support-email.mjs",

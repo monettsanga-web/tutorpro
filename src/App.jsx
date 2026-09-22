@@ -1688,18 +1688,32 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <a href="/online-ict-computing-classes-for-kids.html">Online ICT &amp; Computing</a>
             </div>
             <div>
-              <h3>By age</h3>
-              <a href="/pricing.html">Pricing &amp; plans</a>
+              <h3>Programmes</h3>
+              <a href="/primary-english.html">Primary English (4–11)</a>
+              <a href="/secondary-english.html">Secondary English (12–16)</a>
               <a href="/english-for-kids-ages-4-7.html">English for ages 4–7</a>
               <a href="/english-for-kids-ages-8-11.html">English for ages 8–11</a>
               <a href="/english-for-teens-ages-12-16.html">English for teens 12–16</a>
+            </div>
+            <div>
+              <h3>Getting started</h3>
+              <a href="/free-trial.html">Free trial class</a>
+              <a href="/free-english-class.html">Free English class</a>
+              <a href="/how-it-works.html">How lessons work</a>
+              <a href="/pricing.html">Pricing &amp; plans</a>
+              <a href="/teachers.html">Our teachers</a>
+              <a href="/faq.html">Questions &amp; answers</a>
+              <a href="/english-tutor-for-shy-child.html">Help for a shy child</a>
             </div>
             <div>
               <h3>Company</h3>
               <a href="/about.html">About us</a>
               <a href="/is-tutorpro-legitimate.html">Are we legitimate?</a>
               <a href="/online-english-class-schedule-time-zones.html">Class times by country</a>
+              <a href="/online-english-for-filipino-families.html">For Filipino families</a>
               <a href="/tw/">台灣家長專頁 (Taiwan)</a>
+              <a href="/cn/">中文学生版 (China)</a>
+              <a href="/kr/">한국 학부모 페이지 (Korea)</a>
               <a href="/contact.html">Contact</a>
               <a href="/privacy-policy.html">Privacy policy</a>
               <a href="/terms.html">Terms of service</a>

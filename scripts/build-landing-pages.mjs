@@ -226,6 +226,17 @@ function render(page) {
     },
   }
 
+  // Breadcrumbs were missing from these pages. Google uses them for the crumb
+  // trail under a result, and they cost nothing to publish.
+  const crumbs = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+      { '@type': 'ListItem', position: 2, name: page.h1, item: url },
+    ],
+  }
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -244,6 +255,7 @@ function render(page) {
     <link rel="apple-touch-icon" href="/assets/pwa-icon-192.png" />
     <link rel="stylesheet" href="/assets/pages.css" />
     <script type="application/ld+json">${JSON.stringify(schema)}</script>
+    <script type="application/ld+json">${JSON.stringify(crumbs)}</script>
   </head>
   <body>
     <header class="site-head">

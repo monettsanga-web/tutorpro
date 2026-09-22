@@ -86,6 +86,21 @@ const ICON = {
 }
 
 /** Shared chrome. The stylesheet lives in public/assets/kr.css. */
+/**
+ * Breadcrumbs. These pages had none, so no crumb trail could appear under a
+ * search result. The label is localised because the page is.
+ */
+function crumbsFor(url, title) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: SITE },
+      { '@type': 'ListItem', position: 2, name: String(title).split('|')[0].trim(), item: url },
+    ],
+  }
+}
+
 function head({ title, description, keywords, url, schema }) {
   return `    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -113,7 +128,8 @@ function head({ title, description, keywords, url, schema }) {
     <link rel="stylesheet" href="/assets/kr.css" />
     <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2)}
-    </script>`
+    </script>
+    <script type="application/ld+json">${JSON.stringify(crumbsFor(url, title))}</script>`
 }
 
 function siteHeader() {
