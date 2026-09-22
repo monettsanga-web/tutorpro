@@ -55,6 +55,9 @@ const RULES = [
   // Core conversion and programme pages: the ones a parent searches by name.
   { match: /^(free-trial|how-it-works|faq|teachers)\.html$/, changefreq: 'monthly', priority: '0.9' },
   { match: /^(primary|secondary)-english\.html$/, changefreq: 'monthly', priority: '0.9' },
+  // Curriculum and skill pages: high-intent queries with their own landing page.
+  { match: /^(cambridge|oxford)-english\.html$/, changefreq: 'monthly', priority: '0.9' },
+  { match: /^english-(reading|speaking|grammar|vocabulary)\.html$/, changefreq: 'monthly', priority: '0.8' },
   { match: /^english-for-/, changefreq: 'monthly', priority: '0.9' },
   { match: /^(kr|cn)\/$/, changefreq: 'monthly', priority: '0.8' },
   { match: /^english-tutor-/, changefreq: 'monthly', priority: '0.7' },

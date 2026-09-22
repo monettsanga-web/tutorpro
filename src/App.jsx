@@ -1688,6 +1688,15 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <a href="/online-ict-computing-classes-for-kids.html">Online ICT &amp; Computing</a>
             </div>
             <div>
+              <h3>English skills</h3>
+              <a href="/english-reading.html">Reading</a>
+              <a href="/english-speaking.html">Speaking</a>
+              <a href="/english-grammar.html">Grammar</a>
+              <a href="/english-vocabulary.html">Vocabulary</a>
+              <a href="/cambridge-english.html">Cambridge English</a>
+              <a href="/oxford-english.html">Oxford English</a>
+            </div>
+            <div>
               <h3>Programmes</h3>
               <a href="/primary-english.html">Primary English (4–11)</a>
               <a href="/secondary-english.html">Secondary English (12–16)</a>

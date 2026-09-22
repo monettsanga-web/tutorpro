@@ -13,6 +13,12 @@ let pass = 0, fail = 0
 const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? '  ok  ' : 'FAIL  ') + m) }
 
 const PAGES = [
+  ['cambridge-english.html', 'Cambridge English', /cambridge english classes/i],
+  ['oxford-english.html', 'Oxford English', /oxford english classes/i],
+  ['english-reading.html', 'Reading', /english reading lessons/i],
+  ['english-speaking.html', 'Speaking', /english speaking classes/i],
+  ['english-grammar.html', 'Grammar', /english grammar lessons/i],
+  ['english-vocabulary.html', 'Vocabulary', /english vocabulary lessons/i],
   ['free-trial.html', 'Free Trial', /free trial/i],
   ['how-it-works.html', 'How.*Work', /how online english lessons work/i],
   ['faq.html', 'Frequently Asked', /frequently asked questions/i],
