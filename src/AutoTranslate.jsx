@@ -37,7 +37,10 @@ const languageControlLabels = {
 }
 
 const pageTitles = {
-  en: 'TutorPro Online English — English confidence, built one lesson at a time',
+  // Must match the <title> in index.html and the prerendered homepage.
+  // Google renders JavaScript, so whatever this sets is what actually gets
+  // indexed — a tagline here silently overwrites the search-targeted title.
+  en: 'Online English Classes for Kids & Students | TutorPro English PH',
   tl: 'TutorPro Online English — Kumpiyansa sa Ingles, isang aralin sa bawat pagkakataon',
   ko: 'TutorPro Online English — 한 수업씩 키우는 영어 자신감',
   'zh-CN': 'TutorPro Online English — 一课一步，建立英语自信',

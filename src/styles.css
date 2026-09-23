@@ -1052,6 +1052,18 @@ h3 {
   transform: rotate(-1.2deg);
 }
 
+/* The brand tagline, demoted from the H1 so the heading can carry the search
+   phrase instead. Styled as a warm sub-heading so it still reads as the
+   brand promise rather than body copy. */
+.hero__tagline {
+  max-width: 590px;
+  margin: -6px 0 14px;
+  color: var(--coral-dark, #e73876);
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .hero__lede {
   max-width: 590px;
   margin-bottom: 31px;
@@ -4491,6 +4503,10 @@ body {
 
   .hero h1 em {
     white-space: normal;
+  }
+
+  .hero__tagline {
+    font-size: 1.05rem;
   }
 
   .hero__lede {
