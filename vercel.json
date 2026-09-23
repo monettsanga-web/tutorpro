@@ -4,19 +4,56 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
       ]
     },
     {
       "source": "/assets/(.*)\\.(mp4|webm|webp|jpg|jpeg|png|svg|woff2)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     }
   ],
   "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/blog",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/kr",
+      "destination": "/kr/",
+      "permanent": true
+    },
+    {
+      "source": "/cn",
+      "destination": "/cn/",
+      "permanent": true
+    },
+    {
+      "source": "/tw",
+      "destination": "/tw/",
+      "permanent": true
+    },
     {
       "source": "/(.*)",
       "has": [
@@ -30,7 +67,12 @@
     },
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "tutorpro.site" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "tutorpro.site"
+        }
+      ],
       "destination": "https://www.tutorpro.site/$1",
       "permanent": true
     }

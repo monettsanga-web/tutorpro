@@ -100,4 +100,29 @@ check('the security headers are still present', () => {
   })
 })
 
+
+/* --- duplicate URLs must 301, not merely declare a canonical ---------- */
+// Search Console counts /index.html, /blog, /kr, /cn and /tw as separate URLs
+// that are "not indexed", because each served a 200 alongside its canonical
+// twin. A canonical tag suppresses a duplicate; a 301 removes it entirely.
+const DEDUPE = [['/index.html', '/'], ['/blog', '/blog/'], ['/kr', '/kr/'], ['/cn', '/cn/'], ['/tw', '/tw/']]
+
+for (const [from, to] of DEDUPE) {
+  check(`${from} redirects to ${to} with a permanent 301`, () => {
+    const rule = (config.redirects || []).find((r) => r.source === from && !r.has)
+    assert.ok(rule, `no redirect declared for ${from}`)
+    assert.equal(rule.destination, to, `${from} should point at ${to}`)
+    assert.equal(rule.permanent, true, `${from} must be a 301 so link equity transfers`)
+  })
+}
+
+check('path redirects are declared before the catch-all host redirects', () => {
+  // The host rules match /(.*). If they ran first they would swallow the
+  // rules above, so their position is part of the contract, not a detail.
+  const redirects = config.redirects || []
+  const firstHost = redirects.findIndex((r) => Array.isArray(r.has) && r.has.some((h) => h.type === 'host'))
+  const lastPath = redirects.map((r) => Boolean(r.has)).lastIndexOf(false)
+  assert.ok(firstHost > lastPath, 'host-wide redirects must come last')
+})
+
 console.log(`\n${passed} checks passed.`)
