@@ -84,6 +84,7 @@ import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
 import AnnouncementBanner from './AnnouncementBanner.jsx'
+import WelcomeMessage from './WelcomeMessage.jsx'
 /*
  * Lazily loaded and only behind the classroom flag. A static import would pull
  * classroomRecording.js (and its Supabase Storage calls) into the main
@@ -3562,6 +3563,10 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'overview' && (
         <div className="portal-view">
           <AnnouncementBanner account={account} />
+          {/* Shown for the first 14 days after registering. Registration used
+              to end in silence, with the contact details only on the public
+              site — exactly where a new parent does not think to look. */}
+          <WelcomeMessage account={account} learnerName={learner.name} />
           <section className="student-welcome">
             <div>
               <span className="portal-kicker">Welcome back, {firstName(account)}</span>

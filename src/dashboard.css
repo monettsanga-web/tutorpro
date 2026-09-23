@@ -11585,3 +11585,119 @@ a.feedback-resource-detail:hover strong {
   .posted-announcements__list li { grid-template-columns: minmax(0, 1fr); }
   .posted-announcements__list button { justify-content: center; }
 }
+
+/* ── Welcome card ───────────────────────────────────────────────────────
+   The first thing a newly registered parent sees. Warm rather than alarming:
+   this is a greeting, not a system notice, so it uses the brand cream and
+   coral rather than the amber reserved for problems. */
+.welcome-card {
+  position: relative;
+  margin-bottom: 18px;
+  padding: 22px 24px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 79, 135, 0.22);
+  background: linear-gradient(135deg, #fff6fa 0%, #fffef9 55%, #f4fbe7 100%);
+  box-shadow: 0 16px 38px rgba(50, 21, 104, 0.08);
+}
+
+.welcome-card__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(50, 21, 104, 0.06);
+  color: var(--portal-navy, #321568);
+  cursor: pointer;
+}
+
+.welcome-card__close:hover { background: rgba(50, 21, 104, 0.12); }
+
+.welcome-card__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+  /* Keep the heading clear of the close button on narrow screens. */
+  padding-right: 44px;
+}
+
+.welcome-card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--coral, #ff4f87);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(255, 79, 135, 0.3);
+}
+
+.welcome-card__head h2 {
+  margin: 2px 0 0;
+  color: var(--portal-navy, #321568);
+  font-size: 1.28rem;
+  line-height: 1.3;
+}
+
+.welcome-card__lead {
+  margin: 13px 0 0;
+  color: var(--text, #2f2450);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.welcome-card__channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 17px;
+}
+
+.welcome-card__channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--portal-navy, #321568);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(50, 21, 104, 0.1);
+}
+
+.welcome-card__channel:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(50, 21, 104, 0.16); }
+.welcome-card__channel:focus-visible { outline: 3px solid var(--portal-navy, #321568); outline-offset: 2px; }
+
+.welcome-card__channel--whatsapp { background: #25d366; color: #08331a; }
+.welcome-card__channel--messenger { background: #1877f2; color: #fff; }
+.welcome-card__channel--wechat { background: #07c160; color: #fff; }
+/* KakaoTalk yellow is light: white text on it measures 1.28:1 and vanishes.
+   KakaoTalk's own brown gives 11.76:1. */
+.welcome-card__channel--kakao { background: #fee500; color: #3c1e1e; }
+.welcome-card__channel--email { border: 1px solid var(--portal-line, #e4e0eb); }
+.welcome-card__channel.is-copied { background: #16a34a; color: #fff; }
+
+.welcome-card__note {
+  margin: 15px 0 0;
+  color: var(--portal-muted, #716981);
+  font-size: 0.92rem;
+}
+
+.welcome-card__note a { color: var(--portal-navy, #321568); font-weight: 700; }
+
+@media (max-width: 640px) {
+  .welcome-card { padding: 20px 18px; }
+  .welcome-card__head h2 { font-size: 1.14rem; }
+  .welcome-card__channel { flex: 1 1 100%; justify-content: center; }
+}
