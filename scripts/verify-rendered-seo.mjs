@@ -75,6 +75,31 @@ ok(overflow <= 0, `no horizontal overflow at 375px (${overflow}px)`)
 await phone.close()
 
 await rendered.close()
+
+/* --- the same trap on every other important page --------------------- */
+// The homepage was the one that broke, but any page React touches could
+// drift the same way. Checking the rest costs seconds and would have caught
+// the homepage bug a session earlier.
+console.log('\n--- other pages: served HTML must survive rendering ---')
+for (const path of ['/kr/', '/tw/', '/cn/', '/blog/', '/cambridge-english.html', '/free-trial.html']) {
+  const bare = await browser.newPage()
+  await bare.route('**/assets/*.js', (r) => r.abort())
+  await bare.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' })
+  const bareTitle = await bare.title()
+  const bareH1 = (await bare.locator('h1').first().textContent().catch(() => '') || '').trim()
+  await bare.close()
+
+  const full = await browser.newPage()
+  await full.goto(`${BASE}${path}`, { waitUntil: 'networkidle' }).catch(() => {})
+  await full.waitForTimeout(2500)
+  const fullTitle = await full.title()
+  const fullH1 = (await full.locator('h1').first().textContent().catch(() => '') || '').trim()
+  await full.close()
+
+  ok(bareTitle === fullTitle, `${path} — title survives rendering`)
+  ok(bareH1 === fullH1, `${path} — H1 survives rendering`)
+}
+
 await browser.close()
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
