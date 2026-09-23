@@ -386,7 +386,32 @@ export async function registerAccount(details) {
   accounts.push(account)
   writeAccounts(accounts)
   writeSessionId(account.id)
+  // Fire-and-forget: a welcome email that fails must never stop a parent from
+  // finishing registration. The edge function is idempotent and refuses to
+  // send twice, so a retry on a later sign-in is harmless.
+  sendWelcomeEmail()
   return publicAccount(account)
+}
+
+
+/**
+ * Ask the edge function to send the welcome email.
+ *
+ * Deliberately swallows every error. This runs immediately after a successful
+ * registration, and nothing here is worth showing a parent or, worse,
+ * aborting their sign-up for. If the function is not deployed yet, or Resend
+ * is briefly down, registration still completes normally.
+ */
+async function sendWelcomeEmail() {
+  try {
+    const { supabase } = await import('./supabaseClient.js')
+    if (!supabase) return
+    const { data } = await supabase.auth.getSession()
+    if (!data?.session) return
+    await supabase.functions.invoke('welcome-email', { body: {} })
+  } catch {
+    // Never surfaced: the dashboard welcome card covers this case anyway.
+  }
 }
 
 export async function registerTeacher(details) {
