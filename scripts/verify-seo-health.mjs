@@ -104,6 +104,35 @@ for (const target of linkable) {
 }
 ok(orphans.length === 0, `no orphan pages — every page has an inbound link (${orphans.join(', ') || 'none'})`)
 
+/* --- crawl depth: every page must be reachable from the homepage ------ */
+// A page only the sitemap knows about is a page Google deprioritises. Nine
+// real pages (all six city pages and all three non-English subject pages)
+// were in the sitemap but linked from NOWHERE in the prerendered homepage,
+// which is the version Googlebot reads. That is the likeliest single reason
+// for pages sitting as "Discovered - currently not indexed".
+{
+  const byPath = new Map(pages.map((p) => [p.path, p.html]))
+  const normalise = (href) => {
+    let h = href.replace(/^\//, '').split('#')[0].split('?')[0]
+    if (h === '') h = 'index.html'
+    if (h.endsWith('/')) h += 'index.html'
+    return h
+  }
+  const outbound = (html) => [...new Set(
+    [...html.matchAll(/href="(\/[^"#?]*)"/g)].map((m) => normalise(m[1])).filter((h) => byPath.has(h)),
+  )]
+
+  const seen = new Set(['index.html'])
+  const queue = ['index.html']
+  while (queue.length) {
+    for (const next of outbound(byPath.get(queue.shift()) || '')) {
+      if (!seen.has(next)) { seen.add(next); queue.push(next) }
+    }
+  }
+  const stranded = pages.map((p) => p.path).filter((p) => !seen.has(p))
+  ok(stranded.length === 0, `every page is reachable from the homepage (${stranded.join(', ') || 'none stranded'})`)
+}
+
 /* --- the homepage must reach the money pages ------------------------- */
 const home = pages.find((p) => p.path === 'index.html')?.html || ''
 for (const key of ['free-trial', 'how-it-works', 'faq', 'teachers', 'primary-english', 'secondary-english', 'pricing']) {
