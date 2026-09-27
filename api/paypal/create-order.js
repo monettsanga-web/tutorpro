@@ -1,5 +1,4 @@
-import { parseBillingPlan, parseSessions, planCreditCount, planSessionRate, planTotal, requireStudent, sendError, sendJson, paypalFetch, studentDiscountPercent } from '../_paypal.js'
-import { applyDiscount, discountSaving } from '../../src/discounts.js'
+import { PACKAGE_MIN_SESSIONS, SESSION_RATE_PACKAGE, SESSION_RATE_STANDARD, parseBillingPlan, parseSessions, planCreditCount, planTotal, requireStudent, sendError, sendJson, paypalFetch, studentPriceFor } from '../_paypal.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return sendError(res, 405, 'Method not allowed.')
@@ -9,21 +8,29 @@ export default async function handler(req, res) {
     const sessions = parseSessions(weeklySessions, billingPlan)
     const { supabase } = await requireStudent(req, accountId)
     const fullTotal = planTotal(billingPlan, sessions)
-    // Read from the student's own profile, never from the request: a parent
-    // editing the page must not be able to award themselves a discount.
-    const discountPercent = await studentDiscountPercent(supabase, accountId)
-    const amount = applyDiscount(fullTotal, discountPercent).toFixed(2)
     const credits = planCreditCount(billingPlan, sessions)
-    const sessionRate = planSessionRate(billingPlan, sessions)
-    const saved = discountSaving(fullTotal, discountPercent)
+    // Read from the student's own profile, never from the request: a parent
+    // editing the page must not be able to set their own price.
+    const price = await studentPriceFor(supabase, accountId, {
+      standard: SESSION_RATE_STANDARD,
+      package: SESSION_RATE_PACKAGE,
+      packageMin: PACKAGE_MIN_SESSIONS,
+      sessions,
+      credits,
+      fullTotal,
+    })
+    const amount = price.total.toFixed(2)
+    const sessionRate = price.rate
+    const saved = price.saving
+    const discountPercent = price.percent || 0
     const planLabel = billingPlan === 'monthly' ? 'monthly package' : 'weekly plan'
     const order = await paypalFetch('/v2/checkout/orders', {
       method: 'POST',
       body: JSON.stringify({
         intent: 'CAPTURE',
         purchase_units: [{
-          custom_id: `${accountId}:${billingPlan}:${sessions}:${discountPercent}`,
-          description: `TutorPro English ${planLabel} - ${sessions} session${sessions > 1 ? 's' : ''}/week${discountPercent ? ` (${discountPercent}% discount applied)` : ''}`,
+          custom_id: `${accountId}:${billingPlan}:${sessions}:${discountPercent}:${Math.round(price.total * 100)}`,
+          description: `TutorPro English ${planLabel} - ${sessions} session${sessions > 1 ? 's' : ''}/week${price.mode === 'percent' ? ` (${discountPercent}% discount applied)` : price.mode === 'fixed' ? ` (agreed rate $${sessionRate.toFixed(2)} per lesson)` : ''}`,
           amount: {
             currency_code: 'USD',
             value: amount,
@@ -33,9 +40,9 @@ export default async function handler(req, res) {
           },
           items: [{
             name: `TutorPro English ${billingPlan === 'monthly' ? 'monthly package' : 'weekly credit'}`,
-            description: discountPercent
-              ? `${credits} booking credit${credits > 1 ? 's' : ''} — ${discountPercent}% discount applied, saving $${saved.toFixed(2)}`
-              : `${credits} booking credit${credits > 1 ? 's' : ''} at $${sessionRate.toFixed(2)} each`,
+            description: price.mode === 'standard'
+              ? `${credits} booking credit${credits > 1 ? 's' : ''} at $${sessionRate.toFixed(2)} each`
+              : `${credits} booking credit${credits > 1 ? 's' : ''} at $${sessionRate.toFixed(2)} each — saving $${saved.toFixed(2)}`,
             quantity: '1',
             // PayPal rejects an order whose items do not sum to item_total, so
             // the discounted price is sent as a single line rather than a
@@ -51,7 +58,7 @@ export default async function handler(req, res) {
         },
       }),
     })
-    return sendJson(res, 200, { orderId: order.id, amount, discountPercent, saved })
+    return sendJson(res, 200, { orderId: order.id, amount, discountPercent, saved, pricingMode: price.mode, sessionRate })
   } catch (error) {
     return sendError(res, 400, error.message)
   }

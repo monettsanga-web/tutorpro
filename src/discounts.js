@@ -141,3 +141,179 @@ export function describeDiscount(discount) {
   }
   return parts.join(' · ')
 }
+
+/* ==================================================================
+ * Per-student pricing set by an administrator
+ * ==================================================================
+ *
+ * The percentage discount above takes a slice off the standard price. This
+ * section lets an administrator instead name the exact price a particular
+ * family pays per lesson, which is what you want for a long-standing
+ * customer, a staff child, or a family on a negotiated rate.
+ *
+ * ONE AUTHORITY, THREE MODES
+ * --------------------------
+ * Two independent systems both altering the price would eventually disagree,
+ * and the disagreement would show up as a parent being charged something
+ * other than what they were quoted. So there is a single `pricing.mode`:
+ *
+ *   'standard'  the published $8 / $7
+ *   'percent'   a percentage off the published price
+ *   'fixed'     an explicit price per lesson, replacing the published rate
+ *
+ * `fixed` and `percent` are deliberately exclusive. Stacking a percentage on
+ * top of an already-negotiated rate is the kind of thing that looks harmless
+ * and then produces a $2 lesson nobody intended.
+ *
+ * Legacy `discount: { percent }` records written before this existed are
+ * still honoured, so nothing set earlier silently reverts to full price.
+ */
+
+/** Sensible per-lesson prices for the admin to pick from, in USD. */
+export const RATE_PRESETS = [8, 7, 6, 5, 4, 3]
+
+/** Hard bounds. A $0 lesson cannot be charged; PayPal rejects it. */
+export const MIN_SESSION_RATE = 1
+export const MAX_SESSION_RATE = 100
+
+export const PRICING_MODES = ['standard', 'percent', 'fixed']
+
+/** Clamp a typed rate to something chargeable, or 0 when unusable. */
+export function normalizeRate(value) {
+  const numeric = Math.round(Number(value) * 100) / 100
+  if (!Number.isFinite(numeric) || numeric < MIN_SESSION_RATE) return 0
+  return Math.min(numeric, MAX_SESSION_RATE)
+}
+
+/**
+ * The pricing arrangement on a student's profile, or null for standard.
+ *
+ * Falls back to the older `discount` field so arrangements made before fixed
+ * rates existed keep working. Anything malformed or expired returns null,
+ * which means the family pays the published price — failing closed.
+ */
+export function studentPricing(profileData, now = Date.now()) {
+  const pricing = profileData?.pricing
+  if (pricing && typeof pricing === 'object' && PRICING_MODES.includes(pricing.mode)) {
+    if (pricing.mode === 'standard') return null
+    if (isDiscountExpired(pricing, now)) return null
+
+    if (pricing.mode === 'fixed') {
+      const standard = normalizeRate(pricing.standardRate)
+      const pkg = normalizeRate(pricing.packageRate) || standard
+      // A fixed arrangement with no usable rate is meaningless, so it is
+      // ignored rather than charging an accidental $0.
+      if (!standard) return null
+      return {
+        mode: 'fixed',
+        standardRate: standard,
+        packageRate: pkg,
+        percent: 0,
+        reason: String(pricing.reason || '').slice(0, 120),
+        expiresAt: pricing.expiresAt || '',
+      }
+    }
+
+    const percent = normalizeDiscountPercent(pricing.percent)
+    if (!percent) return null
+    return {
+      mode: 'percent',
+      percent,
+      reason: String(pricing.reason || '').slice(0, 120),
+      expiresAt: pricing.expiresAt || '',
+    }
+  }
+
+  // Legacy: a plain percentage discount written before modes existed.
+  const legacy = activeDiscount(profileData, now)
+  if (legacy) return { mode: 'percent', percent: legacy.percent, reason: legacy.reason, expiresAt: legacy.expiresAt }
+  return null
+}
+
+/**
+ * What this family actually pays.
+ *
+ * `base` carries the published figures so this file stays free of imports
+ * and can be shared byte-for-byte between the browser and the server:
+ *   { standard, package, packageMin, credits, fullTotal }
+ *
+ * Returns the per-lesson rate, the payable total, and how it was reached, so
+ * the checkout can explain itself rather than just showing a mystery number.
+ */
+export function resolveStudentPrice(profileData, base, now = Date.now()) {
+  const credits = Math.max(0, Math.round(Number(base?.credits) || 0))
+  const fullTotal = Math.round((Number(base?.fullTotal) || 0) * 100) / 100
+  const sessions = Number(base?.sessions) || 0
+  const packageMin = Number(base?.packageMin) || 4
+  const standardRate = Number(base?.standard) || 0
+  const plan = studentPricing(profileData, now)
+
+  const asResult = (rate, total, mode, extra = {}) => ({
+    mode,
+    rate: Math.round(rate * 100) / 100,
+    total: Math.round(total * 100) / 100,
+    fullTotal,
+    saving: Math.round((fullTotal - total) * 100) / 100,
+    ...extra,
+  })
+
+  if (!plan) {
+    const rate = credits ? fullTotal / credits : standardRate
+    return asResult(rate, fullTotal, 'standard', { percent: 0, reason: '' })
+  }
+
+  if (plan.mode === 'fixed') {
+    const rate = sessions >= packageMin ? plan.packageRate : plan.standardRate
+    return asResult(rate, rate * credits, 'fixed', { percent: 0, reason: plan.reason })
+  }
+
+  const total = applyDiscount(fullTotal, plan.percent)
+  const rate = credits ? Math.round((total / credits) * 100) / 100 : 0
+  return asResult(rate, total, 'percent', { percent: plan.percent, reason: plan.reason })
+}
+
+/** Validate what an administrator typed on the fixed-rate form. */
+export function validateRateInput({ standardRate, packageRate, expiresAt } = {}) {
+  const standard = normalizeRate(standardRate)
+  if (!standard) {
+    return { valid: false, error: `Enter a price per lesson between $${MIN_SESSION_RATE} and $${MAX_SESSION_RATE}.` }
+  }
+  const pkg = packageRate === '' || packageRate === undefined || packageRate === null
+    ? standard
+    : normalizeRate(packageRate)
+  if (!pkg) {
+    return { valid: false, error: `The package price must be between $${MIN_SESSION_RATE} and $${MAX_SESSION_RATE}.` }
+  }
+  if (pkg > standard) {
+    return {
+      valid: false,
+      error: 'The package price is higher than the single-lesson price, so booking more lessons would cost more each. Check the two figures.',
+    }
+  }
+  if (expiresAt) {
+    const at = Date.parse(expiresAt)
+    if (!Number.isFinite(at)) return { valid: false, error: 'That end date could not be read.' }
+    if (at <= Date.now()) return { valid: false, error: 'That end date is already in the past.' }
+  }
+  return { valid: true, standardRate: standard, packageRate: pkg, error: '' }
+}
+
+/** One line describing an arrangement, for the admin list. */
+export function describeStudentPricing(profileData) {
+  const plan = studentPricing(profileData)
+  if (!plan) return 'Standard pricing'
+  const parts = []
+  if (plan.mode === 'fixed') {
+    parts.push(plan.packageRate !== plan.standardRate
+      ? `$${plan.standardRate} per lesson, $${plan.packageRate} on 4+ a week`
+      : `$${plan.standardRate} per lesson`)
+  } else {
+    parts.push(`${plan.percent}% off`)
+  }
+  if (plan.reason) parts.push(plan.reason)
+  if (plan.expiresAt) {
+    const at = Date.parse(plan.expiresAt)
+    if (Number.isFinite(at)) parts.push(`until ${new Date(at).toISOString().slice(0, 10)}`)
+  }
+  return parts.join(' · ')
+}

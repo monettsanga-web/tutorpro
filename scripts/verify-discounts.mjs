@@ -87,6 +87,33 @@ console.log('\n--- an EXPIRED discount charges full price ---')
 }
 
 /* ================================================================== */
+console.log('\n--- a FIXED per-lesson rate ---')
+{
+  const page = await open(student(`{}`).replace('discount:', 'pricing:{mode:"fixed",standardRate:5,packageRate:4},x:'))
+  await page.close()
+}
+{
+  // 4 lessons a week, monthly = 16 credits. At an agreed $4 that is $64.
+  const fixedAccount = `{id:'a1',role:'student',status:'active',email:'p@e.com',loginId:'p@e.com',
+    authProvider:'email',createdAt:new Date(Date.now()-400*86400000).toISOString(),parentName:'Maria Santos',
+    paidLessonsBalance:0,preferredBillingPlan:'monthly',preferredWeeklySessions:4,
+    pricing:{mode:'fixed',standardRate:5,packageRate:4,reason:'Agreed rate'},
+    child:${LEARNER},children:[${LEARNER}]}`
+  const page = await open(fixedAccount)
+  await page.waitForSelector('.student-payment-pro', { timeout: 15000 })
+  const total = await page.locator('.student-payment-pro__summary-total').textContent()
+  ok(total.includes('64.00'), `the agreed rate produces the right total (${total.replace(/\s+/g, ' ').trim()})`)
+  ok(total.includes('112.00'), 'the published price is shown struck through')
+  const summary = await page.locator('.student-payment-pro').textContent()
+  ok(/\$4\.00/.test(summary), 'the per-class rate shown is the agreed $4.00, not the published $7.00')
+  ok(!/\$7\.00 \/ class/.test(summary), 'the published rate is NOT shown as their rate')
+  const line = page.locator('.student-payment-pro__summary-discount')
+  ok(await line.count() === 1, 'the saving is shown')
+  ok(/agreed rate/i.test(await line.textContent()), 'it is labelled as an agreed rate, not a discount')
+  await page.close()
+}
+
+/* ================================================================== */
 console.log('\n--- the admin panel ---')
 {
   const page = await open(admin, { asAdmin: true })
@@ -96,18 +123,40 @@ console.log('\n--- the admin panel ---')
   await page.waitForTimeout(2000)
 
   const card = page.locator('.admin-discount-card')
-  ok(await card.count() === 1, 'the discount panel is present')
+  ok(await card.count() === 1, 'the pricing panel is present')
   const text = await card.textContent()
-  ok(/Give a specific family a lower price/i.test(text), 'it explains what it does')
+  ok(/Set what a specific family pays/i.test(text), 'it explains what it does')
+  ok(/Only you can see or set this/i.test(text), 'it states that pricing is admin-only')
+
+  // The admin must be able to CHOOSE between the two methods.
+  const mode = card.locator('select[name="mode"]')
+  ok(await mode.count() === 1, 'a pricing method can be chosen')
+  const modes = await mode.locator('option').allTextContents()
+  ok(modes.length === 2, `two methods are offered (${modes.length})`)
+  ok(modes.some((o) => /percentage/i.test(o)), 'percentage off is offered')
+  ok(modes.some((o) => /exact price/i.test(o)), 'an exact price per lesson is offered')
+
+  // Switching to fixed must reveal the preset rate pickers.
+  await mode.selectOption('fixed')
+  await page.waitForTimeout(500)
+  const standard = card.locator('select[name="standardRate"]')
+  const pkg = card.locator('select[name="packageRate"]')
+  ok(await standard.count() === 1, 'a price per lesson can be picked for 1-3 a week')
+  ok(await pkg.count() === 1, 'a price per lesson can be picked for 4 or more a week')
+  const presets = await standard.locator('option').allTextContents()
+  ok(presets.length >= 4, `preset prices are offered to choose from (${presets.length})`)
+  ok(presets.every((o) => /\$\d+\.00 per 25-minute lesson/.test(o)), 'each preset is spelled out in full')
+  await mode.selectOption('percent')
+  await page.waitForTimeout(400)
+  ok(await card.locator('input[name="percent"]').count() === 1, 'switching back shows the percentage field')
   ok(/next checkout/i.test(text), 'it says when the discount takes effect')
   ok(/90%/.test(text), 'it states the 90% cap')
   ok(/add credits/i.test(text), 'it points at the right tool for a free lesson')
 
   ok(await card.locator('select[name="studentId"]').count() === 1, 'a student can be chosen')
-  ok(await card.locator('input[name="percent"]').count() === 1, 'a percentage can be entered')
   ok(await card.locator('input[name="reason"]').count() === 1, 'a reason can be recorded')
   ok(await card.locator('input[name="expiresAt"]').count() === 1, 'an optional end date can be set')
-  ok(await card.locator('input[name="percent"]').getAttribute('max') === '90', 'the input caps at 90')
+  ok(await card.locator('input[name="percent"]').getAttribute('max') === '90', 'the percentage caps at 90')
 
   // The live preview must show real money, not a placeholder.
   const preview = page.locator('.admin-discount-preview')

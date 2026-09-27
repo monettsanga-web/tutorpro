@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 // Shared with the browser so the price a parent SEES and the price we CHARGE
 // are produced by identical code. See src/discounts.js.
-import { activeDiscountPercent, applyDiscount, normalizeDiscountPercent } from '../src/discounts.js'
+import { applyDiscount, normalizeDiscountPercent, resolveStudentPrice } from '../src/discounts.js'
 
 const DEFAULT_SUPABASE_URL = 'https://losmkvvwzijipqrlelyt.supabase.co'
 const PAYPAL_API_BASE = process.env.PAYPAL_ENV === 'sandbox'
@@ -136,8 +136,20 @@ export function parseCustomId(customId = '') {
   const sessionsText = parts.length >= 3 ? parts[2] : parts[1]
   const sessions = parseSessions(sessionsText, billingPlan)
   const discountPercent = parts.length >= 4 ? normalizeDiscountPercent(parts[3]) : 0
+  // Part 5 is the exact agreed total in cents. A fixed per-lesson rate cannot
+  // be expressed as a whole percentage without rounding drift, and a capture
+  // that disagrees with the charge by even one cent is rejected — taking the
+  // parent's money and refusing their credits. Storing the figure itself
+  // removes the arithmetic entirely.
+  const agreedCents = parts.length >= 5 ? Math.round(Number(parts[4])) : 0
   if (!accountId) throw new Error('PayPal order is missing the student account reference.')
-  return { accountId, billingPlan, sessions, discountPercent }
+  return {
+    accountId,
+    billingPlan,
+    sessions,
+    discountPercent,
+    agreedTotal: Number.isFinite(agreedCents) && agreedCents > 0 ? agreedCents / 100 : 0,
+  }
 }
 
 /**
@@ -147,28 +159,31 @@ export function parseCustomId(customId = '') {
  * able to award themselves money off. Fails closed — any error means full
  * price, never a free lesson.
  */
-export async function studentDiscountPercent(supabase, accountId) {
+export async function studentPriceFor(supabase, accountId, base) {
+  const fallback = { mode: 'standard', rate: 0, total: base.fullTotal, fullTotal: base.fullTotal, saving: 0, percent: 0 }
   try {
     const { data, error } = await supabase
       .from('profiles')
       .select('profile_data')
       .eq('id', accountId)
       .single()
-    if (error || !data) return 0
-    return activeDiscountPercent(data.profile_data || {})
+    if (error || !data) return fallback
+    return resolveStudentPrice(data.profile_data || {}, base)
   } catch {
-    return 0
+    // Any failure charges the published price. Never a free lesson.
+    return fallback
   }
 }
 
 export function extractOrderDetails(order) {
   const unit = order?.purchase_units?.[0]
   const capture = unit?.payments?.captures?.[0]
-  const { accountId, billingPlan, sessions, discountPercent } = parseCustomId(unit?.custom_id)
-  // Must match what create-order actually charged. Without the discount here,
-  // every discounted payment would be captured and then rejected as "lower
-  // than the selected plan price" — money taken, no credits granted.
-  const expectedAmount = applyDiscount(planTotal(billingPlan, sessions), discountPercent).toFixed(2)
+  const { accountId, billingPlan, sessions, discountPercent, agreedTotal } = parseCustomId(unit?.custom_id)
+  // Must match what create-order actually charged, or the payment is taken
+  // and the credits refused. The agreed figure recorded on the order wins;
+  // the percentage is the fallback for orders created before fixed rates
+  // existed, and plain plan pricing for the ones before discounts.
+  const expectedAmount = (agreedTotal || applyDiscount(planTotal(billingPlan, sessions), discountPercent)).toFixed(2)
   const capturedAmount = capture?.amount?.value || unit?.amount?.value || '0.00'
   const currency = capture?.amount?.currency_code || unit?.amount?.currency_code || 'USD'
   if (currency !== 'USD') throw new Error('Unexpected payment currency.')
