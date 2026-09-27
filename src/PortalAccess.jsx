@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { loginAccount, registerTeacher, requestPasswordReset } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
+import { confirmTeacherInvite, isValidEmail, isValidOtp, normalizeOtp, setTeacherPassword } from './teacherInvites.js'
 
 const TeacherAIInterview = lazy(() => import('./TeacherAIInterview.jsx'))
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
@@ -34,6 +35,32 @@ function validTeacherLogin(provider, value) {
 export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPortal }) {
   const isAdmin = mode === 'admin'
   const [view, setView] = useState('login')
+  /* Invited teachers arrive with a code instead of a password. Supabase Auth
+     owns the code itself — generation, expiry and attempt limits — so nothing
+     security-sensitive is reimplemented here. */
+  const [invite, setInvite] = useState({ email: '', code: '', password: '' })
+  const [inviteBusy, setInviteBusy] = useState(false)
+
+  const updateInvite = (event) => {
+    const { name, value } = event.target
+    setInvite((current) => ({ ...current, [name]: name === 'code' ? normalizeOtp(value) : value }))
+    setError('')
+  }
+
+  const submitInviteCode = async (event) => {
+    event.preventDefault()
+    setError('')
+    setInviteBusy(true)
+    try {
+      await confirmTeacherInvite({ email: invite.email, code: invite.code })
+      await setTeacherPassword(invite.password)
+      setView('invite-done')
+    } catch (inviteError) {
+      setError(inviteError.message)
+    } finally {
+      setInviteBusy(false)
+    }
+  }
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -201,7 +228,56 @@ export default function PortalAccess({ mode, onClose, onAuthenticated, onEnterPo
           )}
 
           {!isAdmin && view === 'login' && (
-            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch">New to TutorPro Online English? <button onClick={() => { setView('register'); setError('') }}>Apply as a teacher</button></p></>
+            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch">New to TutorPro Online English? <button onClick={() => { setView('register'); setError('') }}>Apply as a teacher</button></p><p className="auth-switch"><button onClick={() => { setView('invite'); setError(''); setErrors({}) }}>I have an invitation code</button></p></>
+          )}
+
+          {!isAdmin && view === 'invite' && (
+            <>
+              <div className="auth-heading role-login-heading">
+                <span className="auth-heading__icon"><GraduationCap size={22} /></span>
+                <div>
+                  <span>Teacher studio</span>
+                  <h2 id="role-access-title">Enter your invitation code</h2>
+                  <p>Your administrator emailed you a six-digit code. Enter it here and choose your own password — nobody else will know it.</p>
+                </div>
+              </div>
+              <form className="auth-form" onSubmit={submitInviteCode} noValidate>
+                <label><span>Email address</span>
+                  <div className="input-wrap"><Mail size={18} />
+                    <input name="email" autoComplete="username" value={invite.email} onChange={updateInvite} placeholder="The address the invitation was sent to" />
+                  </div>
+                </label>
+                <label><span>Six-digit code</span>
+                  <div className="input-wrap">
+                    <input name="code" inputMode="numeric" autoComplete="one-time-code" value={invite.code} onChange={updateInvite} placeholder="123456" />
+                  </div>
+                </label>
+                <label><span>Choose your password</span>
+                  <div className="input-wrap"><LockKeyhole size={18} />
+                    <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={invite.password} onChange={updateInvite} placeholder="At least 8 characters including a number" />
+                    <button type="button" className="input-reveal" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                  </div>
+                </label>
+                <button
+                  className="button button--primary button--full"
+                  type="submit"
+                  disabled={inviteBusy || !isValidEmail(invite.email) || !isValidOtp(invite.code) || invite.password.length < 8}
+                >
+                  {inviteBusy ? 'Confirming…' : 'Confirm and set my password'}
+                </button>
+              </form>
+              <p className="auth-switch">Code not working? <button onClick={() => { setView('login'); setError('') }}>Back to teacher login</button></p>
+            </>
+          )}
+
+          {!isAdmin && view === 'invite-done' && (
+            <div className="role-success">
+              <span><CheckCircle2 size={36} /></span>
+              <span className="kicker">Account confirmed</span>
+              <h2 id="role-access-title">You are all set.</h2>
+              <p>Your password is saved and your email is confirmed. Your administrator needs to approve your profile before bookings open — you will be able to sign in and fill in your experience, education and biography straight away.</p>
+              <button className="button button--primary button--full" onClick={() => { setView('login'); setInvite({ email: '', code: '', password: '' }) }}>Go to teacher login</button>
+            </div>
           )}
 
           {!isAdmin && view === 'reset-request' && (

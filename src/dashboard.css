@@ -11787,3 +11787,81 @@ a.feedback-resource-detail:hover strong {
   .admin-discount-list li { grid-template-columns: minmax(0, 1fr); }
   .admin-discount-list button { justify-content: center; }
 }
+
+/* ── Adding a teacher: invitation vs temporary password ──────────────── */
+.invite-method {
+  display: inline-flex;
+  gap: 4px;
+  margin: 4px 0 18px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(50, 21, 104, 0.07);
+}
+
+.invite-method button {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 16px;
+  min-height: 40px;
+  background: transparent;
+  color: var(--portal-muted, #716981);
+  font-family: inherit;
+  font-size: 0.93rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.invite-method button.is-active {
+  background: #fff;
+  color: var(--portal-navy, #321568);
+  box-shadow: 0 2px 8px rgba(50, 21, 104, 0.14);
+}
+
+.invite-explainer {
+  margin: 4px 0 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: rgba(50, 21, 104, 0.05);
+  color: var(--portal-muted, #716981);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+/* Amber, because the manual route is the one with a real downside. */
+.invite-explainer--warn {
+  background: #fffbeb;
+  border: 1px solid rgba(217, 119, 6, 0.26);
+  color: #7c5410;
+}
+
+.invite-sent__lead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  color: #166534;
+  font-size: 1.04rem;
+}
+
+.invite-sent p { margin: 0 0 12px; line-height: 1.6; }
+
+.invite-sent__steps {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  display: grid;
+  gap: 7px;
+  line-height: 1.55;
+}
+
+.invite-sent__note {
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: rgba(50, 21, 104, 0.05);
+  color: var(--portal-muted, #716981);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 640px) {
+  .invite-method { display: grid; grid-template-columns: 1fr; width: 100%; border-radius: 16px; }
+  .invite-method button { width: 100%; }
+}

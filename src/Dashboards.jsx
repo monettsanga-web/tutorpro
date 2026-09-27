@@ -36,6 +36,7 @@ import {
   Home,
   Languages,
   LayoutDashboard,
+  MailCheck,
   LogOut,
   Maximize2,
   Menu,
@@ -144,6 +145,7 @@ import { buildLearningReport, skillLabel } from './learningReports.js'
 import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
 import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgradeVerdict, FREE_TIER } from './backup.js'
 import { describePaymentError } from './paymentErrors.js'
+import { INVITE_CODE_MINUTES, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import ContactFallback from './ContactFallback.jsx'
 
@@ -5751,6 +5753,31 @@ function AddTeacherDialog({ onClose, onCreated }) {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  /* Invitation is the default because it means the administrator never
+     handles the teacher's password. The temporary-password route stays as a
+     fallback for a teacher with no working email. */
+  const [method, setMethod] = useState('invite')
+  const [invited, setInvited] = useState('')
+
+  const sendInvite = async (event) => {
+    event.preventDefault()
+    setError('')
+    if (form.fullName.trim().length < 2) { setError('Enter the teacher\u2019s full name.'); return }
+    if (!isValidEmail(form.email)) { setError('Enter a valid email address.'); return }
+    setSubmitting(true)
+    try {
+      await inviteTeacherByEmail({
+        email: form.email,
+        fullName: form.fullName,
+        specialization: form.specialization,
+      })
+      setInvited(form.email.trim().toLowerCase())
+    } catch (inviteError) {
+      setError(inviteError.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     const closeOnEscape = (event) => event.key === 'Escape' && onClose()
@@ -5784,15 +5811,70 @@ function AddTeacherDialog({ onClose, onCreated }) {
     <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="portal-dialog add-teacher-dialog" role="dialog" aria-modal="true" aria-labelledby="add-teacher-title">
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
-        <div className="portal-dialog__heading"><span><UserCheck size={23} /></span><div><small>Administrator action</small><h2 id="add-teacher-title">Add a teacher</h2><p>Create an approved teacher login. They can change their profile and paint their own availability after signing in.</p></div></div>
+        <div className="portal-dialog__heading"><span><UserCheck size={23} /></span><div><small>Administrator action</small><h2 id="add-teacher-title">Add a teacher</h2><p>Invite them by email and they set their own password. You never see or handle it.</p></div></div>
         {error && <div className="portal-error" role="alert">{error}</div>}
-        <form className="admin-teacher-form" onSubmit={submit}>
-          <div className="admin-teacher-form__row"><label><span>Full name</span><input autoFocus name="fullName" value={form.fullName} onChange={update} placeholder="Teacher name" /></label><label><span>Email address</span><input type="email" name="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></label></div>
-          <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="password" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label></div>
-          <div className="admin-teacher-form__row admin-teacher-form__row--three"><label><span>Experience</span><input type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="Years" /></label><label><span>Education</span><input name="education" value={form.education} onChange={update} placeholder="Degree" /></label><label><span>Languages</span><input name="languages" value={form.languages} onChange={update} placeholder="English…" /></label></div>
-          <label><span>Short biography</span><textarea name="bio" value={form.bio} onChange={update} placeholder="Teaching background and approach…" /></label>
-          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button" disabled={submitting}>{submitting ? 'Creating teacher…' : 'Create approved teacher'} <ArrowRight size={16} /></button></div>
-        </form>
+
+        {invited ? (
+          <div className="invite-sent" role="status">
+            <p className="invite-sent__lead"><MailCheck size={18} /> <strong>Invitation sent to {invited}</strong></p>
+            <p>Ask them to open the email and follow the instructions. The code is valid for about {INVITE_CODE_MINUTES} minutes.</p>
+            <ol className="invite-sent__steps">
+              <li>They go to <strong>Teacher portal</strong> on the website.</li>
+              <li>They choose <strong>I have an invitation code</strong>.</li>
+              <li>They enter the code and pick their own password.</li>
+            </ol>
+            <p className="invite-sent__note">
+              They will appear in your teacher list as <strong>pending</strong> once they confirm. You still need to
+              approve them before they can be booked, so an invitation on its own grants no access.
+            </p>
+            <div className="portal-dialog__actions">
+              <button type="button" className="portal-secondary-button" onClick={() => { setInvited(''); setForm((current) => ({ ...current, fullName: '', email: '' })) }}>Invite another</button>
+              <button type="button" className="portal-primary-button" onClick={() => onCreated(null)}>Done <ArrowRight size={16} /></button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="invite-method" role="group" aria-label="How to add this teacher">
+              <button type="button" className={method === 'invite' ? 'is-active' : ''} onClick={() => { setMethod('invite'); setError('') }}>
+                Invite by email
+              </button>
+              <button type="button" className={method === 'manual' ? 'is-active' : ''} onClick={() => { setMethod('manual'); setError('') }}>
+                Set a temporary password
+              </button>
+            </div>
+
+            {method === 'invite' ? (
+              <form className="admin-teacher-form" onSubmit={sendInvite}>
+                <div className="admin-teacher-form__row">
+                  <label><span>Full name</span><input autoFocus name="fullName" value={form.fullName} onChange={update} placeholder="Teacher name" /></label>
+                  <label><span>Email address</span><input type="email" name="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></label>
+                </div>
+                <label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label>
+                <p className="invite-explainer">
+                  We email them a one-time code. They enter it on the Teacher portal and choose their own password,
+                  so nobody else ever knows it. They can fill in their experience, education and biography themselves
+                  once they are in.
+                </p>
+                <div className="portal-dialog__actions">
+                  <button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button>
+                  <button type="submit" className="portal-primary-button" disabled={submitting}>{submitting ? 'Sending invitation…' : 'Send invitation'} <ArrowRight size={16} /></button>
+                </div>
+              </form>
+            ) : (
+              <form className="admin-teacher-form" onSubmit={submit}>
+                <p className="invite-explainer invite-explainer--warn">
+                  Use this only when the teacher has no working email. You will have to pass the password to them
+                  yourself, and you will know it — so ask them to change it as soon as they sign in.
+                </p>
+                <div className="admin-teacher-form__row"><label><span>Full name</span><input autoFocus name="fullName" value={form.fullName} onChange={update} placeholder="Teacher name" /></label><label><span>Email address</span><input type="email" name="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></label></div>
+                <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="password" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label></div>
+                <div className="admin-teacher-form__row admin-teacher-form__row--three"><label><span>Experience</span><input type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="Years" /></label><label><span>Education</span><input name="education" value={form.education} onChange={update} placeholder="Degree" /></label><label><span>Languages</span><input name="languages" value={form.languages} onChange={update} placeholder="English…" /></label></div>
+                <label><span>Short biography</span><textarea name="bio" value={form.bio} onChange={update} placeholder="Teaching background and approach…" /></label>
+                <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button" disabled={submitting}>{submitting ? 'Creating teacher…' : 'Create approved teacher'} <ArrowRight size={16} /></button></div>
+              </form>
+            )}
+          </>
+        )}
       </section>
     </div>
   )
