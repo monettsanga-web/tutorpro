@@ -144,6 +144,7 @@ import { buildLearningReport, skillLabel } from './learningReports.js'
 import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
 import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgradeVerdict, FREE_TIER } from './backup.js'
 import { describePaymentError } from './paymentErrors.js'
+import { MAX_DISCOUNT_PERCENT, activeDiscount, applyDiscount, describeDiscount, discountSaving, validateDiscountInput } from './discounts.js'
 import ContactFallback from './ContactFallback.jsx'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
@@ -2469,6 +2470,65 @@ function AdminPaymentsPanel() {
     setMessage('')
   }
 
+  /* --- per-student discounts ---------------------------------------
+     Saved onto the student's own cloud profile, because the PayPal
+     function reads it from there when deciding what to charge. A discount
+     that only existed in this browser would change the displayed price and
+     not the actual bill. */
+  const [discountForm, setDiscountForm] = useState({ studentId: '', percent: '10', reason: '', expiresAt: '' })
+  const [discountBusy, setDiscountBusy] = useState(false)
+  const discountStudent = students.find((student) => student.id === discountForm.studentId) || students[0] || null
+  const discountedStudents = students.filter((student) => activeDiscount(student))
+
+  const updateDiscountForm = (event) => {
+    const { name, value } = event.target
+    setDiscountForm((current) => ({ ...current, [name]: value }))
+  }
+
+  const saveDiscount = async (event) => {
+    event.preventDefault()
+    setError(''); setMessage('')
+    if (!discountStudent) { setError('Select a student account first.'); return }
+    const check = validateDiscountInput({ percent: discountForm.percent, expiresAt: discountForm.expiresAt })
+    if (!check.valid) { setError(check.error); return }
+    setDiscountBusy(true)
+    try {
+      const updated = updateAccount(discountStudent.id, {
+        discount: {
+          percent: check.percent,
+          reason: discountForm.reason.trim().slice(0, 120),
+          expiresAt: discountForm.expiresAt ? new Date(discountForm.expiresAt).toISOString() : '',
+          grantedAt: new Date().toISOString(),
+          grantedBy: 'admin',
+        },
+      })
+      // Without this the server never sees it and still charges full price.
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      setMessage(`${displayName(discountStudent)} now pays ${check.percent}% less. It applies at their next checkout.`)
+      setDiscountForm((current) => ({ ...current, reason: '', expiresAt: '' }))
+      setVersion((value) => value + 1)
+    } catch (saveError) {
+      setError(saveError.message)
+    } finally {
+      setDiscountBusy(false)
+    }
+  }
+
+  const removeDiscount = async (student) => {
+    setError(''); setMessage('')
+    setDiscountBusy(true)
+    try {
+      const updated = updateAccount(student.id, { discount: null })
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      setMessage(`Discount removed for ${displayName(student)}. They pay the normal price from their next checkout.`)
+      setVersion((value) => value + 1)
+    } catch (removeError) {
+      setError(removeError.message)
+    } finally {
+      setDiscountBusy(false)
+    }
+  }
+
   const verifyManualPayment = async (event) => {
     event.preventDefault()
     if (!selectedStudent) {
@@ -2574,6 +2634,78 @@ function AdminPaymentsPanel() {
             <small>Mode: {gatewayCheck.environment} · Key ending {gatewayCheck.serverClientId || 'not set'}</small>
           </div>
         )}
+      </section>
+
+      <section className="portal-card admin-discount-card">
+        <div className="portal-card__heading portal-card__heading--small">
+          <div>
+            <span className="portal-kicker">Student discounts</span>
+            <h2>Give a specific family a lower price</h2>
+            <p>The discount is applied automatically at their next checkout. They keep paying the reduced price until you remove it.</p>
+          </div>
+        </div>
+
+        <form className="admin-manual-payment-form" onSubmit={saveDiscount}>
+          <label><span>Student account</span>
+            <select name="studentId" value={discountStudent?.id || ''} onChange={updateDiscountForm}>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {displayName(student)} · {student.loginId || student.email || 'no login'}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label><span>Discount</span>
+            <input name="percent" type="number" min="1" max={MAX_DISCOUNT_PERCENT} value={discountForm.percent} onChange={updateDiscountForm} />
+          </label>
+          <label><span>Ends on <small>(optional)</small></span>
+            <input name="expiresAt" type="date" value={discountForm.expiresAt} onChange={updateDiscountForm} />
+          </label>
+          <label className="admin-manual-payment-form__wide"><span>Reason <small>(shown only to you)</small></span>
+            <input name="reason" value={discountForm.reason} onChange={updateDiscountForm} placeholder="e.g. Sibling of an existing family, or long-standing customer" />
+          </label>
+          <button className="portal-primary-button" type="submit" disabled={discountBusy || !students.length}>
+            {discountBusy ? 'Saving…' : 'Apply discount'} <Check size={16} />
+          </button>
+        </form>
+
+        {discountStudent && (
+          <p className="admin-discount-preview">
+            {(() => {
+              const percent = Number(discountForm.percent) || 0
+              const monthly = planTotal('monthly', 4)
+              const weekly = planTotal('weekly', 1)
+              if (percent < 1 || percent > MAX_DISCOUNT_PERCENT) return 'Enter a discount between 1 and 90 to preview the new price.'
+              return `At ${percent}% off, ${displayName(discountStudent)} would pay $${applyDiscount(weekly, percent).toFixed(2)} for a single class (normally $${weekly.toFixed(2)}), and $${applyDiscount(monthly, percent).toFixed(2)} for a 4-a-week monthly package (normally $${monthly.toFixed(2)}) — saving $${discountSaving(monthly, percent).toFixed(2)}.`
+            })()}
+          </p>
+        )}
+
+        <div className="admin-discount-list">
+          <h3>Families currently on a discount</h3>
+          {discountedStudents.length ? (
+            <ul>
+              {discountedStudents.map((student) => (
+                <li key={student.id}>
+                  <div>
+                    <strong>{displayName(student)}</strong>
+                    <small>{describeDiscount(student.discount)}</small>
+                  </div>
+                  <button type="button" onClick={() => removeDiscount(student)} disabled={discountBusy}>
+                    <Trash2 size={15} /> Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="admin-discount-empty">Nobody has a discount at the moment. Everyone pays the standard price.</p>
+          )}
+        </div>
+
+        <p className="admin-discount-note">
+          The most you can take off is {MAX_DISCOUNT_PERCENT}%, because PayPal refuses a $0.00 payment. To give a lesson
+          free of charge, add credits directly using the form below instead — that needs no card at all.
+        </p>
       </section>
 
       <section className="portal-card admin-manual-payment-card">
@@ -2881,6 +3013,12 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const koreaRate = koreaRateForDuration(koreaDuration)
   const koreaTotal = koreaSessionTotal(weeklySessions, billingPlan, koreaDuration)
   const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
+  // Display only. The server re-reads this from the student's cloud profile
+  // when it builds the order, so editing the page changes nothing about the
+  // amount actually charged.
+  const studentDiscount = activeDiscount(account)
+  const discountPercent = studentDiscount?.percent || 0
+  const payableTotal = applyDiscount(weeklyTotal, discountPercent)
   const configuredPayPalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || ''
   const paypalClientId = configuredPayPalClientId || 'sb'
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
@@ -3174,7 +3312,20 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
                   <div><span>Package</span><strong>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'}</strong></div>
                   <div><span>Rate</span><strong>{formatUsd(sessionRate)} / class{localPriceHint(sessionRate, account.registrationCountry) && <em className="price-local-hint">{localPriceHint(sessionRate, account.registrationCountry)}</em>}</strong></div>
                   <div><span>Credits included</span><strong>{creditCount}</strong></div>
-                  <div className="student-payment-pro__summary-total"><span>Total PayPal payment</span><strong>{formatUsd(weeklyTotal)}{localPriceHint(weeklyTotal, account.registrationCountry) && <em className="price-local-hint">{localPriceHint(weeklyTotal, account.registrationCountry)}</em>}</strong></div>
+                  {discountPercent > 0 && (
+                    <div className="student-payment-pro__summary-discount">
+                      <span>Your discount ({discountPercent}% off)</span>
+                      <strong>−{formatUsd(discountSaving(weeklyTotal, discountPercent))}</strong>
+                    </div>
+                  )}
+                  <div className="student-payment-pro__summary-total">
+                    <span>Total PayPal payment</span>
+                    <strong>
+                      {discountPercent > 0 && <s className="student-payment-pro__was">{formatUsd(weeklyTotal)}</s>}
+                      {formatUsd(payableTotal)}
+                      {localPriceHint(payableTotal, account.registrationCountry) && <em className="price-local-hint">{localPriceHint(payableTotal, account.registrationCountry)}</em>}
+                    </strong>
+                  </div>
                 </>
               )}
             </div>

@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+// Shared with the browser so the price a parent SEES and the price we CHARGE
+// are produced by identical code. See src/discounts.js.
+import { activeDiscountPercent, applyDiscount, normalizeDiscountPercent } from '../src/discounts.js'
 
 const DEFAULT_SUPABASE_URL = 'https://losmkvvwzijipqrlelyt.supabase.co'
 const PAYPAL_API_BASE = process.env.PAYPAL_ENV === 'sandbox'
@@ -109,21 +112,63 @@ export async function requireStudent(req, accountId) {
   return { supabase, user: data.user }
 }
 
+/**
+ * Read back the reference we attached when the order was created.
+ *
+ * Format: accountId:billingPlan:sessions[:discountPercent]
+ *
+ * The discount is a SNAPSHOT taken at checkout, deliberately. Re-reading the
+ * profile at capture time would mean an admin editing a discount mid-payment
+ * could make a legitimate capture fail. The price agreed when the parent
+ * pressed pay is the price charged.
+ *
+ * This cannot be forged: custom_id is written by this server, and creating an
+ * order against our merchant account requires our API credentials. The payer
+ * only ever sees the order id.
+ *
+ * A missing fourth part means no discount, so orders created before this
+ * feature still capture correctly.
+ */
 export function parseCustomId(customId = '') {
   const parts = String(customId).split(':')
   const accountId = parts[0]
   const billingPlan = parts.length >= 3 ? parseBillingPlan(parts[1]) : 'weekly'
   const sessionsText = parts.length >= 3 ? parts[2] : parts[1]
   const sessions = parseSessions(sessionsText, billingPlan)
+  const discountPercent = parts.length >= 4 ? normalizeDiscountPercent(parts[3]) : 0
   if (!accountId) throw new Error('PayPal order is missing the student account reference.')
-  return { accountId, billingPlan, sessions }
+  return { accountId, billingPlan, sessions, discountPercent }
+}
+
+/**
+ * The discount currently on a student's profile, read server-side.
+ *
+ * Never taken from the request body: a parent editing the page must not be
+ * able to award themselves money off. Fails closed — any error means full
+ * price, never a free lesson.
+ */
+export async function studentDiscountPercent(supabase, accountId) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('profile_data')
+      .eq('id', accountId)
+      .single()
+    if (error || !data) return 0
+    return activeDiscountPercent(data.profile_data || {})
+  } catch {
+    return 0
+  }
 }
 
 export function extractOrderDetails(order) {
   const unit = order?.purchase_units?.[0]
   const capture = unit?.payments?.captures?.[0]
-  const { accountId, billingPlan, sessions } = parseCustomId(unit?.custom_id)
-  const expectedAmount = planTotal(billingPlan, sessions).toFixed(2)
+  const { accountId, billingPlan, sessions, discountPercent } = parseCustomId(unit?.custom_id)
+  // Must match what create-order actually charged. Without the discount here,
+  // every discounted payment would be captured and then rejected as "lower
+  // than the selected plan price" — money taken, no credits granted.
+  const expectedAmount = applyDiscount(planTotal(billingPlan, sessions), discountPercent).toFixed(2)
   const capturedAmount = capture?.amount?.value || unit?.amount?.value || '0.00'
   const currency = capture?.amount?.currency_code || unit?.amount?.currency_code || 'USD'
   if (currency !== 'USD') throw new Error('Unexpected payment currency.')
@@ -132,6 +177,7 @@ export function extractOrderDetails(order) {
     accountId,
     billingPlan,
     sessions,
+    discountPercent,
     credits: planCreditCount(billingPlan, sessions),
     sessionRate: planSessionRate(billingPlan, sessions),
     amount: Number(capturedAmount),

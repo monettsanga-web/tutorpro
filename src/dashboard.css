@@ -11701,3 +11701,89 @@ a.feedback-resource-detail:hover strong {
   .welcome-card__head h2 { font-size: 1.14rem; }
   .welcome-card__channel { flex: 1 1 100%; justify-content: center; }
 }
+
+/* ── Student discounts (Admin → Payments) ─────────────────────────── */
+.admin-discount-preview {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  color: #166534;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.admin-discount-list { margin-top: 18px; }
+
+.admin-discount-list h3 {
+  margin: 0 0 10px;
+  color: var(--portal-navy, #321568);
+  font-size: 1rem;
+}
+
+.admin-discount-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+
+.admin-discount-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 14px;
+  border: 1px solid var(--portal-line, #e4e0eb);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.admin-discount-list strong { display: block; color: var(--portal-navy, #321568); font-size: 0.99rem; }
+.admin-discount-list small { display: block; margin-top: 2px; color: var(--portal-muted, #716981); font-size: 0.88rem; }
+
+.admin-discount-list button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  background: #fff;
+  color: #b91c1c;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.admin-discount-list button:hover { background: #fef2f2; }
+
+.admin-discount-empty,
+.admin-discount-note {
+  margin: 0;
+  color: var(--portal-muted, #716981);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.admin-discount-note { margin-top: 14px; }
+
+/* The saving line and the struck-through original price at checkout. */
+.student-payment-pro__summary-discount {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  color: #166534;
+  font-weight: 750;
+}
+
+.student-payment-pro__was {
+  margin-right: 8px;
+  color: var(--portal-muted, #716981);
+  font-weight: 600;
+  text-decoration-thickness: 2px;
+}
+
+@media (max-width: 640px) {
+  .admin-discount-list li { grid-template-columns: minmax(0, 1fr); }
+  .admin-discount-list button { justify-content: center; }
+}
