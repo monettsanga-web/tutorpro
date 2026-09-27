@@ -17,7 +17,9 @@ const VERY_LATE_THRESHOLD_MINUTES = 15
 /** Build an ISO timestamp for the scheduled start of a booking. */
 export function scheduledStart(booking) {
   if (!booking?.date || !booking?.time) return null
-  const value = new Date(`${booking.date}T${booking.time}:00`)
+  // Stored lesson times are Manila time, so pin the offset rather than let
+  // the viewer's device clock decide when the lesson "really" started.
+  const value = new Date(`${booking.date}T${booking.time}:00+08:00`)
   return Number.isNaN(value.getTime()) ? null : value
 }
 

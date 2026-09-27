@@ -81,13 +81,15 @@ import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailab
 
 import SpeechCoachPanel from './SpeechCoachPanel.jsx'
 import { recordJoin, recordLeave } from './classroomAttendance.js'
+import { formatViewerTime } from './timezone.js'
 import { buildRtcConfiguration, connectionFailureAdvice, fetchDynamicIceServers, hasTurnRelay } from './iceServers.js'
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
 const rtcConfiguration = buildRtcConfiguration()
 
-function formatTime(time) {
-  return new Date(`2026-01-01T${time}`).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })
+function formatTime(time, date = '') {
+  // Lesson times are stored in Manila time; show the viewer's own clock.
+  return formatViewerTime(time, date)
 }
 
 function isPdfFile(file) {
@@ -2466,7 +2468,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
             {chinaConnection && <div className="china-classroom-connect-card"><div><Globe size={17} /><strong>China connection mode</strong></div><p>{voovFallbackLink ? 'Cross-border video is restricted here, so use the backup meeting for video and keep this classroom open for the lesson board. In mainland China install 腾讯会议 (Tencent Meeting) rather than VooV — they join the same room, and the numeric Meeting ID connects faster than the link.' : 'Cross-border video from mainland China is restricted, so the camera may not connect. Chat, the lesson board, annotations and shared files all continue to work. Ask your teacher to add a backup meeting link for video.'}</p><div><button type="button" onClick={() => setLowBandwidthMode((value) => !value)}>{lowBandwidthMode ? 'Standard video' : 'Low-bandwidth mode'}</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer">Open VooV backup</a>}</div></div>}
             <small>{account.role === 'teacher' ? 'Teacher room' : account.role === 'admin' ? 'Administrator access' : 'Booked student room'}</small>
             <h1>Ready for class, {participantName}?</h1>
-            <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at <strong className="classroom-lesson-time">{formatTime(roomBooking.time)}</strong></p>
+            <p>{teacher?.fullName} with {learner?.name} · {new Date(`${roomBooking.date}T12:00`).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} at <strong className="classroom-lesson-time">{formatTime(roomBooking.time, roomBooking.date)}</strong></p>
             <div className="prejoin-room-id"><span><ShieldCheck size={16} /></span><div><small>Unique classroom ID</small><strong>{roomBooking.classroomId}</strong></div><button onClick={copyRoomId}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div>
             {mediaError && <div className="classroom-error"><WifiOff size={17} /> {mediaError}</div>}
             {waiting ? (

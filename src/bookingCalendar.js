@@ -1,3 +1,5 @@
+import { formatViewerTime, timezoneDescription, toViewerTime, viewerDateKey, visitorTimeZone } from './timezone.js'
+
 const calendarOrigin = 'https://www.tutorpro.site'
 
 function escapeCalendarText(value = '') {
@@ -21,11 +23,23 @@ function endTime(booking) {
     .replace(/\.\d{3}Z$/, 'Z')
 }
 
-export function createBookingCalendar(booking, { teacherName = '', learnerName = '' } = {}) {
+/**
+ * Lesson times are stored in Manila time. The .ics event itself is written in
+ * absolute UTC, so every phone and calendar app places it at the right moment
+ * automatically, wherever the family is. The description additionally spells
+ * out the start time in the viewer's own timezone (detected from their IP
+ * address) so the reminder reads correctly at a glance.
+ */
+export function createBookingCalendar(booking, { teacherName = '', learnerName = '', timeZone = visitorTimeZone() } = {}) {
   const title = `TutorPro Online English: ${booking.focus || 'English lesson'}`
+  const localStart = formatViewerTime(booking.time, booking.date, timeZone)
+  const localDate = new Date(`${viewerDateKey(booking.date, booking.time, timeZone)}T12:00:00Z`)
+  const localDay = Number.isNaN(localDate.getTime()) ? '' : localDate.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   const details = [
     learnerName ? `Student: ${learnerName}` : '',
     teacherName ? `Teacher: ${teacherName}` : '',
+    `Starts: ${localDay}${localDay ? ', ' : ''}${localStart} — your time, ${timezoneDescription(timeZone, booking.date)}`,
+    `Manila time (our teaching base): ${booking.date} ${booking.time}`,
     `Lesson length: ${booking.duration || 25} minutes`,
     booking.classroomId ? `Private classroom ID: ${booking.classroomId}` : '',
     booking.slotComment ? `Lesson comment: ${booking.slotComment}` : '',
@@ -64,12 +78,16 @@ export function createBookingCalendar(booking, { teacherName = '', learnerName =
 }
 
 export function downloadBookingCalendar(booking, names = {}) {
-  const content = createBookingCalendar(booking, names)
+  const timeZone = names.timeZone || visitorTimeZone()
+  const content = createBookingCalendar(booking, { ...names, timeZone })
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `TutorPro-English-${booking.date}-${booking.time.replace(':', '')}.ics`
+  // Name the file with the family's own date and time, not Manila's.
+  const localDay = viewerDateKey(booking.date, booking.time, timeZone)
+  const localTime = toViewerTime(booking.time, booking.date, timeZone).time
+  link.download = `TutorPro-English-${localDay}-${String(localTime).replace(':', '')}.ics`
   document.body.appendChild(link)
   link.click()
   link.remove()

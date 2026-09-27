@@ -331,7 +331,10 @@ export function getClassroomAccess(bookingId, account, now = new Date()) {
     return { allowed: false, reason: 'The lesson must be confirmed or ongoing before the classroom opens.', booking }
   }
 
-  const startsAt = new Date(`${booking.date}T${booking.time}:00`)
+  // Lesson times are stored in Manila time (UTC+8). Parsing without the
+  // offset used the viewer's device clock, so the classroom opened hours
+  // early or late for every family outside the Philippines.
+  const startsAt = new Date(`${booking.date}T${booking.time}:00+08:00`)
   if (Number.isNaN(startsAt.getTime())) return { allowed: false, reason: 'The classroom schedule is invalid.', booking }
   const earlyMinutes = account.role === 'teacher' ? 30 : 10
   const opensAt = new Date(startsAt.getTime() - (earlyMinutes * 60 * 1000))

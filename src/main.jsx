@@ -5,12 +5,19 @@ import AutoTranslate from './AutoTranslate.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import PremiumMotion from './PremiumMotion.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
+import { detectVisitorTimeZone } from './timezone.js'
 import './styles.css'
 import './dashboard.css'
 import './classroom.css'
 import './premium-motion.css'
 import './support-chat.css'
 import './support-inbox.css'
+
+// Resolve the visitor's timezone from their IP address once per browser
+// session. Lesson times are stored in Manila time and displayed in whatever
+// this returns, so a family never has to convert anything by hand. A failed
+// lookup silently leaves the device clock in charge.
+detectVisitorTimeZone().catch(() => {})
 
 const rootElement = document.getElementById('root')
 

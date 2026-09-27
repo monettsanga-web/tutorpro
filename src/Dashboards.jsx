@@ -114,7 +114,7 @@ const AdminFunnelPanel = lazy(() => import('./AdminFunnelPanel.jsx'))
 const AdminFollowUpPanel = lazy(() => import('./AdminFollowUpPanel.jsx'))
 const AdminLinkBuilder = lazy(() => import('./AdminLinkBuilder.jsx'))
 import { ANNOUNCEMENT_LIFETIME_DAYS, LANGUAGE_LABELS, announcementCountdownLabel, clearCloudAnnouncements, getAnnouncements, languageForCountry, loadCloudAnnouncements, publishCloudAnnouncement, removeCloudAnnouncement, saveAnnouncement, translateAnnouncementBatch } from './announcements.js'
-import { formatViewerTime, readTimezoneMode, saveTimezoneMode, timezoneCity, timezoneLabel, toViewerTime, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
+import { TIMEZONE_EVENT, formatViewerTime, lessonHasPassed, schoolSlotForViewerCell, timezoneDescription, timezoneLabel, viewerDateKey, viewerNeedsConversion, visitorTimeZone } from './timezone.js'
 /*
  * The classroom is loaded ONLY when the feature flag is on. Keeping the
  * lazy() call behind the flag means that when the classroom is disabled the
@@ -132,7 +132,7 @@ import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js
 import ParentTeacherReviews from './ParentTeacherReviews.jsx'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
-import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates } from './schedule.js'
+import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
@@ -280,9 +280,17 @@ function withTimeout(promise, milliseconds, message) {
   ])
 }
 
+/**
+ * Lessons are stored in Manila time. Every date and time a family reads is
+ * converted into the timezone detected from their IP address first, so a
+ * lesson that starts late on a Manila Monday can correctly show as Sunday
+ * evening in Warsaw. There is deliberately no "show me Manila time" switch.
+ */
 function formatLessonDate(date, time, includeYear = false) {
   if (!date) return 'Date to be confirmed'
-  const value = new Date(`${date}T${time || '00:00'}`)
+  const localDate = viewerDateKey(date, time || '00:00')
+  const value = new Date(`${localDate}T12:00:00`)
+  if (Number.isNaN(value.getTime())) return 'Date to be confirmed'
   return value.toLocaleDateString('en', {
     weekday: 'short',
     day: 'numeric',
@@ -291,9 +299,23 @@ function formatLessonDate(date, time, includeYear = false) {
   })
 }
 
-function formatTime(time) {
+/** The day number on the family's own calendar, e.g. 22 not 23. */
+function lessonDayNumber(date, time = '00:00') {
+  const local = viewerDateKey(date, time)
+  const value = new Date(`${local}T12:00:00Z`)
+  return Number.isNaN(value.getTime()) ? '' : value.getUTCDate()
+}
+
+/** The month on the family's own calendar, e.g. "Sep". */
+function lessonMonthLabel(date, time = '00:00') {
+  const local = viewerDateKey(date, time)
+  const value = new Date(`${local}T12:00:00Z`)
+  return Number.isNaN(value.getTime()) ? '' : value.toLocaleDateString('en', { month: 'short', timeZone: 'UTC' })
+}
+
+function formatTime(time, date = '') {
   if (!time) return ''
-  return new Date(`2026-01-01T${time}`).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })
+  return formatViewerTime(time, date)
 }
 
 function StatusBadge({ status }) {
@@ -357,10 +379,12 @@ export function ScheduleCalendar({
   const scrollRef = useRef(null)
   const calendarRef = useRef(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [timezoneMode, setTimezoneMode] = useState(readTimezoneMode)
-  const viewerZone = visitorTimeZone()
-  // Lesson times are stored in Manila time; convert for display only.
-  const showLocalTimes = timezoneMode === 'local' && viewerNeedsConversion(viewerZone)
+  // Lesson times are stored in Manila time. The grid is drawn in the viewer's
+  // OWN timezone — detected from their IP address, with the device clock as a
+  // fallback — so every row label is a time they can act on without any
+  // conversion. There is no switch back to Manila time on purpose.
+  const [viewerZone, setViewerZone] = useState(visitorTimeZone)
+  const showLocalTimes = viewerNeedsConversion(viewerZone)
   const [nameMenu, setNameMenu] = useState(null)
   const [menuBusy, setMenuBusy] = useState(false)
   const [menuError, setMenuError] = useState('')
@@ -454,10 +478,11 @@ export function ScheduleCalendar({
     }
   }, [])
 
+  // The IP lookup finishes after the first paint, so redraw when it lands.
   useEffect(() => {
-    const syncMode = () => setTimezoneMode(readTimezoneMode())
-    window.addEventListener('tutorpro:timezone-change', syncMode)
-    return () => window.removeEventListener('tutorpro:timezone-change', syncMode)
+    const syncZone = () => setViewerZone(visitorTimeZone())
+    window.addEventListener(TIMEZONE_EVENT, syncZone)
+    return () => window.removeEventListener(TIMEZONE_EVENT, syncZone)
   }, [])
 
   useEffect(() => {
@@ -528,8 +553,7 @@ export function ScheduleCalendar({
     if (selectedStartKeys.has(`${dateKey}-${time}`)) return true
     const start = timeToMinutes(time)
     const count = Math.ceil(Number(duration) / 30)
-    const now = new Date()
-    if (new Date(`${dateKey}T${time}:00`) <= now) return false
+    if (lessonHasPassed(dateKey, time)) return false
     for (let index = 0; index < count; index += 1) {
       const slotTime = minutesToTime(start + (index * 30))
       if ((start + (index * 30)) >= 1440) return false
@@ -550,18 +574,15 @@ export function ScheduleCalendar({
         <strong>{rangeLabel}</strong>
         <button className="schedule-today" onClick={() => onWeekOffset(0)}>Today</button>
         <div className="schedule-view-tabs"><span className="active">Week</span><span>30 min slots</span></div>
-        {viewerNeedsConversion(viewerZone) && (
-          <div className="schedule-timezone-switch" role="group" aria-label="Choose which timezone lesson times are shown in">
-            <Globe2 size={14} />
-            <button type="button" className={timezoneMode === 'local' ? 'active' : ''} onClick={() => { saveTimezoneMode('local'); setTimezoneMode('local') }}>My time ({timezoneLabel(viewerZone)})</button>
-            <button type="button" className={timezoneMode === 'school' ? 'active' : ''} onClick={() => { saveTimezoneMode('school'); setTimezoneMode('school') }}>Manila (UTC+8)</button>
-          </div>
-        )}
+        <div className="schedule-timezone-note" title={`Lesson times are shown in your own timezone, detected from your internet connection (${viewerZone}). Our teaching base is Manila time.`}>
+          <Globe2 size={14} />
+          <span>Your time · <strong>{timezoneDescription(viewerZone)}</strong></span>
+        </div>
         <button type="button" className="schedule-fullscreen-button" onClick={toggleCalendarFullscreen} title={isFullscreen ? 'Exit full screen' : 'View calendar full screen'}>{isFullscreen ? <><Minimize2 size={14} /> Exit full screen</> : <><Maximize2 size={14} /> Full screen</>}</button>
       </div>
       <div className="schedule-scroll" ref={scrollRef}>
         <div className="schedule-days">
-          <div className="schedule-time-heading" title={showLocalTimes ? `Times shown in your local time (${timezoneCity(viewerZone)})` : 'Times shown in Manila school time'}>{showLocalTimes ? timezoneLabel(viewerZone) : 'UTC+8'}</div>
+          <div className="schedule-time-heading" title={showLocalTimes ? `Times shown in your local time (${viewerZone})` : 'Your timezone matches our teaching base in Manila'}>{timezoneLabel(viewerZone)}</div>
           {dates.map((date) => {
             const dateKey = formatDateKey(date)
             const current = dateKey === today()
@@ -569,18 +590,26 @@ export function ScheduleCalendar({
           })}
         </div>
         <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''} ${multiSelect ? 'schedule-body--multi' : ''}`}>
-          {HALF_HOUR_TIMES.map((time) => (
-            <div className="schedule-row" key={time}>
-              <div className={`schedule-time ${time.endsWith(':30') ? 'half' : ''}`}>{showLocalTimes ? toViewerTime(time, formatDateKey(dates[0]), viewerZone).time : time}</div>
-              {dates.map((date, dayIndex) => {
-                const dateKey = formatDateKey(date)
+          {HALF_HOUR_TIMES.map((viewerTime) => (
+            <div className="schedule-row" key={viewerTime}>
+              <div className={`schedule-time ${viewerTime.endsWith(':30') ? 'half' : ''}`}>{viewerTime}</div>
+              {dates.map((columnDate) => {
+                // Rows and columns are the VIEWER's clock and calendar. Each
+                // cell is mapped back to the Manila date and time the booking
+                // is actually stored under, so a lesson never lands in the
+                // wrong column for families whose day starts before ours.
+                const viewerDate = formatDateKey(columnDate)
+                const slot = showLocalTimes ? schoolSlotForViewerCell(viewerDate, viewerTime, viewerZone) : { date: viewerDate, time: viewerTime }
+                const dateKey = slot.date
+                const time = slot.time
+                const dayIndex = weekdayIndex(dateKey)
                 const slotKey = makeSlotKey(dayIndex, time)
                 const bookingCell = occupied.get(`${dateKey}-${time}`)
                 const isAvailable = available.has(slotKey)
                 const selectable = canSelect(dayIndex, dateKey, time)
                 const selectedOwner = selectedCellOwners.get(`${dateKey}-${time}`)
                 const isSelected = Boolean(selectedOwner)
-                const isPast = new Date(`${dateKey}T${time}:00`) <= new Date()
+                const isPast = lessonHasPassed(dateKey, time)
                 const student = bookingCell ? getAccountById(bookingCell.booking.studentId) : null
                 const bookedLearner = student?.children?.find((item) => item.id === bookingCell?.booking.learnerId) || student?.child
                 const feedbackAvailable = Boolean(onBookingFeedback && bookingCell && ['confirmed', 'ongoing', 'completed'].includes(bookingCell.booking.status))
@@ -604,8 +633,8 @@ export function ScheduleCalendar({
                   <button
                     type="button"
                     className={classes}
-                    key={`${dateKey}-${time}`}
-                    aria-label={`${date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${time}${bookingCell ? `, booked for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : isAvailable ? ', available' : ', unavailable'}`}
+                    key={`${viewerDate}-${viewerTime}`}
+                    aria-label={`${columnDate.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })} ${viewerTime} your time${bookingCell ? `, booked for ${bookedLearner?.name || bookingCell.booking.learnerName || 'student'}` : isAvailable ? ', available' : ', unavailable'}`}
                     aria-pressed={editable ? isAvailable : isSelected}
                     disabled={bookingCell ? !(onBookingOpen || onBookingCancel) : !editable && !selectable && !isSelected}
                     onPointerDown={(event) => { startPaint(event, slotKey, Boolean(bookingCell)); startBookingSelection(event, dateKey, time, selectable, selectedOwner) }}
@@ -659,7 +688,7 @@ export function ScheduleCalendar({
         return createPortal((
           <div className="schedule-name-menu" style={{ top: `${nameMenu.top}px`, left: `${nameMenu.left}px` }} role="dialog" aria-label={`Options for ${nameMenu.studentName}`}>
             <div className="schedule-name-menu__head">
-              <div><strong>{nameMenu.studentName}</strong><small>{formatLessonDate(menuBooking.date, menuBooking.time, true)} · {formatTime(menuBooking.time)} · {menuBooking.duration} min</small></div>
+              <div><strong>{nameMenu.studentName}</strong><small>{formatLessonDate(menuBooking.date, menuBooking.time, true)} · {formatTime(menuBooking.time, menuBooking.date)} · {menuBooking.duration} min</small></div>
               <button type="button" onClick={closeNameMenu} aria-label="Close options"><X size={15} /></button>
             </div>
             {menuError && <p className="schedule-name-menu__error" role="alert">{menuError}</p>}
@@ -958,9 +987,12 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
         marginBottom: '10px'
       } : undefined}
     >
+      {/* The big day/month badge follows the family's own calendar: a Manila
+          morning lesson is still the previous evening in New York, and the
+          badge used to disagree with the date printed beside it. */}
       <div className="lesson-card__date">
-        <strong>{new Date(`${booking.date}T00:00`).getDate()}</strong>
-        <span>{new Date(`${booking.date}T00:00`).toLocaleDateString('en', { month: 'short' })}</span>
+        <strong>{lessonDayNumber(booking.date, booking.time)}</strong>
+        <span>{lessonMonthLabel(booking.date, booking.time)}</span>
       </div>
       <div className="lesson-card__main">
         <div className="lesson-card__top" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
@@ -1004,11 +1036,12 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
                 boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
               }}
             >
-              {showTeacher ? '👨‍🏫 Teacher' : '👶 Student'}: {person}
+              {showTeacher ? <GraduationCap size={17} style={{ marginRight: '6px' }} /> : <UserRound size={17} style={{ marginRight: '6px' }} />}
+              {showTeacher ? 'Teacher' : 'Student'}: {person}
             </strong>
           )}
           <span style={{ fontSize: '1rem', color: 'var(--portal-muted)' }}>
-            {formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time" style={{ color: '#fff' }}>{formatTime(booking.time)}</strong>
+            {formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time, booking.date)}</strong>
           </span>
         </p>
         {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{CLASSROOM_ENABLED
@@ -1324,7 +1357,7 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
     <div className="portal-dialog-backdrop booking-slot-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="portal-dialog booking-slot-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-slot-title">
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close booking details"><X size={19} /></button>
-        <div className="booking-slot-dialog__heading"><span><CalendarCheck2 size={25} /></span><div><small>Booked calendar slot</small><h2 id="booking-slot-title">{learnerName}</h2><p>{formatLessonDate(current.date, current.time, true)} at <strong>{formatTime(current.time)}</strong> · {current.duration} minutes</p></div><StatusBadge status={current.status} /></div>
+        <div className="booking-slot-dialog__heading"><span><CalendarCheck2 size={25} /></span><div><small>Booked calendar slot</small><h2 id="booking-slot-title">{learnerName}</h2><p>{formatLessonDate(current.date, current.time, true)} at <strong>{formatTime(current.time, current.date)}</strong> · {current.duration} minutes</p></div><StatusBadge status={current.status} /></div>
 
         <div className="booking-slot-facts"><div><span>Student</span><strong>{learnerName}</strong></div><div><span>Teacher</span><strong>{teacher?.fullName || current.teacherName || 'Teacher'}</strong></div><div><span>Lesson focus</span><strong>{current.focus}</strong></div></div>
         {current.note && <div className="booking-parent-note"><MessageSquareText size={16} /><div><strong>Parent booking note</strong><span>{current.note}</span></div></div>}
@@ -1543,7 +1576,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
         <form className="booking-confirm-bar" onSubmit={submit}>
           <div className={selectedLessons.length ? 'selected' : ''}>
             <span className="portal-card__icon"><Clock3 size={21} /></span>
-            <div><small>{selectedLessons.length ? `${selectedLessons.length} lesson time${selectedLessons.length > 1 ? 's' : ''} selected` : 'Click or drag across available times'}</small><strong>{selectedLessons.length ? `${formatLessonDate(selectedLessons[0].date, selectedLessons[0].time, true)} at ${formatTime(selectedLessons[0].time)}${selectedLessons.length > 1 ? ` + ${selectedLessons.length - 1} more` : ''}` : 'No time selected yet'}</strong><em>{form.duration} min per lesson · select up to 12 times</em></div>
+            <div><small>{selectedLessons.length ? `${selectedLessons.length} lesson time${selectedLessons.length > 1 ? 's' : ''} selected` : 'Click or drag across available times'}</small><strong>{selectedLessons.length ? `${formatLessonDate(selectedLessons[0].date, selectedLessons[0].time, true)} at ${formatTime(selectedLessons[0].time, selectedLessons[0].date)}${selectedLessons.length > 1 ? ` + ${selectedLessons.length - 1} more` : ''}` : 'No time selected yet'}</strong><em>{form.duration} min per lesson · select up to 12 times</em></div>
           </div>
           <label><span>Note <i>applies to all selected lessons</i></span><input name="note" value={form.note} onChange={update} placeholder="Note for the teacher" /></label>
           <button className="portal-primary-button" type="submit" disabled={!selectedLessons.length}>{adminBooking ? `Book ${selectedLessons.length || ''} & confirm` : `Request ${selectedLessons.length || ''} lesson${selectedLessons.length === 1 ? '' : 's'}`} <ArrowRight size={17} /></button>
@@ -1843,7 +1876,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
         <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || booking.learnerName || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
         <div className="feedback-selected-student-card">
           <span><UserRound size={18} /></span>
-          <div><small>Selected student</small><strong>{learner?.name || booking.learnerName || 'Student'}</strong><em>{formatLessonDate(booking.date, booking.time, true)} at {formatTime(booking.time)} · {booking.focus}</em></div>
+          <div><small>Selected student</small><strong>{learner?.name || booking.learnerName || 'Student'}</strong><em>{formatLessonDate(booking.date, booking.time, true)} at {formatTime(booking.time, booking.date)} · {booking.focus}</em></div>
         </div>
         {error && <div className="portal-error" role="alert">{error}</div>}
 
@@ -4152,7 +4185,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
         .map((booking) => ({
           id: booking.id,
           booking,
-          time: booking.time || '--:--',
+          time: booking.time ? formatTime(booking.time, booking.date) : '--:--',
           student: booking.learnerName || booking.studentName || 'Student',
           status: booking.status || 'pending',
         }))
@@ -4178,7 +4211,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
         ? new Date(upcoming.when).toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'short' })
         : 'None',
       nextStudent: upcoming
-        ? `${upcoming.booking.time} · ${upcoming.booking.learnerName || upcoming.booking.studentName || 'Student'}`
+        ? `${formatTime(upcoming.booking.time, upcoming.booking.date)} · ${upcoming.booking.learnerName || upcoming.booking.studentName || 'Student'}`
         : 'No upcoming classes',
     }
   })()
@@ -4571,7 +4604,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               <div className="teacher-feedback-queue-list">
                 {feedbackNeededBookings.slice(0, 4).map((booking) => (
                   <article key={booking.id}>
-                    <div><strong>{booking.learnerName || 'Student'}</strong><span>{formatLessonDate(booking.date, booking.time)} · {formatTime(booking.time)} · {booking.focus}</span></div>
+                    <div><strong>{booking.learnerName || 'Student'}</strong><span>{formatLessonDate(booking.date, booking.time)} · {formatTime(booking.time, booking.date)} · {booking.focus}</span></div>
                     <StatusBadge status={booking.status} />
                     <button type="button" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={15} /> Write feedback</button>
                   </article>
@@ -6847,7 +6880,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       void notifyBookingParticipants(booking, 'confirmed')
       setManagedBooking(booking)
       setAdminReserveSlot(null)
-      setAdminReserveMessage(`Reserved ${formatLessonDate(booking.date, booking.time, true)} at ${formatTime(booking.time)} for ${bookingLearner.name}.`)
+      setAdminReserveMessage(`Reserved ${formatLessonDate(booking.date, booking.time, true)} at ${formatTime(booking.time, booking.date)} for ${bookingLearner.name}.`)
       refresh()
     } catch (reserveError) {
       setAdminReserveError(reserveError.message)
@@ -7127,7 +7160,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                   <label><span>Lesson focus</span><select value={adminReserveFocus} onChange={(event) => setAdminReserveFocus(event.target.value)}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
                   <label><span>Length</span><select value={adminReserveDuration} onChange={(event) => setAdminReserveDuration(event.target.value)}><option value="25">25 min</option><option value="50">50 min</option></select></label>
                   <label><span>Admin note</span><input value={adminReserveNote} onChange={(event) => setAdminReserveNote(event.target.value)} placeholder="Reserved by administrator" /></label>
-                  <div className="admin-reserve-panel__selected"><span>Selected slot</span><strong>{adminReserveSlot ? `${formatLessonDate(adminReserveSlot.date, adminReserveSlot.time, true)} at ${formatTime(adminReserveSlot.time)}` : 'Click an available slot below'}</strong></div>
+                  <div className="admin-reserve-panel__selected"><span>Selected slot</span><strong>{adminReserveSlot ? `${formatLessonDate(adminReserveSlot.date, adminReserveSlot.time, true)} at ${formatTime(adminReserveSlot.time, adminReserveSlot.date)}` : 'Click an available slot below'}</strong></div>
                   <button type="button" className="portal-primary-button" onClick={reserveAdminTeacherSlot} disabled={adminReserving || !adminReserveSlot || !bookingLearner || bookingLearner.incomplete}>{adminReserving ? 'Reserving…' : 'Reserve selected slot'} <CalendarCheck2 size={16} /></button>
                 </div>
                 {adminReserveError && <div className="portal-error" role="alert">{adminReserveError}</div>}

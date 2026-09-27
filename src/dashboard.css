@@ -9673,33 +9673,26 @@ a.feedback-resource-detail:hover strong {
   .announcement-banner > button { grid-column: 2; justify-self: end; }
 }
 
-/* Timezone switcher in the calendar toolbar */
-.schedule-timezone-switch {
+/* Timezone badge in the calendar toolbar.
+   Read-only on purpose: lesson times always follow the visitor's own
+   timezone (detected from their IP address), never Manila time. */
+.schedule-timezone-note {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-left: auto;
-  padding: 3px;
+  padding: 6px 11px;
   border: 1px solid #dce3ee;
   border-radius: 11px;
   background: #f8fafc;
-  color: #64748b;
-}
-.schedule-timezone-switch > svg { margin: 0 3px; color: #7048df; }
-.schedule-timezone-switch button {
-  border: 0;
-  border-radius: 8px;
-  padding: 6px 10px;
-  background: transparent;
   color: #52657e;
   font-size: 0.945rem;
-  font-weight: 750;
-  cursor: pointer;
+  font-weight: 650;
   white-space: nowrap;
 }
-.schedule-timezone-switch button:hover { background: #eef2f7; }
-.schedule-timezone-switch button.active { background: #7048df; color: #fff; }
-.schedule-timezone-switch + .schedule-fullscreen-button { margin-left: 8px; }
+.schedule-timezone-note > svg { color: #7048df; flex: none; }
+.schedule-timezone-note strong { color: #2f3d57; font-weight: 800; }
+.schedule-timezone-note + .schedule-fullscreen-button { margin-left: 8px; }
 
 /* Approximate local-currency hint beside USD prices */
 .price-local-hint {
@@ -9712,7 +9705,10 @@ a.feedback-resource-detail:hover strong {
 }
 
 @media (max-width: 900px) {
-  .schedule-timezone-switch { display: none; }
+  /* Still shown on phones — which timezone the grid is in is the single most
+     important label on it — just tightened so it does not wrap the toolbar. */
+  .schedule-timezone-note { margin-left: 0; padding: 4px 8px; font-size: 0.86rem; }
+  .schedule-timezone-note span { display: inline-flex; gap: 4px; }
 }
 
 /* ---------------- Lesson recording playback on booking cards ---------------- */

@@ -12,12 +12,14 @@ import {
   normalizeCoursewareTemplate,
   saveCoursewareTemplate,
 } from './courseware.js'
+import { formatViewerTime, viewerDateKey } from './timezone.js'
 
 function formatLessonDate(booking) {
   if (!booking?.date || !booking?.time) return 'No schedule'
   try {
-    const date = new Date(`${booking.date}T${booking.time}:00`)
-    return date.toLocaleDateString('en', { month: 'short', day: 'numeric', weekday: 'short' }) + ` · ${date.toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}`
+    // Stored in Manila time, read in the viewer's own timezone.
+    const date = new Date(`${viewerDateKey(booking.date, booking.time)}T12:00:00Z`)
+    return date.toLocaleDateString('en', { month: 'short', day: 'numeric', weekday: 'short', timeZone: 'UTC' }) + ` · ${formatViewerTime(booking.time, booking.date)}`
   } catch {
     return `${booking.date} · ${booking.time}`
   }
