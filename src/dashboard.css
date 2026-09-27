@@ -11861,3 +11861,105 @@ a.feedback-resource-detail:hover strong {
   .invite-method { display: grid; grid-template-columns: 1fr; width: 100%; border-radius: 16px; }
   .invite-method button { width: 100%; }
 }
+
+/* ── Billing a family for class sessions ──────────────────────────────
+   Admin → Payments raises the bill; the parent sees it at the top of
+   their checkout as an amount due. Deliberately styled like money, not
+   like another form field, because it is the one thing on the screen the
+   parent has to act on. */
+.admin-bill-preview {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: rgba(112, 72, 223, 0.07);
+  border: 1px solid rgba(112, 72, 223, 0.22);
+  color: #3b2a66;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.admin-bill-preview strong { color: #2f1c5c; font-weight: 800; }
+
+.admin-bill-card .portal-secondary-button { min-height: 44px; }
+
+.student-bill-panel {
+  border: 1px solid rgba(112, 72, 223, 0.32);
+  background: linear-gradient(140deg, rgba(112, 72, 223, 0.1), rgba(112, 72, 223, 0.03));
+  color: #2f1c5c;
+}
+
+.student-bill-panel .student-payment-pro__panel-heading h3,
+.student-bill-panel .student-payment-pro__panel-heading small { color: #2f1c5c; }
+
+.student-bill-panel__body { display: grid; gap: 8px; color: #3b2a66; }
+
+.student-bill-panel__amount {
+  font-size: 2.1rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #2f1c5c;
+}
+
+.student-bill-panel__body p { margin: 0; line-height: 1.55; }
+.student-bill-panel__body b { color: #2f1c5c; font-weight: 800; }
+.student-bill-panel__body small { color: #6b5f86; }
+
+.student-bill-panel__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  background: #fff;
+  border: 1px solid rgba(112, 72, 223, 0.18);
+  color: #3b2a66;
+}
+
+.student-bill-panel__note svg { flex: none; margin-top: 2px; color: #7048df; }
+
+.student-bill-panel__choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.student-bill-panel__choice button {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(112, 72, 223, 0.32);
+  background: #fff;
+  color: #4a3a7a;
+  font-family: inherit;
+  font-weight: 750;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.student-bill-panel__choice button:hover { border-color: #7048df; }
+
+/* The chosen option must be unmistakable: a parent who cannot tell which
+   one is selected may pay for the wrong thing. */
+.student-bill-panel__choice button.active {
+  background: #7048df;
+  border-color: #7048df;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(112, 72, 223, 0.32);
+}
+
+.student-bill-panel--paid {
+  border-color: rgba(22, 163, 74, 0.4);
+  background: rgba(22, 163, 74, 0.09);
+  color: #14532d;
+}
+
+.student-bill-panel--paid strong { display: inline-flex; align-items: center; gap: 7px; font-size: 1.05rem; color: #166534; }
+.student-bill-panel--paid p { color: #166534; }
+
+@media (max-width: 640px) {
+  .student-bill-panel__amount { font-size: 1.8rem; }
+  .student-bill-panel__choice button { flex: 1 1 100%; }
+}

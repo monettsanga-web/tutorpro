@@ -2,6 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 // Shared with the browser so the price a parent SEES and the price we CHARGE
 // are produced by identical code. See src/discounts.js.
 import { applyDiscount, normalizeDiscountPercent, resolveStudentPrice } from '../src/discounts.js'
+// Bills raised by an administrator. Same reason as above: one copy of the
+// arithmetic for the browser and the card.
+import { activePaymentRequest, markPaymentRequestPaid } from '../src/paymentRequests.js'
 
 const DEFAULT_SUPABASE_URL = 'https://losmkvvwzijipqrlelyt.supabase.co'
 const PAYPAL_API_BASE = process.env.PAYPAL_ENV === 'sandbox'
@@ -12,6 +15,8 @@ export const WEEKLY_SESSION_OPTIONS = [1, 2, 3]
 export const MONTHLY_PACKAGE_OPTIONS = [3, 4, 5, 6, 7]
 export const MONTHLY_BILLING_WEEKS = 4
 export const MAX_CUSTOM_WEEKLY_SESSIONS = 12
+/** An admin bill is a one-off block of lessons, so it is not capped at 12. */
+export const MAX_INVOICE_SESSIONS = 200
 // Published rates. 1-3 lessons/week pay the standard rate; 4 or more unlock
 // the package rate. Mirrored EXACTLY in src/Dashboards.jsx — scripts/test-pricing.mjs
 // fails the build if the two ever drift, because a mismatch would show a
@@ -22,7 +27,16 @@ export const PACKAGE_MIN_SESSIONS = 4
 /** A 50-minute lesson is exactly two 25-minute blocks, so it costs double. */
 export const LONG_LESSON_MULTIPLIER = 2
 export const weeklySessionRate = (sessions) => Number(sessions) < PACKAGE_MIN_SESSIONS ? SESSION_RATE_STANDARD : SESSION_RATE_PACKAGE
-export const parseBillingPlan = (value = 'weekly') => value === 'monthly' ? 'monthly' : 'weekly'
+/**
+ * 'weekly'  — pay for a week of lessons
+ * 'monthly' — four weeks up front
+ * 'invoice' — a specific bill an administrator raised for this family
+ */
+export const parseBillingPlan = (value = 'weekly') => {
+  if (value === 'monthly') return 'monthly'
+  if (value === 'invoice') return 'invoice'
+  return 'weekly'
+}
 export const planSessionRate = (billingPlan, sessions) => weeklySessionRate(sessions)
 export const planCreditCount = (billingPlan, sessions) => Number(sessions) * (parseBillingPlan(billingPlan) === 'monthly' ? MONTHLY_BILLING_WEEKS : 1)
 export const planTotal = (billingPlan, sessions) => planCreditCount(billingPlan, sessions) * planSessionRate(billingPlan, sessions)
@@ -43,8 +57,14 @@ export function sendJson(res, status, payload) {
 
 export function parseSessions(value, billingPlan = 'weekly') {
   const sessions = Number(value)
-  if (!Number.isInteger(sessions) || sessions < 1 || sessions > MAX_CUSTOM_WEEKLY_SESSIONS) {
-    throw new Error(`Choose between 1 and ${MAX_CUSTOM_WEEKLY_SESSIONS} weekly sessions.`)
+  // An admin bill covers a block of lessons rather than a weekly rhythm, so
+  // it has its own, larger ceiling.
+  const isInvoice = parseBillingPlan(billingPlan) === 'invoice'
+  const max = isInvoice ? MAX_INVOICE_SESSIONS : MAX_CUSTOM_WEEKLY_SESSIONS
+  if (!Number.isInteger(sessions) || sessions < 1 || sessions > max) {
+    throw new Error(isInvoice
+      ? `A bill must cover between 1 and ${MAX_INVOICE_SESSIONS} class sessions.`
+      : `Choose between 1 and ${MAX_CUSTOM_WEEKLY_SESSIONS} weekly sessions.`)
   }
   return sessions
 }
@@ -175,6 +195,21 @@ export async function studentPriceFor(supabase, accountId, base) {
   }
 }
 
+/**
+ * The bill an administrator raised for this family, read from their own
+ * profile. Never from the request body: a parent editing the page must not
+ * be able to name their own price. Returns null when nothing is owed.
+ */
+export async function openPaymentRequestFor(supabase, accountId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('profile_data')
+    .eq('id', accountId)
+    .single()
+  if (error || !data) throw new Error('Your account could not be loaded. Please refresh and try again.')
+  return activePaymentRequest(data.profile_data || {})
+}
+
 export function extractOrderDetails(order) {
   const unit = order?.purchase_units?.[0]
   const capture = unit?.payments?.captures?.[0]
@@ -183,6 +218,9 @@ export function extractOrderDetails(order) {
   // and the credits refused. The agreed figure recorded on the order wins;
   // the percentage is the fallback for orders created before fixed rates
   // existed, and plain plan pricing for the ones before discounts.
+  // An admin bill has no formula to fall back on — the agreed figure IS the
+  // price — so a missing one is refused rather than guessed at.
+  if (billingPlan === 'invoice' && !agreedTotal) throw new Error('This billed payment is missing its agreed total.')
   const expectedAmount = (agreedTotal || applyDiscount(planTotal(billingPlan, sessions), discountPercent)).toFixed(2)
   const capturedAmount = capture?.amount?.value || unit?.amount?.value || '0.00'
   const currency = capture?.amount?.currency_code || unit?.amount?.currency_code || 'USD'
@@ -247,6 +285,7 @@ export async function awardPaymentCredits(supabase, details) {
     payerName: details.payerName,
     billingPlan: details.billingPlan,
     weeklySessions: details.sessions,
+    billedSessions: details.billingPlan === 'invoice' ? details.sessions : 0,
     credits: details.credits,
     sessionRate: details.sessionRate,
     amount: details.amount,
@@ -299,13 +338,24 @@ export async function awardPaymentCredits(supabase, details) {
     }
   }
 
+  // A one-off admin bill says nothing about how often this family normally
+  // studies, so it must not overwrite their weekly plan preferences. It does
+  // close the bill, so the "amount due" card disappears the moment it is paid.
+  const isInvoice = details.billingPlan === 'invoice'
+  const settledRequest = isInvoice
+    ? markPaymentRequestPaid(profileData.paymentRequest, { orderId: details.orderId, amount: details.amount })
+    : null
+  const planPreferences = isInvoice ? {} : {
+    preferredWeeklySessions: details.sessions,
+    preferredBillingPlan: details.billingPlan,
+  }
   const nextData = alreadyCredited
-    ? { ...profileData, latestPayment: paymentRecord }
+    ? { ...profileData, latestPayment: paymentRecord, ...(settledRequest ? { paymentRequest: settledRequest } : {}) }
     : {
         ...profileData,
         paidLessonsBalance: currentBalance + details.credits + referralBonusCredits,
-        preferredWeeklySessions: details.sessions,
-        preferredBillingPlan: details.billingPlan,
+        ...planPreferences,
+        ...(settledRequest ? { paymentRequest: settledRequest } : {}),
         latestPayment: paymentRecord,
         referralRewardApplied: Boolean(profileData.referralRewardApplied || referralReward),
         referralFirstPurchaseRewardedAt: referralReward ? new Date().toISOString() : profileData.referralFirstPurchaseRewardedAt,
@@ -335,6 +385,7 @@ export async function awardPaymentCredits(supabase, details) {
     paidLessonsBalance: nextData.paidLessonsBalance ?? currentBalance,
     preferredWeeklySessions: nextData.preferredWeeklySessions,
     preferredBillingPlan: nextData.preferredBillingPlan,
+    paymentRequest: nextData.paymentRequest || null,
     creditsAdded: alreadyCredited ? 0 : details.credits + referralBonusCredits,
     referralReward,
     latestPayment: paymentRecord,

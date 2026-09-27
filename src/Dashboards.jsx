@@ -147,6 +147,7 @@ import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgrad
 import { describePaymentError } from './paymentErrors.js'
 import { INVITE_CODE_MINUTES, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
+import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
 
 const StudentGames = lazy(() => import('./StudentGames.jsx'))
@@ -2566,6 +2567,77 @@ function AdminPaymentsPanel() {
     }
   }
 
+  /* --- bills raised by the administrator ----------------------------
+     "This family owes $X for N class sessions." Saved onto the student's
+     own cloud profile, because the PayPal function reads the amount from
+     there when it builds the order. A bill that lived only in this browser
+     would show the parent a figure nobody could actually charge. */
+  const [billForm, setBillForm] = useState({ studentId: '', sessions: '4', amount: '', note: '' })
+  const [billBusy, setBillBusy] = useState(false)
+  const billStudent = students.find((student) => student.id === billForm.studentId) || students[0] || null
+  // What those sessions cost THIS family, through the same resolver used at
+  // checkout, so a discounted family is billed at their own rate.
+  const billSuggestion = suggestedRequestAmount(billForm.sessions, billStudent || {}, {
+    standard: SESSION_RATE_STANDARD,
+    package: SESSION_RATE_PACKAGE,
+    packageMin: PACKAGE_MIN_SESSIONS,
+  })
+  // An empty amount field means "use the calculated total". The moment the
+  // admin types their own figure, that figure wins.
+  const billAmountEdited = billForm.amount !== ''
+  const billAmount = billAmountEdited ? Number(billForm.amount) : billSuggestion.amount
+  const billedStudents = students.filter((student) => activePaymentRequest(student))
+
+  const updateBillForm = (event) => {
+    const { name, value } = event.target
+    setBillForm((current) => ({ ...current, [name]: value }))
+    setError(''); setMessage('')
+  }
+
+  const sendBill = async (event) => {
+    event.preventDefault()
+    setError(''); setMessage('')
+    if (!billStudent) { setError('Select a student account first.'); return }
+    const check = validatePaymentRequestInput({ sessions: billForm.sessions, amount: billAmount })
+    if (!check.valid) { setError(check.error); return }
+    const request = buildPaymentRequest({
+      sessions: check.sessions,
+      amount: check.amount,
+      rate: check.amount / check.sessions,
+      note: billForm.note.trim(),
+      createdBy: 'admin',
+    })
+    if (!request) { setError('That bill could not be created. Check the session count and amount.'); return }
+    setBillBusy(true)
+    try {
+      const updated = updateAccount(billStudent.id, { paymentRequest: request })
+      // Without this the server never sees the bill and refuses the payment.
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      setMessage(`${displayName(billStudent)} has been billed $${check.amount.toFixed(2)} for ${check.sessions} class session${check.sessions === 1 ? '' : 's'}. It is on their dashboard now, ready to pay.`)
+      setBillForm((current) => ({ ...current, amount: '', note: '' }))
+      setVersion((value) => value + 1)
+    } catch (billError) {
+      setError(billError.message)
+    } finally {
+      setBillBusy(false)
+    }
+  }
+
+  const cancelBill = async (student) => {
+    setError(''); setMessage('')
+    setBillBusy(true)
+    try {
+      const updated = updateAccount(student.id, { paymentRequest: cancelPaymentRequest(student.paymentRequest) })
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      setMessage(`The bill for ${displayName(student)} has been withdrawn. Nothing was charged.`)
+      setVersion((value) => value + 1)
+    } catch (cancelError) {
+      setError(cancelError.message)
+    } finally {
+      setBillBusy(false)
+    }
+  }
+
   const removeDiscount = async (student) => {
     setError(''); setMessage('')
     setDiscountBusy(true)
@@ -2786,6 +2858,98 @@ function AdminPaymentsPanel() {
         <p className="admin-discount-note">
           The most you can take off is {MAX_DISCOUNT_PERCENT}%, because PayPal refuses a $0.00 payment. To give a lesson
           free of charge, add credits directly using the form below instead — that needs no card at all.
+        </p>
+      </section>
+
+      {/* ------------------------------------------------------------------
+          Bill a family for a block of class sessions.
+
+          Type the number of sessions; the total is worked out at THAT
+          family's own rate and can be overridden. It lands on their
+          dashboard as an amount due with a pay button, and the PayPal
+          function charges exactly this figure — read from their profile,
+          not from anything the parent's browser sends.
+          ---------------------------------------------------------------- */}
+      <section className="portal-card admin-bill-card">
+        <div className="portal-card__heading portal-card__heading--small">
+          <div>
+            <span className="portal-kicker">Bill a family</span>
+            <h2>Charge for a set number of class sessions</h2>
+            <p>Type how many sessions to bill. The total is calculated at this family&rsquo;s own price, and you can change it. It appears on the parent&rsquo;s dashboard straight away as an amount due, with a pay button.</p>
+          </div>
+        </div>
+
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        {message && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Done</strong><span>{message}</span></div></div>}
+
+        <form className="admin-manual-payment-form" onSubmit={sendBill}>
+          <label><span>Student account</span>
+            <select name="studentId" value={billStudent?.id || ''} onChange={updateBillForm}>
+              {students.map((student) => <option key={student.id} value={student.id}>{displayName(student)} · {student.loginId || student.email || 'no login'}</option>)}
+            </select>
+          </label>
+          <label><span>Class sessions</span>
+            <input name="sessions" type="number" min="1" max={MAX_REQUEST_SESSIONS} value={billForm.sessions} onChange={updateBillForm} />
+          </label>
+          <label><span>Total to pay <small>(USD)</small></span>
+            <input
+              name="amount"
+              type="number"
+              min="1"
+              step="0.01"
+              value={billAmountEdited ? billForm.amount : (billSuggestion.amount ? billSuggestion.amount.toFixed(2) : '')}
+              onChange={updateBillForm}
+              placeholder="0.00"
+            />
+          </label>
+          <label className="admin-manual-payment-form__wide"><span>Note for the parent <small>(optional, they can see this)</small></span>
+            <input name="note" value={billForm.note} onChange={updateBillForm} placeholder="e.g. October block booking, 12 lessons" maxLength="160" />
+          </label>
+          <button className="portal-primary-button" type="submit" disabled={billBusy || !students.length}>
+            {billBusy ? 'Sending…' : 'Send bill to parent'} <Coins size={16} />
+          </button>
+          {billAmountEdited && (
+            <button type="button" className="portal-secondary-button" onClick={() => setBillForm((current) => ({ ...current, amount: '' }))}>
+              Use the calculated total
+            </button>
+          )}
+        </form>
+
+        {billStudent && billSuggestion.sessions > 0 && (
+          <p className="admin-bill-preview">
+            {billSuggestion.sessions} session{billSuggestion.sessions === 1 ? '' : 's'} at <strong>${billSuggestion.rate.toFixed(2)}</strong> each
+            {billSuggestion.mode !== 'standard' ? ' (this family\u2019s agreed rate)' : ' (standard rate)'} = <strong>${billSuggestion.amount.toFixed(2)}</strong>.
+            {billAmountEdited && Number.isFinite(billAmount) && billAmount > 0 && Math.abs(billAmount - billSuggestion.amount) >= 0.01 && (
+              <> You are charging <strong>${Number(billAmount).toFixed(2)}</strong> instead, which is ${Math.abs(billAmount - billSuggestion.amount).toFixed(2)} {billAmount > billSuggestion.amount ? 'more' : 'less'}.</>
+            )}
+            {' '}They receive <strong>{billSuggestion.sessions} booking credit{billSuggestion.sessions === 1 ? '' : 's'}</strong> once it is paid.
+          </p>
+        )}
+
+        <div className="admin-discount-list">
+          <h3>Bills waiting to be paid</h3>
+          {billedStudents.length ? (
+            <ul>
+              {billedStudents.map((student) => (
+                <li key={student.id}>
+                  <div>
+                    <strong>{displayName(student)}</strong>
+                    <small>{describePaymentRequest(student.paymentRequest)}</small>
+                  </div>
+                  <button type="button" onClick={() => cancelBill(student)} disabled={billBusy}>
+                    <Trash2 size={15} /> Cancel bill
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="admin-discount-empty">No family has an unpaid bill right now.</p>
+          )}
+        </div>
+
+        <p className="admin-discount-note">
+          Paying a bill adds one booking credit per session. Nothing is charged until the parent presses pay, and you can
+          cancel a bill at any time before that. To give lessons free of charge, add credits directly below instead.
         </p>
       </section>
 
@@ -3094,6 +3258,18 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const koreaRate = koreaRateForDuration(koreaDuration)
   const koreaTotal = koreaSessionTotal(weeklySessions, billingPlan, koreaDuration)
   const currentCredits = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
+  /* --- a bill raised by the school ----------------------------------
+     An administrator can say "pay for 12 class sessions, $84". It lives on
+     this family's cloud profile; the server reads the amount from there, so
+     what is shown here and what the card is charged cannot disagree. When a
+     bill is waiting, paying it is the default — choosing a package by hand
+     is still one click away. */
+  const openBill = activePaymentRequest(account)
+  const settledBill = settledPaymentRequest(account)
+  const [billChoice, setBillChoice] = useState('bill')
+  // Derived, not stored: the moment the bill is paid it disappears from the
+  // profile and this falls back to the normal package checkout on its own.
+  const payingBill = Boolean(openBill) && billChoice === 'bill'
   // Display only. The server re-reads this from the student's cloud profile
   // when it builds the order, so editing the page changes nothing about the
   // amount actually charged.
@@ -3115,7 +3291,10 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const paypalClientId = configuredPayPalClientId || 'sb'
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
   const isPayPalTestMode = !configuredPayPalClientId || paypalClientId === 'sb' || import.meta.env.VITE_PAYPAL_ENV === 'sandbox'
-  const selectedMethodName = paymentMethodLabel[paymentMethod] || 'Selected gateway'
+  // A bill is a USD figure agreed with the school, so the China QR and Korea
+  // won price lists do not apply to it: PayPal/card is the only route.
+  const effectiveMethod = payingBill ? 'paypal' : paymentMethod
+  const selectedMethodName = paymentMethodLabel[effectiveMethod] || 'Selected gateway'
   // Raw gateway strings are never rendered: they are translated into an
   // explanation plus the right next step. See src/paymentErrors.js.
   const paymentFailure = gatewayError ? describePaymentError(gatewayError) : null
@@ -3178,7 +3357,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
 
   useEffect(() => {
     setGatewayReady(false)
-    if (paymentMethod !== 'paypal') return undefined
+    if (effectiveMethod !== 'paypal') return undefined
     let cancelled = false
     const scriptId = 'paypal-weekly-plan-sdk'
     const renderPayPalButtons = () => {
@@ -3196,7 +3375,9 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
           label: 'paypal',
         },
         createOrder() {
-          return paypalApiRequest('/api/paypal/create-order', { accountId: account.id, billingPlan, weeklySessions })
+          // 'invoice' tells the server to read the agreed bill from this
+          // family's profile rather than price a weekly plan.
+          return paypalApiRequest('/api/paypal/create-order', { accountId: account.id, billingPlan: payingBill ? 'invoice' : billingPlan, weeklySessions })
             .then((payload) => payload.orderId)
             .catch((error) => {
               setGatewayError(error.message)
@@ -3210,10 +3391,15 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
                 paidLessonsBalance: payload.paidLessonsBalance,
                 preferredWeeklySessions: payload.preferredWeeklySessions || weeklySessions,
                 preferredBillingPlan: payload.preferredBillingPlan || billingPlan,
+                // Carries the now-settled bill back, so the amount due
+                // disappears from this screen immediately rather than after
+                // the next cloud refresh.
+                ...(payload.paymentRequest ? { paymentRequest: payload.paymentRequest } : {}),
                 latestPayment: payload.latestPayment,
               })
               onPaymentComplete(updated)
-              const addedText = payload.alreadyCredited ? 'This payment was already credited.' : `${payload.creditsAdded || creditCount} booking credit${(payload.creditsAdded || creditCount) > 1 ? 's' : ''} added.`
+              const expectedCredits = payingBill ? (openBill?.sessions || 0) : creditCount
+              const addedText = payload.alreadyCredited ? 'This payment was already credited.' : `${payload.creditsAdded || expectedCredits} booking credit${(payload.creditsAdded || expectedCredits) > 1 ? 's' : ''} added.`
               const message = `Server verified PayPal payment. ${addedText} New balance: ${payload.paidLessonsBalance}.`
               setLastPaymentMessage(message)
               window.alert(`🎉 ${message}`)
@@ -3271,7 +3457,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       const container = document.getElementById(paypalContainerId)
       if (container) container.innerHTML = ''
     }
-  }, [account.id, billingPlan, checkoutAttempt, creditCount, onPaymentComplete, paymentMethod, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
+  }, [account.id, billingPlan, checkoutAttempt, creditCount, effectiveMethod, onPaymentComplete, openBill?.sessions, payingBill, paypalApiRequest, paypalClientId, paypalContainerId, paypalCurrency, weeklySessions])
 
   const methodCards = [
     { id: 'paypal', title: isPayPalTestMode ? 'PayPal Sandbox' : 'PayPal / Card Checkout', text: isPayPalTestMode ? 'Sandbox checkout is active until your live Client ID is configured.' : 'Live PayPal and debit/credit card checkout is active.', enabled: true },
@@ -3284,9 +3470,11 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       <div className="student-payment-pro__glow" aria-hidden="true" />
       <div className="student-payment-pro__header">
         <div className="student-payment-pro__intro">
-          <span className="portal-kicker">Secure package checkout</span>
-          <h2 id="student-payment-title">Choose your lesson package</h2>
-          <p>Choose flexible weekly credits or the monthly package from our pricing plan, with server-verified payments before scheduling unlocks.</p>
+          <span className="portal-kicker">{payingBill ? 'Payment requested by TutorPro' : 'Secure package checkout'}</span>
+          <h2 id="student-payment-title">{payingBill ? 'You have an amount to pay' : 'Choose your lesson package'}</h2>
+          <p>{payingBill
+            ? `TutorPro has prepared a payment for ${openBill.sessions} class session${openBill.sessions === 1 ? '' : 's'}. Pay below and the credits are added to your account automatically.`
+            : 'Choose flexible weekly credits or the monthly package from our pricing plan, with server-verified payments before scheduling unlocks.'}</p>
           <div className="student-payment-pro__trust-row">
             <span><ShieldCheck size={14} /> Server verified</span>
             <span><Clock3 size={14} /> 25-minute sessions</span>
@@ -3294,14 +3482,54 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
           </div>
         </div>
         <div className="student-payment-pro__amount-card">
-          <small style={{ color: 'rgba(255, 255, 255, 0.82)' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : paymentMethod === 'koreaKrw' && koreaPricingAllowed ? '결제 금액 · Korea amount due' : 'Amount due today'}</small>
-          <strong style={{ color: '#ffffff' }}>{paymentMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : paymentMethod === 'koreaKrw' && koreaPricingAllowed ? formatKrw(koreaTotal) : formatUsd(weeklyTotal)}</strong>
-          <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'} · {creditCount} booking credit{creditCount > 1 ? 's' : ''}</span>
+          <small style={{ color: 'rgba(255, 255, 255, 0.82)' }}>{payingBill ? 'Amount due' : effectiveMethod === 'chinaQr' && chinaQrAllowed ? 'China QR amount due' : effectiveMethod === 'koreaKrw' && koreaPricingAllowed ? '결제 금액 · Korea amount due' : 'Amount due today'}</small>
+          <strong style={{ color: '#ffffff' }}>{payingBill ? formatUsd(openBill.amount) : effectiveMethod === 'chinaQr' && chinaQrAllowed ? formatRmb(chinaTotal) : effectiveMethod === 'koreaKrw' && koreaPricingAllowed ? formatKrw(koreaTotal) : formatUsd(weeklyTotal)}</strong>
+          <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{payingBill ? `${openBill.sessions} class session${openBill.sessions === 1 ? '' : 's'} · ${openBill.sessions} booking credit${openBill.sessions === 1 ? '' : 's'}` : `${billingPlan === 'monthly' ? 'Monthly package' : 'Weekly plan'} · ${creditCount} booking credit${creditCount > 1 ? 's' : ''}`}</span>
         </div>
       </div>
 
       <div className="student-payment-pro__layout">
         <div className="student-payment-pro__planner">
+          {/* An amount the school has asked this family to pay. Shown first
+              and selected by default, because a parent who has been sent a
+              bill should not have to reconstruct it from a package picker. */}
+          {openBill && (
+            <div className="student-payment-pro__panel student-bill-panel">
+              <div className="student-payment-pro__panel-heading">
+                <div>
+                  <small>From TutorPro</small>
+                  <h3>Amount due</h3>
+                </div>
+                <span>{openBill.sessions} session{openBill.sessions === 1 ? '' : 's'}</span>
+              </div>
+              <div className="student-bill-panel__body">
+                <strong className="student-bill-panel__amount">{formatUsd(openBill.amount)}</strong>
+                <p>
+                  <b>{openBill.sessions} class session{openBill.sessions === 1 ? '' : 's'}</b> at {formatUsd(openBill.rate)} each.
+                  Paying adds <b>{openBill.sessions} booking credit{openBill.sessions === 1 ? '' : 's'}</b> to your account.
+                </p>
+                {openBill.note && <p className="student-bill-panel__note"><MessageSquareText size={14} /> {openBill.note}</p>}
+                {openBill.createdAt && <small>Requested {new Date(openBill.createdAt).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</small>}
+              </div>
+              <div className="student-bill-panel__choice" role="group" aria-label="What would you like to pay for">
+                <button type="button" className={payingBill ? 'active' : ''} onClick={() => { setBillChoice('bill'); setGatewayError(''); setLastPaymentMessage('') }}>
+                  Pay this amount
+                </button>
+                <button type="button" className={payingBill ? '' : 'active'} onClick={() => { setBillChoice('package'); setGatewayError(''); setLastPaymentMessage('') }}>
+                  Choose a package myself
+                </button>
+              </div>
+            </div>
+          )}
+          {settledBill && !openBill && (
+            <div className="student-payment-pro__panel student-bill-panel student-bill-panel--paid">
+              <div className="student-bill-panel__body">
+                <strong><CheckCircle2 size={17} /> Paid — thank you</strong>
+                <p>{settledBill.sessions} class session{settledBill.sessions === 1 ? '' : 's'} · {formatUsd(settledBill.amount)}{settledBill.paidAt ? ` on ${new Date(settledBill.paidAt).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. The credits are on your account.</p>
+              </div>
+            </div>
+          )}
+          {!payingBill && (<>
           <div className="student-payment-pro__panel">
             <div className="student-payment-pro__panel-heading">
               <div>
@@ -3447,10 +3675,29 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               ))}
             </div>
           </div>
+          </>)}
+
+          {payingBill && (
+            <div className="student-payment-pro__panel student-payment-pro__summary-panel">
+              <div className="student-payment-pro__panel-heading"><div><small>Summary</small><h3>What you get</h3></div></div>
+              <div className="student-payment-pro__summary-list">
+                <div><span>Current booking credits</span><strong>{currentCredits}</strong></div>
+                <div><span>Credits after this payment</span><strong>{currentCredits + openBill.sessions}</strong></div>
+                <div><span>Price per session</span><strong>{formatUsd(openBill.rate)}</strong></div>
+                <div className="student-payment-pro__summary-total">
+                  <span>Total to pay</span>
+                  <strong>
+                    {formatUsd(openBill.amount)}
+                    {localPriceHint(openBill.amount, account.registrationCountry) && <em className="price-local-hint">{localPriceHint(openBill.amount, account.registrationCountry)}</em>}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="student-payment-pro__checkout">
-          {paymentMethod === 'paypal' ? (
+          {effectiveMethod === 'paypal' ? (
             <div className="student-payment-pro__checkout-card student-payment-pro__paypal-card">
               <div className="student-payment-pro__checkout-heading">
                 <div>
