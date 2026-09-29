@@ -80,6 +80,7 @@ import {
   updateLocalAccount,
   updateStudentProfile,
   updateTeacherProfile,
+  waitForCloudProfileSync,
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { downloadBookingCalendar } from './bookingCalendar.js'
@@ -6772,6 +6773,17 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminReserveMessage, setAdminReserveMessage] = useState('')
   const [adminReserveError, setAdminReserveError] = useState('')
   const [adminReserving, setAdminReserving] = useState(false)
+  /* --- opening time slots on a teacher's behalf ---------------------
+     Teachers set their own availability, but an administrator is often the
+     one who knows a teacher is free — agreed over a call, or while covering
+     for someone. The draft is kept as { teacherId, slots } rather than a
+     bare array so switching teacher falls back to that teacher's own saved
+     slots without an effect resetting state. */
+  const [availabilityMode, setAvailabilityMode] = useState(false)
+  const [availabilityDraft, setAvailabilityDraft] = useState(null)
+  const [availabilitySaving, setAvailabilitySaving] = useState(false)
+  const [availabilityMessage, setAvailabilityMessage] = useState('')
+  const [availabilityError, setAvailabilityError] = useState('')
 
   const teachers = getAccounts('teacher')
   // Added before logins were written to the shared database, so they exist
@@ -6812,6 +6824,70 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const bookingStudent = bookingProfile?.account || null
   const bookingLearner = bookingProfile?.learner || null
   const selectedCalendarTeacher = teachers.find((teacher) => teacher.id === selectedCalendarTeacherId) || teachers[0] || null
+  const savedTeacherSlots = selectedCalendarTeacher?.teacher?.availabilitySlots || []
+  // A draft belonging to another teacher must never leak onto this one.
+  const draftBelongsHere = Boolean(selectedCalendarTeacher && availabilityDraft?.teacherId === selectedCalendarTeacher.id)
+  const adminAvailabilitySlots = draftBelongsHere ? availabilityDraft.slots : savedTeacherSlots
+  const availabilityDirty = draftBelongsHere
+    && (adminAvailabilitySlots.length !== savedTeacherSlots.length
+      || [...adminAvailabilitySlots].sort().join('|') !== [...savedTeacherSlots].sort().join('|'))
+
+  const paintTeacherAvailability = (slotKey, shouldAdd) => {
+    if (!selectedCalendarTeacher) return
+    setAvailabilityDraft((current) => {
+      const base = current?.teacherId === selectedCalendarTeacher.id ? current.slots : (selectedCalendarTeacher.teacher?.availabilitySlots || [])
+      const next = new Set(base)
+      if (shouldAdd) next.add(slotKey)
+      else next.delete(slotKey)
+      return { teacherId: selectedCalendarTeacher.id, slots: [...next] }
+    })
+    setAvailabilityMessage('')
+    setAvailabilityError('')
+  }
+
+  const clearTeacherAvailability = () => {
+    if (!selectedCalendarTeacher) return
+    setAvailabilityDraft({ teacherId: selectedCalendarTeacher.id, slots: [] })
+    setAvailabilityMessage('')
+    setAvailabilityError('')
+  }
+
+  const discardTeacherAvailability = () => {
+    setAvailabilityDraft(null)
+    setAvailabilityMessage('')
+    setAvailabilityError('')
+  }
+
+  const saveTeacherAvailability = async () => {
+    if (!selectedCalendarTeacher) { setAvailabilityError('Choose a teacher first.'); return }
+    setAvailabilitySaving(true)
+    setAvailabilityError('')
+    setAvailabilityMessage('')
+    const previous = savedTeacherSlots
+    const next = adminAvailabilitySlots
+    try {
+      /* The teacher reads their availability from the shared database, so a
+         save that only lands on this device would show the administrator
+         open slots the teacher never sees — and parents could not book them
+         either. updateTeacherProfile already starts that write, so we wait
+         on it rather than sending the same row a second time. If it does
+         not land, put the old slots back rather than leave the admin's
+         calendar disagreeing with everybody else's. */
+      updateTeacherProfile(selectedCalendarTeacher.id, { availabilitySlots: next })
+      const reachedDatabase = await waitForCloudProfileSync(selectedCalendarTeacher.id)
+      if (!reachedDatabase) {
+        updateTeacherProfile(selectedCalendarTeacher.id, { availabilitySlots: previous })
+        throw new Error('the shared database did not accept the change. Check your connection and try again.')
+      }
+      setAvailabilityDraft(null)
+      setAvailabilityMessage(`${next.length} open slot${next.length === 1 ? '' : 's'} saved for ${selectedCalendarTeacher.fullName}. Families can book these times now, and the teacher sees them on their own device.`)
+      setVersion((value) => value + 1)
+    } catch (saveError) {
+      setAvailabilityError(`The open slots could not be saved: ${saveError.message}`)
+    } finally {
+      setAvailabilitySaving(false)
+    }
+  }
   const selectedTeacherBookings = selectedCalendarTeacher ? bookings.filter((booking) => booking.teacherId === selectedCalendarTeacher.id) : []
   const paymentTransactions = students.flatMap((student) => {
     const transactions = Array.isArray(student.paymentTransactions) ? student.paymentTransactions : student.latestPayment ? [student.latestPayment] : []
@@ -7484,62 +7560,41 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
             {/* View Switcher Toggle */}
             <div className="portal-card" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '10px' }}>
-                <button 
-                  type="button" 
+              {/* Inline SVG icons, not emoji: the 📋 and 📅 characters render
+                  as empty boxes on any machine without those glyphs, and the
+                  white-on-grey inactive label was barely readable. */}
+              <div className="admin-booking-view-switch" role="group" aria-label="Choose how to view bookings">
+                <button
+                  type="button"
+                  className={adminBookingView === 'list' ? 'active' : ''}
+                  aria-pressed={adminBookingView === 'list'}
                   onClick={() => setAdminBookingView('list')}
-                  style={{
-                    background: adminBookingView === 'list' ? '#7048df' : 'transparent',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '6px 16px',
-                    fontSize: '0.989rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
                 >
-                  List View 📋
+                  <ClipboardCheck size={15} /> List view
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
+                  className={adminBookingView === 'calendar' ? 'active' : ''}
+                  aria-pressed={adminBookingView === 'calendar'}
                   onClick={() => {
                     setAdminBookingView('calendar');
                     if (teachers.length && !selectedCalendarTeacherId) {
                       setSelectedCalendarTeacherId(teachers[0].id);
                     }
                   }}
-                  style={{
-                    background: adminBookingView === 'calendar' ? '#7048df' : 'transparent',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '6px 16px',
-                    fontSize: '0.989rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
                 >
-                  Schedule Calendar 📅
+                  <CalendarDays size={15} /> Schedule calendar
                 </button>
               </div>
 
               {adminBookingView === 'calendar' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.989rem', color: '#b9adc7', fontWeight: 'bold' }}>Select Teacher:</span>
+                  <span className="admin-teacher-picker__label">Select teacher</span>
                   <select
+                    className="admin-teacher-picker"
+                    aria-label="Choose which teacher's calendar to show"
                     value={selectedCalendarTeacherId}
                     onChange={(e) => setSelectedCalendarTeacherId(e.target.value)}
-                    style={{
-                      background: 'rgba(0,0,0,0.3)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      color: '#fff',
-                      fontSize: '0.989rem',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
                   >
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>{t.fullName}</option>
@@ -7553,36 +7608,88 @@ export function AdminDashboard({ account, onHome, onLogout }) {
               <AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} />
             ) : (
               <section className="portal-card booking-calendar-card teacher-booking-calendar admin-reserve-calendar-card">
+                {/* Two jobs on one calendar: put a student into a slot, or
+                    open up new slots on the teacher's behalf. Teachers still
+                    manage their own availability; this is for the times the
+                    administrator is the one who knows they are free. */}
+                <div className="calendar-mode-bar" role="group" aria-label="What to do on this teacher's calendar">
+                  <div className="calendar-mode-switch">
+                    <button
+                      type="button"
+                      className={availabilityMode ? '' : 'active'}
+                      aria-pressed={!availabilityMode}
+                      onClick={() => { setAvailabilityMode(false); setAvailabilityError('') }}
+                    >
+                      <CalendarCheck2 size={15} /> Reserve a class
+                    </button>
+                    <button
+                      type="button"
+                      className={availabilityMode ? 'active' : ''}
+                      aria-pressed={availabilityMode}
+                      onClick={() => { setAvailabilityMode(true); setAdminReserveSlot(null); setAdminReserveError(''); setAdminReserveMessage('') }}
+                    >
+                      <CalendarPlus size={15} /> Open time slots
+                    </button>
+                  </div>
+                  {availabilityMode && (
+                    <div className="calendar-mode-actions">
+                      <span className="calendar-mode-count">
+                        {adminAvailabilitySlots.length} slot{adminAvailabilitySlots.length === 1 ? '' : 's'} · {(adminAvailabilitySlots.length / 2).toFixed(1)} hours a week
+                      </span>
+                      {availabilityDirty && <span className="calendar-mode-unsaved">Not saved yet</span>}
+                      {availabilityDirty && <button type="button" className="portal-secondary-button" onClick={discardTeacherAvailability} disabled={availabilitySaving}>Undo changes</button>}
+                      <button type="button" className="portal-secondary-button" onClick={clearTeacherAvailability} disabled={availabilitySaving || !adminAvailabilitySlots.length}>Clear all</button>
+                      <button type="button" className="portal-primary-button" onClick={saveTeacherAvailability} disabled={availabilitySaving || !availabilityDirty}>
+                        <Save size={16} /> {availabilitySaving ? 'Saving…' : 'Save open slots'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="drag-instruction teacher-feedback-instruction" style={{ marginBottom: '15px' }}>
-                  <span><CalendarCheck2 size={18} /></span>
+                  <span>{availabilityMode ? <CalendarPlus size={18} /> : <CalendarCheck2 size={18} />}</span>
                   <div>
-                    <strong>Reserve a slot for {selectedCalendarTeacher?.fullName || 'selected teacher'}</strong>
-                    <small>Choose a student, click any available teacher slot, then reserve it as a confirmed class. Click a booked student name to view details or unbook the class.</small>
+                    {availabilityMode ? (
+                      <>
+                        <strong>Open time slots for {selectedCalendarTeacher?.fullName || 'selected teacher'}</strong>
+                        <small>Click and drag across the calendar to mark when this teacher is free. Drag across green slots to remove them. Each cell is 30 minutes, booked lessons are locked, and the pattern repeats every week. Press <b>Save open slots</b> when you are done — parents can then book those times.</small>
+                      </>
+                    ) : (
+                      <>
+                        <strong>Reserve a slot for {selectedCalendarTeacher?.fullName || 'selected teacher'}</strong>
+                        <small>Choose a student, click any available teacher slot, then reserve it as a confirmed class. Click a booked student name to view details or unbook the class.</small>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                <div className="admin-reserve-panel">
+                {availabilityMode && availabilityError && <div className="portal-error" role="alert">{availabilityError}</div>}
+                {availabilityMode && availabilityMessage && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Open slots saved</strong><span>{availabilityMessage}</span></div></div>}
+
+                {!availabilityMode && <div className="admin-reserve-panel">
                   <label><span>Student</span><select value={bookingLearner?.id || ''} onChange={(event) => setBookingStudentId(event.target.value)}>{studentProfiles.map(({ account: student, learner: optionLearner }) => <option key={optionLearner.id} value={optionLearner.id}>{optionLearner.name} · {student.parentName} · {optionLearner.accessStatus}</option>)}</select></label>
                   <label><span>Lesson focus</span><select value={adminReserveFocus} onChange={(event) => setAdminReserveFocus(event.target.value)}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
                   <label><span>Length</span><select value={adminReserveDuration} onChange={(event) => setAdminReserveDuration(event.target.value)}><option value="25">25 min</option><option value="50">50 min</option></select></label>
                   <label><span>Admin note</span><input value={adminReserveNote} onChange={(event) => setAdminReserveNote(event.target.value)} placeholder="Reserved by administrator" /></label>
                   <div className="admin-reserve-panel__selected"><span>Selected slot</span><strong>{adminReserveSlot ? `${formatLessonDate(adminReserveSlot.date, adminReserveSlot.time, true)} at ${formatTime(adminReserveSlot.time, adminReserveSlot.date)}` : 'Click an available slot below'}</strong></div>
                   <button type="button" className="portal-primary-button" onClick={reserveAdminTeacherSlot} disabled={adminReserving || !adminReserveSlot || !bookingLearner || bookingLearner.incomplete}>{adminReserving ? 'Reserving…' : 'Reserve selected slot'} <CalendarCheck2 size={16} /></button>
-                </div>
-                {adminReserveError && <div className="portal-error" role="alert">{adminReserveError}</div>}
-                {adminReserveMessage && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Slot reserved</strong><span>{adminReserveMessage}</span></div></div>}
+                </div>}
+                {!availabilityMode && adminReserveError && <div className="portal-error" role="alert">{adminReserveError}</div>}
+                {!availabilityMode && adminReserveMessage && <div className="portal-success" role="status"><CheckCircle2 size={17} /><div><strong>Slot reserved</strong><span>{adminReserveMessage}</span></div></div>}
 
                 <ScheduleCalendar 
                   weekOffset={adminCalendarWeek} 
                   onWeekOffset={setAdminCalendarWeek}
-                  availabilitySlots={selectedCalendarTeacher?.teacher?.availabilitySlots || []}
+                  availabilitySlots={adminAvailabilitySlots}
                   bookings={selectedTeacherBookings}
+                  editable={availabilityMode}
+                  onPaint={availabilityMode ? paintTeacherAvailability : undefined}
                   duration={Number(adminReserveDuration)}
-                  selectedLessons={adminReserveSlot ? [{ ...adminReserveSlot, duration: Number(adminReserveDuration) }] : []}
-                  onSelect={(slot) => { setAdminReserveSlot({ date: slot.date, time: slot.time, duration: Number(adminReserveDuration) }); setAdminReserveError(''); setAdminReserveMessage('') }}
+                  selectedLessons={!availabilityMode && adminReserveSlot ? [{ ...adminReserveSlot, duration: Number(adminReserveDuration) }] : []}
+                  onSelect={availabilityMode ? undefined : (slot) => { setAdminReserveSlot({ date: slot.date, time: slot.time, duration: Number(adminReserveDuration) }); setAdminReserveError(''); setAdminReserveMessage('') }}
                   onBookingOpen={setManagedBooking} 
-                  onBookingCancel={unbookCalendarClass}
-                  showInactiveBookings 
+                  onBookingCancel={availabilityMode ? undefined : unbookCalendarClass}
+                  showInactiveBookings={!availabilityMode}
                 />
               </section>
             )}

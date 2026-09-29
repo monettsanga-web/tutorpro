@@ -724,6 +724,42 @@ export function updateAccount(accountId, changes) {
   return updated
 }
 
+/**
+ * Wait for the background push that `updateAccount` already started.
+ *
+ * Every updateAccount() queues a cloud write. Calling updateCloudProfile()
+ * again straight afterwards — as several panels do — sends the SAME row
+ * twice, which is pure waste on a database with a free-tier egress budget.
+ * This instead watches the pending flag the queued write clears on success,
+ * so a caller can report a real outcome after exactly one write.
+ *
+ * Resolves true when the row reached the database, false when it did not.
+ */
+export function waitForCloudProfileSync(accountId, { timeout = 10000, interval = 200 } = {}) {
+  if (!cloudSyncEnabled()) return Promise.resolve(true)
+  return new Promise((resolve) => {
+    const startedAt = Date.now()
+    let settled = false
+    const finish = (value) => {
+      if (settled) return
+      settled = true
+      window.clearInterval(timer)
+      if (typeof window !== 'undefined') window.removeEventListener('tutorpro:cloud-error', onError)
+      resolve(value)
+    }
+    const stillPending = () => Boolean(readAccounts().find((item) => item.id === accountId)?.cloudSyncPending)
+    // The error event carries no account id, so it only counts as a failure
+    // while THIS account is still waiting.
+    const onError = () => { if (stillPending()) finish(false) }
+    const timer = window.setInterval(() => {
+      if (!stillPending()) finish(true)
+      else if (Date.now() - startedAt > timeout) finish(false)
+    }, interval)
+    if (typeof window !== 'undefined') window.addEventListener('tutorpro:cloud-error', onError)
+    if (!stillPending()) finish(true)
+  })
+}
+
 export async function syncPendingCloudProfile(accountId) {
   const account = readAccounts().find((item) => item.id === accountId)
   if (!account) throw new Error('Account not found.')
