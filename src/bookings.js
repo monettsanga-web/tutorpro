@@ -182,14 +182,27 @@ export function createBooking(details) {
   })
   if (conflict) throw new Error('That time conflicts with an existing teacher or student lesson. Please choose another available slot.')
 
-  // Only 1 free trial class per student
+  /*
+   * Trial or regular?
+   *
+   * A parent booking for themselves gets the automatic rule: the first
+   * class for a learner is the free trial, everything after it is a paid
+   * regular class.
+   *
+   * An ADMINISTRATOR booking on their behalf can say outright, because they
+   * are the only one who knows the arrangement — a family returning after a
+   * year, a second child trying a class, a lesson agreed as paid from the
+   * start. `classKind` is only ever set by the admin booking screens; an
+   * absent value keeps the old behaviour exactly.
+   */
   const studentHasActiveTrial = bookings.some((b) => 
     b.studentId === details.studentId && 
     b.learnerId === learner.id && 
     b.isTrialClass && 
     !['cancelled', 'declined'].includes(b.status)
   )
-  const isTrialClass = !studentHasActiveTrial
+  const requestedKind = details.classKind === 'trial' || details.classKind === 'regular' ? details.classKind : ''
+  const isTrialClass = requestedKind ? requestedKind === 'trial' : !studentHasActiveTrial
 
   const bookingId = crypto.randomUUID()
   const classroomCredentials = getStableClassroomCredentials({ id: bookingId, date: details.date })
@@ -213,6 +226,9 @@ export function createBooking(details) {
     teacherNote: '',
     status: 'pending',
     isTrialClass: isTrialClass,
+    // Recorded so a teacher and the funnel can tell an administrator's
+    // deliberate choice from the automatic first-lesson rule.
+    classKindSetBy: requestedKind ? 'admin' : 'automatic',
     trialEnrolled: false,
     createdAt: new Date().toISOString(),
   }
@@ -220,6 +236,20 @@ export function createBooking(details) {
   writeBookings(bookings)
   queueCloudBooking(booking)
   return booking
+}
+
+/**
+ * Has this learner already had a free trial that still counts?
+ *
+ * Used to warn an administrator before they hand out a second one, which
+ * is allowed — they own the business — but should never be an accident.
+ */
+export function learnerHasUsedTrial(studentId, learnerId) {
+  if (!studentId || !learnerId) return false
+  return readBookings().some((booking) => booking.studentId === studentId
+    && booking.learnerId === learnerId
+    && booking.isTrialClass
+    && !['cancelled', 'declined'].includes(booking.status))
 }
 
 export function updateBooking(bookingId, changes) {

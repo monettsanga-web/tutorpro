@@ -30,6 +30,7 @@ import {
   Film,
   Flame,
   Gamepad2,
+  Gift,
   GraduationCap,
   Globe2,
   HardDrive,
@@ -53,6 +54,7 @@ import {
   Sparkles,
   Star,
   Trash2,
+  TriangleAlert,
   TrendingUp,
   Upload,
   UserCheck,
@@ -82,7 +84,7 @@ import {
   updateTeacherProfile,
   waitForCloudProfileSync,
 } from './auth.js'
-import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
+import { createBooking, getBookings, getBookingStats, learnerHasUsedTrial, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { downloadBookingCalendar } from './bookingCalendar.js'
 import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
@@ -664,6 +666,10 @@ export function ScheduleCalendar({
                       return (
                         <span className="schedule-booking-label">
                           <strong className={nameActions ? 'schedule-name-action' : feedbackAvailable ? 'schedule-feedback-target' : ''}>{cellName}</strong>
+                          {/* Which kind of class this is, on the cell, so a
+                              teacher scanning their week can see it without
+                              opening anything. */}
+                          {bookingCell.booking.isTrialClass && <b className="schedule-kind-tag schedule-kind-tag--trial"><Gift size={9} /> Trial</b>}
                           {/* Whether feedback exists is the single most useful thing on
                               this cell, so it is shown in BOTH modes. Previously the
                               'Tap for options' hint replaced it entirely on the teacher
@@ -1004,20 +1010,17 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
           <StatusBadge status={booking.status} />
           <span>{booking.duration} min</span>
           
-          {/* Trial class badges */}
-          {booking.isTrialClass && (
-            <span style={{ background: '#ff9e2c', color: '#090510', fontSize: '0.901rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              🎁 Free Trial Class
-            </span>
-          )}
+          {/* Trial or regular, stated outright on every card.
+              A teacher opening their day needs to know which lessons are
+              trials before the lesson, not after it. Inline SVG icons, not
+              emoji: 🎁 and 🏆 render as empty boxes on many machines. */}
+          <span className={`class-kind-chip class-kind-chip--${booking.isTrialClass ? 'trial' : 'regular'}`}>
+            {booking.isTrialClass ? <Gift size={12} /> : <CheckCircle2 size={12} />}
+            {booking.isTrialClass ? 'Free trial' : 'Regular class'}
+          </span>
           {booking.isTrialClass && booking.trialEnrolled && (
-            <span style={{ background: '#bce94e', color: '#090510', fontSize: '0.901rem', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              🏆 Enrolled (₱100)
-            </span>
-          )}
-          {booking.isTrialClass && !booking.trialEnrolled && (
-            <span style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.901rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
-              Trial (₱40)
+            <span className="class-kind-chip class-kind-chip--enrolled">
+              <Award size={12} /> Enrolled
             </span>
           )}
         </div>
@@ -1425,7 +1428,21 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
    * lesson-focus options are offered. It defaults to English so the flow is
    * unchanged for every family already using the site.
    */
-  const [form, setForm] = useState({ teacherId: account.preferredTeacherId || '', duration: '25', focus: learner.goal, note: '', subject: DEFAULT_SUBJECT_ID })
+  /* `classKind` is only used when an administrator is booking. A parent
+     never sees it: their first lesson is the free trial automatically. */
+  /* A learner added without a learning goal used to leave `focus` empty.
+     The dropdown still LOOKED filled in — a browser shows the first option
+     when the value is missing — so the form refused to submit with
+     "Choose one or more available times", pointing at the calendar rather
+     than the empty field. Fall back to the first real option. */
+  const [form, setForm] = useState({
+    teacherId: account.preferredTeacherId || '',
+    duration: '25',
+    focus: focusOptionsFor(DEFAULT_SUBJECT_ID).includes(learner.goal) ? learner.goal : focusOptionsFor(DEFAULT_SUBJECT_ID)[0],
+    note: '',
+    subject: DEFAULT_SUBJECT_ID,
+    classKind: 'regular',
+  })
   const [selectedLessons, setSelectedLessons] = useState([])
   const [weekOffset, setWeekOffset] = useState(0)
   const [error, setError] = useState('')
@@ -1481,7 +1498,9 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
 
   const submit = async (event) => {
     event.preventDefault()
-    if (!selectedTeacherId || !selectedLessons.length || !form.focus) {
+    if (!selectedTeacherId) { setError('Choose a teacher before booking.'); return }
+    if (!form.focus) { setError('Choose a lesson focus before booking.'); return }
+    if (!selectedLessons.length) {
       setError('Choose one or more available times on the calendar to continue.')
       return
     }
@@ -1496,7 +1515,19 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
     let createdCount = 0
     try {
       for (const selection of selectedLessons) {
-        let booking = createBooking({ ...form, ...selection, teacherId: selectedTeacherId, teacherName: selectedTeacher.fullName, studentId: account.id, learnerId: learner.id, learnerName: learner.name, learnerProfile: learner })
+        let booking = createBooking({
+          ...form,
+          ...selection,
+          // Only an administrator may set this; a parent's booking keeps the
+          // automatic "first lesson is the free trial" rule.
+          classKind: adminBooking ? form.classKind : undefined,
+          teacherId: selectedTeacherId,
+          teacherName: selectedTeacher.fullName,
+          studentId: account.id,
+          learnerId: learner.id,
+          learnerName: learner.name,
+          learnerProfile: learner,
+        })
         if (adminBooking) booking = updateBooking(booking.id, { status: 'confirmed' })
         if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The shared booking database did not respond in time.')
         void notifyBookingParticipants(booking, adminBooking ? 'confirmed' : 'requested')
@@ -1558,7 +1589,27 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
               makes no sense on a maths lesson. */}
           <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}>{focusOptionsFor(form.subject).map((option) => <option key={option}>{option}</option>)}</select></label>
           <fieldset className="compact-duration"><legend>Lesson length</legend><div>{['25', '50'].map((duration) => <label className={form.duration === duration ? 'selected' : ''} key={duration}><input type="radio" name="duration" value={duration} checked={form.duration === duration} onChange={update} /><span>{duration} min</span></label>)}</div></fieldset>
+          {/* Administrators only. A parent's first lesson is the free trial
+              automatically; only the school knows when a class is a trial by
+              arrangement, and the teacher needs to see which it is. */}
+          {adminBooking && (
+            <fieldset className="compact-duration class-kind-choice"><legend>Class type</legend><div>
+              {[['regular', 'Regular class'], ['trial', 'Free trial']].map(([value, label]) => (
+                <label className={form.classKind === value ? 'selected' : ''} key={value}>
+                  <input type="radio" name="classKind" value={value} checked={form.classKind === value} onChange={update} />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div></fieldset>
+          )}
         </div>
+
+        {adminBooking && form.classKind === 'trial' && learnerHasUsedTrial(account.id, learner.id) && (
+          <div className="portal-error class-kind-warning" role="status">
+            <TriangleAlert size={17} />
+            <div><strong>{learner.name} has already had a free trial</strong><span>Booking another one is allowed, but it will not be charged. Choose <b>Regular class</b> if this lesson should use a paid credit.</span></div>
+          </div>
+        )}
 
         {successCount > 0 && <div className="portal-success"><CheckCircle2 size={18} /><div><strong>{successCount} lesson{successCount > 1 ? 's' : ''} {adminBooking ? 'booked and confirmed!' : 'requested!'}</strong><span>{adminBooking ? 'The student and teacher calendars are reserved.' : 'The selected times are reserved while confirmation is pending.'}</span></div></div>}
         {error && <div className="portal-error" role="alert">{error}</div>}
@@ -4438,6 +4489,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           booking,
           time: booking.time ? formatTime(booking.time, booking.date) : '--:--',
           student: booking.learnerName || booking.studentName || 'Student',
+          isTrial: Boolean(booking.isTrialClass),
           status: booking.status || 'pending',
         }))
       return {
@@ -5060,7 +5112,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
                           <li key={lesson.id}>
                             <button type="button" onClick={() => setManagedBooking(lesson.booking)}>
                               <span className="teacher-day__time">{lesson.time}</span>
-                              <span className="teacher-day__who">{lesson.student}</span>
+                              <span className="teacher-day__who">{lesson.student}{lesson.isTrial && <b className="teacher-day__trial"><Gift size={10} /> Trial</b>}</span>
                               <span className={`teacher-day__status teacher-day__status--${lesson.status}`}>{lesson.status}</span>
                             </button>
                           </li>
@@ -6770,6 +6822,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminReserveDuration, setAdminReserveDuration] = useState('25')
   const [adminReserveFocus, setAdminReserveFocus] = useState('Speaking with confidence')
   const [adminReserveNote, setAdminReserveNote] = useState('Reserved by administrator')
+  // Trial or regular, decided by the administrator and shown to the teacher.
+  const [adminReserveKind, setAdminReserveKind] = useState('regular')
   const [adminReserveMessage, setAdminReserveMessage] = useState('')
   const [adminReserveError, setAdminReserveError] = useState('')
   const [adminReserving, setAdminReserving] = useState(false)
@@ -7356,13 +7410,14 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         duration: Number(adminReserveDuration),
         focus: adminReserveFocus,
         note: adminReserveNote,
+        classKind: adminReserveKind,
       })
       booking = updateBooking(booking.id, { status: 'confirmed', reservedByAdmin: true })
       if (cloudSyncEnabled()) await withTimeout(syncBookingNow(booking), 10000, 'The reserved booking did not sync in time.')
       void notifyBookingParticipants(booking, 'confirmed')
       setManagedBooking(booking)
       setAdminReserveSlot(null)
-      setAdminReserveMessage(`Reserved ${formatLessonDate(booking.date, booking.time, true)} at ${formatTime(booking.time, booking.date)} for ${bookingLearner.name}.`)
+      setAdminReserveMessage(`${adminReserveKind === 'trial' ? 'Free trial' : 'Regular class'} reserved for ${bookingLearner.name} on ${formatLessonDate(booking.date, booking.time, true)} at ${formatTime(booking.time, booking.date)}. ${selectedCalendarTeacher.fullName} sees it marked as ${adminReserveKind === 'trial' ? 'a trial' : 'a regular class'}.`)
       refresh()
     } catch (reserveError) {
       setAdminReserveError(reserveError.message)
@@ -7670,6 +7725,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                   <label><span>Student</span><select value={bookingLearner?.id || ''} onChange={(event) => setBookingStudentId(event.target.value)}>{studentProfiles.map(({ account: student, learner: optionLearner }) => <option key={optionLearner.id} value={optionLearner.id}>{optionLearner.name} · {student.parentName} · {optionLearner.accessStatus}</option>)}</select></label>
                   <label><span>Lesson focus</span><select value={adminReserveFocus} onChange={(event) => setAdminReserveFocus(event.target.value)}><option>Speaking with confidence</option><option>Reading comprehension</option><option>Writing and grammar</option><option>Schoolwork and exam support</option><option>Build an all-round foundation</option></select></label>
                   <label><span>Length</span><select value={adminReserveDuration} onChange={(event) => setAdminReserveDuration(event.target.value)}><option value="25">25 min</option><option value="50">50 min</option></select></label>
+                  <label><span>Class type</span><select value={adminReserveKind} onChange={(event) => { setAdminReserveKind(event.target.value); setAdminReserveMessage('') }}><option value="regular">Regular class</option><option value="trial">Free trial</option></select></label>
                   <label><span>Admin note</span><input value={adminReserveNote} onChange={(event) => setAdminReserveNote(event.target.value)} placeholder="Reserved by administrator" /></label>
                   <div className="admin-reserve-panel__selected"><span>Selected slot</span><strong>{adminReserveSlot ? `${formatLessonDate(adminReserveSlot.date, adminReserveSlot.time, true)} at ${formatTime(adminReserveSlot.time, adminReserveSlot.date)}` : 'Click an available slot below'}</strong></div>
                   <button type="button" className="portal-primary-button" onClick={reserveAdminTeacherSlot} disabled={adminReserving || !adminReserveSlot || !bookingLearner || bookingLearner.incomplete}>{adminReserving ? 'Reserving…' : 'Reserve selected slot'} <CalendarCheck2 size={16} /></button>

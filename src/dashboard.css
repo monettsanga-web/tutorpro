@@ -1617,11 +1617,14 @@
   box-shadow: inset 0 0 0 2px var(--portal-orange);
 }
 
+/* A booked class reads RED across every calendar: it is the one state a
+   teacher must never mistake for a free slot. Trials keep their own amber
+   below, so the two are told apart at a glance rather than by reading. */
 .schedule-cell.booked {
   z-index: 2;
   cursor: not-allowed;
-  background: #ffe5f0;
-  box-shadow: inset 3px 0 0 #ec5b98;
+  background: #ffe4e6;
+  box-shadow: inset 4px 0 0 #e11d48;
 }
 
 .schedule-cell.booked.booking-status-trial {
@@ -1638,7 +1641,7 @@
 }
 
 .schedule-cell.booked.manageable { cursor: pointer; }
-.schedule-cell.booked.manageable:hover { z-index: 4; background: #ffd7e8; box-shadow: inset 0 0 0 2px #d83e72; }
+.schedule-cell.booked.manageable:hover { z-index: 4; background: #fecdd3; box-shadow: inset 0 0 0 2px #be123c; }
 .schedule-cell.booked.booking-status-ongoing { background: #e9e2fb; box-shadow: inset 3px 0 0 #7850c9; }
 .schedule-cell.booked.booking-status-completed { background: #e5f5e9; box-shadow: inset 3px 0 0 #4ca66a; }
 .schedule-cell.booked.booking-status-absent { background: #eceff3; box-shadow: inset 3px 0 0 #7c8796; }
@@ -1750,7 +1753,7 @@
 
 .legend-dot--available { background: #62bd85; }
 .legend-dot--selected { background: var(--portal-orange); }
-.legend-dot--booked { background: #ec5b98; }
+.legend-dot--booked { background: #e11d48; }
 .legend-dot--ongoing { background: #7850c9; }
 .legend-dot--completed { background: #4ca66a; }
 .legend-dot--absent { background: #7c8796; }
@@ -2165,7 +2168,7 @@
 .teacher-booking-status-filters { padding-bottom: 1px; }
 .teacher-feedback-instruction { background: linear-gradient(100deg, #f2ecff, #f8fbdc); color: #5e3b8c; }
 .teacher-feedback-instruction small { color: #766789; }
-.teacher-booking-calendar .schedule-cell.booked.booking-start { box-shadow: inset 3px 0 0 #ec5b98, 0 0 0 1px rgba(236,91,152,0.08); }
+.teacher-booking-calendar .schedule-cell.booked.booking-start { box-shadow: inset 4px 0 0 #e11d48, 0 0 0 1px rgba(225,29,72,0.1); }
 
 /* Profile media */
 .profile-media-photo {
@@ -9144,20 +9147,24 @@ a.feedback-resource-detail:hover strong {
    the row, and the click-a-name booking action menu (admin + teacher).
    ========================================================================== */
 
-/* Lighter, softer status fills so names read clearly */
-.schedule-cell.booked { background: #fdf1f6 !important; box-shadow: inset 3px 0 0 #f0a3c3 !important; }
-.schedule-cell.booked.manageable:hover { background: #fce6ef !important; box-shadow: inset 3px 0 0 #e87faa, 0 0 0 1px rgba(232, 127, 170, .35) !important; }
-.schedule-cell.booked.booking-status-trial { background: #fffaf0 !important; box-shadow: inset 3px 0 0 #f5c877 !important; }
-.schedule-cell.booked.booking-status-trial.manageable:hover { background: #fff4de !important; box-shadow: inset 3px 0 0 #eab04b, 0 0 0 1px rgba(234, 176, 75, .35) !important; }
+/* Status fills light enough to read a name on, with the two that matter
+   most kept unmistakable: RED for a booked class, AMBER for a free trial.
+   These carry !important because they are the pass that wins; editing the
+   base rules further up alone changes nothing on screen. */
+.schedule-cell.booked { background: #ffe4e6 !important; box-shadow: inset 4px 0 0 #e11d48 !important; }
+.schedule-cell.booked.manageable:hover { background: #fecdd3 !important; box-shadow: inset 4px 0 0 #be123c, 0 0 0 1px rgba(190, 18, 60, .35) !important; }
+.schedule-cell.booked.booking-status-trial { background: #fff3d6 !important; box-shadow: inset 4px 0 0 #f59e0b !important; }
+.schedule-cell.booked.booking-status-trial.manageable:hover { background: #fde8b8 !important; box-shadow: inset 4px 0 0 #d97706, 0 0 0 1px rgba(217, 119, 6, .35) !important; }
 .schedule-cell.booked.booking-status-ongoing { background: #f2eefc !important; box-shadow: inset 3px 0 0 #a893e0 !important; }
 .schedule-cell.booked.booking-status-completed { background: #eff8f2 !important; box-shadow: inset 3px 0 0 #8ec7a4 !important; }
 .schedule-cell.booked.booking-status-absent { background: #f4f6f8 !important; box-shadow: inset 3px 0 0 #b3bcc7 !important; }
 .schedule-cell.booked.booking-status-cancelled,
 .schedule-cell.booked.booking-status-declined { background: #f7f8f9 !important; box-shadow: inset 3px 0 0 #ccd1d7 !important; }
-.teacher-booking-calendar .schedule-cell.booked.booking-start { box-shadow: inset 3px 0 0 #f0a3c3 !important; }
+.teacher-booking-calendar .schedule-cell.booked.booking-start { box-shadow: inset 4px 0 0 #e11d48 !important; }
+.teacher-booking-calendar .schedule-cell.booked.booking-status-trial.booking-start { box-shadow: inset 4px 0 0 #f59e0b !important; }
 
 /* Softer legend dots to match */
-.legend-dot--booked { background: #f0a3c3; }
+.legend-dot--booked { background: #e11d48; }
 .legend-dot--ongoing { background: #a893e0; }
 .legend-dot--completed { background: #8ec7a4; }
 .legend-dot--absent { background: #b3bcc7; }
@@ -12129,3 +12136,71 @@ a.feedback-resource-detail:hover strong {
   .admin-booking-view-switch { width: 100%; }
   .admin-booking-view-switch button { flex: 1; justify-content: center; padding: 0 10px; }
 }
+
+/* ── Trial or regular, said out loud ──────────────────────────────────
+   The administrator decides when booking; the teacher has to be able to
+   see it without opening the lesson. Red = a booked class, amber = a
+   free trial. Icons are inline SVG because 🎁 and 🏆 render as empty
+   boxes wherever the font lacks them. */
+.class-kind-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.class-kind-chip--trial { background: #fef3c7; border: 1px solid rgba(180, 83, 9, 0.35); color: #92400e; }
+.class-kind-chip--regular { background: #ffe4e6; border: 1px solid rgba(225, 29, 72, 0.32); color: #9f1239; }
+.class-kind-chip--enrolled { background: #dcfce7; border: 1px solid rgba(22, 163, 74, 0.35); color: #166534; }
+.class-kind-chip svg { flex: none; }
+
+/* The same distinction on the calendar cell itself. */
+.schedule-kind-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.schedule-kind-tag--trial { background: #f59e0b; color: #2b1a02; }
+
+.teacher-day__trial {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+/* Choosing the class type when an administrator books. */
+.class-kind-choice legend { color: var(--portal-navy, #321568); }
+.class-kind-choice label.selected { border-color: #e11d48; }
+
+.class-kind-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 0;
+  line-height: 1.55;
+}
+
+.class-kind-warning svg { flex: none; margin-top: 2px; }
+.class-kind-warning strong { display: block; margin-bottom: 2px; }
