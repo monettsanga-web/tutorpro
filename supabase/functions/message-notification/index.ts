@@ -193,13 +193,16 @@ const COPY: Record<string, MessageCopy> = {
   },
 }
 
+/* IP first, a hand-picked language last: see the booking function for why. */
 function languageForProfile(profile: Record<string, any> | undefined) {
   const data = profile?.profile_data || {}
-  const preferred = String(data.preferredLanguage || '').trim()
-  if (preferred && COPY[preferred]) return preferred
+  const fromIp = String(data.ipLanguage || '').trim()
+  if (fromIp && COPY[fromIp]) return fromIp
   const country = String(data.registrationCountry || '').toUpperCase()
   const fromCountry = COUNTRY_LANGUAGES[country]
   if (fromCountry && COPY[fromCountry]) return fromCountry
+  const picked = String(data.preferredLanguage || '').trim()
+  if (picked && COPY[picked]) return picked
   return 'en'
 }
 

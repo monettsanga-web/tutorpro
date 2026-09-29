@@ -18,10 +18,35 @@
  * picker, and that choice is what gets saved.
  */
 
-/** What the site is showing this visitor right now. */
-export function currentLocaleSnapshot({ language = '', timeZone = '' } = {}) {
+/**
+ * Country → language, mirroring src/AutoTranslate.jsx. Kept here as well so
+ * the IP language can be worked out without importing a React component.
+ */
+const COUNTRY_LANGUAGES = {
+  PH: 'en', KR: 'ko', CN: 'zh-CN', TW: 'zh-TW', HK: 'zh-TW', MO: 'zh-TW', JP: 'ja',
+  ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
+  FR: 'fr', DE: 'de', AT: 'de', BR: 'pt', PT: 'pt',
+  SA: 'ar', AE: 'ar', QA: 'ar', EG: 'ar', VN: 'vi', TH: 'th',
+  PL: 'pl',
+}
+
+/** The language implied by the visitor's IP country, or ''. */
+export function languageForCountry(country) {
+  return COUNTRY_LANGUAGES[String(country || '').toUpperCase()] || ''
+}
+
+/**
+ * What the site is showing this visitor right now.
+ *
+ * `ipLanguage` and `preferredLanguage` are kept APART on purpose. Emails
+ * follow the IP one, because a parent who once clicked Chinese in the
+ * picker to see what it looked like must not receive Chinese emails for
+ * the rest of time — which is precisely the fault being fixed.
+ */
+export function currentLocaleSnapshot({ language = '', timeZone = '', country = '' } = {}) {
   return {
     preferredLanguage: String(language || '').trim(),
+    ipLanguage: languageForCountry(country),
     timeZone: String(timeZone || '').trim(),
   }
 }
@@ -49,6 +74,10 @@ export function localeChangesFor(account, snapshot) {
   const language = snapshot?.preferredLanguage
   if (usableLanguage(language) && account.preferredLanguage !== language) {
     changes.preferredLanguage = language
+  }
+  const ipLanguage = snapshot?.ipLanguage
+  if (usableLanguage(ipLanguage) && account.ipLanguage !== ipLanguage) {
+    changes.ipLanguage = ipLanguage
   }
   const zone = snapshot?.timeZone
   if (usableTimeZone(zone) && account.timeZone !== zone) {

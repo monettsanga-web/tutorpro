@@ -58,6 +58,7 @@
     "verify:teacherlogins": "node scripts/verify-teacher-logins.mjs",
     "verify:adminavailability": "node scripts/verify-admin-availability.mjs",
     "verify:classkind": "node scripts/verify-class-kind.mjs",
+    "verify:emaillanguage": "node scripts/verify-email-language.mjs",
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:paymenterrors": "node scripts/test-payment-errors.mjs",
     "test:pricing": "node scripts/test-pricing.mjs",

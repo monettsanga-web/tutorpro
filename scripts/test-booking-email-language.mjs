@@ -224,18 +224,62 @@ const unknown = render('xx-YY', 'Asia/Manila')
 ok(unknown.subject === english.subject, 'an unknown language falls back to English rather than failing')
 
 /* The choice of language, from a real-looking profile. */
-ok(edge.languageForProfile({ profile_data: { preferredLanguage: 'ko' } }) === 'ko', 'the language the site showed them wins')
-ok(edge.languageForProfile({ profile_data: { registrationCountry: 'KR' } }) === 'ko', 'otherwise their IP country decides')
+/* IP FIRST, as instructed. This ordering is the difference between a
+   correct email and the reported fault: someone who once clicked Chinese
+   in the language picker must not be sent Chinese for ever. */
+ok(edge.languageForProfile({ profile_data: { ipLanguage: 'ko' } }) === 'ko', 'the language from their IP address decides')
+ok(edge.languageForProfile({ profile_data: { ipLanguage: 'en', preferredLanguage: 'zh-CN' } }) === 'en',
+  'a Philippine visitor who once clicked Chinese in the picker still gets ENGLISH — the reported bug')
+ok(edge.languageForProfile({ profile_data: { registrationCountry: 'PH', preferredLanguage: 'zh-CN' } }) === 'en',
+  'and the same when only the sign-up country is known')
+ok(edge.languageForProfile({ profile_data: { registrationCountry: 'KR' } }) === 'ko', 'their IP country decides when no live IP language is stored')
+ok(edge.languageForProfile({ profile_data: { ipLanguage: 'ko', registrationCountry: 'PH' } }) === 'ko', 'where they are now beats where they signed up')
+ok(edge.languageForProfile({ profile_data: { preferredLanguage: 'ko' } }) === 'ko', 'a hand-picked language is still used when nothing else is known')
 ok(edge.languageForProfile({ profile_data: { registrationCountry: 'PH' } }) === 'en', 'a Philippine IP means English')
 ok(edge.languageForProfile({ profile_data: { registrationCountry: 'XX' } }) === 'en', 'an unknown country means English')
 ok(edge.languageForProfile({ profile_data: {} }) === 'en', 'no information means English')
 ok(edge.languageForProfile(undefined) === 'en', 'a missing profile means English')
-ok(edge.languageForProfile({ profile_data: { preferredLanguage: 'klingon', registrationCountry: 'KR' } }) === 'ko', 'an unsupported saved language falls through to the country')
+ok(edge.languageForProfile({ profile_data: { ipLanguage: 'klingon', registrationCountry: 'KR' } }) === 'ko', 'an unsupported stored language falls through to the country')
 
 ok(edge.timeZoneForProfile({ profile_data: { timeZone: 'Europe/Warsaw' } }) === 'Europe/Warsaw', 'their saved timezone is used')
 ok(edge.timeZoneForProfile({ profile_data: { registrationCountry: 'KR' } }) === 'Asia/Seoul', 'or one derived from their country')
 ok(edge.timeZoneForProfile({ profile_data: { timeZone: 'Moon/Base' } }) === 'Asia/Manila', 'a corrupted zone falls back instead of throwing')
 ok(edge.timeZoneForProfile(undefined) === 'Asia/Manila', 'and an unknown person gets our teaching base')
+
+/* ================================================================== */
+/* 7. The site can tell whether the fix is actually deployed           */
+/* ================================================================== */
+const notifications = read('src/bookingNotifications.js')
+const dashboards = read('src/Dashboards.jsx')
+
+ok(booking.includes("EMAIL_TEMPLATE_VERSION = 'single-language-2026-09'"), 'the function states which version it is')
+ok(/if \(payload\?\.ping\)/.test(booking), 'and answers a version check without sending anything')
+ok(notifications.includes("EXPECTED_EMAIL_TEMPLATE_VERSION = 'single-language-2026-09'"), 'the website knows which version it expects')
+const expected = notifications.match(/EXPECTED_EMAIL_TEMPLATE_VERSION = '([^']+)'/)?.[1]
+const deployedVersion = booking.match(/EMAIL_TEMPLATE_VERSION = '([^']+)'/)?.[1]
+ok(expected === deployedVersion, `the two version markers agree (${expected} / ${deployedVersion})`)
+ok(dashboards.includes('runEmailTemplateCheck'), 'the admin dashboard can run the check')
+ok(dashboards.includes('Still sending the old English + Chinese email'), 'and says plainly when the old template is still live')
+ok(/booking-notification/.test(dashboards), 'naming the function to redeploy')
+
+const { pingBookingEmailTemplate } = await import('../src/bookingNotifications.js')
+ok(typeof pingBookingEmailTemplate === 'function', 'the check is exported for the dashboard')
+const offline = await pingBookingEmailTemplate()
+ok(offline.upToDate === false, 'with no database connection the check does not claim everything is fine')
+ok(typeof offline.reason === 'string' && offline.reason.length > 10, 'and explains why it could not tell')
+
+/* ================================================================== */
+/* 8. The browser separates the IP language from a hand-picked one      */
+/* ================================================================== */
+const { languageForCountry } = await import('../src/profileLocale.js')
+ok(languageForCountry('PH') === 'en', 'a Philippine IP maps to English')
+ok(languageForCountry('kr') === 'ko', 'lower case country codes still work')
+ok(languageForCountry('XX') === '', 'an unknown country maps to nothing rather than guessing')
+const mixed = currentLocaleSnapshot({ language: 'zh-CN', country: 'PH', timeZone: 'Asia/Manila' })
+ok(mixed.ipLanguage === 'en' && mixed.preferredLanguage === 'zh-CN', 'the two are recorded separately, never merged')
+const bothChanges = localeChangesFor({ id: 'a' }, mixed)
+ok(bothChanges.ipLanguage === 'en', 'the IP language is saved for the email to use')
+ok(bothChanges.preferredLanguage === 'zh-CN', 'and the picker choice is still kept for the website')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

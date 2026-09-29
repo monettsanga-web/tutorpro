@@ -55,6 +55,7 @@ import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage
 import ReviewCarousel from './ReviewCarousel.jsx'
 import { clearHashRoute, readHashRoute } from './hashRoute.js'
 import { currentLocaleSnapshot, localeChangesFor } from './profileLocale.js'
+import { readVisitorCountry } from './visitorLocale.js'
 import { TIMEZONE_EVENT, visitorTimeZone } from './timezone.js'
 /* mergeCloudBookings / fetchCloudBookings were removed here: the public site
    no longer fetches bookings, because a logged-out visitor cannot see any. */
@@ -1872,6 +1873,8 @@ export default function App() {
     const remember = () => {
       const snapshot = currentLocaleSnapshot({
         language: typeof document !== 'undefined' ? document.documentElement.lang : '',
+        // The IP country is what the emails follow.
+        country: readVisitorCountry(),
         timeZone: visitorTimeZone(),
       })
       const changes = localeChangesFor(currentAccount, snapshot)

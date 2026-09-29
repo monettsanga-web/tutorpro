@@ -86,7 +86,7 @@ import {
 } from './auth.js'
 import { createBooking, getBookings, getBookingStats, learnerHasUsedTrial, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { downloadBookingCalendar } from './bookingCalendar.js'
-import { notifyBookingParticipants } from './bookingNotifications.js'
+import { notifyBookingParticipants, pingBookingEmailTemplate } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
 import PracticeWordSpeaker, { PracticeWordChip, speakPracticeWord } from './PracticeWordSpeaker.jsx'
 import AnnouncementBanner from './AnnouncementBanner.jsx'
@@ -6855,6 +6855,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [active, setActive] = useHashSection('admin', 'overview', true, ADMIN_SECTIONS)
   const [version, setVersion] = useState(0)
   const [managedAccount, setManagedAccount] = useState(null)
+  /* --- are the email templates up to date? -------------------------
+     Email wording lives inside a Supabase function, not in this website,
+     so pushing a fix here does NOT change what goes out. The only way to
+     find out used to be to book a lesson and read the email. This asks
+     the function which version is deployed. Nothing is sent. */
+  const [emailCheck, setEmailCheck] = useState(null)
+  const [checkingEmail, setCheckingEmail] = useState(false)
   const [managedLearnerId, setManagedLearnerId] = useState('')
   const [showAddTeacher, setShowAddTeacher] = useState(false)
   // Teachers who exist only in this browser and so cannot sign in elsewhere.
@@ -7286,6 +7293,19 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
   }
 
+  const runEmailTemplateCheck = async () => {
+    setCheckingEmail(true)
+    setEmailCheck(null)
+    try {
+      const result = await pingBookingEmailTemplate()
+      setEmailCheck(result)
+    } catch (checkError) {
+      setEmailCheck({ upToDate: false, reason: checkError.message })
+    } finally {
+      setCheckingEmail(false)
+    }
+  }
+
   const openManagedStudent = (studentId, learnerId) => {
     setAdminActionError('')
     let student = getAccountById(studentId)
@@ -7587,6 +7607,40 @@ export function AdminDashboard({ account, onHome, onLogout }) {
         <div className="portal-view">
           <section className="admin-welcome"><div><span className="portal-kicker">TutorPro Online English command centre</span><span className={`admin-live-sync admin-live-sync--${cloudStatus}`}><i /> {cloudStatus === 'connected' ? 'Supabase live sync' : cloudStatus === 'connecting' ? 'Connecting shared database' : cloudStatus === 'error' ? 'Cloud sync needs attention' : 'This-browser sync'}</span><h1>Everything important, under control.</h1><p>New student and teacher registrations appear automatically with complete profile controls.</p></div><span className="admin-welcome__shield"><ShieldCheck size={34} /></span></section>
           {cloudError && <div className="portal-error admin-cloud-error" role="alert">{cloudError} Check the Supabase setup and administrator membership.</div>}
+
+          <section className="portal-card admin-email-check">
+            <div className="portal-card__heading portal-card__heading--small">
+              <div>
+                <span className="portal-kicker">Email language</span>
+                <h2>Are booking emails in the right language?</h2>
+                <p>Email wording is stored in Supabase, not on this website, so it does not update when the site does. This checks which version is live. Nothing is sent.</p>
+              </div>
+              <button className="portal-primary-button" type="button" onClick={runEmailTemplateCheck} disabled={checkingEmail}>
+                {checkingEmail ? 'Checking…' : 'Run check'} <MailCheck size={16} />
+              </button>
+            </div>
+            {emailCheck && (
+              <div className={`admin-email-check__result ${emailCheck.upToDate ? 'is-ok' : 'is-bad'}`} role="status">
+                {emailCheck.upToDate ? (
+                  <>
+                    <strong>✅ Up to date — every email goes out in one language</strong>
+                    <p>Each parent and teacher receives the email in their own language, chosen from their IP address. {emailCheck.languages?.length || 0} languages are available.</p>
+                  </>
+                ) : (
+                  <>
+                    <strong>⚠️ Still sending the old English + Chinese email</strong>
+                    <p>{emailCheck.reason || 'The deployed email template is the old bilingual one.'} This is why a booking email arrived with Chinese in it. Fixing it takes about three minutes and has to be done once, by hand:</p>
+                    <ol>
+                      <li>Open <a href="https://supabase.com/dashboard/project/losmkvvwzijipqrlelyt/functions" target="_blank" rel="noopener noreferrer">Supabase → Edge Functions</a> and click <b>booking-notification</b>.</li>
+                      <li>Delete everything in the editor and paste the whole of <code>supabase/functions/booking-notification/index.ts</code> from your project.</li>
+                      <li>Press <b>Deploy</b>, wait for it to finish, then press <b>Run check</b> here again.</li>
+                    </ol>
+                    <small>Full instructions with screenshots of each step are in <code>docs/email-language-fix.md</code>.</small>
+                  </>
+                )}
+              </div>
+            )}
+          </section>
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student profiles</small><strong>{studentProfiles.length}</strong><em>{students.length} family accounts</em></div></article>
             <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>

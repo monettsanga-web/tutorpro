@@ -25,6 +25,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * Nothing here is bilingual. One recipient, one language.
  */
 
+/* Bumped whenever the email wording or language rules change, so the
+   dashboard can tell an out-of-date deployment from a current one. */
+export const EMAIL_TEMPLATE_VERSION = 'single-language-2026-09'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -199,14 +203,29 @@ function calendarDate(value: Date) {
   return value.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
 }
 
-/** Fails closed to English rather than sending somebody a language they cannot read. */
+/**
+ * Which language this person reads. IP FIRST, by instruction.
+ *
+ *   1. `ipLanguage`     — worked out from the IP address on their last visit.
+ *   2. `registrationCountry` — the IP country captured when they signed up.
+ *   3. `preferredLanguage`   — a language they chose by hand in the picker.
+ *   4. English.
+ *
+ * The hand-picked language is deliberately LAST. Someone who once clicked
+ * Chinese to see what it looked like would otherwise receive Chinese
+ * emails forever, which is exactly the complaint this function exists to
+ * answer. Fails closed to English rather than sending a language the
+ * reader cannot understand.
+ */
 export function languageForProfile(profile: Record<string, any> | undefined) {
   const data = profile?.profile_data || {}
-  const preferred = String(data.preferredLanguage || '').trim()
-  if (preferred && COPY[preferred]) return preferred
+  const fromIp = String(data.ipLanguage || '').trim()
+  if (fromIp && COPY[fromIp]) return fromIp
   const country = String(data.registrationCountry || '').toUpperCase()
   const fromCountry = COUNTRY_LANGUAGES[country]
   if (fromCountry && COPY[fromCountry]) return fromCountry
+  const picked = String(data.preferredLanguage || '').trim()
+  if (picked && COPY[picked]) return picked
   return 'en'
 }
 
@@ -314,7 +333,26 @@ Deno.serve(async (request) => {
     const { data: { user }, error: userError } = await userClient.auth.getUser()
     if (userError || !user) return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    const { bookingId, event = 'updated' } = await request.json()
+    const payload = await request.json()
+
+    /*
+     * A harmless version check. The administrator's dashboard calls this to
+     * find out whether THIS version — the one that writes each email in a
+     * single language — is actually deployed. Without it the only way to
+     * discover that the old bilingual templates are still live is to book a
+     * lesson and read the email.
+     *
+     * Nothing is sent and nothing is written.
+     */
+    if (payload?.ping) {
+      return new Response(JSON.stringify({
+        version: EMAIL_TEMPLATE_VERSION,
+        languages: Object.keys(COPY),
+        singleLanguagePerRecipient: true,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    const { bookingId, event = 'updated' } = payload || {}
     if (!bookingId || !['requested', 'confirmed', 'cancelled', 'restored', 'updated'].includes(event)) throw new Error('Invalid booking notification request')
 
     const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
@@ -378,7 +416,12 @@ Deno.serve(async (request) => {
       return { email, language }
     }))
 
-    return new Response(JSON.stringify({ delivered: true, recipients: results.length, languages: results.map((result) => result.language) }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify({
+      delivered: true,
+      recipients: results.length,
+      languages: results.map((result) => result.language),
+      version: EMAIL_TEMPLATE_VERSION,
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }

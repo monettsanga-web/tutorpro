@@ -6,6 +6,11 @@ version in, booking emails will keep going out in English **and** Chinese.
 
 It takes about three minutes.
 
+**You no longer have to guess whether it worked.** Open your dashboard →
+**Overview** → *"Are booking emails in the right language?"* → **Run check**.
+It tells you which version is live without sending anything. Run it before
+and after the steps below.
+
 ---
 
 ## What was wrong
@@ -18,9 +23,15 @@ when you booked a test class from the Philippines.
 
 Each person gets **one** email in **their own language**, chosen from:
 
-1. the language the website last showed them (set from their IP address), then
-2. the country detected from their IP when they registered, then
-3. English.
+1. the language of their **IP address** on their last visit, then
+2. the country detected from their **IP** when they registered, then
+3. a language they chose by hand in the picker, then
+4. English.
+
+The hand-picked language deliberately comes last. If you once clicked Chinese
+in the language picker to see how the site looked, that choice is stored on
+your account — and under the old ordering it would have kept sending you
+Chinese emails even after this fix. Your IP wins.
 
 The lesson time is also shown on their own clock, not always Manila time.
 A Korean parent now reads *"2026년 10월 7일 수요일 5:00 PM (현지 시간 · GMT+9)"*
@@ -53,8 +64,15 @@ Click **Deploy**. Wait for it to say deployed — about 30 seconds.
 
 ## Step 4 — check it
 
-Book a test class on the website. The email should now be entirely in English,
-with no Chinese anywhere.
+Go to your dashboard → **Overview** → **Run check**. It should turn green:
+
+> ✅ Up to date — every email goes out in one language
+
+If it still shows the orange warning, the paste or the deploy did not take.
+Try the three steps again.
+
+Then book a test class. The email should be entirely in English, with no
+Chinese anywhere.
 
 ---
 
