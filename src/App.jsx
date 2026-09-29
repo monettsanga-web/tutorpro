@@ -54,6 +54,8 @@ import { captureAttribution } from './attribution.js'
 import { cachedPublicReviews, fetchPublicReviews, mergeReviews, publishedAverage, reviewsForTeacher } from './publicReviews.js'
 import ReviewCarousel from './ReviewCarousel.jsx'
 import { clearHashRoute, readHashRoute } from './hashRoute.js'
+import { currentLocaleSnapshot, localeChangesFor } from './profileLocale.js'
+import { TIMEZONE_EVENT, visitorTimeZone } from './timezone.js'
 /* mergeCloudBookings / fetchCloudBookings were removed here: the public site
    no longer fetches bookings, because a logged-out visitor cannot see any. */
 import { fetchPublicTeachers, subscribeToCloudProfiles } from './cloudProfiles.js'
@@ -1851,6 +1853,39 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAccount])
   void teacherVersion
+
+  /*
+   * Record the language and timezone this person is actually using.
+   *
+   * Both come from their IP address — AutoTranslate picks the language,
+   * src/timezone.js resolves the zone — but a SERVER writing an email has
+   * neither. Saving them on the profile is what lets a booking
+   * notification arrive in one language the reader understands, at a time
+   * on their own clock, instead of the old English-plus-Chinese message
+   * that went to everybody.
+   *
+   * `localeChangesFor` returns null when nothing has changed, so the usual
+   * page load writes nothing at all.
+   */
+  useEffect(() => {
+    if (!currentAccount?.id) return undefined
+    const remember = () => {
+      const snapshot = currentLocaleSnapshot({
+        language: typeof document !== 'undefined' ? document.documentElement.lang : '',
+        timeZone: visitorTimeZone(),
+      })
+      const changes = localeChangesFor(currentAccount, snapshot)
+      // updateAccount already queues the one cloud write it needs.
+      if (changes) updateAccount(currentAccount.id, changes)
+    }
+    remember()
+    window.addEventListener('tutorpro:language-change', remember)
+    window.addEventListener(TIMEZONE_EVENT, remember)
+    return () => {
+      window.removeEventListener('tutorpro:language-change', remember)
+      window.removeEventListener(TIMEZONE_EVENT, remember)
+    }
+  }, [currentAccount])
 
   // Admin setting: public / parents-only / hidden. Teachers and admins always
   // keep access so they can check exactly what parents will see.
