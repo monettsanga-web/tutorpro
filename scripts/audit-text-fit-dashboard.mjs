@@ -43,7 +43,7 @@ const ROLES = {
 
 const MEASURE = `(() => {
   const viewport = document.documentElement.clientWidth
-  const report = { overflowX: document.documentElement.scrollWidth - viewport, clipped: [], pastEdge: [], tiny: [] }
+  const report = { overflowX: document.documentElement.scrollWidth - viewport, clipped: [], tall: [], truncated: [], pastEdge: [], tiny: [] }
   const seen = new Set()
   const describe = (el) => {
     const cls = typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0, 2).join('.') : ''
@@ -54,7 +54,8 @@ const MEASURE = `(() => {
      the button and clipped by overflow:hidden. It is invisible decoration,
      not text that does not fit, so it must not be reported. */
   const decoratedAndClipped = (el) => {
-    if (getComputedStyle(el).overflowX !== 'hidden') return false
+    const style = getComputedStyle(el)
+    if (style.overflowX !== 'hidden' && style.overflowY !== 'hidden') return false
     return ['::before', '::after'].some((pseudo) => {
       const style = getComputedStyle(el, pseudo)
       return style.content !== 'none' && style.position === 'absolute'
@@ -74,11 +75,27 @@ const MEASURE = `(() => {
     const rect = el.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return
     const scrollable = ['auto', 'scroll'].includes(style.overflowX)
+    const scrollsY = ['auto', 'scroll'].includes(style.overflowY)
     const hasOwnText = [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim())
     if (!hasOwnText) return
     if (!scrollable && el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 4 && !insideScroller(el) && !decoratedAndClipped(el)) {
       const key = 'clip:' + describe(el)
       if (!seen.has(key)) { seen.add(key); report.clipped.push({ el: describe(el), text: textOf(el), box: el.clientWidth, needs: el.scrollWidth }) }
+    }
+    /* Text cut off at the BOTTOM of a fixed-height box. The first version of
+       this audit only ever measured width, so every vertical clip was
+       invisible to it. */
+    if (!scrollsY && style.overflowY === 'hidden' && el.scrollHeight > el.clientHeight + 2 && el.clientHeight > 4 && !decoratedAndClipped(el)) {
+      const key = 'tall:' + describe(el)
+      if (!seen.has(key)) { seen.add(key); report.tall.push({ el: describe(el), text: textOf(el), box: el.clientHeight, needs: el.scrollHeight }) }
+    }
+    const clamped = style.webkitLineClamp && style.webkitLineClamp !== 'none'
+    if (style.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) {
+      const key = 'trunc:' + describe(el)
+      if (!seen.has(key)) { seen.add(key); report.truncated.push({ el: describe(el), text: textOf(el), how: 'ellipsis' }) }
+    } else if (clamped && el.scrollHeight > el.clientHeight + 2) {
+      const key = 'trunc:' + describe(el)
+      if (!seen.has(key)) { seen.add(key); report.truncated.push({ el: describe(el), text: textOf(el), how: 'line clamp ' + style.webkitLineClamp }) }
     }
     if (rect.right > viewport + 1 && rect.left < viewport && !insideScroller(el)) {
       const key = 'edge:' + describe(el)
@@ -96,7 +113,14 @@ const MEASURE = `(() => {
 const browser = await chromium.launch()
 let problems = 0
 
-for (const viewport of [{ label: 'phone 390', width: 390, height: 844 }, { label: 'tablet 768', width: 768, height: 1024 }, { label: 'tablet 1024', width: 1024, height: 1366 }]) {
+for (const viewport of [
+  { label: 'phone 390', width: 390, height: 844 },
+  { label: 'tablet 768', width: 768, height: 1024 },
+  { label: 'tablet 1024', width: 1024, height: 1366 },
+  // Desktop was never measured in the first pass, so nobody knew whether
+  // the same text was being clipped there too.
+  { label: 'desktop 1440', width: 1440, height: 900 },
+]) {
   for (const [role, config] of Object.entries(ROLES)) {
     console.log(`\n=============== ${viewport.label} · ${role} ===============`)
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height }, isMobile: viewport.width < 700, hasTouch: viewport.width < 700 })
@@ -133,12 +157,14 @@ for (const viewport of [{ label: 'phone 390', width: 390, height: 844 }, { label
       if (await scrim.count() && await scrim.first().isVisible()) { await scrim.first().click(); await page.waitForTimeout(300) }
       await page.waitForTimeout(700)
       const report = await page.evaluate(MEASURE)
-      const issues = report.clipped.length + report.pastEdge.length + report.tiny.length + (report.overflowX > 1 ? 1 : 0)
+      const issues = report.clipped.length + report.tall.length + report.truncated.length + report.pastEdge.length + report.tiny.length + (report.overflowX > 1 ? 1 : 0)
       problems += issues
       if (!issues) { console.log(`  ok   ${section}`); continue }
       console.log(`  --   ${section}${report.overflowX > 1 ? `   PAGE SCROLLS SIDEWAYS by ${report.overflowX}px` : ''}`)
       report.pastEdge.slice(0, 5).forEach((i) => console.log(`         past edge +${i.over}px  ${i.el}  "${i.text}"`))
-      report.clipped.slice(0, 5).forEach((i) => console.log(`         cut off ${i.box}→${i.needs}px  ${i.el}  "${i.text}"`))
+      report.clipped.slice(0, 5).forEach((i) => console.log(`         too wide ${i.box}→${i.needs}px  ${i.el}  "${i.text}"`))
+      report.tall.slice(0, 5).forEach((i) => console.log(`         CUT OFF BELOW ${i.box}→${i.needs}px  ${i.el}  "${i.text}"`))
+      report.truncated.slice(0, 5).forEach((i) => console.log(`         truncated (${i.how})  ${i.el}  "${i.text}"`))
       report.tiny.slice(0, 5).forEach((i) => console.log(`         ${i.size}px text  ${i.el}  "${i.text}"`))
     }
     await page.close()

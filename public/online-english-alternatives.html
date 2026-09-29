@@ -113,6 +113,24 @@
       .cta p { color:var(--muted); }
       footer { padding:34px 0; color:var(--muted); border-top:1px solid var(--line); }
       @media (max-width: 860px) { .hero-grid, .cards, .pricing { grid-template-columns:1fr; } .row { grid-template-columns:1fr; } .row > div + div { border-left:0; border-top:1px solid var(--line); } .nav-links { display:none; } }
+
+      /* TEXT FITTING ON PHONES
+         A grid child defaults to min-width:auto, so the column could not
+         shrink below the longest word in the headline. At 360px that made
+         the track 392px wide inside a 328px container and the whole page
+         scrolled sideways by 48px. Three things fix it: let the children
+         shrink, let long words break, and stop the pill being sized to its
+         own content regardless of the screen. */
+      .hero-grid > *, .cards > *, .pricing > *, .row > * { min-width: 0; }
+      img { max-width: 100%; }
+      h1, h2, h3, p, li, .kicker, .hero-card strong { overflow-wrap: break-word; }
+      .kicker { max-width: 100%; }
+
+      @media (max-width: 520px) {
+        h1 { font-size: clamp(2rem, 8.5vw, 2.7rem); letter-spacing:-.045em; line-height:.95; }
+        .cta h2 { font-size: clamp(1.7rem, 7.5vw, 2.4rem); line-height:1.04; }
+        .hero-actions > .btn { flex:1 1 100%; justify-content:center; text-align:center; }
+      }
     </style>
       <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.tutorpro.site"}, {"@type": "ListItem", "position": 2, "name": "Compare online English schools", "item": "https://www.tutorpro.site/online-english-alternatives.html"}]}</script>
   </head>
