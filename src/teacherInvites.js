@@ -29,6 +29,7 @@
  */
 
 import { isSupabaseConfigured, supabase } from './supabaseClient.js'
+import { describeTeacherCreateError, validateTeacherDetails } from './teacherAccounts.js'
 
 /** How long Supabase gives a teacher to use the code, for the wording. */
 export const INVITE_CODE_MINUTES = 60
@@ -159,4 +160,56 @@ export async function setTeacherPassword(password) {
   const { error } = await supabase.auth.updateUser({ password: value })
   if (error) throw new Error(describeInviteError(error))
   return { updated: true }
+}
+
+/* ==================================================================
+ * Adding a teacher with a temporary password
+ * ==================================================================
+ *
+ * The fallback route, for a teacher with no working email. It used to write
+ * the account into this browser only, which meant the teacher could never
+ * log in from their own phone — the account simply did not exist anywhere
+ * else. It now goes through our own server function, which holds the
+ * service-role key and creates a real, already-confirmed login.
+ *
+ * The administrator's own session is untouched: `supabase.auth.signUp` in
+ * the browser would have replaced it with the new teacher's.
+ */
+export async function createTeacherWithPassword(details) {
+  const check = validateTeacherDetails(details)
+  if (!check.valid) throw new Error(check.error)
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('The shared database is not configured in this browser, so a teacher login cannot be created.')
+  }
+
+  const { data } = await supabase.auth.getSession()
+  const token = data?.session?.access_token
+  if (!token) {
+    throw new Error('Your administrator session could not be read. Log out, log back in, and try again.')
+  }
+
+  let payload
+  try {
+    const response = await fetch('/api/teachers/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        fullName: details.fullName,
+        email: details.email,
+        password: details.password,
+        specialization: details.specialization,
+        experience: details.experience,
+        education: details.education,
+        languages: details.languages,
+        bio: details.bio,
+        status: details.status,
+      }),
+    })
+    payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || `The server refused the request (${response.status}).`)
+  } catch (error) {
+    throw new Error(describeTeacherCreateError(error), { cause: error })
+  }
+  if (!payload?.id) throw new Error('The database did not return the new teacher account.')
+  return payload
 }

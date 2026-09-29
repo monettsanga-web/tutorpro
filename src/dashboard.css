@@ -11963,3 +11963,72 @@ a.feedback-resource-detail:hover strong {
   .student-bill-panel__amount { font-size: 1.8rem; }
   .student-bill-panel__choice button { flex: 1 1 100%; }
 }
+
+/* ── Teacher logins that only exist in one browser ────────────────────
+   A teacher added before logins were saved to the shared database can be
+   seen, approved and booked here, yet cannot sign in on their own phone.
+   That is invisible unless we say so, loudly. */
+.login-missing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  background: rgba(245, 158, 11, 0.14);
+  color: #92400e;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.login-missing-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 16px;
+  line-height: 1.55;
+}
+
+.login-missing-banner svg { flex: none; margin-top: 2px; }
+.login-missing-banner strong { display: block; margin-bottom: 3px; }
+
+.table-action--fix-login {
+  border-color: rgba(180, 83, 9, 0.35);
+  color: #b45309;
+}
+
+.table-action--fix-login:hover { background: rgba(245, 158, 11, 0.14); }
+
+/* The details an administrator has to pass on to the teacher. */
+.new-login-details {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 13px 15px;
+  border-radius: 14px;
+  border: 1px solid var(--portal-line, #e4e0eb);
+  background: #f8fafc;
+}
+
+.new-login-details > div {
+  display: grid;
+  grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.new-login-details span { color: var(--portal-muted, #716981); font-size: 0.88rem; font-weight: 700; }
+
+.new-login-details strong {
+  min-width: 0;
+  color: var(--portal-navy, #321568);
+  font-size: 1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .new-login-details > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}

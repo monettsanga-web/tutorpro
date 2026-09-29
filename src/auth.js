@@ -480,7 +480,20 @@ export async function registerTeacher(details) {
   return publicAccount(account)
 }
 
-export async function createTeacherByAdmin(details) {
+/**
+ * Mirror a teacher login that has just been created in the database.
+ *
+ * `cloudId` is mandatory in normal use and comes from /api/teachers/create.
+ * It MUST be reused as the local id: bookings, availability slots and
+ * feedback are all keyed on the teacher id, so a local copy with a fresh
+ * random id would leave the teacher staring at an empty timetable on their
+ * own phone while the admin's browser showed their lessons.
+ *
+ * When the account lives in Supabase we deliberately keep no local password
+ * hash. The password belongs to the teacher; every device signs them in
+ * through the database.
+ */
+export async function createTeacherByAdmin(details, { cloudId = '', cloudProfile = false } = {}) {
   const accounts = readAccounts()
   const email = normalizeEmail(details.email)
   validateNewCredentials('email', details.email, details.password)
@@ -491,7 +504,7 @@ export async function createTeacherByAdmin(details) {
 
   const salt = createSalt()
   const account = {
-    id: crypto.randomUUID(),
+    id: cloudId || crypto.randomUUID(),
     role: 'teacher',
     status: 'approved',
     createdByAdmin: true,
@@ -499,8 +512,9 @@ export async function createTeacherByAdmin(details) {
     email,
     loginId: email,
     authProvider: 'email',
-    passwordHash: await hashPassword(details.password, salt),
-    salt,
+    ...(cloudProfile
+      ? { cloudProfile: true }
+      : { passwordHash: await hashPassword(details.password, salt), salt }),
     createdAt: new Date().toISOString(),
     referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     teacher: {
@@ -522,6 +536,37 @@ export async function createTeacherByAdmin(details) {
   accounts.push(account)
   writeAccounts(accounts)
   return publicAccount(account)
+}
+
+/**
+ * Move a browser-only teacher onto the database login just created for them.
+ *
+ * Teachers added before logins were created properly exist under a random
+ * local id. Once they have a real Supabase account we point the local record
+ * at the new id and hand the old id back, so the caller can repoint anything
+ * that referenced it (bookings, above all) instead of orphaning it.
+ */
+export function relinkTeacherAccount(oldId, cloudId, extra = {}) {
+  if (!oldId || !cloudId) throw new Error('Both the old and the new teacher id are needed.')
+  const accounts = readAccounts()
+  const index = accounts.findIndex((account) => account.id === oldId)
+  if (index < 0) throw new Error('That teacher could not be found on this device.')
+  if (accounts[index].role !== 'teacher') throw new Error('Only a teacher account can be relinked.')
+  if (oldId !== cloudId && accounts.some((account) => account.id === cloudId)) {
+    throw new Error('A different account already uses that id.')
+  }
+  const { passwordHash: _hash, salt: _salt, ...rest } = accounts[index]
+  accounts[index] = {
+    ...rest,
+    ...extra,
+    id: cloudId,
+    role: 'teacher',
+    cloudProfile: true,
+    relinkedFromLocalId: oldId,
+    relinkedAt: new Date().toISOString(),
+  }
+  writeAccounts(accounts)
+  return publicAccount(accounts[index])
 }
 
 export async function registerAdmin(emailValue, password) {

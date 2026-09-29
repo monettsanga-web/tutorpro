@@ -34,6 +34,7 @@ import {
   Globe2,
   HardDrive,
   Home,
+  KeyRound,
   Languages,
   LayoutDashboard,
   MailCheck,
@@ -65,6 +66,7 @@ import {
 import {
   addStudentLearner,
   createTeacherByAdmin,
+  relinkTeacherAccount,
   getAccountById,
   getAccounts,
   getApprovedTeachers,
@@ -79,7 +81,7 @@ import {
   updateStudentProfile,
   updateTeacherProfile,
 } from './auth.js'
-import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
+import { createBooking, getBookings, getBookingStats, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { downloadBookingCalendar } from './bookingCalendar.js'
 import { notifyBookingParticipants } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
@@ -145,7 +147,8 @@ import { buildLearningReport, skillLabel } from './learningReports.js'
 import { MARKETING_TEMPLATES, campaignStats, readCampaignLog, saveCampaignLog } from './marketing.js'
 import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgradeVerdict, FREE_TIER } from './backup.js'
 import { describePaymentError } from './paymentErrors.js'
-import { INVITE_CODE_MINUTES, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
+import { INVITE_CODE_MINUTES, createTeacherWithPassword, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
+import { describeTeacherCreateError, describeTeacherLogin, hasSharedLogin, suggestTemporaryPassword, teachersWithoutLogin, validateTeacherDetails } from './teacherAccounts.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -6030,7 +6033,9 @@ export function SupportInbox({ onUnreadChange }) {
 }
 
 function AddTeacherDialog({ onClose, onCreated }) {
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' })
+  // Generated once, outside render, so the suggestion is stable and the
+  // react-hooks/purity rule stays happy.
+  const [form, setForm] = useState(() => ({ fullName: '', email: '', password: suggestTemporaryPassword(), specialization: 'Both Curricula', experience: '', education: '', languages: 'English', bio: '' }))
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   /* Invitation is the default because it means the administrator never
@@ -6038,6 +6043,10 @@ function AddTeacherDialog({ onClose, onCreated }) {
      fallback for a teacher with no working email. */
   const [method, setMethod] = useState('invite')
   const [invited, setInvited] = useState('')
+  // Shown after a temporary-password account is made, so the administrator
+  // can copy the exact details to send the teacher.
+  const [createdLogin, setCreatedLogin] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   const sendInvite = async (event) => {
     event.preventDefault()
@@ -6072,16 +6081,19 @@ function AddTeacherDialog({ onClose, onCreated }) {
 
   const submit = async (event) => {
     event.preventDefault()
-    if (form.fullName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(form.email) || form.password.length < 8 || !/[0-9]/.test(form.password)) {
-      setError('Add a name, valid email and temporary password with at least 8 characters and one number.')
-      return
-    }
+    const check = validateTeacherDetails(form)
+    if (!check.valid) { setError(check.error); return }
     setSubmitting(true)
     try {
-      const teacher = await createTeacherByAdmin(form)
-      onCreated(teacher)
+      /* The DATABASE login is created first, and its id is reused for the
+         local copy. Writing the local copy first is what used to leave a
+         teacher who could be seen, approved and booked here, but who could
+         not log in from their own phone because no such account existed. */
+      const created = await createTeacherWithPassword(form)
+      const teacher = await createTeacherByAdmin(form, { cloudId: created.id, cloudProfile: true })
+      setCreatedLogin({ email: teacher.email, password: form.password, fullName: teacher.fullName })
     } catch (createError) {
-      setError(createError.message)
+      setError(describeTeacherCreateError(createError))
     } finally {
       setSubmitting(false)
     }
@@ -6091,10 +6103,43 @@ function AddTeacherDialog({ onClose, onCreated }) {
     <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="portal-dialog add-teacher-dialog" role="dialog" aria-modal="true" aria-labelledby="add-teacher-title">
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
-        <div className="portal-dialog__heading"><span><UserCheck size={23} /></span><div><small>Administrator action</small><h2 id="add-teacher-title">Add a teacher</h2><p>Invite them by email and they set their own password. You never see or handle it.</p></div></div>
+        <div className="portal-dialog__heading"><span><UserCheck size={23} /></span><div><small>Administrator action</small><h2 id="add-teacher-title">Add a teacher</h2><p>{method === 'manual' && !invited
+          ? 'Their login is created in the shared database, so they can sign in from their own phone straight away.'
+          : 'Invite them by email and they set their own password. You never see or handle it.'}</p></div></div>
         {error && <div className="portal-error" role="alert">{error}</div>}
 
-        {invited ? (
+        {createdLogin ? (
+          <div className="invite-sent" role="status">
+            <p className="invite-sent__lead"><CheckCircle2 size={18} /> <strong>{createdLogin.fullName} can now log in</strong></p>
+            <p>
+              This login exists in the shared database, so it works on their own phone, tablet or computer —
+              not only on this device.
+            </p>
+            <div className="new-login-details">
+              <div><span>Website</span><strong>www.tutorpro.site</strong></div>
+              <div><span>Email</span><strong>{createdLogin.email}</strong></div>
+              <div><span>Temporary password</span><strong>{createdLogin.password}</strong></div>
+            </div>
+            <button
+              type="button"
+              className="portal-secondary-button"
+              onClick={() => {
+                navigator.clipboard?.writeText(`TutorPro teacher login\nWebsite: https://www.tutorpro.site\nEmail: ${createdLogin.email}\nTemporary password: ${createdLogin.password}\n\nPlease change your password after your first sign-in.`)
+                  .then(() => setCopied(true))
+                  .catch(() => setCopied(false))
+              }}
+            >
+              {copied ? 'Copied' : 'Copy the details to send them'}
+            </button>
+            <p className="invite-sent__note">
+              Send these to the teacher and ask them to change the password once they are in. You know this
+              password, so it should not stay in use.
+            </p>
+            <div className="portal-dialog__actions">
+              <button type="button" className="portal-primary-button" onClick={() => onCreated(null)}>Done <ArrowRight size={16} /></button>
+            </div>
+          </div>
+        ) : invited ? (
           <div className="invite-sent" role="status">
             <p className="invite-sent__lead"><MailCheck size={18} /> <strong>Invitation sent to {invited}</strong></p>
             <p>Ask them to open the email and follow the instructions. The code is valid for about {INVITE_CODE_MINUTES} minutes.</p>
@@ -6146,14 +6191,123 @@ function AddTeacherDialog({ onClose, onCreated }) {
                   Use this only when the teacher has no working email. You will have to pass the password to them
                   yourself, and you will know it — so ask them to change it as soon as they sign in.
                 </p>
+                <p className="invite-explainer">
+                  The login is created in the shared database straight away, with no confirmation email, so the
+                  teacher can sign in from their own phone immediately.
+                </p>
                 <div className="admin-teacher-form__row"><label><span>Full name</span><input autoFocus name="fullName" value={form.fullName} onChange={update} placeholder="Teacher name" /></label><label><span>Email address</span><input type="email" name="email" value={form.email} onChange={update} placeholder="teacher@example.com" /></label></div>
-                <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="password" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label></div>
+                <div className="admin-teacher-form__row"><label><span>Temporary password</span><input type="text" name="password" value={form.password} onChange={update} placeholder="8+ characters and a number" /><small>Suggested for you. The teacher should change it after signing in.</small></label><label><span>Specialization</span><select name="specialization" value={form.specialization} onChange={update}>{TEACHER_SPECIALIZATIONS.map((option) => <option key={option}>{option}</option>)}</select></label></div>
                 <div className="admin-teacher-form__row admin-teacher-form__row--three"><label><span>Experience</span><input type="number" min="0" name="experience" value={form.experience} onChange={update} placeholder="Years" /></label><label><span>Education</span><input name="education" value={form.education} onChange={update} placeholder="Degree" /></label><label><span>Languages</span><input name="languages" value={form.languages} onChange={update} placeholder="English…" /></label></div>
                 <label><span>Short biography</span><textarea name="bio" value={form.bio} onChange={update} placeholder="Teaching background and approach…" /></label>
                 <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="portal-primary-button" disabled={submitting}>{submitting ? 'Creating teacher…' : 'Create approved teacher'} <ArrowRight size={16} /></button></div>
               </form>
             )}
           </>
+        )}
+      </section>
+    </div>
+  )
+}
+
+/**
+ * Give an existing teacher a login that works on their own device.
+ *
+ * Teachers added before logins were created in the database exist only in
+ * this browser. This creates the real account, moves the local record onto
+ * the new id, and repoints their lessons — otherwise the teacher would sign
+ * in on their phone to an empty timetable.
+ */
+function TeacherLoginFixDialog({ teacher, onClose, onFixed }) {
+  const [password, setPassword] = useState(suggestTemporaryPassword)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  const create = async (event) => {
+    event.preventDefault()
+    setError('')
+    const check = validateTeacherDetails({ fullName: teacher.fullName, email: teacher.email || teacher.loginId, password })
+    if (!check.valid) { setError(check.error); return }
+    setBusy(true)
+    try {
+      const created = await createTeacherWithPassword({
+        fullName: teacher.fullName,
+        email: teacher.email || teacher.loginId,
+        password,
+        specialization: teacher.teacher?.specialization,
+        experience: teacher.teacher?.experience,
+        education: teacher.teacher?.education,
+        languages: teacher.teacher?.languages,
+        bio: teacher.teacher?.bio,
+        status: teacher.status === 'pending' ? 'pending' : 'approved',
+      })
+      const relinked = relinkTeacherAccount(teacher.id, created.id)
+      // Their lessons are keyed on the old id, so move them across and push
+      // each one to the shared database.
+      const moved = reassignTeacherBookings(teacher.id, created.id)
+      if (cloudSyncEnabled()) {
+        await Promise.allSettled(moved.map((booking) => syncBookingNow(booking)))
+        await updateCloudProfile(relinked).catch(() => {})
+      }
+      setDone({ email: created.email, password, moved: moved.length })
+    } catch (fixError) {
+      setError(describeTeacherCreateError(fixError))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="portal-dialog add-teacher-dialog" role="dialog" aria-modal="true" aria-labelledby="fix-login-title">
+        <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
+        <div className="portal-dialog__heading"><span><KeyRound size={23} /></span><div><small>Administrator action</small><h2 id="fix-login-title">Create a login for {teacher.fullName}</h2><p>This teacher exists only in this browser, so they cannot sign in anywhere else yet.</p></div></div>
+        {error && <div className="portal-error" role="alert">{error}</div>}
+        {done ? (
+          <div className="invite-sent" role="status">
+            <p className="invite-sent__lead"><CheckCircle2 size={18} /> <strong>{teacher.fullName} can now log in on any device</strong></p>
+            <div className="new-login-details">
+              <div><span>Website</span><strong>www.tutorpro.site</strong></div>
+              <div><span>Email</span><strong>{done.email}</strong></div>
+              <div><span>Temporary password</span><strong>{done.password}</strong></div>
+            </div>
+            <p className="invite-sent__note">
+              {done.moved > 0
+                ? `${done.moved} existing lesson${done.moved === 1 ? '' : 's'} moved to their new login, so their timetable is intact.`
+                : 'They had no lessons booked yet, so there was nothing to move.'}
+              {' '}Ask them to change the password after signing in.
+            </p>
+            <button
+              type="button"
+              className="portal-secondary-button"
+              onClick={() => {
+                navigator.clipboard?.writeText(`TutorPro teacher login\nWebsite: https://www.tutorpro.site\nEmail: ${done.email}\nTemporary password: ${done.password}\n\nPlease change your password after your first sign-in.`)
+                  .then(() => setCopied(true))
+                  .catch(() => setCopied(false))
+              }}
+            >
+              {copied ? 'Copied' : 'Copy the details to send them'}
+            </button>
+            <div className="portal-dialog__actions">
+              <button type="button" className="portal-primary-button" onClick={onFixed}>Done <ArrowRight size={16} /></button>
+            </div>
+          </div>
+        ) : (
+          <form className="admin-teacher-form" onSubmit={create}>
+            <div className="new-login-details">
+              <div><span>Name</span><strong>{teacher.fullName}</strong></div>
+              <div><span>Email</span><strong>{teacher.email || teacher.loginId || 'No email on file'}</strong></div>
+            </div>
+            <label><span>Temporary password</span><input autoFocus type="text" value={password} onChange={(event) => { setPassword(event.target.value); setError('') }} placeholder="8+ characters and a number" /><small>Suggested for you. You will be able to copy it to send to the teacher.</small></label>
+            <p className="invite-explainer">
+              Their lessons, availability and feedback move across with them, so nothing is lost.
+            </p>
+            <div className="portal-dialog__actions">
+              <button type="button" className="portal-secondary-button" onClick={onClose} disabled={busy}>Cancel</button>
+              <button type="submit" className="portal-primary-button" disabled={busy}>{busy ? 'Creating login…' : 'Create their login'} <ArrowRight size={16} /></button>
+            </div>
+          </form>
         )}
       </section>
     </div>
@@ -6594,6 +6748,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [managedAccount, setManagedAccount] = useState(null)
   const [managedLearnerId, setManagedLearnerId] = useState('')
   const [showAddTeacher, setShowAddTeacher] = useState(false)
+  // Teachers who exist only in this browser and so cannot sign in elsewhere.
+  const [teacherToFix, setTeacherToFix] = useState(null)
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
@@ -6618,6 +6774,9 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [adminReserving, setAdminReserving] = useState(false)
 
   const teachers = getAccounts('teacher')
+  // Added before logins were written to the shared database, so they exist
+  // in this browser alone and cannot sign in anywhere else.
+  const teachersMissingLogin = teachersWithoutLogin(teachers)
   const students = getAccounts('student')
   const studentProfiles = students.flatMap((student) => {
     const learners = student.children?.length ? student.children : student.child ? [student.child] : []
@@ -7279,7 +7438,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div><section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
@@ -7460,6 +7619,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
       {managedBooking && <BookingSlotDialog booking={managedBooking} account={account} onClose={() => setManagedBooking(null)} onChanged={(updated) => { setManagedBooking(updated); refresh() }} />}
       {showAddTeacher && <AddTeacherDialog onClose={() => setShowAddTeacher(false)} onCreated={() => { setShowAddTeacher(false); refresh() }} />}
+      {teacherToFix && <TeacherLoginFixDialog teacher={teacherToFix} onClose={() => setTeacherToFix(null)} onFixed={() => { setTeacherToFix(null); refresh() }} />}
       {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
       {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
     </PortalShell>

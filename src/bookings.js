@@ -374,6 +374,28 @@ export function removeTeacherBookingData(accountId) {
   return removedBookings.length
 }
 
+/**
+ * Point every lesson at a teacher's new account id.
+ *
+ * Used when a browser-only teacher is given a real database login: their id
+ * changes, and without this their existing lessons would stay attached to an
+ * id that no longer belongs to anyone. Returns the bookings that moved so
+ * the caller can push them to the shared database.
+ */
+export function reassignTeacherBookings(oldTeacherId, newTeacherId) {
+  if (!oldTeacherId || !newTeacherId || oldTeacherId === newTeacherId) return []
+  const bookings = readBookings()
+  const moved = []
+  const next = bookings.map((booking) => {
+    if (booking.teacherId !== oldTeacherId) return booking
+    const updated = { ...booking, teacherId: newTeacherId, updatedAt: new Date().toISOString() }
+    moved.push(updated)
+    return updated
+  })
+  if (moved.length) writeBookings(next)
+  return moved
+}
+
 export function getBookingStats() {
   const bookings = readBookings()
   return {
