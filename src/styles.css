@@ -1,3 +1,7 @@
+/* FONTS: declared once in public/assets/fonts.css and linked from
+   index.html, so the React app and the generated pages cannot drift onto
+   different typefaces. See that file for why they are self-hosted. */
+
 /* ---------- Foundation ---------- */
 :root {
   --ink: #321568;
@@ -6053,7 +6057,8 @@ body {
   gap: 16px;
   background: linear-gradient(135deg, #090510 0%, #25104d 54%, #111827 100%);
   color: #fff;
-  font-family: 'Manrope', Inter, sans-serif;
+  /* Inter is not loaded on this site; DM Sans is. */
+  font-family: 'Manrope', 'DM Sans', sans-serif;
 }
 .portal-boot__spinner {
   width: 42px;

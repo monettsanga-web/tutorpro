@@ -253,7 +253,7 @@ function render(page) {
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/assets/pwa-icon-192.png" />
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
     <script type="application/ld+json">${JSON.stringify(schema)}</script>
     <script type="application/ld+json">${JSON.stringify(crumbs)}</script>
   </head>

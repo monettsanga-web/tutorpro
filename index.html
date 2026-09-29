@@ -7,6 +7,12 @@
     <!-- Trustpilot domain ownership verification. Keep this tag in place:
          removing it can invalidate the verified status of the review profile. -->
     <meta name="trustpilot-one-time-domain-verification-id" content="69892fd2-e225-4c59-ada9-f26668616bd5" />
+    <!-- The two faces used above the fold. Preloaded so the headline is
+         drawn in the right typeface on first paint instead of swapping
+         after it. The rest load normally. -->
+    <link rel="preload" href="/assets/fonts/dmsans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/fonts.css" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/favicon.png" sizes="256x256" />

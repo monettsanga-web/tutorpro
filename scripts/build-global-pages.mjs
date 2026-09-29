@@ -278,7 +278,7 @@ function page(spec) {
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">${JSON.stringify(faqSchema(spec))}</script>
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
     <header class="site-head">

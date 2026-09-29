@@ -433,7 +433,7 @@ function render(spec) {
     <meta name="twitter:description" content="${escapeHtml(spec.description)}" />
     <meta name="twitter:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <script type="application/ld+json">${JSON.stringify(schema(spec))}</script>
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
     <header class="site-head">

@@ -61,7 +61,11 @@ body {
   margin: 0;
   background: var(--cream-2);
   color: var(--text);
-  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+  /* Pretendard is not bundled — Hangul falls through to the reader's own
+     Korean system font, which renders it properly. 'DM Sans' is added so
+     the Latin words match the rest of the site instead of changing face
+     mid-sentence. */
+  font-family: 'Pretendard Variable', Pretendard, 'DM Sans', -apple-system, BlinkMacSystemFont,
     'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
   font-size: 17px;
   line-height: 1.8;

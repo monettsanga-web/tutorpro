@@ -215,7 +215,7 @@ function page(subject) {
     <meta property="og:description" content="${escapeHtml(subject.description)}" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <script type="application/ld+json">${JSON.stringify(buildSchema(subject))}</script>
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
     <header class="site-head">

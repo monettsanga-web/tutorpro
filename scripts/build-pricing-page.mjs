@@ -187,7 +187,7 @@ function page() {
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <script type="application/ld+json">${JSON.stringify(buildSchema())}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
     <header class="site-head">

@@ -244,7 +244,7 @@ function render(city, all) {
     <meta property="og:description" content="One-to-one lessons for children aged 4-16. Free first class, no card required." />
     <meta property="og:url" content="${url}" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">${JSON.stringify(schema(city))}</script>

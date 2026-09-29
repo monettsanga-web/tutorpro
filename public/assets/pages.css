@@ -40,7 +40,11 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+  /* Was Inter, which is not loaded anywhere on this site — so every one of
+     these pages rendered in whatever the device substituted, in a
+     different typeface from the homepage. Now the same self-hosted family
+     as the rest of the site (see /assets/fonts.css). */
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   font-size: 1.05rem;
   line-height: 1.7;
@@ -159,6 +163,14 @@ body::before {
   font-size: 0.78rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+}
+
+h1,
+h2,
+h3 {
+  /* The homepage sets its headings in Nunito; these pages used to inherit
+     the body face, so the two halves of the site did not look related. */
+  font-family: 'Nunito', 'Manrope', 'DM Sans', system-ui, sans-serif;
 }
 
 h1 {

@@ -118,7 +118,7 @@ const html = `<!doctype html>
     <meta property="og:description" content="Registered Philippine business, DTI No. ${DTI}. Verify us on the public government register." />
     <meta property="og:url" content="${SITE}/is-tutorpro-legitimate.html" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json">${JSON.stringify(orgSchema())}</script>

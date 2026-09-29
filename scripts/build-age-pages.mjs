@@ -198,7 +198,7 @@ function page(age) {
     <meta property="og:description" content="${escapeHtml(age.description)}" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <script type="application/ld+json">${JSON.stringify(buildSchema(age))}</script>
-    <link rel="stylesheet" href="/assets/pages.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/pages.css" />
   </head>
   <body>
     <header class="site-head">

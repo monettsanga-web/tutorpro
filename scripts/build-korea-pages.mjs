@@ -125,7 +125,7 @@ function head({ title, description, keywords, url, schema }) {
     <meta property="og:description" content="${description}" />
     <meta property="og:image" content="${SITE}/assets/tutorpro-hero.webp" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="stylesheet" href="/assets/kr.css" />
+    <link rel="stylesheet" href="/assets/fonts.css" /><link rel="stylesheet" href="/assets/kr.css" />
     <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2)}
     </script>
