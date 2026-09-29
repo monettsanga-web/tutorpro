@@ -12302,3 +12302,124 @@ a.feedback-resource-detail:hover strong {
 .admin-email-check__result li { margin: 5px 0; }
 .admin-email-check__result code { padding: 1px 5px; border-radius: 5px; background: rgba(0, 0, 0, 0.07); font-size: 0.9em; overflow-wrap: anywhere; }
 .admin-email-check__result a { color: inherit; font-weight: 800; }
+
+/* ==========================================================================
+   TEXT FITTING — dashboards on tablet and phone
+   ==========================================================================
+   Measured with scripts/audit-text-fit-dashboard.mjs at 390, 768 and 1024px.
+
+   The big one: several dashboard views are grids with NO declared columns
+   (`display: grid; gap: 22px`). An implicit track is auto-sized, so it grows
+   to its widest child and drags the whole panel past the screen — on the
+   admin Payments view that was 912px of content inside a 768px tablet, which
+   is why entire headings sat off the right-hand edge. There was already a
+   fix for this, but only inside the phone breakpoint.
+   ========================================================================== */
+
+/* Words break rather than push a panel open. `break-word` only splits a word
+   when it genuinely cannot fit, so ordinary text is untouched. */
+.portal-view,
+.portal-view p,
+.portal-view strong,
+.portal-view small,
+.portal-view span,
+.portal-view h1,
+.portal-view h2,
+.portal-view h3 {
+  overflow-wrap: break-word;
+}
+
+/* A button squeezed narrower than its own label reads as "Run chec…".
+   These keep their label whole at every width. */
+.portal-view .portal-primary-button,
+.portal-view .portal-secondary-button,
+.portal-view .portal-text-button,
+.portal-card__heading .portal-primary-button,
+.portal-card__heading .portal-secondary-button {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  /* Cap the implicit grid track so long headings wrap instead of widening
+     the panel. Without this every child of these views is measured at its
+     widest possible line. */
+  .portal-view,
+  .portal-view[class*="admin-"],
+  .admin-payments-view,
+  .admin-analytics-view,
+  .admin-booking-view,
+  .referral-dashboard-view,
+  .support-inbox-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .portal-view { max-width: 100%; }
+
+  /* Four statistics across a tablet leaves room for about two words each. */
+  .portal-stat-grid,
+  .portal-stat-grid--three {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
+  /* The heading and its action button stack rather than fight for the row. */
+  .portal-page-heading {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .portal-card__heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The timezone badge sat 17px past the edge of the calendar toolbar. */
+  .schedule-timezone-note {
+    flex: 1 1 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  /* One statistic per row on a narrow phone reads better than two cramped. */
+  .portal-stat-grid,
+  .portal-stat-grid--three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --- labels that were being truncated with an ellipsis ------------------ */
+@media (max-width: 1100px) {
+  /* "Lessons completed" was being shortened to "Lessons complet…" because
+     the statistic label is pinned to one line. Two short lines read better
+     than a clipped one. */
+  .portal-stat-grid small {
+    overflow: visible;
+    white-space: normal;
+    line-height: 1.3;
+    text-overflow: clip;
+  }
+
+  /* An account login is the one string a person may need to read back
+     character by character, so it must never be cut off. */
+  .profile-info-row strong {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
+  /* Buttons inside the admin forms are grid items, where flex:none does
+     nothing. Widening them to their label pushed the longest one past the
+     screen, so they take the whole row instead: a full-width button always
+     has room for its own words. */
+  .admin-manual-payment-form button,
+  .admin-teacher-form button {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    justify-content: center;
+    min-width: 0;
+    white-space: nowrap;
+  }
+}

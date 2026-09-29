@@ -6795,3 +6795,112 @@ body {
   .contact-fallback__button { transition: none; }
   .contact-fallback__button:hover { transform: none; }
 }
+
+/* ==========================================================================
+   TEXT FITTING — tablet and phone
+   ==========================================================================
+   Measured with scripts/audit-text-fit.mjs at 360, 390, 768 and 1024px.
+   Three things pushed the page wider than the screen, which is what makes
+   text look cut off and the whole page slide sideways:
+
+     1. The footer kept three fixed-width link columns until 650px, so at
+        768px it was 525px of columns beside the brand block — 35px more
+        than the screen.
+     2. The header's links and buttons did not fit at 1024px, by 18px.
+     3. The hero headline capped at 760px while a nowrap phrase inside it
+        needed 799px, so the last word was clipped.
+   ========================================================================== */
+
+/* --- the page must never be wider than the screen ----------------------- */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* A grid or flex child refuses to shrink below its content unless told.
+   This is the single most common cause of a page that scrolls sideways. */
+.footer__main,
+.footer__links,
+.footer__links > div,
+.header-inner,
+.nav,
+.header-actions {
+  min-width: 0;
+}
+
+/* Long unbroken strings — email addresses, links — must wrap rather than
+   push their container open. */
+.footer__contact a,
+.contact-card,
+.contact-card span,
+.footer__links a {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1100px) {
+  /* The header fits on a tablet again: less space between things and
+     slightly tighter buttons, rather than hiding anything useful. */
+  .header-inner { gap: 10px; }
+
+  .nav {
+    gap: 15px;
+    margin-right: 12px;
+  }
+
+  .header-actions { gap: 6px; }
+
+  .header-actions .button {
+    /* flex: none stops the row squeezing the button narrower than its own
+       label, which cut "Student registration" off mid-word at 1024px. */
+    flex: none;
+    padding-right: 15px;
+    padding-left: 15px;
+    font-size: 0.96rem;
+    white-space: nowrap;
+  }
+
+  /* Student, Teacher and Admin portal links all stay — they are how each
+     kind of person gets in — but they are set tighter so the row fits a
+     tablet instead of pushing the registration button off the screen. */
+  .header-portal-link {
+    padding-right: 3px;
+    padding-left: 3px;
+    font-size: 0.85rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .nav > a {
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  /* The headline was clipped because this phrase may not break. Below
+     desktop it is allowed to wrap onto the next line instead. */
+  .hero h1 {
+    max-width: 100%;
+  }
+
+  .hero h1 em { white-space: normal; }
+}
+
+@media (max-width: 1024px) {
+  /* The footer was still in its desktop three-column layout on a tablet. */
+  .footer__main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+
+  .footer__links {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 28px 32px;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Two readable columns beat three cramped ones on a phone. */
+  .footer__links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 18px;
+  }
+}

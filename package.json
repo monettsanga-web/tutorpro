@@ -59,6 +59,8 @@
     "verify:adminavailability": "node scripts/verify-admin-availability.mjs",
     "verify:classkind": "node scripts/verify-class-kind.mjs",
     "verify:emaillanguage": "node scripts/verify-email-language.mjs",
+    "verify:textfit": "node scripts/audit-text-fit.mjs",
+    "verify:textfitdash": "node scripts/audit-text-fit-dashboard.mjs",
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:paymenterrors": "node scripts/test-payment-errors.mjs",
     "test:pricing": "node scripts/test-pricing.mjs",
