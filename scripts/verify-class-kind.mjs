@@ -192,6 +192,65 @@ console.log('\n--- reserving on a teacher calendar carries the choice ---')
 }
 
 /* ================================================================== */
+console.log('\n--- the admin can mark an EXISTING lesson, however it was booked ---')
+{
+  /* Choosing at booking time is not enough: most lessons are booked by the
+     parent, so the administrator needs to be able to correct one afterwards
+     and have the teacher see it. */
+  const page = await open(ADMIN_ID, { bookings: seededBookings })
+  await page.locator('.portal-nav button:has-text("All bookings")').first().click()
+  await page.waitForTimeout(900)
+  await page.locator('.admin-booking-view-switch button:has-text("Schedule calendar")').click()
+  await page.waitForSelector('.admin-reserve-calendar-card', { timeout: 15000 })
+  await page.waitForTimeout(900)
+
+  await page.locator('.schedule-toolbar__arrows button[aria-label="Next week"]').click()
+  await page.waitForTimeout(800)
+  // Open the REGULAR lesson from the calendar with a real click: a
+  // programmatic one does not carry the pointer position the menu needs.
+  const regularCell = page.locator('.schedule-cell.booked.booking-start:not(.booking-status-trial)').first()
+  await regularCell.scrollIntoViewIfNeeded()
+  await regularCell.click()
+  await page.waitForTimeout(900)
+  // Clicking a booked cell opens a small menu first on the admin calendar.
+  const menu = page.locator('.schedule-name-menu')
+  if (await menu.count()) {
+    const details = menu.locator('button:has-text("View booking details")')
+    if (await details.count()) await details.click()
+    await page.waitForTimeout(800)
+  }
+  await page.waitForSelector('.booking-slot-dialog', { timeout: 12000 })
+
+  const editor = page.locator('.booking-kind-editor')
+  ok(await editor.count() === 1, 'an administrator can change the class type of an existing lesson')
+  const editorText = (await editor.innerText()).replace(/\s+/g, ' ')
+  ok(/Regular class/.test(editorText) && /Free trial/.test(editorText), `both options are there (${editorText.slice(0, 70)}…)`)
+  ok(/Teacher M sees/.test(editorText) || /what .*sees/i.test(editorText), 'and it says the teacher will see it')
+
+  const activeBefore = await page.locator('.booking-kind-switch button.active').innerText()
+  ok(/Regular class/.test(activeBefore), `it starts on the lesson's current type (${activeBefore.trim()})`)
+
+  await page.locator('.booking-kind-switch button:has-text("Free trial")').click()
+  await page.waitForTimeout(1500)
+  const activeAfter = await page.locator('.booking-kind-switch button.active').innerText()
+  ok(/Free trial/.test(activeAfter), `pressing Free trial marks it (${activeAfter.trim()})`)
+
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('tutorpro_bookings_v1') || '[]').find((b) => b.id === 'bk-regular'))
+  ok(stored?.isTrialClass === true, 'the change is saved on the booking')
+  ok(stored?.classKindSetBy === 'admin', 'recorded as the administrator\'s decision')
+
+  // And back again, which must also clear the "enrolled" flag.
+  await page.locator('.booking-kind-switch button:has-text("Regular class")').click()
+  await page.waitForTimeout(1500)
+  const reverted = await page.evaluate(() => JSON.parse(localStorage.getItem('tutorpro_bookings_v1') || '[]').find((b) => b.id === 'bk-regular'))
+  ok(reverted?.isTrialClass === false, 'it can be changed back to a regular class')
+  ok(reverted?.trialEnrolled === false, 'and the trial-enrolled flag is cleared, so nothing contradicts itself')
+  await page.screenshot({ path: 'screenshots/class-kind-mark.png' })
+  await page.close()
+}
+
+/* ================================================================== */
+/* ================================================================== */
 console.log('\n--- the teacher can tell them apart ---')
 {
   const page = await open(TEACHER_ID, { bookings: seededBookings })
@@ -211,6 +270,14 @@ console.log('\n--- the teacher can tell them apart ---')
   const regularChip = colours.find((c) => /regular/i.test(c.text))
   ok(trialChip && regularChip && trialChip.background !== regularChip.background, `the two chips look different (${trialChip?.background} vs ${regularChip?.background})`)
   ok(trialChip?.colour !== 'rgb(255, 255, 255)' && regularChip?.colour !== 'rgb(255, 255, 255)', 'neither chip is white-on-white')
+  const rowColours = await page.$$eval('.lesson-card', (nodes) => nodes.map((n) => ({
+    trial: n.classList.contains('lesson-card--trial'),
+    edge: getComputedStyle(n).borderLeftColor,
+  })))
+  ok(rowColours.length === 2, `both lesson rows are listed (${rowColours.length})`)
+  ok(rowColours.find((r) => !r.trial)?.edge === 'rgb(225, 29, 72)', `the row of a booked regular class is red (${rowColours.find((r) => !r.trial)?.edge})`)
+  ok(rowColours.find((r) => r.trial)?.edge === 'rgb(245, 158, 11)', `and a trial row is amber (${rowColours.find((r) => r.trial)?.edge})`)
+
   await page.locator('.lesson-card').first().scrollIntoViewIfNeeded()
   await page.waitForTimeout(300)
   await page.screenshot({ path: 'screenshots/class-kind-cards.png' })

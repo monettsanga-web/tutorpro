@@ -987,17 +987,11 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   const session = booking.classroomSummary
   const sessionMinutes = session?.elapsedSeconds ? Math.max(1, Math.round(session.elapsedSeconds / 60)) : 0
 
+  /* The whole row is colour-coded, not just a badge: red down the edge for
+     a booked class, amber for a free trial. A teacher scanning a list needs
+     to see which is which before reading a word of it. */
   return (
-    <article 
-      className={`lesson-card ${booking.isTrialClass ? 'lesson-card--trial' : ''}`}
-      style={booking.isTrialClass ? {
-        borderLeft: '5px solid #ff9e2c',
-        paddingLeft: '14px',
-        background: 'rgba(255, 158, 44, 0.04)',
-        borderRadius: '8px',
-        marginBottom: '10px'
-      } : undefined}
-    >
+    <article className={`lesson-card lesson-card--status-${booking.status} ${booking.isTrialClass ? 'lesson-card--trial' : 'lesson-card--regular'}`}>
       {/* The big day/month badge follows the family's own calendar: a Manila
           morning lesson is still the previous evening in New York, and the
           badge used to disagree with the date printed beside it. */}
@@ -1375,6 +1369,57 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
           {canComment ? <><textarea value={comment} onChange={(event) => { setComment(event.target.value); setSaved(false); setError('') }} maxLength="500" placeholder={`Write a reminder or lesson comment for ${learnerName}…`} /><div className="booking-comment-actions"><small>{comment.length}/500 · Visible to the parent, teacher and administrator</small><button onClick={saveComment} disabled={saving || comment.trim() === (current.slotComment || '').trim()}><Save size={15} /> {saving ? 'Saving…' : 'Save comment'}</button></div></> : <div className="booking-comment-readonly">{current.slotComment ? <><MessageSquareText size={16} /><span>{current.slotComment}</span></> : <span>No teacher comment has been added to this booking yet.</span>}</div>}
         </div>
 
+        {/* Mark an EXISTING lesson as a trial or a regular class.
+            Choosing at booking time is not enough on its own: most lessons
+            are booked by the parent, and the school often only learns which
+            arrangement applies afterwards. This works on any booking, from
+            any calendar, and the teacher sees the change immediately. */}
+        {account.role === 'admin' && (
+          <div className="booking-kind-editor">
+            <div>
+              <strong>Class type</strong>
+              <small>What {teacher?.fullName || current.teacherName || 'the teacher'} sees on their dashboard.</small>
+            </div>
+            <div className="booking-kind-switch" role="group" aria-label="Mark this class as a trial or a regular class">
+              {[['regular', 'Regular class'], ['trial', 'Free trial']].map(([value, label]) => {
+                const isTrial = value === 'trial'
+                const active = Boolean(current.isTrialClass) === isTrial
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={active ? 'active' : ''}
+                    aria-pressed={active}
+                    disabled={saving || active}
+                    onClick={async () => {
+                      setSaving(true)
+                      setError('')
+                      try {
+                        const updated = updateBooking(current.id, {
+                          isTrialClass: isTrial,
+                          classKindSetBy: 'admin',
+                          // A class that is no longer a trial cannot be an
+                          // enrolled trial, or the teacher payout note would
+                          // contradict the class type beside it.
+                          ...(isTrial ? {} : { trialEnrolled: false }),
+                        })
+                        changed(updated)
+                        if (cloudSyncEnabled()) await withTimeout(syncBookingNow(updated), 10000, 'Could not sync booking.')
+                      } catch (kindError) {
+                        setError(kindError.message)
+                      } finally {
+                        setSaving(false)
+                      }
+                    }}
+                  >
+                    {isTrial ? <Gift size={14} /> : <CheckCircle2 size={14} />} {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Trial Class Enrollment Settings for Admin */}
         {account.role === 'admin' && current.isTrialClass && (
           <div className="booking-trial-enrollment-editor" style={{ marginTop: '15px', padding: '12px', background: 'rgba(188, 233, 78, 0.08)', borderRadius: '8px', border: '1px solid rgba(188, 233, 78, 0.25)', marginBottom: '15px' }}>
@@ -1399,7 +1444,7 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
                 style={{ width: '18px', height: '18px', accentColor: '#bce94e', cursor: 'pointer' }}
               />
               <div>
-                <strong style={{ display: 'block', fontSize: '1.06rem', color: '#bce94e' }}>🎁 Successful Trial Class Enrolled</strong>
+                <strong style={{ display: 'block', fontSize: '1.06rem', color: '#166534' }}>Successful trial — student enrolled</strong>
                 <span style={{ fontSize: '0.967rem', color: '#b9adc7' }}>Marking this trial class as enrolled will upgrade the teacher's payout from ₱40 to ₱100!</span>
               </div>
             </label>
@@ -1416,7 +1461,14 @@ export function BookingSlotDialog({ booking, account, onClose, onChanged }) {
   )
 }
 
-function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking = false }) {
+/**
+ * `adminBooking` — an administrator is operating this panel: they choose
+ *   whether the class is a trial, and the booking is confirmed immediately.
+ * `useCredits` — the family's paid credits are checked and spent. Defaults
+ *   to the old behaviour (parents yes, the dedicated admin screen no) so
+ *   nothing about money changes by accident.
+ */
+function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking = false, useCredits = !adminBooking }) {
   let teachers = getApprovedTeachers()
   const learner = learnerProp || account.child
 
@@ -1507,7 +1559,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
 
     // Restrict bookings to only paid session count (booking credits) for Parent view
     const balance = typeof account.paidLessonsBalance === 'number' ? account.paidLessonsBalance : 0
-    if (!adminBooking && selectedLessons.length > balance) {
+    if (useCredits && selectedLessons.length > balance) {
       setError(`⚠️ You only have ${balance} paid lesson credits left, but you are trying to book ${selectedLessons.length} lessons. Please complete payment first so your booking credits can be added.`)
       return
     }
@@ -1535,13 +1587,10 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
       }
       
       // Update account paidLessonsBalance credits upon successful booking
-      if (!adminBooking) {
-        const nextBalance = balance - createdCount
-        const updated = updateAccount(account.id, { paidLessonsBalance: nextBalance })
-        onBooked()
-      } else {
-        onBooked()
+      if (useCredits) {
+        updateAccount(account.id, { paidLessonsBalance: balance - createdCount })
       }
+      onBooked()
 
       setSuccessCount(createdCount)
       setSelectedLessons([])
@@ -4150,7 +4199,14 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
         </div>
       )}
 
-      {active === 'book' && <BookLessonPanel account={account} learner={learner} onBooked={() => { const refreshed = getAccountById(account.id); if (refreshed) { setAccount(refreshed); onAccountChange(refreshed) } setBookingVersion((value) => value + 1) }} />}
+      {/* An administrator who opens a family's dashboard and books from here
+          is still an administrator: they get the Trial/Regular choice and the
+          booking is confirmed straight away, exactly as on Admin → All
+          bookings. Without `adminBooking` this screen silently behaved like a
+          parent, which is why the class-type choice appeared to be missing.
+          `useCredits` keeps the family's paid credits being spent, because
+          that is what has always happened on this screen. */}
+      {active === 'book' && <BookLessonPanel account={account} learner={learner} adminBooking={adminPreview} useCredits onBooked={() => { const refreshed = getAccountById(account.id); if (refreshed) { setAccount(refreshed); onAccountChange(refreshed) } setBookingVersion((value) => value + 1) }} />}
 
       {active === 'my-teachers' && (
         <ParentTeacherReviews

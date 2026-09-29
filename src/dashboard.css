@@ -12204,3 +12204,82 @@ a.feedback-resource-detail:hover strong {
 
 .class-kind-warning svg { flex: none; margin-top: 2px; }
 .class-kind-warning strong { display: block; margin-bottom: 2px; }
+
+/* ── The row of a booked class ────────────────────────────────────────
+   Red down the left edge of every booked lesson row, amber for a free
+   trial. The calendar already does this; a teacher reading the list view
+   needs the same signal, because that is the view they actually scan. */
+.lesson-card {
+  border-left: 5px solid transparent;
+  padding-left: 14px;
+}
+
+.lesson-card--regular.lesson-card--status-pending,
+.lesson-card--regular.lesson-card--status-confirmed,
+.lesson-card--regular.lesson-card--status-ongoing {
+  border-left-color: #e11d48;
+  background: rgba(225, 29, 72, 0.04);
+}
+
+.lesson-card--trial.lesson-card--status-pending,
+.lesson-card--trial.lesson-card--status-confirmed,
+.lesson-card--trial.lesson-card--status-ongoing {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+/* Finished or dropped lessons must not shout as loudly as a live booking. */
+.lesson-card--status-completed { border-left-color: #4ca66a; }
+.lesson-card--status-absent { border-left-color: #7c8796; }
+.lesson-card--status-cancelled,
+.lesson-card--status-declined { border-left-color: #a7adb6; }
+
+/* ── Marking an existing lesson as a trial or a regular class ─────────
+   Admin-only, inside the booking details dialog, so a lesson booked by a
+   parent can still be corrected afterwards. */
+.booking-kind-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 15px 0;
+  padding: 13px 15px;
+  border: 1px solid var(--portal-line, #e4e0eb);
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.booking-kind-editor strong { display: block; color: var(--portal-navy, #321568); font-size: 1rem; }
+.booking-kind-editor small { display: block; margin-top: 2px; color: var(--portal-muted, #716981); font-size: 0.88rem; }
+
+.booking-kind-switch { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+
+.booking-kind-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid var(--portal-line, #e4e0eb);
+  background: #fff;
+  color: #4a3a7a;
+  font-family: inherit;
+  font-size: 0.93rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.booking-kind-switch button:hover:not(:disabled) { border-color: #7048df; }
+
+/* The current type is filled in its own colour — red for a booked class,
+   amber for a trial — so it matches the row and the calendar cell. */
+.booking-kind-switch button.active { cursor: default; color: #fff; }
+.booking-kind-switch button.active:first-child { background: #e11d48; border-color: #e11d48; }
+.booking-kind-switch button.active:last-child { background: #b45309; border-color: #b45309; }
+
+@media (max-width: 560px) {
+  .booking-kind-editor { flex-direction: column; align-items: stretch; }
+  .booking-kind-switch button { flex: 1; justify-content: center; }
+}
