@@ -105,9 +105,24 @@ function writeAccounts(accounts) {
   }
 }
 
+/*
+ * Which account is signed in on this device.
+ *
+ * This is the second half of staying signed in; the first is the Supabase
+ * session in src/supabaseClient.js. Both used to live in `sessionStorage`,
+ * which the browser empties when the tab closes, so everyone — parents,
+ * teachers and the administrator — was asked for their password again on
+ * every visit.
+ *
+ * `writeSessionId` was actively deleting the localStorage copy, so even the
+ * fallback below could never fire. It now writes to localStorage, which
+ * survives closing the browser. Reading still checks sessionStorage first so
+ * anyone signed in under the old behaviour is not thrown out mid-session.
+ */
 function readSessionId() {
   try {
-    return (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(SESSION_KEY) : null) || localStorage.getItem(SESSION_KEY)
+    const perTab = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(SESSION_KEY) : null
+    return perTab || localStorage.getItem(SESSION_KEY)
   } catch {
     return null
   }
@@ -115,12 +130,13 @@ function readSessionId() {
 
 function writeSessionId(accountId) {
   try {
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem(SESSION_KEY, accountId)
-      localStorage.removeItem(SESSION_KEY)
-    } else localStorage.setItem(SESSION_KEY, accountId)
-  } catch {
     localStorage.setItem(SESSION_KEY, accountId)
+    // The old per-tab copy would otherwise shadow this one on the next read.
+    if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(SESSION_KEY)
+  } catch {
+    // Private browsing: remember it for this tab at least, so the person can
+    // finish what they are doing.
+    try { sessionStorage.setItem(SESSION_KEY, accountId) } catch { /* Nothing can be stored. */ }
   }
 }
 
@@ -906,4 +922,23 @@ export async function removeTeacherAccount(accountId) {
 
 export function logoutAccount() {
   clearSessionId()
+  /*
+   * Also end the Supabase session, not just the local record of who was
+   * signed in.
+   *
+   * This did not matter while the session lived in `sessionStorage`: the
+   * browser threw it away when the tab closed, so a stale token could never
+   * outlive the visit. Now that sessions survive a restart — which is the
+   * whole point — "Log out" has to actually revoke one, or a family sharing
+   * a laptop would leave a working access token behind on the machine.
+   *
+   * `scope: 'local'` clears this device only, so signing out on the school
+   * computer does not kick the same person off their phone.
+   */
+  import('./supabaseClient.js')
+    .then(({ supabase }) => supabase?.auth?.signOut({ scope: 'local' }))
+    .catch(() => {
+      // Offline, or Supabase not configured. clearSessionId already ran, so
+      // this device is signed out either way.
+    })
 }
