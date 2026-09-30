@@ -699,13 +699,34 @@
   text-align: left;
 }
 
+/* Sat at -74px, which is 20px ABOVE the panda's own box (the mascot is
+   108px tall and centred on --panda-top), so on a phone a small unexplained
+   white ✕ floated over whatever copy happened to be there — measured sitting
+   on the "O" of the homepage headline and again in the middle of the footer.
+   -46px keeps it inside the mascot's outline, where it reads as the panda's
+   own close button and only ever covers artwork. */
 .panda-companion__dismiss--loose {
-  top: calc(var(--panda-top) - 74px);
+  top: calc(var(--panda-top) - 46px);
   opacity: 1;
 }
 
 /* Sit on whichever side the panda is, always inside the screen. */
 .panda-layer--left .panda-companion__bubble--loose { left: 74px; right: auto; }
 .panda-layer--right .panda-companion__bubble--loose { right: 74px; left: auto; }
-.panda-layer--left .panda-companion__dismiss--loose { left: 12px; right: auto; }
-.panda-layer--right .panda-companion__dismiss--loose { right: 12px; left: auto; }
+
+/* The close button used to be pinned to the screen edge (left/right: 12px)
+   while the panda floated somewhere else entirely, so it appeared as a lone
+   unexplained ✕ sitting on the copy — on the homepage headline, and again
+   over the footer's "Chat on WhatsApp" button. Both --panda-left and
+   --panda-size are published by the flight loop, so the button can ride on
+   the mascot's inboard shoulder instead: it is then always clearly part of
+   the panda, and only ever covers the mascot's own artwork.
+   `max`/`min` keep it on screen if the panda drifts right to the edge. */
+.panda-layer--left .panda-companion__dismiss--loose {
+  left: min(calc(var(--panda-left) + var(--panda-size) / 2 - 30px), calc(100vw - 38px));
+  right: auto;
+}
+.panda-layer--right .panda-companion__dismiss--loose {
+  left: max(calc(var(--panda-left) - var(--panda-size) / 2 + 4px), 12px);
+  right: auto;
+}

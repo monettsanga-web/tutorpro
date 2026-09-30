@@ -130,7 +130,11 @@ body.support-embedded-open .support-widget:not(.support-widget--embedded) { disp
 .support-widget {
   right: clamp(18px, 3vw, 30px);
   bottom: clamp(18px, 3vw, 30px);
-  font-family: Inter, 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Was `Inter, ...` — Inter is not loaded anywhere on this site, so the chat
+     widget silently rendered in whatever each device substituted and looked
+     like it came from a different website. Use the family we actually ship
+     (see /assets/fonts.css). */
+  font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .support-launcher {

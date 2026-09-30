@@ -60,6 +60,8 @@
     "verify:classkind": "node scripts/verify-class-kind.mjs",
     "verify:emaillanguage": "node scripts/verify-email-language.mjs",
     "verify:textfit": "node scripts/audit-text-fit.mjs",
+    "verify:overlayfit": "node scripts/audit-overlay-fit.mjs",
+    "verify:sw": "node scripts/verify-service-worker.mjs",
     "verify:textfitdash": "node scripts/audit-text-fit-dashboard.mjs",
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:paymenterrors": "node scripts/test-payment-errors.mjs",

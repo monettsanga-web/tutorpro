@@ -101,7 +101,10 @@ const SYSTEM = [
   'system-ui', 'ui-sans-serif', 'sans-serif', 'serif', 'monospace', '-apple-system',
   'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Helvetica',
   'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans', 'Noto Sans', 'Apple SD Gothic Neo',
-  'Malgun Gothic', 'Trebuchet MS', 'Courier New', 'inherit', 'initial', 'unset',
+  'Malgun Gothic', 'Courier New', 'inherit', 'initial', 'unset',
+  /* 'Trebuchet MS' is deliberately NOT on this list. It ships with Windows
+     and macOS but with neither iOS nor Android, so naming it is exactly the
+     bug this file exists to stop: the phone silently draws something else. */
   /* Pretendard is named first on the Korean pages and is NOT bundled: Hangul
      falls through to the reader's own Korean system font, which is correct
      and avoids shipping a multi-megabyte CJK file. */
@@ -110,7 +113,27 @@ const SYSTEM = [
      Korean chain — never the face a layout is measured against. */
   'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC',
 ]
-const stylesheets = ['src/styles.css', 'src/dashboard.css', 'public/assets/pages.css', 'public/assets/kr.css']
+/* This list used to be four filenames typed by hand, and that is precisely
+   how `src/support-chat.css` kept asking for Inter after every other file had
+   been cleaned: the check never opened it. Sweep every stylesheet in the
+   project instead, so a new one is covered the moment it is added. */
+function collectStylesheets() {
+  const found = []
+  const walk = (dir) => {
+    if (!existsSync(dir)) return
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name.endsWith('.css')) found.push(full.replace(root + '/', ''))
+    }
+  }
+  walk(join(root, 'src'))
+  walk(join(root, 'public/assets'))
+  return found.sort()
+}
+const stylesheets = collectStylesheets()
+ok(stylesheets.length >= 6, `the sweep found every stylesheet (${stylesheets.length})`)
+ok(stylesheets.includes('src/support-chat.css'), 'including src/support-chat.css, which the old hand-typed list missed')
 stylesheets.forEach((file) => {
   if (!existsSync(join(root, file))) return
   const css = read(file)
@@ -136,6 +159,43 @@ ok(!/font-family:\s*Inter[,;]/.test(read('public/assets/pages.css')), 'the page 
 const vercel = read('vercel.json')
 ok(/woff2/.test(vercel), 'vercel.json caches the font files')
 ok(/max-age=31536000, immutable/.test(vercel), 'for a year, immutably')
+
+/* ================================================================== */
+/* 6. A deploy actually reaches a phone that has been here before      */
+/* ================================================================== */
+/* The font fix was live on the server for a whole day while returning
+   visitors carried on seeing the old type. The service worker cached
+   EVERYTHING under /assets/ cache-first and never revalidated, and three of
+   the stylesheets live at stable paths (pages.css, kr.css, fonts.css), so
+   the browser kept the pre-deploy copy for ever. No amount of fixing CSS
+   can show up on a device while that is true, which is why the same report
+   kept coming back. */
+const sw = read('public/service-worker.js')
+const cacheName = (sw.match(/const CACHE_NAME = '([^']+)'/) || [])[1]
+ok(Boolean(cacheName), `the service worker names its cache (${cacheName || 'none'})`)
+ok(cacheName !== 'tutorpro-classroom-shell-v2', 'and it is not the version that went stale')
+ok(/isImmutable/.test(sw), 'it tells immutable files apart from stable ones')
+ok(
+  /HASHED\s*=\s*\/-\[A-Za-z0-9_-\]\{8,\}/.test(sw),
+  'it recognises a Vite content hash, which is what makes a file safe to keep',
+)
+/* The decisive one: the stable stylesheets must go to the network first. */
+ok(
+  /revalidating\(request\)[\s\S]{0,500}\.catch\(\(\) => caches\.match\(request\)\)/.test(sw),
+  'stable paths are fetched from the network with the cache only as a fallback',
+)
+ok(
+  /cache: 'no-cache'/.test(sw),
+  "and with cache: 'no-cache', so the browser's own HTTP cache cannot answer with a stale copy",
+)
+ok(
+  !/woff2/.test(sw) || /IMMUTABLE_TYPE[\s\S]{0,120}woff2/.test(sw),
+  'fonts stay cache-first, so a repeat visit still costs nothing',
+)
+ok(
+  /caches\s*\.?\s*[\s\S]{0,40}keys\(\)[\s\S]{0,400}caches\.delete/.test(sw),
+  'activating the new worker deletes the old cache outright',
+)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

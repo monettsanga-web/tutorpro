@@ -746,7 +746,7 @@ function CurriculumFramework() {
       ccss: 'US CCSS',
       cambridge: 'Cambridge Prep',
       outcomes: 'Learning Outcomes',
-      swipe: '👈 Swipe horizontally to view full framework columns (Lv.0 to Lv.11) 👉',
+      swipe: 'Swipe across to see every level, Lv.0 to Lv.11',
       outcomes0_2: [
         'Master 26 letters and 44 basic phonics sounds.',
         'Able to blend and spell simple words.',
@@ -779,7 +779,7 @@ function CurriculumFramework() {
       ccss: '美國CCSS標準',
       cambridge: '劍橋考試準備',
       outcomes: '能力達成 Outcomes',
-      swipe: '👈 左右滑動查看完整課程體系 (Lv.0 至 Lv.11) 👉',
+      swipe: '左右滑動查看完整課程體系（Lv.0 至 Lv.11）',
       outcomes0_2: [
         '熟練掌握26個字母及44個基本發音及拼讀',
         '能夠拼讀和拼寫簡單單詞',
@@ -943,7 +943,12 @@ function CurriculumFramework() {
         
         {/* Mobile touch scroll indicator */}
         <div style={{ textAlign: 'center', color: '#bce94e', fontSize: '0.956rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} className="mobile-scroll-tip">
+          {/* Was 👈 … 👉. A device without those emoji draws two empty
+              boxes, so the hint read as a rendering fault rather than an
+              instruction. lucide draws real arrows everywhere. */}
+          <ChevronLeft size={15} aria-hidden="true" />
           <span>{t.swipe}</span>
+          <ChevronRight size={15} aria-hidden="true" />
         </div>
       </div>
     </section>
