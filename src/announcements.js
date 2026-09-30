@@ -5,7 +5,7 @@ import { isSupabaseConfigured, supabase } from './supabaseClient.js'
 const ANNOUNCEMENTS_KEY = 'tutorpro_announcements_v1'
 const DISMISSED_KEY = 'tutorpro_announcements_dismissed_v1'
 
-/** Country -> language, matching the map used by AutoTranslate.jsx. */
+/** Country -> language, matching the map used by VisitorCountry.jsx. */
 export const COUNTRY_LANGUAGES = {
   PH: 'tl', KR: 'ko', CN: 'zh-CN', TW: 'zh-TW', HK: 'zh-TW', MO: 'zh-TW', JP: 'ja',
   ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',

@@ -9,7 +9,7 @@
  * was written in English AND Chinese and sent to everybody — a parent in
  * Manila received half a message they could not read.
  *
- * The website already knows the answer: AutoTranslate picks the language
+ * The website already knows the answer: VisitorCountry.jsx picks the language
  * from the visitor's IP address, and src/timezone.js resolves their zone
  * the same way. This records both on the account so the server can write
  * one email, in one language, on the reader's own clock.
@@ -19,7 +19,7 @@
  */
 
 /**
- * Country → language, mirroring src/AutoTranslate.jsx. Kept here as well so
+ * Country → language, mirroring src/VisitorCountry.jsx. Kept here as well so
  * the IP language can be worked out without importing a React component.
  */
 const COUNTRY_LANGUAGES = {

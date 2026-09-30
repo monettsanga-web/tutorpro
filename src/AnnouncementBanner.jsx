@@ -15,7 +15,7 @@ import {
 /**
  * Shows admin announcements inside the dashboard, automatically translated
  * into the viewer's language. The language comes from their IP country
- * (detected by AutoTranslate) or the country saved at registration.
+ * (detected by VisitorCountry.jsx) or the country saved at registration.
  * English is always kept underneath so nothing is lost in translation.
  */
 export default function AnnouncementBanner({ account }) {

@@ -1863,8 +1863,9 @@ export default function App() {
   /*
    * Record the language and timezone this person is actually using.
    *
-   * Both come from their IP address — AutoTranslate picks the language,
-   * src/timezone.js resolves the zone — but a SERVER writing an email has
+   * Both come from their IP address — VisitorCountry.jsx resolves the
+   * country and language, src/timezone.js the zone — but a SERVER writing
+   * an email has
    * neither. Saving them on the profile is what lets a booking
    * notification arrive in one language the reader understands, at a time
    * on their own clock, instead of the old English-plus-Chinese message
@@ -1877,7 +1878,12 @@ export default function App() {
     if (!currentAccount?.id) return undefined
     const remember = () => {
       const snapshot = currentLocaleSnapshot({
-        language: typeof document !== 'undefined' ? document.documentElement.lang : '',
+        // Was `document.documentElement.lang`, which the old auto-translate
+        // widget used to rewrite. The page is no longer translated and now
+        // correctly declares itself English, so the reader's own language
+        // comes from the detected IP country instead — which is what the
+        // emails were always meant to follow.
+        language: currentVisitorLocale().language,
         // The IP country is what the emails follow.
         country: readVisitorCountry(),
         timeZone: visitorTimeZone(),

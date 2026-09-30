@@ -2854,74 +2854,12 @@ h3 {
   color: #fff;
 }
 
-/* ---------- Automatic language control ---------- */
-.language-control {
-  position: fixed;
-  z-index: 95;
-  bottom: 18px;
-  left: 18px;
-  display: flex;
-  min-height: 43px;
-  /* Never wider than the screen it is pinned to. */
-  max-width: calc(100vw - 36px);
-  align-items: center;
-  gap: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 14px;
-  padding: 0 9px 0 12px;
-  background: rgba(50, 21, 104, 0.94);
-  box-shadow: 0 13px 32px rgba(39, 17, 78, 0.24);
-  color: #fff;
-  backdrop-filter: blur(10px);
-}
-
-.language-control > span {
-  color: #dff7a6;
-  font-size: 0.863rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-
-.language-control select {
-  /* Was a flat max-width: 125px. The longest option, "Auto-detect", needs
-     more than that in DM Sans at weight 750, so the control shipped reading
-     "Auto-detec" with the native chevron sitting on the final letter. Let the
-     select size itself to its own content and only cap it against the
-     viewport. */
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  min-height: 29px;
-  text-overflow: ellipsis;
-  border: 0;
-  border-radius: 8px;
-  outline: 0;
-  padding: 0 7px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-size: 0.934rem;
-  font-weight: 750;
-  cursor: pointer;
-}
-
-.language-control select option {
-  background: #fff;
-  color: #321568;
-}
-
-#google_translate_element,
-.goog-te-banner-frame,
-.goog-logo-link,
-.goog-te-gadget {
-  display: none !important;
-}
-
-body {
-  top: 0 !important;
-}
+/* The floating "CHOOSE LANGUAGE" picker and the Google Translate widget it
+   drove were removed: they machine-translated the English page at its own
+   URL, which competes with the real /kr/, /cn/ and /tw/ pages for the same
+   search results. See src/VisitorCountry.jsx. Those pages are linked from
+   the footer and declared in hreflang, which is how this is meant to work.
+   The support chat still translates messages. */
 
 .skiptranslate iframe {
   display: none !important;
@@ -4393,15 +4331,6 @@ body {
     width: min(100% - 32px, 1160px);
   }
 
-  .language-control {
-    bottom: 12px;
-    left: 12px;
-  }
-
-  .language-control > span {
-    display: none;
-  }
-
   .section {
     padding: 74px 0;
   }
@@ -5728,25 +5657,6 @@ body {
   }
 }
 
-.language-control--translate-ready {
-  gap: 8px;
-}
-
-.quick-translate-link {
-  border-radius: 999px;
-  padding: 6px 9px;
-  background: rgba(188, 233, 78, 0.16);
-  color: #bce94e;
-  font-size: 0.934rem;
-  font-weight: 950;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.quick-translate-link:hover {
-  background: rgba(188, 233, 78, 0.24);
-}
-
 /* PWA install prompt */
 .pwa-install-card {
   position: fixed;
@@ -5905,10 +5815,6 @@ body {
     padding-bottom: 176px;
   }
 
-  body:has(.mobile-guest-action-bar) .language-control {
-    bottom: 94px;
-  }
-
   body:has(.mobile-guest-action-bar) .support-widget {
     bottom: 94px;
   }
@@ -5922,10 +5828,6 @@ body {
 
   body:has(.support-panel) .support-widget {
     bottom: 12px;
-  }
-
-  body:has(.support-panel) .language-control {
-    display: none;
   }
 }
 

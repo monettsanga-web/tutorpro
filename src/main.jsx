@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
-import AutoTranslate from './AutoTranslate.jsx'
+import VisitorCountry from './VisitorCountry.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import PremiumMotion from './PremiumMotion.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
@@ -30,7 +30,7 @@ if (prerendered) prerendered.remove()
 createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>
-      <AutoTranslate />
+      <VisitorCountry />
       <PremiumMotion />
       <App />
       <SupportChatWidget />

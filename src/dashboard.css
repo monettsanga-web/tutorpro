@@ -451,14 +451,6 @@
   .portal .portal-main { margin-left: 250px; }
 
   .portal .portal-topbar { display: none; }
-
-  /* The floating language pill is anchored bottom-left, which is exactly where
-     the sidebar's Log out button now sits. Inside a dashboard it moves to the
-     content area; the marketing site keeps it in the corner. */
-  body:has(.portal) .language-control {
-    left: auto;
-    right: 18px;
-  }
 }
 
 

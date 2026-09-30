@@ -21,7 +21,12 @@ const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf
 
 const booking = read('supabase/functions/booking-notification/index.ts')
 const messaging = read('supabase/functions/message-notification/index.ts')
-const autoTranslate = read('src/AutoTranslate.jsx')
+/* Was src/AutoTranslate.jsx. That component machine-translated the whole
+   site by IP, which competed with the real /kr/, /cn/ and /tw/ pages in
+   search; it was replaced by one that only detects the country. The
+   country -> language table moved with it, and the emails must still match
+   it exactly. */
+const autoTranslate = read('src/VisitorCountry.jsx')
 
 /** Lift `const NAME... = { ... }` out of TypeScript source and evaluate it. */
 function extractObject(source, name) {

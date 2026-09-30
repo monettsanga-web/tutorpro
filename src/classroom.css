@@ -1310,8 +1310,7 @@ body.classroom-active .support-widget {
 /* Prevent support widget from covering classroom controls on phones */
 @media (max-width: 650px) {
   body.classroom-active .support-widget,
-  body.classroom-active .support-launcher,
-  body.classroom-active .language-control {
+  body.classroom-active .support-launcher {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
