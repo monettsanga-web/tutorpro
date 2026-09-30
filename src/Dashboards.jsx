@@ -53,6 +53,7 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  Search,
   Trash2,
   TriangleAlert,
   TrendingUp,
@@ -136,6 +137,7 @@ import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './me
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import ParentTeacherReviews from './ParentTeacherReviews.jsx'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
+import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
 import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
@@ -6862,6 +6864,11 @@ export function AdminDashboard({ account, onHome, onLogout }) {
      the function which version is deployed. Nothing is sent. */
   const [emailCheck, setEmailCheck] = useState(null)
   const [checkingEmail, setCheckingEmail] = useState(false)
+  // Throwaway accounts left behind by automated checks. `null` = never looked.
+  const [testAccounts, setTestAccounts] = useState(null)
+  const [testAccountsBusy, setTestAccountsBusy] = useState('')
+  const [testAccountsError, setTestAccountsError] = useState('')
+  const [testAccountsRemoved, setTestAccountsRemoved] = useState(null)
   const [managedLearnerId, setManagedLearnerId] = useState('')
   const [showAddTeacher, setShowAddTeacher] = useState(false)
   // Teachers who exist only in this browser and so cannot sign in elsewhere.
@@ -7306,6 +7313,54 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
   }
 
+  /*
+   * Test accounts.
+   *
+   * Automated checks have to sign up through the real form to prove
+   * registration works, and every one of those sign-ups lands in the live
+   * Students list. Deleting them properly means deleting the Supabase AUTH
+   * user, which only the service-role key can do, so the work happens in
+   * /api/admin/test-accounts.js. The matching rules live in
+   * src/testAccounts.js and are applied again on the server before anything
+   * is removed, so this button cannot delete a real family even if the
+   * request were tampered with.
+   */
+  const findTestAccountsToRemove = async () => {
+    setTestAccountsBusy('list')
+    setTestAccountsError('')
+    setTestAccountsRemoved(null)
+    try {
+      const result = await listTestAccounts()
+      setTestAccounts(result.accounts || [])
+    } catch (error) {
+      setTestAccountsError(error.message)
+      setTestAccounts(null)
+    } finally {
+      setTestAccountsBusy('')
+    }
+  }
+
+  const removeTestAccounts = async () => {
+    if (!testAccounts?.length) return
+    setTestAccountsBusy('delete')
+    setTestAccountsError('')
+    try {
+      const result = await deleteTestAccounts(testAccounts.map((item) => item.id))
+      setTestAccountsRemoved(result)
+      setTestAccounts([])
+      /* The Students list is built from the cloud profiles, so pull them
+         again. `reconcile: true` is what drops the rows that have just gone,
+         exactly as the background sync does. */
+      const profiles = await fetchCloudProfiles()
+      mergeCloudAccounts(profiles, { reconcile: true })
+      setVersion((value) => value + 1)
+    } catch (error) {
+      setTestAccountsError(error.message)
+    } finally {
+      setTestAccountsBusy('')
+    }
+  }
+
   const openManagedStudent = (studentId, learnerId) => {
     setAdminActionError('')
     let student = getAccountById(studentId)
@@ -7641,6 +7696,50 @@ export function AdminDashboard({ account, onHome, onLogout }) {
               </div>
             )}
           </section>
+          <section className="portal-card admin-test-accounts">
+            <div className="portal-card__heading portal-card__heading--small">
+              <div>
+                <span className="portal-kicker">Housekeeping</span>
+                <h2>Test accounts in your Students list</h2>
+                <p>Checking that registration works means signing up through the real form, and those sign-ups land here with your real families. This finds them and removes them completely, including the login. Nothing is deleted until you press the second button.</p>
+              </div>
+              <button className="portal-primary-button" type="button" onClick={findTestAccountsToRemove} disabled={Boolean(testAccountsBusy)}>
+                {testAccountsBusy === 'list' ? 'Looking…' : 'Find test accounts'} <Search size={16} />
+              </button>
+            </div>
+            {testAccountsError && <div className="portal-error" role="alert">{testAccountsError}</div>}
+            {testAccountsRemoved && (
+              <div className="admin-test-accounts__result is-ok" role="status">
+                <strong>Removed {testAccountsRemoved.deleted?.length || 0} test {(testAccountsRemoved.deleted?.length === 1) ? 'account' : 'accounts'}.</strong>
+                {Boolean(testAccountsRemoved.failed?.length) && <p>{testAccountsRemoved.failed.length} could not be removed: {testAccountsRemoved.failed.map((item) => `${item.email} (${item.why})`).join(', ')}</p>}
+                {Boolean(testAccountsRemoved.refused?.length) && <p>{testAccountsRemoved.refused.length} were skipped because they did not match the test-account rules — that is the safety check doing its job.</p>}
+              </div>
+            )}
+            {testAccounts && !testAccounts.length && !testAccountsRemoved && (
+              <div className="admin-test-accounts__result is-ok" role="status">
+                <strong>Nothing to clean up. Every account in your list looks like a real family.</strong>
+              </div>
+            )}
+            {Boolean(testAccounts?.length) && (
+              <div className="admin-test-accounts__result is-bad">
+                <strong>{testAccounts.length} test {testAccounts.length === 1 ? 'account' : 'accounts'} found. Read the list, then delete.</strong>
+                <ul className="admin-test-accounts__list">
+                  {testAccounts.map((item) => (
+                    <li key={item.id}>
+                      <b>{item.parentName}</b>
+                      <span>{item.email}</span>
+                      <small>{item.reason}</small>
+                    </li>
+                  ))}
+                </ul>
+                <p>Administrators and teachers can never appear on this list, and the server checks every account again before removing it.</p>
+                <button className="portal-primary-button portal-primary-button--danger" type="button" onClick={removeTestAccounts} disabled={Boolean(testAccountsBusy)}>
+                  {testAccountsBusy === 'delete' ? 'Deleting…' : `Delete these ${testAccounts.length}`} <Trash2 size={16} />
+                </button>
+              </div>
+            )}
+          </section>
+
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--blue"><GraduationCap size={21} /></span><div><small>Student profiles</small><strong>{studentProfiles.length}</strong><em>{students.length} family accounts</em></div></article>
             <article><span className="stat-icon stat-icon--orange"><Users size={21} /></span><div><small>Teacher profiles</small><strong>{teachers.length}</strong><em>{pendingTeachers} pending review</em></div></article>

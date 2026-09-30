@@ -12476,3 +12476,77 @@ a.feedback-resource-detail:hover strong {
   line-height: 1.3;
   text-overflow: clip;
 }
+
+/* ---------------------------------------------------------------------------
+   Test-account housekeeping (Admin -> Overview)
+
+   Automated checks have to register through the real form to prove sign-up
+   works, and those accounts land in the live Students list next to real
+   families. This card finds them and removes them. It is deliberately loud:
+   it deletes people, so the list is shown in full, with the reason each row
+   qualifies, before the second button appears.
+   --------------------------------------------------------------------------- */
+.admin-test-accounts__result {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  border-radius: 16px;
+  padding: 15px 17px;
+  font-size: 1.006rem;
+  line-height: 1.55;
+}
+
+.admin-test-accounts__result.is-ok {
+  border: 1px solid #b6e4c8;
+  background: #f0fbf4;
+  color: #14532d;
+}
+
+.admin-test-accounts__result.is-bad {
+  border: 1px solid #f3cfa6;
+  background: #fff8ef;
+  color: #7a3d0b;
+}
+
+.admin-test-accounts__result strong { font-size: 1.06rem; }
+.admin-test-accounts__result p { margin: 0; }
+
+.admin-test-accounts__list {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-test-accounts__list li {
+  display: grid;
+  /* minmax(0, 1fr): a bare 1fr is min-content sized, which stops a long
+     address from wrapping and pushes the card wider than its column. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  border: 1px solid rgba(122, 61, 11, 0.16);
+  border-radius: 12px;
+  padding: 9px 12px;
+  background: #fff;
+}
+
+.admin-test-accounts__list b { color: #321568; font-size: 1.006rem; }
+
+.admin-test-accounts__list span {
+  overflow-wrap: anywhere;
+  color: #5b4a6b;
+  font-size: 0.978rem;
+}
+
+.admin-test-accounts__list small { color: #7a3d0b; font-size: 0.923rem; line-height: 1.4; }
+
+.portal-primary-button--danger {
+  border-color: #c0392b;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #fff;
+}
+
+.portal-primary-button--danger:hover { background: linear-gradient(135deg, #d94436, #a93226); }
