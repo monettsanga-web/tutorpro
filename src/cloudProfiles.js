@@ -53,33 +53,114 @@ function broadcastProfileRefresh() {
   })
 }
 
+/**
+ * WeChat IDs and WhatsApp numbers are not Supabase identities.
+ *
+ * THE FAULT THIS FIXES
+ * --------------------
+ * The registration modal offers five ways to sign up. Two of them could
+ * never work:
+ *
+ *   WhatsApp  -> supabase.auth.signUp({ phone })  -> 400
+ *                {"error_code":"phone_provider_disabled",
+ *                 "msg":"Phone signups are disabled"}
+ *   WeChat    -> supabase.auth.signInAnonymously() -> 422
+ *                {"error_code":"anonymous_provider_disabled",
+ *                 "msg":"Anonymous sign-ins are disabled"}
+ *
+ * A parent who picked either button was told "Shared registration failed:
+ * Phone signups are disabled" and could not create an account at all.
+ * Logging in was broken the same way: signInCloudProfile sent anything
+ * without an "@" to the phone endpoint, which is also switched off.
+ *
+ * Turning those providers on is not an option here — phone sign-up needs a
+ * paid SMS gateway, and anonymous sign-in would let anyone create unlimited
+ * accounts. Neither is something this project should depend on.
+ *
+ * So the handle becomes a stable address under a subdomain we own, and the
+ * account is created with ordinary email+password, which IS enabled and is
+ * auto-confirmed. The parent still types their WeChat ID or phone number and
+ * their own password; the mapping is invisible to them and deterministic, so
+ * the same handle always resolves to the same account.
+ *
+ * Nothing is ever sent to these addresses: notifications go to the address
+ * on the profile, and the domain has no mailbox.
+ */
+const HANDLE_DOMAIN = 'accounts.tutorpro.site'
+
+export function cloudLoginEmail(provider, login) {
+  const raw = String(login || '').trim()
+  if (provider === 'wechat') return `wechat.${raw.toLowerCase()}@${HANDLE_DOMAIN}`
+  if (provider === 'whatsapp') return `whatsapp.${raw.replace(/\D/g, '')}@${HANDLE_DOMAIN}`
+  return raw.toLowerCase()
+}
+
+/**
+ * The login box asks for one value and does not know which button was used
+ * at registration, so work it out from the shape. A WeChat ID must start
+ * with a letter (see validLoginId), a WhatsApp number is digits and +, and
+ * an email has an @, so the three can never be confused.
+ */
+export function cloudLoginCandidates(loginValue) {
+  const raw = String(loginValue || '').trim()
+  if (!raw) return []
+  if (raw.includes('@')) return [raw.toLowerCase()]
+  if (/^\+?[0-9\s()-]{8,20}$/.test(raw)) return [cloudLoginEmail('whatsapp', raw)]
+  return [cloudLoginEmail('wechat', raw)]
+}
+
+/** Supabase speaks to developers. Parents need a sentence they can act on. */
+function friendlyAuthMessage(message = '') {
+  const text = String(message)
+  if (/already registered|user_already_exists|already exists/i.test(text)) {
+    return 'An account with this login already exists. Please log in instead, or use "Forgot password" to get back in.'
+  }
+  if (/password/i.test(text) && /weak|short|at least/i.test(text)) {
+    return 'Please choose a longer password: at least eight characters, including a number.'
+  }
+  if (/rate limit|too many/i.test(text)) {
+    return 'Too many attempts just now. Please wait a minute and try again.'
+  }
+  if (/phone_provider_disabled|anonymous_provider_disabled/i.test(text)) {
+    return 'That sign-up method is not available right now. Please use an email address, or contact us and we will set the account up for you.'
+  }
+  if (/invalid.*email|email_address_invalid/i.test(text)) {
+    return 'That login does not look right for the option you picked. Check it and try again.'
+  }
+  return `Registration could not be completed: ${text}`
+}
+
 export async function registerCloudProfile({ login, password, provider, account }) {
   if (!supabase) return null
   const options = { data: metadataFor(account) }
-  let result
-  if (['email', 'gmail', 'yahoo'].includes(provider)) {
-    result = await supabase.auth.signUp({ email: login.trim().toLowerCase(), password, options })
-  } else if (provider === 'whatsapp') {
-    result = await supabase.auth.signUp({ phone: login.replace(/[\s()-]/g, ''), password, options })
-  } else {
-    result = await supabase.auth.signInAnonymously({ options })
+  /* Always an email sign-up. WeChat and WhatsApp handles are mapped to an
+     address first — see cloudLoginEmail above for why. */
+  const email = cloudLoginEmail(provider, login)
+  const result = await supabase.auth.signUp({ email, password, options })
+  if (result.error) {
+    if (isServiceRestriction(result.error)) throw new Error(serviceRestrictionMessage(result.error))
+    throw new Error(friendlyAuthMessage(result.error.message))
   }
-  if (result.error) throw new Error(`Shared registration failed: ${result.error.message}`)
   return { userId: result.data.user?.id || null, session: result.data.session || null }
 }
 
 export async function signInCloudProfile(login, password) {
   if (!supabase) return null
-  const identifier = login.trim()
-  const credentials = identifier.includes('@')
-    ? { email: identifier.toLowerCase(), password }
-    : { phone: identifier.replace(/[\s()-]/g, ''), password }
-  const { data, error } = await supabase.auth.signInWithPassword(credentials)
+  const candidates = cloudLoginCandidates(login)
+  if (!candidates.length) throw new Error('Enter the email, WeChat ID or phone number you registered with.')
+
+  let lastError = null
+  let data = null
+  for (const email of candidates) {
+    const attempt = await supabase.auth.signInWithPassword({ email, password })
+    if (!attempt.error) { data = attempt.data; break }
+    lastError = attempt.error
+  }
   // A free-plan service restriction (HTTP 402) would otherwise surface to a
   // parent as "Supabase login failed", which reads like the site is broken
   // and their account is gone. Explain it instead.
-  if (error && isServiceRestriction(error)) throw new Error(serviceRestrictionMessage(error))
-  if (error) throw new Error(`Supabase login failed: ${error.message}`)
+  if (!data && lastError && isServiceRestriction(lastError)) throw new Error(serviceRestrictionMessage(lastError))
+  if (!data) throw new Error(`Supabase login failed: ${lastError?.message || 'unknown error'}`)
   const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
   if (profileError && isServiceRestriction(profileError)) throw new Error(serviceRestrictionMessage(profileError))
   if (profileError) throw new Error(`Shared profile could not be loaded: ${profileError.message}`)
