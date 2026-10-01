@@ -61,7 +61,24 @@ set search_path = public
 as $$
 begin
   -- Administrators may change anything.
-  if public.is_tutorpro_admin() then
+  --
+  -- So may anything with no end-user attached: that is the website's own
+  -- server key and the SQL editor. This exemption is NOT optional. Without
+  -- it the first version of this file broke two things:
+  --
+  --   * a verified PayPal payment could no longer add the lessons it paid
+  --     for, and a paid invoice stayed marked unpaid, because
+  --     api/_paypal.js writes credits and clears paymentRequest with the
+  --     server key;
+  --   * a teacher created from the admin dashboard stayed a student,
+  --     because api/teachers/create.js sets role on an existing row.
+  --
+  -- It is safe: a signed-out visitor cannot reach this trigger at all. The
+  -- row-level security policy on profiles is `using (id = auth.uid())`,
+  -- which matches no row when there is no user, so their UPDATE is refused
+  -- before the trigger ever runs. Only the service key, which never leaves
+  -- the server, gets here with no user.
+  if auth.uid() is null or public.is_tutorpro_admin() then
     return new;
   end if;
 

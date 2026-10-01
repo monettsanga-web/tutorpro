@@ -86,5 +86,18 @@ for (const key of ['pricing', 'discount', 'paymentRequest', 'credits']) {
 ok(/is_tutorpro_admin\(\)/.test(sql), 'administrators are exempt, so your own edits still work')
 ok(!/&\s*'\{\}'::jsonb/.test(sql), 'the guard contains no placeholder left over from drafting')
 
+/* The exemption that the first version of the file was missing. Without it
+   the trigger also blocked the website's OWN server key, so a verified
+   PayPal payment could not add the lessons it had just paid for, and a
+   teacher created by the admin stayed a student. */
+ok(
+  /auth\.uid\(\) is null/.test(sql),
+  "the server's own key is exempt, so a paid lesson is still credited and a new teacher still gets their role",
+)
+ok(
+  /auth\.uid\(\) is null or public\.is_tutorpro_admin\(\)/.test(sql),
+  'the exemption is on the very first check, before anything is frozen',
+)
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
