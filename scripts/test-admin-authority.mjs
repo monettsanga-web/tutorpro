@@ -99,5 +99,20 @@ ok(
   'the exemption is on the very first check, before anything is frozen',
 )
 
+/* Part 1 guards UPDATE only. The profile row is CREATED from the sign-up
+   request's own metadata, so the 90%-off attack simply moved to
+   registration until a BEFORE INSERT guard existed too. */
+ok(/before insert on public\.profiles/i.test(sql), 'sign-up is guarded as well as editing')
+ok(/new\.role := 'student'/.test(sql), 'nobody can register themselves as an administrator')
+ok(/new\.status := 'pending'/.test(sql), 'a teacher application still has to be approved by hand')
+ok(
+  /current_user = 'service_role'/.test(sql),
+  "the insert guard tells the server apart from a visitor by the database role, because auth.uid() is null for BOTH at sign-up",
+)
+ok(
+  !/security definer[\s\S]{0,400}current_user = 'service_role'/.test(sql),
+  'and it is not security definer, which would have made current_user the function owner and broken that test',
+)
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

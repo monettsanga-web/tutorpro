@@ -123,3 +123,76 @@ select tgname as trigger_name
 from pg_trigger
 where tgrelid = 'public.profiles'::regclass
   and not tgisinternal;
+
+
+-- ============================================================
+-- PART 2 · The same protection at SIGN-UP time
+-- ============================================================
+--
+-- WHY A SECOND PART WAS NEEDED
+-- ----------------------------
+-- Part 1 guards UPDATE. It does not guard INSERT, and the profile row is
+-- CREATED from whatever the sign-up request says about itself: the
+-- handle_tutorpro_user trigger copies raw_user_meta_data straight into
+-- profiles. Tested against the live site after Part 1 was installed:
+--
+--   POST /auth/v1/signup  { ..., "data": { "role": "admin",
+--                            "profile_data": { "pricing":
+--                              { "mode": "percent", "percent": 90 } } } }
+--
+--   -> profiles.role stored as "admin"
+--   -> a $16.00 order came back as $1.60 from the real payment endpoint
+--
+-- So the discount hole was still open; it had just moved from "edit your
+-- profile" to "say it when you register".
+--
+-- HOW THE SERVER IS TOLD APART FROM A VISITOR
+-- -------------------------------------------
+-- Part 1 trusts `auth.uid() is null`, which is correct for UPDATE: only the
+-- server key can update a row with no user attached. That test cannot be
+-- reused here, because sign-up ALSO has no user yet.
+--
+-- This function is deliberately NOT security definer, so current_user is
+-- whoever is really writing:
+--
+--   service_role          the website's own server key   -> trusted
+--   postgres              inside the sign-up trigger      -> sanitised
+--   authenticated / anon  a visitor                       -> sanitised
+--
+-- Legitimate teacher applications still work: they register with
+-- role 'teacher' and status 'pending', which is exactly what is allowed
+-- through, and you still approve them by hand.
+
+create or replace function public.tutorpro_guard_profile_insert()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if current_user = 'service_role' or public.is_tutorpro_admin() then
+    return new;
+  end if;
+
+  -- Nobody makes themselves an administrator by signing up.
+  if new.role is distinct from 'teacher' then
+    new.role := 'student';
+  end if;
+
+  -- A teacher application always starts waiting for your approval.
+  if new.role = 'teacher' then
+    new.status := 'pending';
+  end if;
+
+  -- A price, a discount, a bill or lesson credits can never arrive with a
+  -- brand new account. Only you create those.
+  new.profile_data := coalesce(new.profile_data, '{}'::jsonb)
+    - 'pricing' - 'discount' - 'paymentRequest' - 'credits';
+
+  return new;
+end;
+$$;
+
+drop trigger if exists tutorpro_guard_profile_insert on public.profiles;
+create trigger tutorpro_guard_profile_insert
+  before insert on public.profiles
+  for each row execute function public.tutorpro_guard_profile_insert();
