@@ -12550,3 +12550,78 @@ a.feedback-resource-detail:hover strong {
 }
 
 .portal-primary-button--danger:hover { background: linear-gradient(135deg, #d94436, #a93226); }
+
+/* ---------------------------------------------------------------------------
+   Students grouped by country (Admin -> Students)
+
+   The country pills above the table were a read-only summary and the table
+   below them was one flat run of every family in sign-up order, so answering
+   "who do I have in Korea?" meant reading every row. The pills are now the
+   filter, and with no filter chosen the table is split into a block per
+   country, largest first.
+   --------------------------------------------------------------------------- */
+.student-country-pill {
+  /* It is a button now, so undo the browser's own button styling and keep
+     the text left-aligned like the read-only version was. */
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.student-country-pill:hover { border-color: rgba(255,255,255,.42); transform: translateY(-1px); }
+.student-country-pill:focus-visible { outline: 2px solid #bce94e; outline-offset: 2px; }
+
+.student-country-pill.is-selected {
+  border-color: #bce94e;
+  background: rgba(188, 233, 78, .17);
+  box-shadow: 0 0 0 1px rgba(188, 233, 78, .35) inset;
+}
+
+.student-country-pill--all > span { display: grid; place-items: center; }
+
+/* A country block inside the table. */
+.admin-table__country + .admin-table__country { margin-top: 18px; }
+
+.admin-table__country-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #e4e9f3;
+  padding: 12px 4px 8px;
+}
+
+.admin-table__country-head > span { font-size: 1.22rem; line-height: 1; }
+.admin-table__country-head strong { color: #321568; font-size: 1.06rem; letter-spacing: -.01em; }
+.admin-table__country-head small { color: #6b5f7d; font-size: 0.945rem; }
+
+/* The heading is a flex row, not a grid row, so it must not inherit the
+   table's column template. Keeping it full width lets a long country name
+   wrap instead of being squeezed into the first column. */
+@media (max-width: 900px) {
+  .admin-table__country-head { padding: 10px 2px 8px; }
+}
+
+/* The two-letter country chip that replaced the flag emoji. Windows ships
+   no flag glyphs and nor do many Linux builds, so the flags were drawn as
+   empty boxes beside every family. */
+.country-mark {
+  display: inline-grid;
+  min-width: 34px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  padding: 0 6px;
+  opacity: .85;
+  font-size: 0.83rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1;
+}
+
+.country-mark--unknown { border-style: dashed; opacity: .6; }
