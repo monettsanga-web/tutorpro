@@ -25,19 +25,19 @@ const learner = (name, year) => ({ id: `${name}-l`.toLowerCase(), name, year, cu
 /* Two families in the Philippines (one with two children), two in Korea,
    one in Malaysia, and one that registered before the country was recorded. */
 const FAMILIES = [
-  { id: '22222222-2222-4222-8222-000000000001', parentName: 'Maria Santos', country: 'PH', children: [learner('Juan', 'Year 3'), learner('Ana', 'Year 5')] },
-  { id: '22222222-2222-4222-8222-000000000002', parentName: 'Jun Dela Cruz', country: 'PH', children: [learner('Mika', 'Year 2')] },
-  { id: '22222222-2222-4222-8222-000000000003', parentName: 'Park Ji-woo', country: 'KR', children: [learner('Minho', 'Year 4')] },
-  { id: '22222222-2222-4222-8222-000000000004', parentName: 'Kim Soo-ah', country: 'KR', children: [learner('Hana', 'Year 6')] },
-  { id: '22222222-2222-4222-8222-000000000005', parentName: 'Aisyah Rahman', country: 'MY', children: [learner('Nurul', 'Year 1')] },
-  { id: '22222222-2222-4222-8222-000000000006', parentName: 'Older Account', country: '', children: [learner('Sam', 'Year 7')] },
+  { id: '22222222-2222-4222-8222-000000000001', parentName: 'Maria Santos', email: 'maria.santos@gmail.com', country: 'PH', children: [learner('Juan', 'Year 3'), learner('Ana', 'Year 5')] },
+  { id: '22222222-2222-4222-8222-000000000002', parentName: 'Jun Dela Cruz', email: 'jun.delacruz@yahoo.com', country: 'PH', children: [learner('Mika', 'Year 2')] },
+  { id: '22222222-2222-4222-8222-000000000003', parentName: 'Park Ji-woo', email: 'jiwoo.park@naver.com', country: 'KR', children: [learner('Minho', 'Year 4')] },
+  { id: '22222222-2222-4222-8222-000000000004', parentName: 'Kim Soo-ah', email: 'sooah@kakao.com', country: 'KR', children: [learner('Hana', 'Year 6')] },
+  { id: '22222222-2222-4222-8222-000000000005', parentName: 'Aisyah Rahman', email: 'aisyah@gmail.com', country: 'MY', children: [learner('Nurul', 'Year 1')] },
+  { id: '22222222-2222-4222-8222-000000000006', parentName: 'Older Account', email: 'older@gmail.com', country: '', children: [learner('Sam', 'Year 7')] },
 ]
 
 const accounts = [
   { id: ADMIN, role: 'admin', status: 'active', parentName: 'Monett', fullName: 'Monett', email: 'admin@example.com', loginId: 'admin@example.com' },
   ...FAMILIES.map((f) => ({
     id: f.id, role: 'student', status: 'active', parentName: f.parentName,
-    email: `${f.id}@example.com`, loginId: `${f.id}@example.com`,
+    email: f.email, loginId: f.email,
     registrationCountry: f.country, children: f.children, child: f.children[0],
   })),
 ]
@@ -82,10 +82,15 @@ const snapshot = (page) => page.evaluate(`(() => ({
     rows: block.querySelectorAll('.admin-table__row').length,
     learners: [...block.querySelectorAll('.admin-table__row')].map((r) => r.children[1]?.querySelector('strong')?.textContent?.trim()),
   })),
-  pills: [...document.querySelectorAll('.student-country-pill')].map((p) => ({
-    label: p.querySelector('strong')?.textContent?.trim(),
+  pills: [...document.querySelectorAll('.country-chip')].map((p) => ({
+    label: p.querySelector('span:not(.country-mark)')?.textContent?.trim(),
+    count: p.querySelector('b')?.textContent?.trim(),
     selected: p.getAttribute('aria-pressed') === 'true',
   })),
+  stats: [...document.querySelectorAll('.students-stat')].map((c) => c.textContent.replace(/[\\s]+/g, ' ').trim()),
+  shown: document.querySelector('.students-toolbar__count')?.textContent?.trim() || '',
+  headings: [...document.querySelectorAll('.admin-table__head span')].map((h) => h.textContent.trim()),
+  columns: getComputedStyle(document.querySelector('.admin-table__head')).gridTemplateColumns.split(' ').length,
   totalRows: document.querySelectorAll('.admin-table__row').length,
   empty: document.querySelector('.admin-table .empty-state, .admin-table__country ~ .empty-state')?.textContent?.trim() || '',
 }))()`)
@@ -112,10 +117,21 @@ ok(
   view.sections[0] === ph || view.sections[0]?.title === ph?.title,
   `the biggest country comes first (${view.sections[0]?.title})`,
 )
-ok(view.pills[0]?.label === 'All countries' && view.pills[0].selected, 'the "All countries" pill is there and selected to begin with')
+ok(view.pills[0]?.label === 'All countries' && view.pills[0].selected, 'the "All countries" chip is there and selected to begin with')
+ok(view.pills[0]?.count === '7', `the All chip counts every learner (${view.pills[0]?.count})`)
+ok(view.stats.length === 4, `four summary figures sit above the list (${view.stats.join(' | ')})`)
+ok(/7\s*Learners/i.test(view.stats[0] || ''), `the first counts learners (${view.stats[0]})`)
+ok(/6\s*Families/i.test(view.stats[1] || ''), `the second counts families (${view.stats[1]})`)
+ok(/3\s*Countries/i.test(view.stats[2] || ''), `the third counts countries, excluding the unknown one (${view.stats[2]})`)
+/* The table declared six headings against a five-column grid, so the sixth
+   landed in an implicit auto track and never lined up with its heading. */
+ok(view.headings.length === 5, `the table has five headings (${view.headings.join(', ')})`)
+ok(view.columns === 5, `and exactly five columns to put them in (${view.columns})`)
+ok(!view.headings.includes('Country'), 'the Country column is gone - it repeated the group heading on every row')
+ok(/7 of 7 shown/.test(view.shown), `the toolbar says how many are showing (${view.shown})`)
 
 /* ---- filtering ---- */
-await page.locator('.student-country-pill', { hasText: 'Korea' }).first().click()
+await page.locator('.country-chip', { hasText: 'Korea' }).first().click()
 await page.waitForTimeout(500)
 view = await snapshot(page)
 console.log('\nFiltered to Korea')
@@ -128,11 +144,31 @@ ok(
 ok(view.pills[0]?.selected === false, 'and "All countries" is no longer highlighted')
 
 /* ---- pressing the same pill clears the filter ---- */
-await page.locator('.student-country-pill', { hasText: 'Korea' }).first().click()
+await page.locator('.country-chip', { hasText: 'Korea' }).first().click()
 await page.waitForTimeout(500)
 view = await snapshot(page)
 console.log('\nPressing Korea again')
 ok(view.totalRows === 7, `clears the filter and brings everyone back (${view.totalRows})`)
+
+/* ---- search ---- */
+await page.fill('.students-search input', 'santos')
+await page.waitForTimeout(600)
+view = await snapshot(page)
+console.log('\nSearching "santos"')
+ok(view.totalRows === 2, `finds the two Santos learners (${view.totalRows})`)
+ok(/2 of 7 shown/.test(view.shown), `and says so (${view.shown})`)
+await page.fill('.students-search input', 'jiwoo.park@naver.com')
+await page.waitForTimeout(600)
+view = await snapshot(page)
+ok(view.totalRows === 1, `an email address finds one family (${view.totalRows})`)
+await page.fill('.students-search input', 'zzzz-nobody')
+await page.waitForTimeout(600)
+view = await snapshot(page)
+ok(view.totalRows === 0, 'a search with no matches shows nothing rather than everything')
+await page.click('.students-search button')
+await page.waitForTimeout(600)
+view = await snapshot(page)
+ok(view.totalRows === 7, `clearing the search brings everyone back (${view.totalRows})`)
 
 /* ---- it survives a phone ---- */
 await page.screenshot({ path: '/home/user/tutorpro/shots/students-by-country.png', fullPage: false })

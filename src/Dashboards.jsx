@@ -198,6 +198,21 @@ function countryLabel(country) {
  * blank, or left over from before the site recorded a country - becomes
  * UNKNOWN rather than disappearing from the list.
  */
+/*
+ * A stable colour for a family's initials.
+ *
+ * Every avatar used the same pale blue, so a list of twenty families read
+ * as twenty identical grey dots and the eye had nothing to anchor to.
+ * Deriving the tone from the name means the same family keeps the same
+ * colour everywhere, and the palette is fixed so nothing clashes.
+ */
+function avatarTone(name) {
+  const source = String(name || '')
+  let hash = 0
+  for (let index = 0; index < source.length; index += 1) hash = (hash * 31 + source.charCodeAt(index)) >>> 0
+  return ['violet', 'blue', 'teal', 'amber', 'rose', 'green'][hash % 6]
+}
+
 function studentCountryKey(student) {
   const country = String(student?.registrationCountry || '').toUpperCase()
   return /^[A-Z]{2}$/.test(country) ? country : 'UNKNOWN'
@@ -6889,6 +6904,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
      the function which version is deployed. Nothing is sent. */
   // 'ALL', a two-letter country code, or 'UNKNOWN'.
   const [studentCountryFilter, setStudentCountryFilter] = useState('ALL')
+  const [studentSearch, setStudentSearch] = useState('')
   const [emailCheck, setEmailCheck] = useState(null)
   const [checkingEmail, setCheckingEmail] = useState(false)
   // Throwaway accounts left behind by automated checks. `null` = never looked.
@@ -6966,7 +6982,6 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     return groups
   }, new Map())
   const studentCountries = [...countryGroups.values()].sort((first, second) => second.learners - first.learners || first.code.localeCompare(second.code))
-  const locatedStudentFamilies = studentCountries.filter((country) => country.code !== 'UNKNOWN').reduce((total, country) => total + country.families, 0)
   /*
    * Students arranged by the country they registered from.
    *
@@ -6977,9 +6992,16 @@ export function AdminDashboard({ account, onHome, onLogout }) {
    * first. The country still shows on each row, because that column is what
    * a screen reader and a CSV export read.
    */
-  const visibleStudentProfiles = studentCountryFilter === 'ALL'
-    ? studentProfiles
-    : studentProfiles.filter(({ account: student }) => studentCountryKey(student) === studentCountryFilter)
+  const studentQuery = studentSearch.trim().toLowerCase()
+  const visibleStudentProfiles = studentProfiles.filter(({ account: student, learner }) => {
+    if (studentCountryFilter !== 'ALL' && studentCountryKey(student) !== studentCountryFilter) return false
+    if (!studentQuery) return true
+    // Search what an administrator actually remembers: a name, or an address.
+    return [student.parentName, student.email, student.loginId, learner.name, learner.year, learner.curriculum]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(studentQuery))
+  })
+  const suspendedLearnerCount = studentProfiles.filter(({ learner }) => learner.accessStatus === 'suspended').length
   const studentCountrySections = (() => {
     const rowsByCountry = new Map()
     visibleStudentProfiles.forEach((profile) => {
@@ -7707,7 +7729,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   /* One row of the students table. Lifted out of the JSX so the table can
      be grouped by country without duplicating any of it. */
-  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year} · <span className={`inline-access inline-access--${rowLearner.accessStatus}`}>{rowLearner.accessStatus}</span></small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div className="student-country-cell"><CountryMark country={student.registrationCountry} /><div><strong>{student.registrationCountry ? countryLabel(student.registrationCountry) : 'Unavailable'}</strong><small>{student.registrationCountry ? 'IP estimate at registration' : 'Registered before location capture'}</small></div></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
+  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span className={`table-avatar table-avatar--${avatarTone(student.parentName)}`}>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
@@ -7837,10 +7859,38 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="student-world-card"><div className="student-world-card__intro"><span className="student-world-card__orb"><Globe2 size={25} /></span><div><span className="portal-kicker">TutorPro around the world</span><h2>Your learning community, at a glance.</h2><p>Registration countries are estimated from the visitor’s IP at sign-up. We save only the country code—never an IP address.</p></div><div className="student-world-card__metric"><strong>{studentCountries.filter((country) => country.code !== 'UNKNOWN').length}</strong><span>countries represented</span></div></div><div className="student-world-card__countries" role="group" aria-label="Filter students by country">{studentCountries.length ? <>
-            <button type="button" className={`student-country-pill student-country-pill--all${studentCountryFilter === 'ALL' ? ' is-selected' : ''}`} aria-pressed={studentCountryFilter === 'ALL'} onClick={() => setStudentCountryFilter('ALL')}><span aria-hidden="true"><Globe2 size={18} /></span><div><strong>All countries</strong><small>{studentProfiles.length} learner{studentProfiles.length === 1 ? '' : 's'} · {students.length} {students.length === 1 ? 'family' : 'families'}</small></div></button>
-            {studentCountries.map((country) => <button type="button" className={`student-country-pill${country.code === 'UNKNOWN' ? ' student-country-pill--unknown' : ''}${studentCountryFilter === country.code ? ' is-selected' : ''}`} key={country.code} aria-pressed={studentCountryFilter === country.code} onClick={() => setStudentCountryFilter(studentCountryFilter === country.code ? 'ALL' : country.code)}><CountryMark country={country.code} /><div><strong>{country.code === 'UNKNOWN' ? 'Awaiting location' : countryLabel(country.code)}</strong><small>{country.learners} learner{country.learners === 1 ? '' : 's'} · {country.families} {country.families === 1 ? 'family' : 'families'}</small></div></button>)}
-          </> : <div className="student-world-card__empty">Your global learner map will appear here as families register.</div>}</div><div className="student-world-card__footer"><span><i /> {locatedStudentFamilies} of {students.length} family accounts include a country estimate</span><span>Private, aggregate view for administrators</span></div></section><section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Country</span><span>Status</span><span>Controls</span></div>{studentCountrySections.length ? studentCountrySections.map((section) => <div className="admin-table__country" key={section.code}>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="students-overview">
+          <div className="students-stats">
+            <article className="students-stat"><span className="students-stat__icon students-stat__icon--blue"><GraduationCap size={18} /></span><div><strong>{studentProfiles.length}</strong><small>Learner{studentProfiles.length === 1 ? '' : 's'}</small></div></article>
+            <article className="students-stat"><span className="students-stat__icon students-stat__icon--violet"><Users size={18} /></span><div><strong>{students.length}</strong><small>{students.length === 1 ? 'Family' : 'Families'}</small></div></article>
+            <article className="students-stat"><span className="students-stat__icon students-stat__icon--green"><Globe2 size={18} /></span><div><strong>{studentCountries.filter((country) => country.code !== 'UNKNOWN').length}</strong><small>Countries</small></div></article>
+            <article className={`students-stat${suspendedLearnerCount ? ' students-stat--alert' : ''}`}><span className="students-stat__icon students-stat__icon--amber"><Ban size={18} /></span><div><strong>{suspendedLearnerCount}</strong><small>Suspended</small></div></article>
+          </div>
+
+          <div className="students-toolbar">
+            <label className="students-search">
+              <Search size={17} />
+              <input type="search" value={studentSearch} onChange={(event) => setStudentSearch(event.target.value)} placeholder="Search a parent, student or email…" aria-label="Search students" />
+              {Boolean(studentSearch) && <button type="button" onClick={() => setStudentSearch('')} aria-label="Clear search"><X size={15} /></button>}
+            </label>
+            <span className="students-toolbar__count">{visibleStudentProfiles.length} of {studentProfiles.length} shown</span>
+          </div>
+
+          {/* One row of countries that scrolls sideways rather than wrapping
+              into a ragged block. Each is a filter. */}
+          <div className="students-countries" role="group" aria-label="Filter students by country">
+            <button type="button" className={`country-chip${studentCountryFilter === 'ALL' ? ' is-selected' : ''}`} aria-pressed={studentCountryFilter === 'ALL'} onClick={() => setStudentCountryFilter('ALL')}>
+              <Globe2 size={15} /><span>All countries</span><b>{studentProfiles.length}</b>
+            </button>
+            {studentCountries.map((country) => <button type="button" key={country.code} className={`country-chip${country.code === 'UNKNOWN' ? ' country-chip--unknown' : ''}${studentCountryFilter === country.code ? ' is-selected' : ''}`} aria-pressed={studentCountryFilter === country.code} onClick={() => setStudentCountryFilter(studentCountryFilter === country.code ? 'ALL' : country.code)}>
+              <CountryMark country={country.code} /><span>{country.code === 'UNKNOWN' ? 'Awaiting location' : countryLabel(country.code)}</span><b>{country.learners}</b>
+            </button>)}
+          </div>
+
+          <p className="students-privacy"><ShieldCheck size={14} /> Countries are estimated from the visitor’s IP at sign-up. Only the country code is stored — never an IP address.</p>
+        </section>
+
+        <section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentCountrySections.length ? studentCountrySections.map((section) => <div className="admin-table__country" key={section.code}>
             <div className="admin-table__country-head"><CountryMark country={section.code} /><strong>{section.code === 'UNKNOWN' ? 'Awaiting location' : countryLabel(section.code)}</strong><small>{section.rows.length} learner{section.rows.length === 1 ? '' : 's'} · {section.families} {section.families === 1 ? 'family' : 'families'}</small></div>
             {section.rows.map(renderStudentRow)}
           </div>) : <EmptyState icon={GraduationCap} title={studentCountryFilter === 'ALL' ? 'No students yet' : `No students from ${studentCountryFilter === 'UNKNOWN' ? 'an unknown country' : countryLabel(studentCountryFilter)}`} text={studentCountryFilter === 'ALL' ? 'New parent registrations will appear here.' : 'Choose another country, or All countries, to see the rest.'} />}</div></section></div>

@@ -12625,3 +12625,345 @@ a.feedback-resource-detail:hover strong {
 }
 
 .country-mark--unknown { border-style: dashed; opacity: .6; }
+
+/* ===========================================================================
+   Admin -> Students, redesigned
+   ---------------------------------------------------------------------------
+   What was wrong with the old layout:
+
+   - A heavy dark-blue gradient panel sat in the middle of an otherwise light
+     dashboard and took the eye before the actual list did.
+   - The country pills wrapped into a ragged two-row block whose last row was
+     half empty.
+   - The table declared six columns against a five-column grid
+     (`1.2fr 1fr 1fr 0.9fr 0.95fr`), so the sixth landed in an implicit
+     auto-width track and never lined up with its heading.
+   - The Country column repeated, on every single row, the country already
+     written in the group heading above it - plus the words "IP estimate at
+     registration" eight times down the page.
+   - The status appeared twice per row: once as text under the student's name
+     and again as a badge two columns later.
+   - Long addresses broke across three lines, so no two rows were the same
+     height.
+   - Every avatar was the same pale blue, so a list of families read as a
+     column of identical grey dots.
+
+   The shape now: four plain statistics, one search box, one scrolling row of
+   country filters, then the list.
+   =========================================================================== */
+
+.students-overview {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ---------- statistics ---------- */
+.students-stats {
+  display: grid;
+  /* minmax(0, 1fr) - a bare 1fr is min-content sized and would be pushed
+     wider than its share by a long label. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 12px;
+}
+
+.students-stat {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--portal-line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 15, 48, .04);
+}
+
+.students-stat > div { display: flex; min-width: 0; flex-direction: column; }
+.students-stat strong { color: #1d1033; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.students-stat small { color: var(--portal-muted); font-size: 0.9rem; font-weight: 600; }
+.students-stat--alert strong { color: #b4341f; }
+
+.students-stat__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+}
+
+.students-stat__icon--blue { background: #e7efff; color: #2457c5; }
+.students-stat__icon--violet { background: #efe8ff; color: #6b3fd4; }
+.students-stat__icon--green { background: #e4f7ec; color: #1a7f4b; }
+.students-stat__icon--amber { background: #fdeee4; color: #b4541f; }
+
+/* ---------- search ---------- */
+.students-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.students-search {
+  display: flex;
+  flex: 1 1 280px;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--portal-line);
+  border-radius: 13px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--portal-muted);
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.students-search:focus-within { border-color: #7048df; box-shadow: 0 0 0 3px rgba(112, 72, 223, .14); }
+
+.students-search input {
+  min-width: 0;
+  min-height: 46px;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: #1d1033;
+  font-size: 1rem;
+}
+
+.students-search input::-webkit-search-cancel-button { display: none; }
+
+.students-search > button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #eceaf3;
+  color: #43355c;
+  cursor: pointer;
+}
+
+.students-toolbar__count { color: var(--portal-muted); font-size: 0.94rem; font-weight: 600; white-space: nowrap; }
+
+/* ---------- country filters ---------- */
+/* One row that scrolls, rather than a block that wraps raggedly. */
+.students-countries {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.country-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--portal-line);
+  border-radius: 999px;
+  padding: 8px 14px 8px 11px;
+  background: #fff;
+  color: #3a2b55;
+  font-size: 0.95rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.country-chip:hover { border-color: #b9a9e4; background: #faf8ff; }
+.country-chip:focus-visible { outline: 2px solid #7048df; outline-offset: 2px; }
+
+.country-chip b {
+  min-width: 22px;
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: #f0edf7;
+  color: #43355c;
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.country-chip.is-selected {
+  border-color: #321568;
+  background: #321568;
+  color: #fff;
+}
+
+.country-chip.is-selected b { background: rgba(255, 255, 255, .2); color: #fff; }
+.country-chip.is-selected .country-mark { border-color: rgba(255, 255, 255, .6); }
+.country-chip--unknown { color: #6b5f7d; }
+
+.students-privacy {
+  display: flex;
+  /* Not centre: when this wraps to two lines on a phone the shield would
+     float in the middle of the paragraph instead of beside its first word. */
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: var(--portal-muted);
+  font-size: 0.9rem;
+}
+
+.students-privacy svg { flex: 0 0 auto; margin-top: 2px; }
+
+/* ---------- the list ---------- */
+/* Five headings, five columns. They disagreed before. */
+.admin-table--students .admin-table__head,
+.admin-table--students .admin-table__row {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, .8fr) minmax(0, .9fr);
+}
+
+.admin-table__country-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  border-bottom: 0;
+  padding: 20px 2px 10px;
+}
+
+.admin-table__country-head strong {
+  color: #1d1033;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.admin-table__country-head small {
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: #f2f0f7;
+  color: #5c4d78;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.admin-table__country:first-child .admin-table__country-head { padding-top: 6px; }
+.admin-table__country + .admin-table__country { margin-top: 2px; }
+
+.admin-table--students .admin-table__row {
+  border-top: 1px solid #f0eef5;
+  border-radius: 12px;
+  padding: 0 8px;
+  margin: 0 -8px;
+  transition: background .14s ease;
+}
+
+.admin-table--students .admin-table__row:hover { background: #faf9fd; }
+
+/* Two lines, then an ellipsis. A long address used to break across three,
+   so no two rows were the same height. The full address is in the tooltip
+   and on the family's own page. */
+.admin-table--students .table-person small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.35;
+}
+
+/* ---------- avatars ---------- */
+.table-avatar { color: #fff !important; font-weight: 800; }
+.table-avatar--violet { background: linear-gradient(140deg, #7f56d9, #5b34b5) !important; }
+.table-avatar--blue { background: linear-gradient(140deg, #3b82f6, #1d4ed8) !important; }
+.table-avatar--teal { background: linear-gradient(140deg, #14b8a6, #0d7f73) !important; }
+.table-avatar--amber { background: linear-gradient(140deg, #f59e0b, #c2700a) !important; }
+.table-avatar--rose { background: linear-gradient(140deg, #f43f5e, #b91d3c) !important; }
+.table-avatar--green { background: linear-gradient(140deg, #22c55e, #12833c) !important; }
+
+/* ---------- phones ---------- */
+@media (max-width: 760px) {
+  .students-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .students-stat { padding: 12px; }
+  .students-stat strong { font-size: 1.3rem; }
+  .students-toolbar__count { width: 100%; }
+
+  /* Let the full address show on the card layout, where there is room. */
+  .admin-table--students .table-person small { -webkit-line-clamp: 3; }
+
+  .admin-table__country-head { padding: 16px 2px 8px; }
+  .admin-table--students .admin-table__row { margin: 10px 0; padding: 13px; }
+}
+
+/* On a phone each row becomes a card, and the shared rule
+   `.admin-table__row > div { justify-content: center }` is meant to centre a
+   stacked label/value pair VERTICALLY. `.table-person` is a flex ROW, so the
+   same declaration centred it horizontally instead: the avatar and family
+   name sat in the middle of the card while every other line started at the
+   left edge. */
+@media (max-width: 760px) {
+  .admin-table__row > .table-person { justify-content: flex-start; }
+
+  /* Give the controls their own line, aligned with the rest of the card. */
+  .admin-table--students .table-actions { justify-content: flex-start; gap: 8px; }
+}
+
+/* ---------------------------------------------------------------------------
+   Tablets, 761-900px.
+
+   The stacked card layout only started at 760px, but `.admin-table` carries
+   `min-width: 900px` inside a horizontally scrolling card. So on a 768px
+   tablet the students list was a six-column table squeezed into ~625px: the
+   STATUS badge was sliced in half and the CONTROLS column - Open, suspend,
+   delete - was off-screen entirely until you scrolled sideways, with nothing
+   on screen to say it was there.
+
+   Below 900px the students list uses the same card layout as a phone.
+   Scoped to --students so the teachers table is untouched.
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .students-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .admin-table--students { min-width: 0; }
+  .admin-table--students .admin-table__head { display: none; }
+
+  .admin-table--students .admin-table__row {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0;
+    margin: 10px 0;
+    overflow: hidden;
+    border: 1px solid var(--portal-line);
+    border-top: 1px solid var(--portal-line);
+    border-radius: 14px;
+    padding: 13px;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(50, 21, 104, 0.05);
+  }
+
+  .admin-table--students .admin-table__row > div {
+    min-height: 43px;
+    justify-content: center;
+    border-bottom: 1px solid #eef0f4;
+    padding: 7px 0;
+  }
+
+  .admin-table--students .admin-table__row > div:last-child {
+    min-height: 46px;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .admin-table--students .admin-table__row > .table-person { justify-content: flex-start; }
+  .admin-table--students .table-actions { justify-content: flex-start; gap: 8px; }
+  .admin-table--students .table-person small { -webkit-line-clamp: 3; }
+}
+
+/* `.admin-table__row > div { justify-content: center }` is three classes deep
+   and beat the two-class `.table-actions` rule, so the buttons sat centred in
+   a card where every other line starts at the left edge. */
+@media (max-width: 900px) {
+  .admin-table--students .admin-table__row > .table-actions { justify-content: flex-start; }
+  .admin-table--students .admin-table__row > .table-person { justify-content: flex-start; }
+}
