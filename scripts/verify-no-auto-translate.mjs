@@ -50,7 +50,7 @@ async function visit(country, label) {
   return { state, translateHits, label }
 }
 
-const EXPECTED_TITLE = 'Online English Classes for Kids & Students | TutorPro English PH'
+const EXPECTED_TITLE = 'Online English Classes for Kids & Teens | TutorPro'
 
 for (const [country, language, label] of [
   ['PH', 'en', 'a visitor in the Philippines'],

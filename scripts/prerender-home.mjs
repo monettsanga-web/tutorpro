@@ -31,9 +31,9 @@ const HERO = {
   // the homepage is the highest-authority page on the site — wasting its H1
   // on a tagline is the single most expensive on-page mistake available.
   // The tagline still appears as the lede, so nothing is lost.
-  heading: 'Online English Classes for Primary and Secondary Students',
+  heading: 'Online English Classes for Kids & Teens',
   tagline: 'English confidence, built one lesson at a time.',
-  lede: 'Personalised 1-to-1 online tutoring that helps Primary and Secondary students speak up, write clearly and thrive at school.',
+  lede: 'Personalised one-to-one online tutoring for children and teens aged 4–16, helping them speak up, write clearly and thrive at school.',
   proof: ['No commitment', 'From $8 per class', 'Flexible times'],
 }
 

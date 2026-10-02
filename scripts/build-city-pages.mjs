@@ -236,8 +236,8 @@ function render(city, all) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Online English Tutor for Kids in ${city.city} · Free First Class</title>
-    <meta name="description" content="One-to-one online English lessons for children aged 4-16 in ${city.city}. Cambridge and Oxford coursebooks, ${w.localStart}-${w.localEnd} after-school slots, free first class, no card required. from $7 per lesson." />
+    <title>Online English Tutor for Kids in ${city.city}</title>
+    <meta name="description" content="One-to-one online English lessons for children aged 4-16 in ${city.city}. Cambridge and Oxford coursebooks, after-school slots, free first class." />
     <link rel="canonical" href="${url}" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Online English Tutor for Kids in ${city.city}" />

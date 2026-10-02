@@ -148,8 +148,8 @@ function buildSchema() {
 
 function page() {
   const url = `${SITE}/pricing.html`
-  const title = 'Pricing — Online English Classes from $7 | TutorPro Online English'
-  const description = 'Transparent pricing for one-to-one online English classes for kids: from $7 per 25-minute lesson, free first class, no contract. Weekly and monthly plans compared.'
+  const title = 'Online English Class Prices from $7 | TutorPro'
+  const description = 'Transparent pricing for one-to-one online English classes for kids: from $7 per 25-minute lesson, free first class, no contract.'
 
   const weeklyRows = WEEKLY_ROWS.map((r) => `
             <tr>

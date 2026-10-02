@@ -110,8 +110,8 @@ const html = `<!doctype html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Is TutorPro Online English Legitimate? DTI ${DTI} · Verify Us</title>
-    <meta name="description" content="Yes — TutorPro Online English is a registered Philippine business, DTI No. ${DTI}, verifiable on the government register. Free first class, no card required, no teacher fees ever." />
+    <title>Is TutorPro Legitimate? DTI ${DTI} · Verify Us</title>
+    <meta name="description" content="Yes — TutorPro Online English is a registered Philippine business, DTI No. ${DTI}, verifiable on the government register. Free first class." />
     <link rel="canonical" href="${SITE}/is-tutorpro-legitimate.html" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Is TutorPro Online English Legitimate?" />

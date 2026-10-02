@@ -229,7 +229,7 @@ function Hero({ onBook }) {
         <div className="hero__content">
           <div className="eyebrow">
             <span><Sparkles size={14} /></span>
-            English · Maths · Science · ICT
+            English · Maths · Science · ICT · Ages 4–16
           </div>
           {/* The H1 must match the prerendered one in scripts/prerender-home.mjs.
               Google renders JavaScript, so React's H1 is what finally gets
@@ -237,10 +237,10 @@ function Hero({ onBook }) {
               heading the prerender had carefully put in place, and the whole
               homepage optimisation was being undone a second after load.
               The tagline survives directly underneath, so nothing is lost. */}
-          <h1>Online English Classes for <em>Primary and Secondary</em> Students</h1>
+          <h1>Online English Classes for <em>Kids &amp; Teens</em></h1>
           <p className="hero__tagline">Real confidence, built one lesson at a time.</p>
           <p className="hero__lede">
-            Personalised 1-to-1 online tutoring in English, Maths, Science and ICT — helping Primary and Secondary students keep up, catch up and thrive at school.
+            Personalised one-to-one online tutoring in English, Maths, Science and ICT for children and teens aged 4–16 — helping them keep up, catch up and thrive at school.
           </p>
           <div className="hero__actions">
             <button className="button button--primary button--large" onClick={onBook}>

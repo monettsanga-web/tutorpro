@@ -50,7 +50,7 @@ const ARTICLES = [
   {
     slug: 'help-child-speak-english-at-home',
     category: 'Parent guides',
-    title: 'How to Help Your Child Speak English at Home | TutorPro English PH',
+    title: 'How to Help Your Child Speak English at Home',
     h1: 'How to help your child speak English at home',
     description:
       'Practical ways to build your child\u2019s spoken English at home, including what to do if you do not speak English yourself. Written for parents, not teachers.',
@@ -97,7 +97,7 @@ const ARTICLES = [
   {
     slug: 'english-reading-activities-primary',
     category: 'Reading',
-    title: 'English Reading Activities for Primary Students | TutorPro English PH',
+    title: 'English Reading Activities for Primary Students',
     h1: 'English reading activities for primary students',
     description:
       'Reading activities that work for primary-age children, matched to the three things that actually go wrong: decoding, fluency and comprehension.',
@@ -142,7 +142,7 @@ const ARTICLES = [
   {
     slug: 'common-english-grammar-mistakes-children',
     category: 'Grammar',
-    title: 'Common English Grammar Mistakes Children Make | TutorPro English PH',
+    title: 'Common English Grammar Mistakes Children Make',
     h1: 'Common English grammar mistakes children make',
     description:
       'The grammar mistakes children make most often, why each happens, and which ones are worth correcting. Some are signs of progress rather than problems.',
@@ -186,7 +186,7 @@ const ARTICLES = [
   {
     slug: 'build-english-vocabulary-children',
     category: 'Vocabulary',
-    title: 'How to Build Your Child\u2019s English Vocabulary | TutorPro English PH',
+    title: 'How to Build Your Child\u2019s English Vocabulary',
     h1: 'How parents can help children build English vocabulary',
     description:
       'Which English words are worth teaching, how many a child can absorb at once, and why spacing matters more than effort. Practical guidance for parents.',
@@ -230,10 +230,10 @@ const ARTICLES = [
   {
     slug: 'online-english-classes-what-parents-should-know',
     category: 'Parent guides',
-    title: 'Online English Classes: What Parents Should Know | TutorPro English PH',
+    title: 'Online English Classes: What Parents Should Know',
     h1: 'Online English classes: what parents should know before booking',
     description:
-      'What to check before booking online English lessons for your child: class size, teacher vetting, feedback, refund terms and the questions worth asking any school.',
+      'What to check before booking online English lessons for your child: class size, teacher vetting, feedback and refund terms.',
     lede:
       'Online lessons vary enormously in quality and the differences are not obvious from a website. These are the things worth checking before you pay anyone, including us.',
     body: `
@@ -471,7 +471,7 @@ ${cards}
         </p>`
 
   return shell({
-    title: 'English Learning Resources for Parents | TutorPro English PH',
+    title: 'English Learning Resources for Parents',
     description: 'Practical guides for parents helping a child learn English at home: speaking, reading, grammar and vocabulary. Written for parents, not teachers.',
     url,
     schema,

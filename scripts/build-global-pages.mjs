@@ -71,9 +71,9 @@ const PAGES = [
   {
     slug: 'online-english-classes-for-kids.html',
     label: 'Online English classes',
-    title: 'Online English Classes for Kids — 1-to-1 Lessons Worldwide | TutorPro',
+    title: 'Online English Classes for Kids | 1-to-1 Lessons',
     description:
-      'One-to-one online English classes for children aged 4–16, taught live by qualified teachers. Cambridge and Oxford-aligned lessons from $7. Free first class, no card required.',
+      'One-to-one online English classes for children aged 4–16, taught live by qualified teachers. Cambridge and Oxford aligned, from $7.',
     heading: 'Online English classes for kids, one-to-one',
     lede:
       'Live video lessons for children aged 4 to 16, with one teacher and one child. No group classes, no waiting for a turn to speak — your child talks for the whole lesson.',
@@ -112,9 +112,9 @@ const PAGES = [
   {
     slug: 'online-english-tutor-for-kids.html',
     label: 'Online English tutor',
-    title: 'Online English Tutor for Children — Qualified, Vetted Teachers | TutorPro',
+    title: 'Online English Tutor for Children | TutorPro',
     description:
-      'Find a qualified online English tutor for your child. Every teacher passes a recorded teaching interview and credential check. One-to-one lessons from $7, free first class.',
+      'Find a qualified online English tutor for your child. Every teacher passes a recorded interview and credential check. From $7 per lesson.',
     heading: 'Finding an online English tutor you can actually trust',
     lede:
       'Choosing a tutor for your child online means trusting someone you have never met. Here is exactly how our teachers are selected, and how to judge any tutor you are considering.',
@@ -152,9 +152,9 @@ const PAGES = [
   {
     slug: 'online-english-class-schedule-time-zones.html',
     label: 'Time zones & scheduling',
-    title: 'Online English Class Times by Country — Time Zone Guide | TutorPro',
+    title: 'Online English Class Times by Country | TutorPro',
     description:
-      'When can your child have an online English lesson? A country-by-country guide to lesson times with Philippine-based teachers (UTC+8), from the UK and Europe to the US, Japan and Australia.',
+      'A country-by-country guide to online English lesson times with Philippine-based teachers (UTC+8), from the UK and Europe to the US and Japan.',
     heading: 'What time can my child have a lesson?',
     lede:
       'The most practical question for a family abroad is not price — it is whether lessons can happen at a time that suits a tired child after school. Here are the real numbers.',

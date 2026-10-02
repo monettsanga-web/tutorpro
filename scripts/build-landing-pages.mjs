@@ -71,7 +71,7 @@ const PAGES = [
     slug: 'free-english-class',
     tag: 'lp-free',
     title: 'Free English Class for Your Child · TutorPro Online English',
-    description: 'Book a free 25-minute one-to-one online English class for your child. No card required, no contract. Cambridge and Oxford aligned teachers. from $7 per lesson after.',
+    description: 'Book a free 25-minute one-to-one online English class for your child. No card required, no contract. From $7 per lesson afterwards.',
     h1: 'A free English class for your child. No card, no catch.',
     lede: 'One-to-one online lessons with real teachers, built around Cambridge and Oxford coursebooks. Try a full 25-minute class for free and decide afterwards.',
     pills: ['Free first class', 'No card required', 'Ages 4–16', 'from $7 per lesson'],
@@ -156,7 +156,7 @@ const PAGES = [
   {
     slug: 'online-english-for-filipino-families',
     tag: 'lp-ph',
-    title: 'Online English Classes for Filipino Families · TutorPro Online English',
+    title: 'Online English Classes for Filipino Families',
     description: 'One-to-one online English lessons for children in the Philippines. DTI registered, Cambridge and Oxford aligned, GCash and PayPal accepted. Free first class.',
     h1: 'English classes for Filipino families, run from the Philippines.',
     lede: 'A DTI-registered Philippine school teaching children one-to-one online, with Cambridge and Oxford materials and payment options that actually work here.',

@@ -55,9 +55,9 @@ const PAGES = [
     slug: 'cambridge-english.html',
     guide: ['online-english-classes-what-parents-should-know', 'what to check before booking any online English school'],
     label: 'Cambridge English',
-    title: 'Cambridge English Classes for Kids Online | TutorPro English PH',
+    title: 'Cambridge English Classes for Kids | TutorPro',
     description:
-      `Online one-to-one lessons using Cambridge English course books for children aged 4\u201316, including Power Up and Global English. From $${PACKAGE} per lesson, free first class.`,
+      `Online one-to-one lessons using Cambridge English course books for children aged 4\u201316. From $${PACKAGE} per lesson, free first class.`,
     heading: 'Cambridge English classes for children',
     lede:
       'Lessons built on published Cambridge course books, taught one-to-one and matched to your child\u2019s actual level rather than their school year.',
@@ -141,9 +141,9 @@ const PAGES = [
     slug: 'english-reading.html',
     guide: ['english-reading-activities-primary', 'reading activities for primary students'],
     label: 'Reading',
-    title: 'English Reading Lessons for Children Online | TutorPro English PH',
+    title: 'English Reading Classes for Kids | TutorPro',
     description:
-      `One-to-one online English reading lessons for children aged 4\u201316: phonics, decoding, fluency and comprehension. Oxford and Cambridge materials from $${PACKAGE} per lesson.`,
+      `One-to-one online English reading lessons for children aged 4\u201316: phonics, decoding, fluency and comprehension. From $${PACKAGE} per lesson.`,
     heading: 'English reading lessons for children',
     lede:
       'From letter sounds to understanding a full passage. Reading problems usually have a specific cause, and the fix depends on which one it is.',
@@ -182,9 +182,9 @@ const PAGES = [
     slug: 'english-speaking.html',
     guide: ['help-child-speak-english-at-home', 'how to help your child speak English at home'],
     label: 'Speaking',
-    title: 'English Speaking Classes for Kids Online | TutorPro English PH',
+    title: 'English Speaking Classes for Kids | TutorPro',
     description:
-      `One-to-one online English speaking classes for children aged 4\u201316. Your child speaks for the whole lesson, not a fraction of it. From $${PACKAGE} per lesson, free first class.`,
+      `One-to-one online English speaking classes for children aged 4\u201316. Your child speaks for the whole lesson. From $${PACKAGE}, free first class.`,
     heading: 'English speaking classes for children',
     lede:
       'Speaking improves with talk time, and talk time is exactly what a group class cannot give. One teacher, one child, the whole lesson.',
@@ -223,7 +223,7 @@ const PAGES = [
     slug: 'english-grammar.html',
     guide: ['common-english-grammar-mistakes-children', 'the grammar mistakes children make most often'],
     label: 'Grammar',
-    title: 'English Grammar Lessons for Kids Online | TutorPro English PH',
+    title: 'English Grammar Classes for Kids | TutorPro',
     description:
       `One-to-one online English grammar lessons for children aged 4\u201316. Tenses, articles and sentence structure taught in context, not as rules to memorise. From $${PACKAGE}.`,
     heading: 'English grammar lessons for children',
@@ -266,7 +266,7 @@ const PAGES = [
     slug: 'english-vocabulary.html',
     guide: ['build-english-vocabulary-children', 'how to build your child\u2019s vocabulary at home'],
     label: 'Vocabulary',
-    title: 'English Vocabulary Lessons for Kids Online | TutorPro English PH',
+    title: 'English Vocabulary Classes for Kids | TutorPro',
     description:
       `One-to-one online English vocabulary lessons for children aged 4\u201316. Themed word sets, spaced repetition and words met in context. From $${PACKAGE} per lesson.`,
     heading: 'English vocabulary lessons for children',

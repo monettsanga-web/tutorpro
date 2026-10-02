@@ -49,9 +49,9 @@ const PAGES = [
   {
     slug: 'free-trial.html',
     label: 'Free trial',
-    title: 'Free Trial English Class for Kids — No Card Required | TutorPro English PH',
+    title: 'Free English Trial Class for Kids | TutorPro',
     description:
-      `Book a free trial English class for your child. A full one-to-one lesson with a real teacher, no card required and no obligation. Lessons from $${PACKAGE} after the trial.`,
+      `Book a free trial English class for your child: a full one-to-one lesson with a real teacher, no card required. Lessons from $${PACKAGE} after.`,
     heading: 'Book a free trial English class',
     lede:
       'One full lesson, one real teacher, no card and no obligation. It is the only honest way to find out whether online lessons suit your child.',
@@ -147,7 +147,7 @@ const PAGES = [
     label: 'FAQ',
     title: 'Frequently Asked Questions | TutorPro English PH',
     description:
-      'Answers to the questions parents ask most about TutorPro online English classes: ages, lesson length, pricing, the free trial, teachers, booking, refunds and support.',
+      'Answers to the questions parents ask most about TutorPro online English classes: ages, lesson length, pricing, the free trial and booking.',
     heading: 'Frequently asked questions',
     lede:
       'The practical questions parents actually ask, answered plainly. If yours is not here, message us and a real person will reply.',
@@ -197,9 +197,9 @@ const PAGES = [
   {
     slug: 'teachers.html',
     label: 'Our teachers',
-    title: 'Our Online English Teachers — How We Vet Them | TutorPro English PH',
+    title: 'Our Online English Teachers | TutorPro',
     description:
-      'Every TutorPro teacher passes a recorded teaching interview and credential check before meeting a child. See exactly how our online English teachers are selected.',
+      'Every TutorPro teacher passes a recorded teaching interview and credential check before meeting a child. See how our teachers are selected.',
     heading: 'The teachers who will teach your child',
     lede:
       'You are trusting someone you have never met with your child. Here is precisely how our teachers are selected — and how to judge any online tutor you are considering.',
@@ -251,9 +251,9 @@ const PAGES = [
   {
     slug: 'primary-english.html',
     label: 'Primary English',
-    title: 'Primary English Classes for Kids Online | TutorPro English PH',
+    title: 'Primary English Classes for Kids | TutorPro',
     description:
-      `Online primary English lessons for children aged 4\u201311. Phonics, reading, speaking, grammar and vocabulary, one-to-one with Cambridge and Oxford materials. From $${PACKAGE}.`,
+      `Online primary English lessons for children aged 4\u201311: phonics, reading, speaking, grammar and vocabulary, one-to-one. From $${PACKAGE} per lesson.`,
     heading: 'Primary English classes for children aged 4–11',
     lede:
       'Phonics to fluent reading, one teacher and one child. Lessons follow published Cambridge and Oxford primary courses and adapt to where your child actually is.',
@@ -296,9 +296,9 @@ const PAGES = [
   {
     slug: 'secondary-english.html',
     label: 'Secondary English',
-    title: 'Secondary English Classes for Students Online | TutorPro English PH',
+    title: 'Secondary English Classes Online | TutorPro',
     description:
-      `Online secondary English lessons for students aged 12\u201316. Writing, comprehension, advanced grammar and exam-style speaking, one-to-one. Cambridge and Oxford materials from $${PACKAGE}.`,
+      `Online secondary English lessons for students aged 12\u201316: writing, comprehension, grammar and exam-style speaking, one-to-one. From $${PACKAGE}.`,
     heading: 'Secondary English classes for students aged 12–16',
     lede:
       'Writing, comprehension and confident speaking for older learners, one-to-one. Lessons follow published Cambridge and Oxford secondary courses.',
