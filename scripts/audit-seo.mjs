@@ -17,7 +17,11 @@ const text = async (url) => {
 }
 
 const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text()
-const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+/* The sitemap always names production. When BASE points somewhere else -
+   a local build, a preview deploy - audit THAT copy rather than silently
+   crawling the live site instead. */
+const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+  .map((m) => m[1].replace(/^https?:\/\/[^/]+/, BASE))
 console.log(`sitemap: ${urls.length} URLs\n`)
 
 const pick = (html, re) => { const m = html.match(re); return m ? m[1].trim() : '' }
@@ -76,7 +80,14 @@ for (const p of pages) {
   else if (p.description.length > 165) add('MED', p.url, `description is ${p.description.length} chars, will be cut`)
   else if (p.description.length < 70) add('LOW', p.url, `description is only ${p.description.length} chars`)
   if (!p.canonical) add('HIGH', p.url, 'no canonical')
-  else if (p.canonical.replace(/\/$/, '') !== p.url.replace(/\/$/, '')) add('HIGH', p.url, `canonical points elsewhere: ${p.canonical}`)
+  /* Compare PATHS. A canonical must always name the production host, so
+     comparing whole URLs reports every page as broken when BASE is a local
+     build or a preview deploy. */
+  else {
+    const path = (value) => value.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '') || '/'
+    if (path(p.canonical) !== path(p.url)) add('HIGH', p.url, `canonical points elsewhere: ${p.canonical}`)
+    if (!/^https:\/\/www\.tutorpro\.site/.test(p.canonical)) add('HIGH', p.url, `canonical does not name the production host: ${p.canonical}`)
+  }
   if (/noindex/i.test(p.robots)) add('HIGH', p.url, 'is noindex but is in the sitemap')
   if (p.h1.length === 0) add('HIGH', p.url, 'no H1')
   if (p.h1.length > 1) add('MED', p.url, `${p.h1.length} H1s: ${p.h1.map((h) => h.text.slice(0, 30)).join(' | ')}`)
@@ -111,7 +122,8 @@ for (const p of pages.filter((x) => x.status === 200)) {
 
 /* ---- orphan check: which pages nothing links to ---- */
 const linkedTo = new Set()
-pages.forEach((p) => p.links.forEach((l) => linkedTo.add(l.replace(/\/$/, ''))))
+/* A page that failed to load has no links array. */
+pages.forEach((p) => (p.links || []).forEach((l) => linkedTo.add(l.replace(/\/$/, ''))))
 pages.filter((p) => p.status === 200).forEach((p) => {
   const self = p.url.replace(/\/$/, '')
   if (self !== BASE.replace(/\/$/, '') && !linkedTo.has(self)) add('HIGH', p.url, 'no other page links to it — Google may never find it')

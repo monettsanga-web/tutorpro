@@ -213,7 +213,7 @@ function page() {
         </p>
 
         <div class="card card--hero">
-          <h3>The short version</h3>
+          <h2>The short version</h2>
           <p><strong>$8 per class</strong> if your child has 1–3 lessons a week.<br />
           <strong>$8 per class</strong> if your child has 4 or more lessons a week.<br />
           Lessons are 25 minutes one-to-one. 50-minute lessons are available for older learners.</p>

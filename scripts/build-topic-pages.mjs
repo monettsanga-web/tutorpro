@@ -133,7 +133,7 @@ const PAGES = [
       ['Do I need to buy the Oxford books?', 'No. Materials are included in the lesson price and shared on screen during the lesson.'],
       ['Should I choose Oxford or Cambridge materials?', 'We choose based on your child rather than the brand. Oxford Family and Friends has a stronger phonics spine; Cambridge Power Up has more speaking repetition. Many children work across both.'],
     ],
-    related: [['cambridge-english.html', 'Cambridge English'], ['english-reading.html', 'Reading'], ['primary-english.html', 'Primary English']],
+    related: [['online-phonics-classes.html', 'Phonics'], ['cambridge-english.html', 'Cambridge English'], ['english-reading.html', 'Reading']],
   },
 
   /* ---------------------------------------------------------------- */
@@ -174,7 +174,7 @@ const PAGES = [
       ['How long before reading improves?', 'It depends on the cause and on practice between lessons. Decoding often shows visible change within a few weeks; comprehension is slower because it depends on vocabulary, which accumulates.'],
       ['How much do reading lessons cost?', `$${STANDARD} per 25-minute lesson for 1\u20133 a week, or $${PACKAGE} each for ${PACKAGE_MIN} or more. The first class is free.`],
     ],
-    related: [['english-speaking.html', 'Speaking'], ['english-vocabulary.html', 'Vocabulary'], ['oxford-english.html', 'Oxford English']],
+    related: [['online-phonics-classes.html', 'Phonics'], ['english-vocabulary.html', 'Vocabulary'], ['oxford-english.html', 'Oxford English']],
   },
 
   /* ---------------------------------------------------------------- */
@@ -215,7 +215,7 @@ const PAGES = [
       ['What age can speaking lessons start?', 'From 4. Early lessons are mostly songs, games and single words, which is exactly the right form of speaking practice at that age.'],
       ['How much do speaking classes cost?', `$${STANDARD} per 25-minute lesson for 1\u20133 a week, or $${PACKAGE} each for ${PACKAGE_MIN} or more a week. The first class is free.`],
     ],
-    related: [['english-reading.html', 'Reading'], ['english-tutor-for-shy-child.html', 'Help for a shy child'], ['english-vocabulary.html', 'Vocabulary']],
+    related: [['one-to-one-english-tutor.html', 'One-to-one tutoring'], ['english-tutor-for-shy-child.html', 'Help for a shy child'], ['english-reading.html', 'Reading']],
   },
 
   /* ---------------------------------------------------------------- */
@@ -300,6 +300,112 @@ const PAGES = [
       ['How much do vocabulary lessons cost?', `$${STANDARD} per 25-minute lesson for 1\u20133 a week, or $${PACKAGE} each for ${PACKAGE_MIN} or more. The first class is free.`],
     ],
     related: [['english-reading.html', 'Reading'], ['english-grammar.html', 'Grammar'], ['english-speaking.html', 'Speaking']],
+  },
+  /* ---------------------------------------------------------------- */
+  /*
+   * Phonics and one-to-one were the last two high-intent queries on the
+   * keyword list with no page of their own.
+   *
+   * Phonics is NOT the reading page in different words. Reading covers
+   * decoding plus fluency plus comprehension across the whole 4-16 range;
+   * phonics is the narrow, earlier skill of mapping letters to sounds, it
+   * mostly concerns ages 4-8, and parents search for it by name because a
+   * school has used the word at them.
+   *
+   * One-to-one is not the tutor page either. /online-english-tutor-for-kids
+   * answers "who will teach my child and how do you check them". This
+   * answers a different question entirely: "why pay for one-to-one instead
+   * of a cheaper group class". That is a comparison, and the honest answer
+   * includes where a group class is the better choice.
+   */
+  {
+    slug: 'online-phonics-classes.html',
+    guide: ['english-reading-activities-primary', 'reading activities for primary students'],
+    label: 'Phonics',
+    title: 'Online Phonics Classes for Kids | TutorPro',
+    description:
+      `One-to-one online phonics lessons for children aged 4\u20138. Letter sounds, blending and segmenting with Oxford Phonics World. From $${PACKAGE} per lesson.`,
+    heading: 'Online phonics classes for children',
+    lede:
+      'The letter-sound groundwork that makes reading feel automatic later rather than effortful \u2014 taught one-to-one, at your child\u2019s pace.',
+    body: `
+        <h2>What phonics actually is</h2>
+        <p>Phonics teaches a child that letters represent sounds, that those sounds can be blended into words, and that words can be broken back down into sounds. It is a narrow skill and a short phase \u2014 most children need it between roughly ages four and eight \u2014 but almost everything in reading sits on top of it.</p>
+        <p>A child who has not been taught to decode is memorising word shapes instead. That works until texts get long and unfamiliar words start appearing, at which point reading slows and comprehension drops. It is frequently mistaken for a comprehension problem when it is a decoding one.</p>
+
+        <h2>The order we teach it in</h2>
+        <div class="grid">
+          <div class="card"><h3>1. Letter sounds</h3><p>The single sounds first \u2014 <em>s, a, t, p, i, n</em> \u2014 chosen because they combine into real words almost immediately, so a child reads something on day one rather than reciting an alphabet.</p></div>
+          <div class="card"><h3>2. Blending</h3><p>Pushing sounds together into a word: <em>c-a-t</em> becomes <em>cat</em>. This is the step that most often needs patient one-to-one repetition, and the step group classes rush.</p></div>
+          <div class="card"><h3>3. Segmenting</h3><p>The reverse \u2014 hearing <em>cat</em> and splitting it back into sounds. This is what makes spelling possible rather than guessed.</p></div>
+          <div class="card"><h3>4. Digraphs and blends</h3><p>Two letters, one sound: <em>sh, ch, th, ck</em>, then consonant clusters like <em>st</em> and <em>bl</em>.</p></div>
+          <div class="card"><h3>5. Long vowels and silent e</h3><p>Where English stops being tidy. <em>Mat</em> becomes <em>mate</em>. Needs far more practice than its one-line explanation suggests.</p></div>
+          <div class="card"><h3>6. Tricky words</h3><p>The high-frequency words that refuse to decode \u2014 <em>said, the, one, come</em>. Learned on sight because there is nothing else to be done with them.</p></div>
+        </div>
+
+        <h2>What a phonics lesson looks like</h2>
+        <p>Twenty-five minutes is deliberate for this age. The teacher shares the page on screen, your child says the sounds aloud, blends them, then reads short words and sentences built only from sounds they have already met \u2014 so they succeed rather than guess. Most lessons end with a short game that reuses the same sounds, because repetition is the whole mechanism and a bored five-year-old stops producing sound at all.</p>
+        <p>Your child talks for most of the lesson. Phonics cannot be learned by listening to someone else do it.</p>
+
+        <h2>Which materials we use</h2>
+        <p>Mainly <strong>Oxford Phonics World</strong>, with the phonics strand of <strong>Family and Friends</strong> as children move into reading sentences. Both are published courses with a proper sequence, which matters more than it sounds: phonics taught out of order leaves gaps that surface two years later as spelling trouble.</p>
+        <p>We are not an accredited provider of any named phonics scheme \u2014 we are not a Read Write Inc, Jolly Phonics or Letters and Sounds licensed centre. We teach from published Oxford materials, in their published order.</p>
+
+        <h2>When phonics is the wrong answer</h2>
+        <p>If your child already decodes unfamiliar words accurately and the problem is understanding what they have read, phonics is not what they need \u2014 <a href="/english-reading.html">reading comprehension</a> or <a href="/english-vocabulary.html">vocabulary</a> is. If they read fine but will not speak, that is <a href="/english-speaking.html">speaking confidence</a>. We will tell you which after the free first class rather than selling you the lesson you asked for.</p>`,
+    faqs: [
+      ['What age should a child start phonics?', 'Usually between four and six, once they can hear and repeat individual sounds. Some children are ready earlier and some later; the free first class is where we find out rather than guessing from age.'],
+      ['Do you teach phonics one-to-one?', 'Yes, every phonics lesson is one-to-one. Blending in particular needs a teacher listening to one child and correcting immediately, which is the step most often rushed in a group.'],
+      ['Which phonics scheme do you use?', 'We teach from Oxford Phonics World and the phonics strand of Family and Friends, in their published order. We are not a licensed centre for any named scheme such as Read Write Inc or Jolly Phonics.'],
+      ['How long does phonics take?', 'Most children work through the main sequence over several months to about a year, depending on starting point and how often they have lessons. It is a phase, not a permanent subject.'],
+      ['My child reads but spells badly. Is that phonics?', 'Often yes. Reading uses blending; spelling uses segmenting, and a child can be fluent at one and weak at the other. Segmenting practice usually helps.'],
+      ['How much do phonics classes cost?', `$${STANDARD} per 25-minute lesson for 1\u20133 a week, or $${PACKAGE} each for ${PACKAGE_MIN} or more a week. The first class is free and no card is needed.`],
+    ],
+    related: [['english-reading.html', 'Reading'], ['oxford-english.html', 'Oxford English'], ['primary-english.html', 'Primary English']],
+  },
+
+  /* ---------------------------------------------------------------- */
+  {
+    slug: 'one-to-one-english-tutor.html',
+    guide: ['online-english-classes-what-parents-should-know', 'what to check before booking any online English school'],
+    label: 'One-to-one',
+    title: 'One-to-One English Tutor for Kids | TutorPro',
+    description:
+      `Why one-to-one English lessons work for children aged 4\u201316, and when a group class is the better choice. From $${PACKAGE} per lesson, free first class.`,
+    heading: 'One-to-one English tutoring for children',
+    lede:
+      'Every TutorPro lesson is one child and one teacher. Here is what that actually changes \u2014 and where a group class would serve you better.',
+    body: `
+        <h2>The difference is talk time</h2>
+        <p>In a class of eight children sharing twenty-five minutes, a child speaks for roughly three minutes even if the teacher distributes turns perfectly. One-to-one, the same twenty-five minutes gives your child somewhere between ten and fifteen minutes of actual speaking, because the rest is the teacher asking, correcting and explaining.</p>
+        <p>That ratio is the whole argument. A language is produced, not received, and the quantity a child produces is the thing that most closely tracks how fast they improve.</p>
+
+        <h2>What else changes</h2>
+        <div class="grid">
+          <div class="card"><h3>Correction lands</h3><p>A mistake is corrected the moment it happens, to the child who made it. In a group, correcting one child costs the other seven their attention, so teachers correct less.</p></div>
+          <div class="card"><h3>The pace is your child\u2019s</h3><p>Stuck on long vowels? We stay there. Already fluent at it? We move on the same lesson. No group can do both.</p></div>
+          <div class="card"><h3>Quiet children speak</h3><p>A child who will not volunteer in front of peers will often talk freely to one adult who waits. This is the most common reason parents move a shy child out of group classes.</p></div>
+          <div class="card"><h3>The content is theirs</h3><p>Homework they are stuck on, a book they are reading, an exam next month. A group class teaches the syllabus; a tutor can teach your child\u2019s week.</p></div>
+        </div>
+
+        <h2>When a group class is the better choice</h2>
+        <p>We would rather say this than pretend otherwise. A group suits a child who is motivated by other children, who needs to hear peers making mistakes to feel safe making their own, or who finds an adult\u2019s undivided attention uncomfortable rather than helpful. It is also cheaper, and for a family where budget is the binding constraint, regular group lessons beat occasional one-to-one ones \u2014 consistency matters more than format.</p>
+        <p>We only teach one-to-one, so if that is your child, we are not the right school and we will say so.</p>
+
+        <h2>The same teacher each week</h2>
+        <p>Your child keeps the same teacher rather than meeting whoever is free. Over a few months that teacher knows which sounds your child still avoids, which topics get them talking, and what they were stuck on last Tuesday \u2014 none of which survives a rotating roster. You can change teacher at any time if the fit is wrong.</p>
+
+        <h2>What it costs</h2>
+        <p>$${STANDARD} per 25-minute lesson for 1\u20133 lessons a week, or $${PACKAGE} each at ${PACKAGE_MIN} or more a week. 50-minute lessons are double. There is no contract and the <a href="/free-trial.html">first class is free</a> \u2014 a full lesson with a real teacher, no card required. Full detail on the <a href="/pricing.html">pricing page</a>.</p>`,
+    faqs: [
+      ['Are TutorPro lessons one-to-one?', 'Yes. Every lesson is one child with one teacher. We do not run group classes.'],
+      ['Why is one-to-one better than a group class?', 'Mainly talk time. In a group of eight sharing 25 minutes a child speaks for around three minutes; one-to-one it is usually ten to fifteen. Correction also reaches the child who made the mistake, immediately.'],
+      ['Is one-to-one worth the extra cost?', 'For most children learning to speak, yes, because speaking time is what drives progress. But a child who is motivated by peers, or a family for whom budget decides frequency, may do better with consistent group lessons than occasional private ones.'],
+      ['Will my child have the same teacher every week?', 'Yes, unless you ask to change. Keeping one teacher is how they come to know what your child avoids and what gets them talking.'],
+      ['Can I change teacher if it is not a good fit?', 'At any time, and without needing to explain. Tell us and we will arrange someone else.'],
+      ['How much does a one-to-one English tutor cost?', `$${STANDARD} per 25-minute lesson for 1\u20133 a week, or $${PACKAGE} each for ${PACKAGE_MIN} or more. 50-minute lessons are double. The first class is free.`],
+    ],
+    related: [['online-english-tutor-for-kids.html', 'How we vet teachers'], ['english-speaking.html', 'Speaking'], ['pricing.html', 'Pricing']],
   },
 ]
 

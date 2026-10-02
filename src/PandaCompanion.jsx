@@ -61,7 +61,9 @@ const DESKTOP_QUERY = '(min-width: 1100px)'
  * which means every line gets said and you see new ones on the way back up.
  */
 const phrases = [
-  'Hi! I’m Popo 🐼',
+  /* No panda emoji: Linux builds without Noto Color Emoji draw an empty
+     box, which is the one thing the mascot must never look like. */
+  'Hi! I’m Popo!',
   'Your first class is free!',
   'No card needed to start',
   'Cambridge & Oxford books',

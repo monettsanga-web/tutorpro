@@ -277,53 +277,58 @@ function Hero({ onBook }) {
   )
 }
 
-function AnimatedStat({ value, label }) {
-  const elementRef = useRef(null)
-  const [displayValue, setDisplayValue] = useState(value)
-
-  useEffect(() => {
-    const numericValue = Number.parseInt(value, 10)
-    if (!Number.isFinite(numericValue) || !elementRef.current || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
-    let frame = 0
-    let startedAt = 0
-    const suffix = value.replace(String(numericValue), '')
-    const run = (time) => {
-      if (!startedAt) startedAt = time
-      const progress = Math.min(1, (time - startedAt) / 1200)
-      const eased = 1 - ((1 - progress) ** 3)
-      setDisplayValue(`${Math.round(numericValue * eased)}${suffix}`)
-      if (progress < 1) frame = window.requestAnimationFrame(run)
-    }
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return
-      setDisplayValue(`0${suffix}`)
-      frame = window.requestAnimationFrame(run)
-      observer.disconnect()
-    }, { threshold: 0.65 })
-    observer.observe(elementRef.current)
-    return () => {
-      observer.disconnect()
-      if (frame) window.cancelAnimationFrame(frame)
-    }
-  }, [value])
-
-  return <div className="stat" ref={elementRef}><strong>{displayValue}</strong><span>{label}</span></div>
-}
-
-function Stats() {
-  const items = [
-    ['500+', 'active students'],
-    ['20+', 'expert tutors'],
-    ['98%', 'success rate'],
-    ['5+', 'years of experience'],
+/*
+ * WHY PARENTS CHOOSE TUTORPRO
+ *
+ * This replaced a statistics band that read:
+ *
+ *   500+ active students · 20+ expert tutors · 98% success rate
+ *   5+ years of experience
+ *
+ * None of those numbers were true or measurable. The database holds two
+ * teachers, nothing counts a "success", and inventing figures on the page a
+ * parent reads before trusting you with their child is the worst possible
+ * place to do it. Publishing an unverifiable number is also the fastest way
+ * to lose the trust the rest of the site is trying to build.
+ *
+ * Every line below is something that can be checked: the DTI registration
+ * is on the public register, the course books are named on the curriculum
+ * pages, the vetting process is described on /teachers.html, and the free
+ * first class is what the booking flow actually does.
+ */
+function WhyParents({ onBook }) {
+  const reasons = [
+    [Users, 'Always one-to-one', 'One child, one teacher, every lesson. No group classes.'],
+    [BookOpen, 'Cambridge & Oxford books', 'Published course books — Power Up, Global English, Family and Friends, Oxford Phonics World.'],
+    [UserRoundCheck, 'Teachers you can check', 'Every teacher passes a recorded teaching interview and a credential check before meeting a child.'],
+    [GraduationCap, 'Ages 4 to 16', 'Phonics and first words through to exam-style writing and comprehension.'],
+    [Clock3, 'Lessons when you need them', 'Pick your times, change them when life changes. No fixed term.'],
+    [LayoutDashboard, 'You can see the progress', 'Written feedback after every lesson, in your own parent dashboard.'],
+    [ShieldCheck, 'A registered business', 'TutorPro English PH · DTI Reg. No. 5274092, verifiable on the public register.'],
+    [Heart, 'Free first class', 'A full lesson with a real teacher. No card, no obligation.'],
   ]
 
   return (
-    <section className="stats" aria-label="TutorPro Online English at a glance">
-      <div className="container stats__inner">
-        <p>Trusted by growing learners</p>
-        <div className="stats__items">
-          {items.map(([number, label]) => <AnimatedStat value={number} label={label} key={label} />)}
+    <section className="why-parents" aria-labelledby="why-parents-heading">
+      <div className="container">
+        <div className="why-parents__head">
+          <span className="portal-kicker">Why parents choose TutorPro</span>
+          <h2 id="why-parents-heading">Everything here is something you can check.</h2>
+          <p>No invented numbers, no borrowed logos. These are the things we can show you before you book.</p>
+        </div>
+        <ul className="why-parents__grid">
+          {reasons.map(([Icon, title, detail]) => (
+            <li key={title}>
+              <span aria-hidden="true"><Icon size={19} /></span>
+              <div><strong>{title}</strong><small>{detail}</small></div>
+            </li>
+          ))}
+        </ul>
+        <div className="why-parents__cta">
+          <button type="button" className="button button--primary button--large" onClick={() => onBook('Why parents section')}>
+            Book a free first class <ArrowRight size={18} />
+          </button>
+          <a className="button button--outline" href="/online-english-classes-for-kids.html">Explore English programmes</a>
         </div>
       </div>
     </section>
@@ -2100,7 +2105,7 @@ export default function App() {
       ) : (
         <main>
           <Hero onBook={openRegistration} />
-          <Stats />
+          <WhyParents onBook={openRegistration} />
           <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />
