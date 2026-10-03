@@ -54,8 +54,37 @@ for (const url of urls) {
     links: [...new Set(all(body, /<a\b[^>]+href=["']([^"'#?]+)["']/gi))]
       .filter((href) => href.startsWith('/') || href.startsWith(BASE))
       .map((href) => (href.startsWith('/') ? BASE + href : href)),
-    words: body.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ').split(/\s+/).filter((w) => w.length > 1).length,
+    words: countWords(body),
   })
+}
+
+/**
+ * How much text a page actually has.
+ *
+ * Splitting on whitespace is wrong for Chinese, Japanese and Korean, which
+ * are written without spaces between words. /tw/ has 1,334 Chinese
+ * characters - a long page by any measure - and a whitespace count scored
+ * it 196, so the audit reported four perfectly substantial Chinese pages
+ * as "thin content" and the real problem went unnoticed underneath them.
+ *
+ * CJK characters are counted separately and divided by 1.5, because a
+ * Chinese word is one or two characters. Latin words are counted as
+ * before. Hangul syllables count the same way as Chinese.
+ */
+function countWords(body) {
+  const text = body.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ')
+  const cjk = (text.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g) || []).length
+  const latin = text
+    .replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.replace(/[^\p{L}\p{N}]/gu, '').length > 1).length
+  return latin + Math.round(cjk / 1.5)
+}
+
+/* A meta description in Chinese says in 50 characters what English needs
+   150 for, and Google truncates by pixel width, not character count. */
+function isCjkText(value) {
+  return (value.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g) || []).length > value.length / 4
 }
 
 const report = []
@@ -78,7 +107,7 @@ for (const p of pages) {
   else if (p.title.length < 25) add('MED', p.url, `title is only ${p.title.length} chars: "${p.title}"`)
   if (!p.description) add('HIGH', p.url, 'no meta description')
   else if (p.description.length > 165) add('MED', p.url, `description is ${p.description.length} chars, will be cut`)
-  else if (p.description.length < 70) add('LOW', p.url, `description is only ${p.description.length} chars`)
+  else if (p.description.length < (isCjkText(p.description) ? 35 : 70)) add('LOW', p.url, `description is only ${p.description.length} chars`)
   if (!p.canonical) add('HIGH', p.url, 'no canonical')
   /* Compare PATHS. A canonical must always name the production host, so
      comparing whole URLs reports every page as broken when BASE is a local
