@@ -1081,7 +1081,23 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
               }}
             >
               {showTeacher ? <GraduationCap size={17} style={{ marginRight: '6px' }} /> : <UserRound size={17} style={{ marginRight: '6px' }} />}
-              {showTeacher ? 'Teacher' : 'Student'}: {person}
+              {/* The name itself opens the conversation, the way it does
+                  everywhere else people chat. The Message button below
+                  stays, because on a lesson card it is the clearer target. */}
+              {showTeacher ? 'Teacher' : 'Student'}: {onOpenChat && person ? (
+                <button
+                  type="button"
+                  className="chat-name-button"
+                  title={`Message ${person}`}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onOpenChat(
+                      showStudent ? booking.studentId : booking.teacherId,
+                      showStudent ? (booking.learnerName || 'Parent') : (booking.teacherName || 'Teacher'),
+                    )
+                  }}
+                >{person}</button>
+              ) : person}
             </strong>
           )}
           <span style={{ fontSize: '1rem', color: 'var(--portal-muted)' }}>
@@ -1224,93 +1240,85 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  /* Group consecutive messages from the same person: a column of repeated
+     avatars and timestamps reads as noise rather than a conversation. */
+  const rows = messages.map((message, index) => ({
+    ...message,
+    mine: message.senderId === currentUserId,
+    startsRun: index === 0 || messages[index - 1].senderId !== message.senderId,
+  }))
+
   return (
-    <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()} style={{ zIndex: 9999 }}>
-      <section className="portal-dialog direct-chat-dialog" role="dialog" aria-modal="true" style={{ width: '450px', maxWidth: '90vw', height: '550px', display: 'flex', flexDirection: 'column' }}>
-        <header className="portal-dialog__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
-          <div>
-            <span className="portal-kicker" style={{ textTransform: 'uppercase', color: '#bce94e', fontWeight: '800', fontSize: '0.934rem', letterSpacing: '0.05em' }}>Direct Messaging</span>
-            <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '900', color: '#fff' }}>💬 Chat with {targetUserName}</h3>
-          </div>
-          <button className="portal-dialog__close" onClick={onClose} style={{ border: 'none', background: 'transparent', color: '#b9adc7', cursor: 'pointer' }}><X size={20} /></button>
-        </header>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {messages.length ? messages.map((msg) => {
-            const isMe = msg.senderId === currentUserId
-            return (
-              <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '75%',
-                  background: isMe ? '#7850c9' : 'rgba(255,255,255,0.06)',
-                  color: '#fff',
-                  padding: '10px 14px',
-                  borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                  border: isMe ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                }}>
-                  <p style={{ margin: 0, fontSize: '1.03rem', lineHeight: '1.4' }}>{msg.body}</p>
-                  <small style={{ display: 'block', textAlign: 'right', fontSize: '0.901rem', color: isMe ? 'rgba(255,255,255,0.7)' : '#b9adc7', marginTop: '4px' }}>
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </small>
-                </div>
-              </div>
-            )
-          }) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#b9adc7', textAlign: 'center', padding: '20px' }}>
-              <span style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</span>
-              <strong>No messages yet</strong>
-              <span style={{ fontSize: '0.956rem', opacity: 0.7, marginTop: '4px' }}>Say hello and start the conversation.<br />{targetUserName} is emailed whenever you send a message.</span>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+    /*
+     * A docked panel, not a centre modal.
+     *
+     * This used to be a `portal-dialog-backdrop` at z-index 9999: a dark
+     * sheet over the whole dashboard with a 450x550 box in the middle. You
+     * could not look at the booking, the schedule or the student's profile
+     * while typing about them, which is the one thing you always want to do
+     * while writing a message.
+     *
+     * Docked bottom-right it behaves like every other chat people already
+     * know, and the dashboard stays readable behind it. On a phone there is
+     * no room to dock anything, so it becomes a full-height sheet.
+     */
+    <section
+      className="direct-chat"
+      role="dialog"
+      aria-label={`Chat with ${targetUserName}`}
+      onKeyDown={(event) => { if (event.key === 'Escape') onClose() }}
+    >
+      <header className="direct-chat__head">
+        <span className="direct-chat__avatar" aria-hidden="true">{initials(targetUserName)}</span>
+        <div>
+          <strong>{targetUserName}</strong>
+          <small>{currentUserRole === 'teacher' ? 'Parent' : currentUserRole === 'admin' ? 'Member' : 'Teacher'} · replies by email too</small>
         </div>
+        <button type="button" className="direct-chat__close" onClick={onClose} aria-label="Close chat"><X size={18} /></button>
+      </header>
 
-        {/* Honest feedback: a message can send successfully while its email
-            alert fails, and the two must not be conflated. */}
-        {error && <p role="alert" style={{ margin: '0 0 8px', padding: '9px 12px', borderRadius: '9px', background: 'rgba(255,79,135,0.14)', color: '#ffc2d6', fontSize: '0.95rem' }}>{error}</p>}
-        {notice && !error && <p role="status" style={{ margin: '0 0 8px', padding: '9px 12px', borderRadius: '9px', background: 'rgba(188,233,78,0.12)', color: '#dff7a6', fontSize: '0.95rem' }}>{notice}</p>}
+      <div className="direct-chat__messages">
+        {rows.length ? rows.map((message) => (
+          <div key={message.id} className={`direct-chat__row${message.mine ? ' is-mine' : ''}${message.startsRun ? ' starts-run' : ''}`}>
+            <div className="direct-chat__bubble">
+              <p>{message.body}</p>
+              <time dateTime={message.createdAt}>
+                {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </time>
+            </div>
+          </div>
+        )) : (
+          <div className="direct-chat__empty">
+            {/* lucide, not an emoji: a device without the glyph drew an
+                empty box in the middle of the empty state. */}
+            <span><MessageSquareText size={26} /></span>
+            <strong>No messages yet</strong>
+            <small>Say hello to start. {targetUserName} is emailed whenever you send a message.</small>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-        <form onSubmit={sendMessage} style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
-          <input
-            type="text"
-            placeholder={sending ? 'Sending…' : 'Type your message...'}
-            value={text}
-            disabled={sending}
-            onChange={(e) => setText(e.target.value)}
-            style={{
-              flex: 1,
-              background: 'rgba(0,0,0,0.2)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              padding: '10px 14px',
-              color: '#fff',
-              fontSize: '1.037rem',
-              outline: 'none'
-            }}
-          />
-          <button
-            type="submit"
-            disabled={!text.trim() || sending}
-            style={{
-              background: '#bce94e',
-              color: '#090510',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              fontWeight: '900',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '1rem'
-            }}
-          >
-            Send <Send size={14} />
-          </button>
-        </form>
-      </section>
-    </div>
+      {/* Honest feedback: a message can send successfully while its email
+          alert fails, and the two must not be conflated. */}
+      {error && <p className="direct-chat__note direct-chat__note--bad" role="alert">{error}</p>}
+      {notice && !error && <p className="direct-chat__note" role="status">{notice}</p>}
+
+      <form className="direct-chat__compose" onSubmit={sendMessage}>
+        <input
+          type="text"
+          placeholder={sending ? 'Sending…' : 'Write a message…'}
+          value={text}
+          disabled={sending}
+          autoFocus
+          onChange={(event) => setText(event.target.value)}
+          aria-label="Message"
+        />
+        <button type="submit" disabled={!text.trim() || sending} aria-label="Send message">
+          <Send size={17} />
+        </button>
+      </form>
+    </section>
   )
 }
 
@@ -6907,6 +6915,10 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   // 'ALL', a two-letter country code, or 'UNKNOWN'.
   const [studentCountryFilter, setStudentCountryFilter] = useState('ALL')
   const [studentSearch, setStudentSearch] = useState('')
+  /* Clicking a family or teacher name opens a conversation with them. The
+     admin had no direct chat at all: the only way to reach a parent was the
+     support inbox, which is for threads THEY started. */
+  const [directChatUser, setDirectChatUser] = useState(null)
   const [emailCheck, setEmailCheck] = useState(null)
   const [checkingEmail, setCheckingEmail] = useState(false)
   // Throwaway accounts left behind by automated checks. `null` = never looked.
@@ -7731,7 +7743,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   /* One row of the students table. Lifted out of the JSX so the table can
      be grouped by country without duplicating any of it. */
-  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span className={`table-avatar table-avatar--${avatarTone(student.parentName)}`}>{initials(student.parentName)}</span><div><strong>{student.parentName}</strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
+  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span className={`table-avatar table-avatar--${avatarTone(student.parentName)}`}>{initials(student.parentName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => setDirectChatUser({ id: student.id, name: student.parentName })} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
@@ -7857,7 +7869,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => setDirectChatUser({ id: teacher.id, name: teacher.fullName })} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
@@ -8107,6 +8119,15 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {teacherToFix && <TeacherLoginFixDialog teacher={teacherToFix} onClose={() => setTeacherToFix(null)} onFixed={() => { setTeacherToFix(null); refresh() }} />}
       {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
       {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
+      {directChatUser && (
+        <DirectChatModal
+          currentUserId={account.id}
+          currentUserRole="admin"
+          targetUserId={directChatUser.id}
+          targetUserName={directChatUser.name}
+          onClose={() => setDirectChatUser(null)}
+        />
+      )}
     </PortalShell>
   )
 }

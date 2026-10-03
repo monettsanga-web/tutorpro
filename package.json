@@ -66,6 +66,7 @@
     "verify:registration": "node scripts/verify-registration.mjs",
     "verify:staysignedin": "node scripts/verify-stay-signed-in.mjs",
     "verify:studentcountries": "node scripts/verify-students-by-country.mjs",
+    "verify:directchat": "node scripts/verify-direct-chat.mjs",
     "verify:textfitdash": "node scripts/audit-text-fit-dashboard.mjs",
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:paymenterrors": "node scripts/test-payment-errors.mjs",

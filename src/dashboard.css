@@ -12967,3 +12967,271 @@ a.feedback-resource-detail:hover strong {
   .admin-table--students .admin-table__row > .table-actions { justify-content: flex-start; }
   .admin-table--students .admin-table__row > .table-person { justify-content: flex-start; }
 }
+
+/* ===========================================================================
+   DIRECT CHAT — a docked panel, not a centre modal
+   ---------------------------------------------------------------------------
+   This was a `portal-dialog-backdrop` at z-index 9999: a dark sheet over the
+   whole dashboard with a 450x550 box floating in the middle, built entirely
+   from inline styles. Two problems with that:
+
+     - it blocked the page. You could not look at the booking, the schedule
+       or the student's profile while typing a message about them, which is
+       the one thing you always want to do while writing one.
+     - on a phone the fixed 550px height overflowed short screens, and the
+       on-screen keyboard covered the input.
+
+   Docked bottom-right it behaves like every chat people already use, and
+   the dashboard stays readable behind it. On a phone it becomes a
+   full-height sheet measured in dvh, so the keyboard shrinks the message
+   list instead of hiding the box you are typing into.
+   =========================================================================== */
+.direct-chat {
+  position: fixed;
+  z-index: 140;
+  right: clamp(16px, 3vw, 28px);
+  bottom: clamp(16px, 3vw, 28px);
+  display: flex;
+  width: min(390px, calc(100vw - 32px));
+  /* dvh, not vh: on iOS the address bar makes vh taller than the screen. */
+  height: min(560px, calc(100dvh - 120px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(50, 21, 104, 0.14);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 28px 70px rgba(23, 12, 48, 0.26);
+  animation: direct-chat-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes direct-chat-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .direct-chat { animation: none; }
+}
+
+/* ---------- header ---------- */
+.direct-chat__head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 14px;
+  background: linear-gradient(125deg, #321568, #6b3fd4);
+  color: #fff;
+}
+
+.direct-chat__head > div { display: flex; min-width: 0; flex-direction: column; }
+.direct-chat__head strong { overflow: hidden; font-size: 1.06rem; text-overflow: ellipsis; white-space: nowrap; }
+.direct-chat__head small { color: rgba(255, 255, 255, 0.76); font-size: 0.9rem; }
+
+.direct-chat__avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.93rem;
+  font-weight: 800;
+}
+
+.direct-chat__close {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-left: auto;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+}
+
+.direct-chat__close:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ---------- messages ---------- */
+.direct-chat__messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  padding: 14px 13px;
+  background: linear-gradient(180deg, #f8f7fc 0%, #f2f0f8 100%);
+  overscroll-behavior: contain;
+}
+
+.direct-chat__row { display: flex; justify-content: flex-start; }
+.direct-chat__row.is-mine { justify-content: flex-end; }
+/* Space between people, not between every line from the same person. */
+.direct-chat__row.starts-run { margin-top: 10px; }
+.direct-chat__row:first-child { margin-top: 0; }
+
+.direct-chat__bubble {
+  position: relative;
+  max-width: 78%;
+  min-width: 0;
+  border-radius: 16px 16px 16px 5px;
+  padding: 9px 13px 7px;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(23, 12, 48, 0.07);
+}
+
+.direct-chat__row.is-mine .direct-chat__bubble {
+  border-radius: 16px 16px 5px 16px;
+  background: linear-gradient(135deg, #7048df, #5b34b5);
+  color: #fff;
+}
+
+.direct-chat__bubble p {
+  margin: 0;
+  /* A pasted link or a long word must wrap rather than widen the bubble. */
+  overflow-wrap: anywhere;
+  font-size: 1.015rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.direct-chat__bubble time {
+  display: block;
+  margin-top: 3px;
+  color: #8a7ca3;
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.direct-chat__row.is-mine time { color: rgba(255, 255, 255, 0.74); }
+
+.direct-chat__empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 24px;
+  color: #6b5f7d;
+  text-align: center;
+}
+
+.direct-chat__empty > span {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ece7f8;
+  color: #6b3fd4;
+}
+
+.direct-chat__empty strong { color: #321568; font-size: 1.06rem; }
+.direct-chat__empty small { font-size: 0.945rem; line-height: 1.5; }
+
+/* ---------- status line ---------- */
+.direct-chat__note {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 9px 14px;
+  background: #f0fbf4;
+  color: #14532d;
+  font-size: 0.93rem;
+}
+
+.direct-chat__note--bad { background: #fdecec; color: #8c2020; }
+
+/* ---------- compose ---------- */
+.direct-chat__compose {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid #e9e5f1;
+  padding: 11px;
+  background: #fff;
+  /* Clear of the home indicator on a phone. */
+  padding-bottom: max(11px, env(safe-area-inset-bottom));
+}
+
+.direct-chat__compose input {
+  min-width: 0;
+  min-height: 44px;
+  flex: 1;
+  border: 1px solid #e0dbec;
+  border-radius: 22px;
+  outline: 0;
+  padding: 0 15px;
+  background: #f7f6fb;
+  color: #1d1033;
+  /* 16px minimum: anything smaller makes iOS Safari zoom the whole page in
+     when the field is focused, and it never zooms back out. */
+  font-size: 1rem;
+}
+
+.direct-chat__compose input:focus { border-color: #7048df; background: #fff; box-shadow: 0 0 0 3px rgba(112, 72, 223, 0.13); }
+
+.direct-chat__compose button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff4f87, #d9245f);
+  color: #fff;
+  cursor: pointer;
+  transition: transform .14s ease, filter .14s ease;
+}
+
+.direct-chat__compose button:hover:not(:disabled) { transform: scale(1.06); }
+.direct-chat__compose button:disabled { cursor: not-allowed; filter: grayscale(0.7); opacity: 0.5; }
+
+/* ---------- phones ---------- */
+@media (max-width: 640px) {
+  .direct-chat {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* Full height, measured in dvh so the keyboard shortens the message
+       list rather than pushing the input off the bottom of the screen. */
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .direct-chat__head { padding-top: max(13px, env(safe-area-inset-top)); }
+  .direct-chat__bubble { max-width: 85%; }
+}
+
+/* The chat covers the bottom bars while it is open; they would sit on top
+   of the compose box otherwise. */
+body:has(.direct-chat) .mobile-guest-action-bar,
+body:has(.direct-chat) .support-widget { display: none !important; }
+
+/* A person's name that opens a conversation. It must look clickable without
+   turning every table into a wall of blue links. */
+.chat-name-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(112, 72, 223, 0.32);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.chat-name-button:hover { color: #6b3fd4; text-decoration-color: #6b3fd4; }
+.chat-name-button:focus-visible { outline: 2px solid #7048df; outline-offset: 2px; border-radius: 4px; }
