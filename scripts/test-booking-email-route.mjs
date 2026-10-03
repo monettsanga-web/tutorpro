@@ -139,5 +139,39 @@ ok(
 )
 ok(/direct\.handled/.test(browser), 'the Supabase fallback runs only when the new route sent nothing, so nobody gets two emails')
 
+/* ================================================================== */
+/* 7. The support-message email, same fix                              */
+/* ================================================================== */
+/* This is the one the teacher actually screenshotted: "New Message
+   Notification · 消息通知", with a Chinese paragraph under the English. */
+const msg = await import(join(root, 'api/_messageEmail.js'))
+const enCopy = msg.COPY.en
+const englishMessageText = [
+  enCopy.newMessage, enCopy.greeting('Teacher M'), enCopy.sentYouAMessage('Support'),
+  enCopy.readAndReply, enCopy.replyInside, enCopy.subject('Support'),
+].join(' ')
+ok(!CJK.test(englishMessageText), 'the English message email contains no Chinese — the exact fault in the screenshot')
+ok(!HANGUL.test(englishMessageText) && !ARABIC.test(englishMessageText), 'nor any other script')
+ok(!/消息通知/.test(englishMessageText), 'the bilingual header "New Message Notification · 消息通知" is gone')
+ok(msg.languageForProfile({ profile_data: { registrationCountry: 'PH' } }) === 'en', 'a recipient in the Philippines gets English')
+ok(msg.languageForProfile({ profile_data: { ipLanguage: 'zh-CN' } }) === 'zh-CN', 'and a Chinese reader still gets Chinese, alone')
+ok(Object.keys(msg.COPY).length >= 14, `the message email covers ${Object.keys(msg.COPY).length} languages`)
+
+const messageRoute = read('api/notify/message.js')
+ok(/RESEND_API_KEY/.test(messageRoute) && /501/.test(messageRoute), 'the message route falls back cleanly before the key is set')
+ok(/Not your message/.test(messageRoute), 'only the author can trigger their own notification')
+ok(/emailed_at/.test(messageRoute), 'it refuses to send the same message twice')
+ok(
+  messageRoute.indexOf('emailed_at: new Date()') > messageRoute.indexOf('response.ok'),
+  'and stamps emailed_at only AFTER a confirmed send, so a failure can be retried',
+)
+
+const messenger = read('src/directMessages.js')
+ok(/\/api\/notify\/message/.test(messenger), 'the website calls the new message route')
+ok(
+  messenger.indexOf('/api/notify/message') < messenger.indexOf("functions.invoke('message-notification'"),
+  'before the old Supabase function',
+)
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

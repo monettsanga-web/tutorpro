@@ -28,7 +28,11 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.mjs', 'server/**/*.mjs'],
+    /* api/** are Vercel serverless functions: Node, not the browser. They
+       were never listed here, so every `process.env` and every `Buffer` in
+       them was reported as an undefined global - 23 errors that said
+       nothing about the code. */
+    files: ['scripts/**/*.mjs', 'server/**/*.mjs', 'api/**/*.js'],
     languageOptions: {
       globals: globals.node,
     },

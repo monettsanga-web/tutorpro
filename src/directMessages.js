@@ -168,10 +168,20 @@ export async function sendDirectMessage({ senderId, senderRole, recipientId, bod
   let emailed = false
   let emailError = ''
   try {
-    const { data: result, error: invokeError } = await client.functions.invoke('message-notification', {
-      body: { messageId: saved.id },
-    })
-    if (invokeError) throw invokeError
+    /*
+     * /api/notify/message first.
+     *
+     * The wording used to live only in a Supabase Edge Function, which has
+     * to be redeployed by hand and never was — so this email went out as
+     * English with a Chinese paragraph underneath, to everybody. The Vercel
+     * route ships with every push instead.
+     *
+     * It answers 501 while RESEND_API_KEY is missing, and only then do we
+     * fall back to the old function. The route also stamps emailed_at only
+     * after a confirmed send, and refuses to send twice, so the fallback
+     * cannot produce a duplicate.
+     */
+    const result = await sendMessageEmail(saved.id, client)
     emailed = Boolean(result?.delivered)
     if (!emailed) emailError = result?.reason || result?.error || 'Email alert was not sent.'
   } catch (caught) {
@@ -179,6 +189,39 @@ export async function sendDirectMessage({ senderId, senderRole, recipientId, bod
   }
 
   return { message: saved, emailed, emailError }
+}
+
+/**
+ * Send the "you have a new message" email.
+ *
+ * Tries the route in this repository, then the Supabase function it
+ * replaced. Returns whatever the sender reported.
+ */
+async function sendMessageEmail(messageId, client) {
+  const { data: session } = await client.auth.getSession()
+  const token = session?.session?.access_token
+  if (token) {
+    try {
+      const response = await fetch('/api/notify/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ messageId }),
+      })
+      // 501 means the Resend key is not in Vercel yet.
+      if (response.status !== 501) {
+        const payload = await response.json().catch(() => ({}))
+        if (response.ok) return payload
+        return { delivered: false, error: payload.error }
+      }
+    } catch {
+      // Network trouble: fall through to the Supabase function.
+    }
+  }
+  const { data: result, error: invokeError } = await client.functions.invoke('message-notification', {
+    body: { messageId },
+  })
+  if (invokeError) throw invokeError
+  return result
 }
 
 /** Mark everything the other person sent as read. Drives the unread badge. */
