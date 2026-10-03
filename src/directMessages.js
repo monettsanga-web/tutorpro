@@ -95,6 +95,36 @@ export function mergeThread(userA, userB, incoming) {
   return merged
 }
 
+/**
+ * Everyone this person already has a conversation with.
+ *
+ * A contact list built only from bookings loses people: a teacher whose
+ * lessons have all finished, or a parent who changed teacher, still has a
+ * thread full of messages and no way back into it. This reads the local
+ * cache, which is where every thread lands whether it came from the cloud
+ * or was written offline.
+ */
+export function listDirectConversations(currentUserId) {
+  if (!currentUserId) return []
+  const threads = readLocal()
+  const out = []
+  for (const [key, messages] of Object.entries(threads)) {
+    if (!Array.isArray(messages) || !messages.length) continue
+    const ids = key.split('--')
+    if (!ids.includes(currentUserId)) continue
+    const withId = ids.find((id) => id !== currentUserId)
+    if (!withId) continue
+    const last = messages[messages.length - 1]
+    out.push({
+      withId,
+      withName: last?.senderId === currentUserId ? last?.recipientName || '' : last?.senderName || '',
+      lastMessage: last?.body || '',
+      lastAt: last?.createdAt || '',
+    })
+  }
+  return out.sort((a, b) => new Date(b.lastAt || 0) - new Date(a.lastAt || 0))
+}
+
 export function cloudMessagingEnabled() {
   return Boolean(isSupabaseConfigured && supabase)
 }

@@ -113,7 +113,7 @@ import { attendanceSummary, formatPresence, punctuality } from './classroomAtten
 import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED } from './classroomFeature.js'
 import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPolicy.js'
 import { SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
-import { fetchThread, markThreadRead, mergeThread, readLocalThread, sendDirectMessage, subscribeToDirectMessages } from './directMessages.js'
+import { fetchThread, listDirectConversations, markThreadRead, mergeThread, readLocalThread, sendDirectMessage, subscribeToDirectMessages } from './directMessages.js'
 import { classroomComponents } from './classroomLazy.js'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
@@ -4053,17 +4053,31 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       subtitle: 'Registration, schedules, payments · English & 中文',
     }]
     const seen = new Set()
+    const add = (id, name, subtitle) => {
+      if (!id || seen.has(id)) return
+      seen.add(id)
+      list.push({ id, key: id, kind: 'person', name, subtitle })
+    }
+
+    /* Teachers this family has lessons with. */
     allBookings.forEach((booking) => {
-      if (!booking.teacherId || seen.has(booking.teacherId)) return
-      seen.add(booking.teacherId)
-      list.push({
-        id: booking.teacherId,
-        key: booking.teacherId,
-        kind: 'person',
-        name: booking.teacherName || 'Teacher',
-        subtitle: 'Your child’s teacher · lessons, homework, progress',
-      })
+      add(booking.teacherId, booking.teacherName || 'Teacher', 'Your child’s teacher · lessons, homework, progress')
     })
+
+    /* The teacher the administrator assigned, before any lesson is booked.
+       Bookings alone left a newly-assigned family with nobody to write to
+       but the administrator. */
+    learners.forEach((child) => {
+      if (!child?.assignedTeacherId) return
+      const teacher = getAccountById(child.assignedTeacherId)
+      add(child.assignedTeacherId, teacher?.fullName || 'Your teacher', `${child.name}’s teacher`)
+    })
+
+    /* Anyone already in a conversation, so a thread is never orphaned. */
+    listDirectConversations(account.id).forEach((conversation) => {
+      add(conversation.withId, conversation.withName || 'Teacher', 'Existing conversation')
+    })
+
     return list
   })()
   const studentSyncCallbacks = useRef({ onAccountChange, onLogout })
@@ -4495,8 +4509,8 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             intro="Admin answers registration, schedule and payment questions. Teachers answer about the lessons themselves."
             people={chatPeople}
             onOpen={(person) => (person.kind === 'support' ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
-            emptyTitle="No conversations yet"
-            emptyText="Book a class and your teacher will appear here."
+            emptyTitle="No teachers yet"
+            emptyText="Your teacher appears here once a class is booked, or as soon as the administrator assigns one. You can always message admin above."
           />
           {!parentChinaSupport && (
             <section className="portal-card parent-support-channel-card">
@@ -4634,17 +4648,48 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       subtitle: 'Schedules, payouts, student concerns',
     }]
     const seen = new Set()
+    const add = (id, name, subtitle) => {
+      if (!id || seen.has(id)) return
+      seen.add(id)
+      list.push({ id, key: id, kind: 'person', name, subtitle })
+    }
+
+    /*
+     * Families who have booked with this teacher.
+     *
+     * Bookings were the ONLY source here, which is why a teacher could see
+     * nothing but the administrator: a teacher the admin has just assigned
+     * students to - or whose lessons are all in the past and cleared - has
+     * an empty booking list, and an empty booking list meant an empty
+     * contact list. The person they most need to message is the parent of
+     * a child they have not taught yet.
+     */
     bookings.forEach((booking) => {
-      if (!booking.studentId || seen.has(booking.studentId)) return
-      seen.add(booking.studentId)
-      list.push({
-        id: booking.studentId,
-        key: booking.studentId,
-        kind: 'person',
-        name: booking.learnerName ? `${booking.learnerName}’s parent` : 'Parent',
-        subtitle: booking.learnerName ? `Family of ${booking.learnerName}` : 'Family account',
-      })
+      add(
+        booking.studentId,
+        booking.learnerName ? `${booking.learnerName}’s parent` : 'Parent',
+        booking.learnerName ? `Family of ${booking.learnerName} · ${booking.status === 'completed' ? 'past lesson' : 'booked lesson'}` : 'Family account',
+      )
     })
+
+    /* Students the administrator assigned to this teacher, booked or not. */
+    getAccounts('student').forEach((family) => {
+      const learners = (family.children?.length ? family.children : [family.child]).filter(Boolean)
+      const mine = learners.filter((child) => child.assignedTeacherId === account.id)
+      if (!mine.length) return
+      add(
+        family.id,
+        family.parentName ? `${family.parentName}` : `${mine[0].name}’s parent`,
+        `Assigned student${mine.length > 1 ? 's' : ''}: ${mine.map((child) => child.name).join(', ')}`,
+      )
+    })
+
+    /* Anyone already in a conversation with this teacher, so a thread can
+       never be orphaned by a booking being cleared. */
+    listDirectConversations(account.id).forEach((conversation) => {
+      add(conversation.withId, conversation.withName || 'Parent', 'Existing conversation')
+    })
+
     return list
   })()
 
@@ -5404,8 +5449,8 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             intro="Admin handles schedules and payouts. Parents are reached through their family account."
             people={chatPeople}
             onOpen={(person) => (person.kind === 'support' ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
-            emptyTitle="No conversations yet"
-            emptyText="Accept a booking and that family will appear here."
+            emptyTitle="No families yet"
+            emptyText="A family appears here as soon as a lesson is booked with you, or the administrator assigns a student to you. You can always message admin above."
           />
           <section className="portal-card teacher-support-channel-card">
             <div><span className="portal-kicker">Another way to reach admin</span><h2>Prefer Facebook Messenger?</h2><p>Messenger is quick where it is accessible. The website chat above works inside TutorPro and never asks for your email again.</p></div>
