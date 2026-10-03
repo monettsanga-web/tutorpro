@@ -6027,6 +6027,11 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
 export function SupportInbox({ onUnreadChange }) {
   const [conversations, setConversations] = useState([])
   const [selectedId, setSelectedId] = useState('')
+  /* The inbox opens the first conversation for you on load, which is right
+     the first time and wrong afterwards: closing the panel re-selected that
+     same conversation on the next refresh, so the close button looked
+     broken. This records that the admin chose to close it. */
+  const [threadDismissed, setThreadDismissed] = useState(false)
   const [thread, setThread] = useState(null)
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState(null)
@@ -6044,13 +6049,13 @@ export function SupportInbox({ onUnreadChange }) {
       setConversations(rows)
       onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
       setError('')
-      if (!selectedId && rows[0]) setSelectedId(rows[0].id)
+      if (!selectedId && !threadDismissed && rows[0]) setSelectedId(rows[0].id)
     } catch (loadError) {
       setError(loadError.message)
     } finally {
       setLoading(false)
     }
-  }, [onUnreadChange, selectedId])
+  }, [onUnreadChange, selectedId, threadDismissed])
 
   const loadThread = useCallback(async (conversationId = selectedId) => {
     if (!conversationId) return
@@ -6097,6 +6102,7 @@ export function SupportInbox({ onUnreadChange }) {
   }, [thread?.messages, translations])
 
   const selectConversation = (conversationId) => {
+    setThreadDismissed(false)
     setSelectedId(conversationId)
     setThread(null)
     setDraft('')
@@ -6172,6 +6178,19 @@ export function SupportInbox({ onUnreadChange }) {
     || item.last_message?.toLowerCase().includes(normalizedQuery))
 
   return (
+    /*
+     * The docked panel is rendered OUTSIDE .portal-view on purpose.
+     *
+     * .portal-view carries `transform: matrix(1,0,0,1,0,0)` and
+     * `filter: blur(0px)` from the motion layer. They are identity values
+     * and change nothing visually, but ANY transform or filter other than
+     * `none` makes an element the containing block for its
+     * `position: fixed` descendants. Nested inside, the panel measured
+     * itself against .portal-view instead of the screen: on a 390px phone
+     * it came out 366px wide and hung 148px below the bottom of the
+     * viewport.
+     */
+    <>
     <div className="portal-view support-inbox-view">
       <div className="portal-page-heading"><div><span className="portal-kicker">Parents & Teachers Care</span><h1>Parents/Teachers support inbox</h1><p>Reply to parents and teachers directly from TutorPro Online English.</p></div><span className="support-inbox-live"><i /> Live inbox</span></div>
       {error && <div className="portal-error" role="alert">{error}</div>}
@@ -6181,15 +6200,30 @@ export function SupportInbox({ onUnreadChange }) {
           <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_count) > 0 && <i>{conversation.unread_count}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
         </aside>
 
-        <div className="support-admin-thread">
-          {thread ? <>
-            <header><div><span>{initials(thread.parentName)}</span><div><strong>{thread.parentName}</strong><small>{thread.email} · {/^zh/.test(thread.language) ? 'Chinese' : thread.language || 'English'}</small></div></div><button onClick={toggleStatus} disabled={sending}>{thread.status === 'closed' ? 'Reopen' : 'Close conversation'}</button></header>
-            <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p>{translations[message.id] && <p className="support-admin-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-admin-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
-            <form onSubmit={reply}>{attachment && <div className="support-admin-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-admin-file-button" title="Upload attachment"><FileUp size={18} /><input ref={supportAttachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseSupportAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); reply(event) } }} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || (!draft.trim() && !attachment)}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
-          </> : <div className="support-thread-placeholder"><MessageSquareText size={36} /><h2>Select a conversation</h2><p>Parent details and private messages will appear here.</p></div>}
-        </div>
       </section>
     </div>
+        {/*
+          * The whole panel is conditional, not just its contents.
+          *
+          * The wrapper used to render always, and it carries the docked
+          * `position: fixed` styling - so with nothing selected an empty
+          * 420x600 white box sat in the bottom-right corner of the screen.
+          *
+          * `selectedId && thread`, not `thread` alone: the inbox polls in
+          * the background, and clearing only `thread` let the next poll
+          * repopulate it so the panel reappeared a moment after it was
+          * closed. The selection is the thing the admin controls.
+          */}
+        {selectedId && thread ? (
+        <div className="support-admin-thread support-admin-thread--docked">
+          <>
+            <header><div><span>{initials(thread.parentName)}</span><div><strong>{thread.parentName}</strong><small>{thread.email} · {/^zh/.test(thread.language) ? 'Chinese' : thread.language || 'English'}</small></div></div><button onClick={toggleStatus} disabled={sending}>{thread.status === 'closed' ? 'Reopen' : 'Close conversation'}</button><button type="button" className="support-admin-dismiss" onClick={() => { setThreadDismissed(true); setSelectedId(''); setThread(null) }} aria-label="Close this chat"><X size={18} /></button></header>
+            <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p>{translations[message.id] && <p className="support-admin-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-admin-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
+            <form onSubmit={reply}>{attachment && <div className="support-admin-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-admin-file-button" title="Upload attachment"><FileUp size={18} /><input ref={supportAttachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseSupportAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); reply(event) } }} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || (!draft.trim() && !attachment)}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
+          </>
+        </div>
+        ) : null}
+    </>
   )
 }
 

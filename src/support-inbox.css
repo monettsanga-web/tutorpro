@@ -65,3 +65,120 @@
   .support-admin-thread > form { grid-template-columns: 1fr; }
   .support-admin-thread form button { min-height: 43px; }
 }
+
+/* ===========================================================================
+   The support thread is a docked popup, not a second column
+   ---------------------------------------------------------------------------
+   `.support-inbox` was a fixed `320px 1fr` grid, 650px tall. Two problems:
+
+     - On a phone it stacked into a 330px conversation list ABOVE a 540px
+       thread. Reading a reply meant scrolling past the whole list, and the
+       box you type into sat at the very bottom of a very long page.
+     - On desktop an empty right-hand pane took half the screen whenever no
+       conversation was selected.
+
+   Now the list is the page, and opening a conversation docks the thread
+   bottom-right — the same shape as the direct chat in every other
+   dashboard, so one habit works everywhere. On a phone it is a full-height
+   sheet measured in dvh, so the keyboard shortens the message list rather
+   than hiding the compose box.
+   =========================================================================== */
+.support-inbox {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.support-conversation-list { border-right: 0; }
+
+/* Taller rows read better now that the list has the full width. */
+.support-conversation-list > div { max-height: min(62dvh, 640px); }
+
+.support-admin-thread--docked {
+  position: fixed;
+  z-index: 140;
+  right: clamp(16px, 3vw, 28px);
+  bottom: clamp(16px, 3vw, 28px);
+  display: flex;
+  width: min(420px, calc(100vw - 32px));
+  /* dvh: on iOS the address bar makes vh taller than the visible screen. */
+  height: min(600px, calc(100dvh - 120px));
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(50, 21, 104, 0.14);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 28px 70px rgba(23, 12, 48, 0.26);
+  animation: support-thread-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes support-thread-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .support-admin-thread--docked { animation: none; }
+}
+
+.support-admin-thread--docked > header { flex: 0 0 auto; }
+
+.support-admin-thread--docked .support-admin-messages {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.support-admin-thread--docked > form {
+  flex: 0 0 auto;
+  /* Clear of the home indicator on a phone. */
+  padding-bottom: max(11px, env(safe-area-inset-bottom));
+}
+
+/* Anything below 16px makes iOS Safari zoom the page in when the field is
+   focused, and it never zooms back out. */
+.support-admin-thread form input[type="text"],
+.support-admin-thread form textarea { font-size: 1rem; }
+
+.support-admin-dismiss {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f0ecf8;
+  color: #4a3a66;
+  cursor: pointer;
+}
+
+.support-admin-dismiss:hover { background: #e2daf3; }
+
+/* While the thread is open the floating widgets would sit on the compose
+   box. Same rule the direct chat uses. */
+body:has(.support-admin-thread--docked) .mobile-guest-action-bar,
+body:has(.support-admin-thread--docked) .support-widget { display: none !important; }
+
+@media (max-width: 650px) {
+  /* Undo the old stacked layout: the list is the page now. */
+  .support-conversation-list { max-height: none; border-bottom: 0; }
+  .support-conversation-list > div { max-height: none; }
+
+  .support-admin-thread--docked {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .support-admin-thread--docked > header {
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+}
