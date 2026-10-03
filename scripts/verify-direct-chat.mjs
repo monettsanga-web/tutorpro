@@ -11,6 +11,14 @@
  * height overflowed short screens and the keyboard covered the input.
  *
  * It also could not be reached from the admin dashboard at all.
+ *
+ * UPDATE
+ * ------
+ * The direct chat is now parent-to-teacher only, which is the pair that
+ * has an inbox at both ends. Admin-to-anybody opens the SUPPORT
+ * conversation instead - see verify-admin-name-chat.mjs - because a direct
+ * message to a parent landed somewhere the parent could not read. So this
+ * file drives the panel from the parent's Messages page.
  */
 const SANDBOX = '/home/user/.npm/_npx/eedcb85d74ea43ba/node_modules/playwright-core/index.mjs'
 const { chromium } = await import('playwright-core').catch(() => import(SANDBOX))
@@ -23,25 +31,31 @@ const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? '  ok  ' : 'FAIL  '
 
 const ADMIN = '11111111-1111-4111-8111-111111111111'
 const PARENT = '22222222-2222-4222-8222-000000000001'
+const TEACHER = '33333333-3333-4333-8333-000000000001'
 const learner = { id: 'l1', name: 'Juan Santos', year: 'Year 3', curriculum: 'Cambridge', goal: 'Speaking with confidence', accessStatus: 'active' }
+const bookings = [
+  { id: 'b1', studentId: PARENT, learnerId: 'l1', learnerName: 'Juan Santos', teacherId: TEACHER, teacherName: 'Teacher M', date: '2026-10-10', time: '16:00', duration: 25, status: 'confirmed', subject: 'English' },
+]
 const accounts = [
   { id: ADMIN, role: 'admin', status: 'active', parentName: 'Monett', fullName: 'Monett', email: 'admin@tutorpro.site', loginId: 'admin@tutorpro.site' },
   { id: PARENT, role: 'student', status: 'active', parentName: 'Maria Santos', email: 'maria@gmail.com', loginId: 'maria@gmail.com', registrationCountry: 'PH', children: [learner], child: learner },
+  { id: TEACHER, role: 'teacher', status: 'approved', fullName: 'Teacher M', parentName: 'Teacher M', email: 'teacherm@tutorpro.site', loginId: 'teacherm@tutorpro.site', teacher: { specialization: 'General English', experience: 5, languages: 'English', bio: 'Hi', education: 'BA', credentials: [] } },
 ]
 
 const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] })
 
-async function adminStudents(width) {
+async function parentMessages(width) {
   const page = await browser.newPage({ viewport: { width, height: width < 700 ? 844 : 950 }, isMobile: width < 700, hasTouch: width < 700 })
   await page.route('**/paypal.com/**', (r) => r.abort())
   await page.route('**/*.{mp4,webm}', (r) => r.abort())
-  await page.route('**/auth/v1/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: ADMIN }) }))
+  await page.route('**/auth/v1/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: PARENT }) }))
   await page.route('**/rest/v1/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"offline"}' }))
   await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' })
   await page.evaluate(`
     sessionStorage.setItem('tutorpro_ip_timezone','Asia/Manila');
     localStorage.setItem('tutorpro_accounts_v2', ${JSON.stringify(JSON.stringify(accounts))});
-    localStorage.setItem('tutorpro_session_v2', '${ADMIN}');`)
+    localStorage.setItem('tutorpro_bookings_v1', ${JSON.stringify(JSON.stringify(bookings))});
+    localStorage.setItem('tutorpro_session_v2', '${PARENT}');`)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2400)
   const enter = page.locator('button:has-text("My dashboard"):visible').first()
@@ -53,7 +67,7 @@ async function adminStudents(width) {
   await page.waitForSelector('.portal-nav', { timeout: 20000 })
   const menu = page.locator('.portal-menu')
   if (await menu.count() && await menu.first().isVisible()) { await menu.first().click(); await page.waitForTimeout(350) }
-  await page.locator('.portal-nav button:has-text("Students")').first().click()
+  await page.locator('.portal-nav button:has-text("Messages")').first().click()
   await page.waitForTimeout(800)
   const scrim = page.locator('.portal-scrim')
   if (await scrim.count() && await scrim.first().isVisible()) { await scrim.first().click(); await page.waitForTimeout(300) }
@@ -63,16 +77,16 @@ async function adminStudents(width) {
 }
 
 /* ---------- desktop ---------- */
-const page = await adminStudents(1440)
+const page = await parentMessages(1440)
 
-const nameButton = page.locator('.chat-name-button', { hasText: 'Maria Santos' }).first()
-ok(await nameButton.count() > 0, 'the family name in Admin → Students is clickable')
+const nameButton = page.locator('.chat-person .chat-name-button', { hasText: 'Teacher M' }).first()
+ok(await nameButton.count() > 0, 'the teacher’s name in the parent’s Messages page is clickable')
 
 await nameButton.click()
 await page.waitForTimeout(700)
 
 const chat = page.locator('.direct-chat')
-ok(await chat.count() > 0, 'clicking the name opens the chat — the admin had no direct chat at all before')
+ok(await chat.count() > 0, 'clicking the name opens the chat — a parent had no way to start one without a lesson card before')
 
 const shape = await page.evaluate(`(() => {
   const el = document.querySelector('.direct-chat')
@@ -88,16 +102,16 @@ const shape = await page.evaluate(`(() => {
     fitsVertically: r.top >= 0 && r.bottom <= innerHeight + 1,
     blockingBackdrop: Boolean(document.querySelector('.portal-dialog-backdrop')),
     title: el.querySelector('.direct-chat__head strong')?.textContent?.trim(),
-    dashboardStillVisible: Boolean(document.querySelector('.admin-table__row')),
+    dashboardStillVisible: Boolean(document.querySelector('.chat-person')),
     inlineStyled: el.getAttribute('style') || '',
   }
 })()`)
 ok(shape.position === 'fixed', 'it is pinned to the viewport')
 ok(shape.right < 40 && shape.bottom < 40, `docked to the bottom-right corner (${shape.right}px from the right, ${shape.bottom}px from the bottom)`)
 ok(!shape.blockingBackdrop, 'there is no dark backdrop over the dashboard any more')
-ok(shape.dashboardStillVisible, 'the student list is still on screen and readable behind it')
+ok(shape.dashboardStillVisible, 'the Messages page is still on screen and readable behind it')
 ok(shape.fitsVertically, `the panel fits on screen (${shape.height}px tall)`)
-ok(shape.title === 'Maria Santos', `the header names the person (${shape.title})`)
+ok(shape.title === 'Teacher M', `the header names the person (${shape.title})`)
 ok(!shape.inlineStyled, 'the panel is styled by a stylesheet, not by inline styles')
 
 /* The empty state used an emoji, which draws an empty box where the OS has
@@ -127,8 +141,8 @@ ok(await page.locator('.direct-chat').count() === 0, 'Escape closes the chat')
 await page.close()
 
 /* ---------- phone ---------- */
-const phone = await adminStudents(390)
-await phone.locator('.chat-name-button', { hasText: 'Maria Santos' }).first().click()
+const phone = await parentMessages(390)
+await phone.locator('.chat-person .chat-name-button', { hasText: 'Teacher M' }).first().click()
 await phone.waitForTimeout(700)
 const small = await phone.evaluate(`(() => {
   const el = document.querySelector('.direct-chat')

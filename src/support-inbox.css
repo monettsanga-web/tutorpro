@@ -182,3 +182,8 @@ body:has(.support-admin-thread--docked) .support-widget { display: none !importa
     padding-top: max(12px, env(safe-area-inset-top));
   }
 }
+
+/* While the conversation is being fetched. The panel is already on screen,
+   so it must look like a chat opening, not an empty white rectangle. */
+.support-admin-thread--loading { display: grid; grid-template-rows: auto 1fr; }
+.support-admin-thread--loading .support-admin-messages { display: grid; place-items: center; }

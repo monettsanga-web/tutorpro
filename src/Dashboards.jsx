@@ -5730,7 +5730,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
         {error && <div className="portal-error" role="alert">{error}</div>}
         <section className="admin-teacher-profile-hero">
           <ProfilePhoto accountId={teacher?.id} name={teacher?.fullName} className="admin-teacher-profile-photo" />
-          <div><StatusBadge status={teacher?.status || 'pending'} /><h1>{teacher?.fullName || 'New Teacher'}</h1><p>{profile.specialization || 'Specialization not provided'} · {Number(profile.experience) || 0} years experience</p><div className="profile-tags"><span><Star size={13} /> {profile.rating || 'New'} rating</span><span><Video size={13} /> {profile.lessonsCompleted || completedLessons} lessons</span></div></div>
+          <div><StatusBadge status={teacher?.status || 'pending'} /><h1>{onOpenChat ? <button type="button" className="chat-name-button" title={`Message ${teacher?.fullName || 'this teacher'}`} onClick={() => onOpenChat(teacher?.email || teacher?.loginId, teacher?.fullName)}>{teacher?.fullName || 'New Teacher'}</button> : (teacher?.fullName || 'New Teacher')}</h1><p>{profile.specialization || 'Specialization not provided'} · {Number(profile.experience) || 0} years experience</p><div className="profile-tags"><span><Star size={13} /> {profile.rating || 'New'} rating</span><span><Video size={13} /> {profile.lessonsCompleted || completedLessons} lessons</span></div></div>
           <div className="admin-teacher-profile-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             
             {/* NATIVE INTER-WEBSITE CHAT BUTTON */}
@@ -6161,71 +6161,64 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   )
 }
 
-export function SupportInbox({ onUnreadChange }) {
-  const [conversations, setConversations] = useState([])
-  const [selectedId, setSelectedId] = useState('')
-  /* The inbox opens the first conversation for you on load, which is right
-     the first time and wrong afterwards: closing the panel re-selected that
-     same conversation on the next refresh, so the close button looked
-     broken. This records that the admin chose to close it. */
-  const [threadDismissed, setThreadDismissed] = useState(false)
+/**
+ * One support conversation, docked in the corner.
+ *
+ * WHY IT IS ITS OWN COMPONENT
+ * ---------------------------
+ * The admin dashboard had two different "message this person" behaviours
+ * and neither matched the rest of the site:
+ *
+ *  - a name in the Students or Teachers table opened a DIRECT message, a
+ *    system parents and teachers have no inbox for, so the reply could
+ *    never be read;
+ *  - the Message button on a student or teacher profile created a support
+ *    conversation, then threw the whole page over to the support inbox -
+ *    which opened whichever conversation happened to be first, because
+ *    `initialConversationId` was passed to SupportInbox and SupportInbox
+ *    never accepted the prop.
+ *
+ * Admin to parent and admin to teacher is the support conversation: both
+ * sides already have a window onto it. Lifting the thread out of the inbox
+ * means a name click anywhere in the admin dashboard opens that person's
+ * real conversation, in the same docked panel, without leaving the page.
+ */
+export function SupportThreadDock({ conversationId, onClose, onChanged, fallbackName = '' }) {
   const [thread, setThread] = useState(null)
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState(null)
   const [translations, setTranslations] = useState({})
-  const [query, setQuery] = useState('')
-  const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const messagesRef = useRef(null)
   const supportAttachmentInputRef = useRef(null)
 
-  const loadConversations = useCallback(async () => {
-    try {
-      const rows = await fetchAdminSupportConversations()
-      setConversations(rows)
-      onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
-      setError('')
-      if (!selectedId && !threadDismissed && rows[0]) setSelectedId(rows[0].id)
-    } catch (loadError) {
-      setError(loadError.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [onUnreadChange, selectedId, threadDismissed])
-
-  const loadThread = useCallback(async (conversationId = selectedId) => {
+  const loadThread = useCallback(async () => {
     if (!conversationId) return
     try {
       const next = await fetchAdminSupportThread(conversationId)
       setThread(next)
       setError('')
-      await loadConversations()
     } catch (loadError) {
       setError(loadError.message)
     }
-  }, [loadConversations, selectedId])
+  }, [conversationId])
 
   useEffect(() => {
     let active = true
-    const refresh = async () => {
-      if (!active) return
-      await loadConversations()
-      if (selectedId) await loadThread(selectedId)
-    }
+    const refresh = async () => { if (active) await loadThread() }
     refresh()
     const interval = window.setInterval(refresh, 5000)
-    return () => {
-      active = false
-      window.clearInterval(interval)
-    }
-  }, [loadConversations, loadThread, selectedId])
+    return () => { active = false; window.clearInterval(interval) }
+  }, [loadThread])
 
   useEffect(() => {
     const element = messagesRef.current
     if (element) element.scrollTop = element.scrollHeight
   }, [thread?.messages?.length])
 
+  /* Incoming Chinese is translated for the administrator only; what the
+     parent wrote is always shown first, untouched. */
   useEffect(() => {
     if (!thread?.messages?.length) return undefined
     let active = true
@@ -6238,41 +6231,30 @@ export function SupportInbox({ onUnreadChange }) {
     return () => { active = false }
   }, [thread?.messages, translations])
 
-  const selectConversation = (conversationId) => {
-    setThreadDismissed(false)
-    setSelectedId(conversationId)
-    setThread(null)
-    setDraft('')
-    setAttachment(null)
-    setTranslations({})
-    if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = ''
-  }
-
   const reply = async (event) => {
     event.preventDefault()
-    if (!selectedId || (!draft.trim() && !attachment)) return
+    if (!conversationId || (!draft.trim() && !attachment)) return
     setSending(true)
     setError('')
     const messageText = draft.trim()
     try {
-      if (attachment) await uploadAdminSupportAttachment(selectedId, attachment, messageText)
-      else await sendAdminSupportMessage(selectedId, messageText)
+      if (attachment) await uploadAdminSupportAttachment(conversationId, attachment, messageText)
+      else await sendAdminSupportMessage(conversationId, messageText)
       setDraft('')
       setAttachment(null)
       if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = ''
-      await loadThread(selectedId)
+      await loadThread()
+      onChanged?.()
 
       /*
-       * Tell the parent or teacher, in ONE language.
-       *
-       * This used to call the `support-notification` Edge Function, which
-       * is not in this repository and sends English with a Chinese
-       * paragraph underneath to everybody. /api/notify/support deploys with
-       * every push and uses the language on the conversation.
+       * Tell the parent or teacher, in ONE language. /api/notify/support
+       * deploys with every push and uses the language on the conversation;
+       * the old `support-notification` Edge Function sent English with a
+       * Chinese paragraph underneath to everybody.
        */
       if (cloudSyncEnabled() && supabase) {
         try {
-          await notifySupportReply(selectedId, messageText || 'Shared a support file attachment.')
+          await notifySupportReply(conversationId, messageText || 'Shared a support file attachment.')
         } catch (notiError) {
           console.warn('Support email notification failed to send:', notiError)
         }
@@ -6300,7 +6282,8 @@ export function SupportInbox({ onUnreadChange }) {
     setSending(true)
     try {
       await setSupportConversationStatus(thread.id, thread.status === 'closed' ? 'open' : 'closed')
-      await loadThread(thread.id)
+      await loadThread()
+      onChanged?.()
     } catch (statusError) {
       setError(statusError.message)
     } finally {
@@ -6308,11 +6291,82 @@ export function SupportInbox({ onUnreadChange }) {
     }
   }
 
+  if (!conversationId) return null
+
+  /* The panel only draws once there is a thread: the wrapper carries the
+     docked `position: fixed` styling, so an empty one is a blank white box
+     floating in the corner. While it loads, a small card says so. */
+  if (!thread) {
+    return (
+      <div className="support-admin-thread support-admin-thread--docked support-admin-thread--loading">
+        <header><div><span>{initials(fallbackName || '—')}</span><div><strong>{fallbackName || 'Opening conversation'}</strong><small>Loading the conversation…</small></div></div><button type="button" className="support-admin-dismiss" onClick={onClose} aria-label="Close this chat"><X size={18} /></button></header>
+        <div className="support-admin-messages">{error ? <div className="portal-error" role="alert">{error}</div> : <div className="support-inbox-empty">Loading…</div>}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="support-admin-thread support-admin-thread--docked">
+      <header><div><span>{initials(thread.parentName)}</span><div><strong>{thread.parentName}</strong><small>{thread.email} · {/^zh/.test(thread.language) ? 'Chinese' : thread.language || 'English'}</small></div></div><button onClick={toggleStatus} disabled={sending}>{thread.status === 'closed' ? 'Reopen' : 'Close conversation'}</button><button type="button" className="support-admin-dismiss" onClick={onClose} aria-label="Close this chat"><X size={18} /></button></header>
+      <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p>{translations[message.id] && <p className="support-admin-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-admin-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
+      {error && <div className="portal-error" role="alert">{error}</div>}
+      <form onSubmit={reply}>{attachment && <div className="support-admin-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-admin-file-button" title="Upload attachment"><FileUp size={18} /><input ref={supportAttachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseSupportAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); reply(event) } }} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || (!draft.trim() && !attachment)}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
+    </div>
+  )
+}
+
+export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
+  const [conversations, setConversations] = useState([])
+  const [selectedId, setSelectedId] = useState(initialConversationId)
+  /* The inbox opens the first conversation for you on load, which is right
+     the first time and wrong afterwards: closing the panel re-selected that
+     same conversation on the next refresh, so the close button looked
+     broken. This records that the admin chose to close it. */
+  const [threadDismissed, setThreadDismissed] = useState(false)
+  const [query, setQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const rows = await fetchAdminSupportConversations()
+      setConversations(rows)
+      onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
+      setError('')
+      /* `initialConversationId` is a conversation opened from elsewhere in
+         the admin dashboard. The prop was already being passed before
+         SupportInbox accepted it, so the inbox used to ignore it and show
+         whichever conversation happened to be first. */
+      if (!selectedId && !threadDismissed) {
+        const openFirst = initialConversationId || rows[0]?.id
+        if (openFirst) setSelectedId(openFirst)
+      }
+    } catch (loadError) {
+      setError(loadError.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [initialConversationId, onUnreadChange, selectedId, threadDismissed])
+
+  useEffect(() => {
+    let active = true
+    const refresh = async () => { if (active) await loadConversations() }
+    refresh()
+    const interval = window.setInterval(refresh, 5000)
+    return () => { active = false; window.clearInterval(interval) }
+  }, [loadConversations])
+
+  const selectConversation = (conversationId) => {
+    setThreadDismissed(false)
+    setSelectedId(conversationId)
+  }
+
   const normalizedQuery = query.trim().toLowerCase()
   const filtered = conversations.filter((item) => !normalizedQuery
     || item.parent_name?.toLowerCase().includes(normalizedQuery)
     || item.email?.toLowerCase().includes(normalizedQuery)
     || item.last_message?.toLowerCase().includes(normalizedQuery))
+  const selected = conversations.find((item) => item.id === selectedId)
 
   return (
     /*
@@ -6339,30 +6393,19 @@ export function SupportInbox({ onUnreadChange }) {
 
       </section>
     </div>
-        {/*
-          * The whole panel is conditional, not just its contents.
-          *
-          * The wrapper used to render always, and it carries the docked
-          * `position: fixed` styling - so with nothing selected an empty
-          * 420x600 white box sat in the bottom-right corner of the screen.
-          *
-          * `selectedId && thread`, not `thread` alone: the inbox polls in
-          * the background, and clearing only `thread` let the next poll
-          * repopulate it so the panel reappeared a moment after it was
-          * closed. The selection is the thing the admin controls.
-          */}
-        {selectedId && thread ? (
-        <div className="support-admin-thread support-admin-thread--docked">
-          <>
-            <header><div><span>{initials(thread.parentName)}</span><div><strong>{thread.parentName}</strong><small>{thread.email} · {/^zh/.test(thread.language) ? 'Chinese' : thread.language || 'English'}</small></div></div><button onClick={toggleStatus} disabled={sending}>{thread.status === 'closed' ? 'Reopen' : 'Close conversation'}</button><button type="button" className="support-admin-dismiss" onClick={() => { setThreadDismissed(true); setSelectedId(''); setThread(null) }} aria-label="Close this chat"><X size={18} /></button></header>
-            <div className="support-admin-messages" ref={messagesRef}>{thread.messages?.map((message) => <div className={`support-admin-message support-admin-message--${message.sender}`} key={message.id}><small>{message.sender === 'admin' ? 'TutorPro Admin' : thread.parentName}</small><p>{message.body}</p>{translations[message.id] && <p className="support-admin-translation"><Languages size={12} /> {translations[message.id]}</p>}{message.attachment && <button className="support-admin-attachment" onClick={() => downloadSupportAttachment(message.attachment).catch((downloadError) => setError(downloadError.message))}><Paperclip size={13} /><span>{message.attachment.name}</span><Download size={13} /></button>}<time>{new Date(message.createdAt).toLocaleString('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>)}</div>
-            <form onSubmit={reply}>{attachment && <div className="support-admin-selected-file"><Paperclip size={13} /><span>{attachment.name}</span><button type="button" onClick={() => { setAttachment(null); if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = '' }}><X size={13} /></button></div>}<label className="support-admin-file-button" title="Upload attachment"><FileUp size={18} /><input ref={supportAttachmentInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,.jpg,.jpeg,.png,.webp,.pdf,.txt" onChange={chooseSupportAttachment} /></label><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); reply(event) } }} placeholder={/^zh/.test(thread.language) ? '用中文或英文回复家长…' : 'Reply to the parent…'} maxLength="1000" /><button type="submit" disabled={sending || (!draft.trim() && !attachment)}><Send size={17} /> {sending ? 'Sending…' : 'Send reply'}</button></form>
-          </>
-        </div>
-        ) : null}
+    {selectedId && !threadDismissed ? (
+      <SupportThreadDock
+        key={selectedId}
+        conversationId={selectedId}
+        fallbackName={selected?.parent_name || ''}
+        onChanged={loadConversations}
+        onClose={() => { setThreadDismissed(true); setSelectedId('') }}
+      />
+    ) : null}
     </>
   )
 }
+
 
 function AddTeacherDialog({ onClose, onCreated }) {
   // Generated once, outside render, so the suggestion is stable and the
@@ -7113,6 +7156,13 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [processingAccountId, setProcessingAccountId] = useState('')
   const [supportUnread, setSupportUnread] = useState(0)
   const [initialSupportId, setInitialSupportId] = useState('')
+  /*
+   * The conversation opened by clicking somebody's name. It is the SUPPORT
+   * conversation, not a direct message: a direct message to a parent or a
+   * teacher lands in a table neither of them has a window onto, so the
+   * reply could never be read. Both sides can see this one.
+   */
+  const [supportChatPerson, setSupportChatPerson] = useState(null)
   const [adminBookingView, setAdminBookingView] = useState('list') // list, calendar
   const [selectedCalendarTeacherId, setSelectedCalendarTeacherId] = useState('')
   const [adminCalendarWeek, setAdminCalendarWeek] = useState(0)
@@ -7460,12 +7510,17 @@ export function AdminDashboard({ account, onHome, onLogout }) {
               parent_name: fullName,
               parent_email: email,
               visitor_language: 'en',
-              first_message: `Admin initiated chat with ${fullName}.`,
+              /* Shown to the parent as the opening line of their support
+               thread, so it has to read like something a person would
+               write - not "Admin initiated chat with <name>." */
+            first_message: 'Conversation opened by TutorPro Admin.',
             });
             if (createErr) throw createErr;
             setInitialSupportId(data.conversationId);
+            setSupportChatPerson({ id: data.conversationId, name: fullName });
           } else {
             setInitialSupportId(found.id);
+            setSupportChatPerson({ id: found.id, name: found.parent_name || fullName });
           }
         }
       } else {
@@ -7477,21 +7532,30 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             id: 'local-conv-' + crypto.randomUUID(),
             parentName: fullName,
             email: email,
-            messages: [{ id: crypto.randomUUID(), sender: 'admin', body: `Admin initiated chat with ${fullName}.`, createdAt: new Date().toISOString() }],
+            messages: [{ id: crypto.randomUUID(), sender: 'admin', body: 'Conversation opened by TutorPro Admin.', createdAt: new Date().toISOString() }],
             status: 'open',
             createdAt: new Date().toISOString()
           }
           localConvs.push(newConv)
           localStorage.setItem('tutorpro_local_support_threads_v1', JSON.stringify(localConvs))
           setInitialSupportId(newConv.id)
+          setSupportChatPerson({ id: newConv.id, name: fullName })
         } else {
           setInitialSupportId(found.id)
+          setSupportChatPerson({ id: found.id, name: found.parentName || fullName })
         }
       }
       
-      setActive('support');
-      setManagedAccount(null);
-      setManagedLearnerId('');
+      /*
+       * It used to do this here:
+       *     setActive('support'); setManagedAccount(null); setManagedLearnerId('')
+       * - the whole page jumped to the support inbox and shut the profile
+       * you were reading. Worse, the inbox then opened whichever
+       * conversation was first in the list, because `initialConversationId`
+       * was passed to a component that did not accept the prop.
+       *
+       * The conversation now opens where you are, in the docked panel.
+       */
     } catch (e) {
       setAdminActionError(`Could not initiate chat: ${e.message}`);
     }
@@ -7894,6 +7958,17 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             <AdminTeacherProfile teacher={managedAccount} onBack={exitManagedDashboard} onStatusChange={setStatus} onRemove={setTeacherToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} onOpenChat={launchSupportChat} />
           </RoleErrorBoundary>
           {teacherToRemove && <RemoveTeacherDialog teacher={teacherToRemove} onClose={() => setTeacherToRemove(null)} onConfirm={removeTeacherRegistration} />}
+          {/* A profile page is its own return, so the docked conversation
+              has to be rendered here too - otherwise the Message button on
+              a profile set the state and nothing appeared. */}
+          {supportChatPerson && (
+            <SupportThreadDock
+              key={supportChatPerson.id}
+              conversationId={supportChatPerson.id}
+              fallbackName={supportChatPerson.name}
+              onClose={() => setSupportChatPerson(null)}
+            />
+          )}
         </PortalShell>
       </AdminRenderErrorBoundary>
     )
@@ -7907,6 +7982,17 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} teachers={teachers} onOpenChat={launchSupportChat} />
           </RoleErrorBoundary>
           {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
+          {/* A profile page is its own return, so the docked conversation
+              has to be rendered here too - otherwise the Message button on
+              a profile set the state and nothing appeared. */}
+          {supportChatPerson && (
+            <SupportThreadDock
+              key={supportChatPerson.id}
+              conversationId={supportChatPerson.id}
+              fallbackName={supportChatPerson.name}
+              onClose={() => setSupportChatPerson(null)}
+            />
+          )}
         </PortalShell>
       </AdminRenderErrorBoundary>
     )
@@ -7914,7 +8000,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   /* One row of the students table. Lifted out of the JSX so the table can
      be grouped by country without duplicating any of it. */
-  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span className={`table-avatar table-avatar--${avatarTone(student.parentName)}`}>{initials(student.parentName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => setDirectChatUser({ id: student.id, name: student.parentName })} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
+  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span className={`table-avatar table-avatar--${avatarTone(student.parentName)}`}>{initials(student.parentName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
@@ -8040,7 +8126,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => setDirectChatUser({ id: teacher.id, name: teacher.fullName })} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
@@ -8297,6 +8383,20 @@ export function AdminDashboard({ account, onHome, onLogout }) {
           targetUserId={directChatUser.id}
           targetUserName={directChatUser.name}
           onClose={() => setDirectChatUser(null)}
+        />
+      )}
+      {/*
+        * The conversation opened by clicking a name, docked in the corner.
+        * Rendered here, outside every `.portal-view`: that element carries
+        * an identity transform from the motion layer, and any transform
+        * makes it the containing block for a `position: fixed` child.
+        */}
+      {supportChatPerson && active !== 'support' && (
+        <SupportThreadDock
+          key={supportChatPerson.id}
+          conversationId={supportChatPerson.id}
+          fallbackName={supportChatPerson.name}
+          onClose={() => setSupportChatPerson(null)}
         />
       )}
     </PortalShell>
