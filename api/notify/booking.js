@@ -51,12 +51,23 @@ export default async function handler(req, res) {
   const resendKey = process.env.RESEND_API_KEY
   const body = req.body || {}
 
-  /* A health check the admin dashboard can call without sending anything. */
+  /* A health check the admin dashboard can call without sending anything.
+     It reports enough to tell the three failure modes apart - key missing,
+     key present but not a Resend key, and deployment not rebuilt since the
+     variable was added - WITHOUT ever echoing the key itself. */
   if (body.ping) {
     return sendJson(res, 200, {
       version: EMAIL_TEMPLATE_VERSION,
       sender: 'vercel',
       configured: Boolean(resendKey),
+      keyLooksRight: typeof resendKey === 'string' && resendKey.startsWith('re_'),
+      // Which commit this deployment was built from. If this does not move
+      // after a redeploy, the redeploy did not happen.
+      builtFrom: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7),
+      builtAt: process.env.VERCEL_DEPLOYMENT_ID ? 'vercel' : 'unknown',
+      // Proof the runtime can see project variables at all. Names only.
+      sampleVarsPresent: ['RESEND_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'PAYPAL_CLIENT_ID']
+        .filter((name) => Boolean(process.env[name])),
     })
   }
 
