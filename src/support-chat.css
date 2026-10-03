@@ -29,7 +29,10 @@
 .support-launcher small { color: #dff7a6; font-size: 0.841rem; }
 .support-launcher > i { position: absolute; top: 4px; right: 5px; width: 9px; height: 9px; border: 2px solid #321568; border-radius: 50%; background: #8ee36a; box-shadow: 0 0 0 4px rgba(142,227,106,0.13); }
 
-body.support-embedded-open .support-widget:not(.support-widget--embedded) { display: none; }
+/* The rule that hides the floating launcher while a panel is open. The
+   docked panel has to be exempt — it is not "embedded", so without this it
+   hid itself and measured 0x0. */
+body.support-embedded-open .support-widget:not(.support-widget--embedded):not(.support-widget--docked) { display: none; }
 
 .support-widget--embedded {
   position: static;
@@ -542,3 +545,79 @@ body.support-embedded-open .support-widget:not(.support-widget--embedded) { disp
     height: min(720px, calc(100dvh - 16px));
   }
 }
+
+/* ===========================================================================
+   DOCKED SUPPORT CHAT
+   ---------------------------------------------------------------------------
+   The dashboard version of this widget. It used to be embedded in the middle
+   of a page: a 650px-tall block of chat with a "Parent name / Contact email"
+   form, sitting below a Messenger card you had to scroll past. A parent who
+   is already signed in should not be asked who they are, and should not lose
+   sight of the dashboard to send one sentence.
+
+   Docked, it is the same panel every other chat here uses: bottom-right on a
+   desktop, a full-height sheet on a phone. These rules are last in the file
+   on purpose — an earlier `.support-panel` block in this stylesheet sets its
+   own width and height, and the last declaration wins.
+   =========================================================================== */
+.support-widget--docked {
+  position: fixed;
+  z-index: 141;
+  right: clamp(16px, 3vw, 28px);
+  bottom: clamp(16px, 3vw, 28px);
+  width: min(390px, calc(100vw - 32px));
+  margin: 0;
+}
+
+.support-widget--docked .support-panel {
+  width: 100%;
+  /* dvh, not vh: on iOS the address bar makes vh taller than the screen. */
+  height: min(600px, calc(100dvh - 120px));
+  min-height: 0;
+  margin: 0;
+  border-radius: 20px;
+  box-shadow: 0 28px 70px rgba(23, 12, 48, 0.26);
+}
+
+/* The header is 86px of gradient in a 600px panel; the dock needs that space
+   for messages. */
+.support-widget--docked .support-panel > header { min-height: 64px; padding: 11px 14px; }
+.support-widget--docked .support-panel > header > span { width: 42px; height: 42px; }
+.support-widget--docked .support-panel > header strong { font-size: 1.05rem; }
+.support-widget--docked .support-panel > header small { font-size: 0.9rem; }
+
+@media (max-width: 640px) {
+  .support-widget--docked {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .support-widget--docked .support-panel {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  /* styles.css lifts the floating launcher above the mobile action bar with
+     `body:has(.support-panel) .support-widget { bottom: 12px }`. That rule is
+     more specific than a single class, so it was pushing the docked sheet
+     12px off the top of the screen. Outrank it, do not duplicate it. */
+  body:has(.support-panel) .support-widget.support-widget--docked,
+  body:has(.mobile-guest-action-bar) .support-widget.support-widget--docked { bottom: 0; }
+
+  .support-widget--docked .support-panel > header { padding-top: max(11px, env(safe-area-inset-top)); }
+  .support-widget--docked .support-reply { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+}
+
+/* While a chat sheet is open on a phone, the floating bars would sit on top
+   of the box you are typing into. */
+body:has(.support-widget--docked) .mobile-guest-action-bar { display: none !important; }
+
+/* The dashboard Messages page already lists the admin conversation, so the
+   floating launcher would be a second button for the same chat — and on a
+   phone it sits exactly on top of the first contact card. */
+body:has(.parent-support-view) .support-widget:not(.support-widget--docked) { display: none !important; }

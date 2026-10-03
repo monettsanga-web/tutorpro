@@ -20,10 +20,17 @@ function accountEmail(account) {
   return candidate.includes('@') ? candidate : ''
 }
 
-export default function SupportChatWidget({ embedded = false, autoStartForAccount = false, audience = 'parent' }) {
+/*
+ * `docked` is the dashboard form of this widget: the same support
+ * conversation, but as the small panel in the bottom-right corner that a
+ * person's name opens — the shape every other chat on this site now uses.
+ * It replaced a full page of chat embedded in the middle of the dashboard,
+ * which you had to scroll past your own lesson list to reach.
+ */
+export default function SupportChatWidget({ embedded = false, docked = false, onClose, autoStartForAccount = false, audience = 'parent' }) {
   const [account, setAccount] = useState(getCurrentAccount)
   const [locale, setLocale] = useState(currentVisitorLocale)
-  const [open, setOpen] = useState(embedded)
+  const [open, setOpen] = useState(embedded || docked)
   const [credentials, setCredentials] = useState(readSavedSupportThread)
   const [thread, setThread] = useState(null)
   const [form, setForm] = useState(() => ({
@@ -73,10 +80,12 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
   }, [supportStorageKey])
 
   useEffect(() => {
-    if (!embedded) return undefined
+    /* The floating launcher must not sit on top of the panel that is
+       already open, whether that panel is embedded or docked. */
+    if (!embedded && !docked) return undefined
     document.body.classList.add('support-embedded-open')
     return () => document.body.classList.remove('support-embedded-open')
-  }, [embedded])
+  }, [embedded, docked])
 
   useEffect(() => {
     if (!open || !credentials) return undefined
@@ -269,11 +278,11 @@ export default function SupportChatWidget({ embedded = false, autoStartForAccoun
   }
 
   return (
-    <div className={`support-widget ${embedded ? 'support-widget--embedded' : ''} ${open ? 'support-widget--open' : ''}`}>
+    <div className={`support-widget ${embedded ? 'support-widget--embedded' : ''} ${docked ? 'support-widget--docked' : ''} ${open ? 'support-widget--open' : ''}`}>
       {!embedded && !open && <button className="support-launcher" onClick={() => setOpen(true)} aria-label={chinese ? '联系 TutorPro 管理员' : 'Chat with TutorPro Online English support'}><span><MessageCircle size={23} /></span><div><strong>{chinese ? '联系管理员' : 'Need help?'}</strong><small>{chinese ? '中文家长咨询' : 'Chat with us'}</small></div><i /></button>}
 
       {open && <section className="support-panel" role="dialog" aria-label={chinese ? '家长客服聊天' : 'Parent support chat'}>
-        <header><span><Headphones size={21} /></span><div><strong>{supportRoleLabel}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div>{!embedded && <button onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>}</header>
+        <header><span><Headphones size={21} /></span><div><strong>{supportRoleLabel}</strong><small>{chinese ? '给管理员留言，我们会尽快回复' : 'Message the administrator'}</small></div>{(!embedded || onClose) && <button onClick={() => (onClose ? onClose() : setOpen(false))} aria-label="Close chat"><X size={18} /></button>}</header>
 
         {!credentials && autoStartForAccount && account ? <div className="support-loading">{loading ? (chinese ? '正在打开对话…' : 'Opening your support chat…') : (error || (chinese ? '无法自动打开对话。' : 'Unable to open chat automatically.'))}</div> : !credentials ? <form className="support-start" onSubmit={beginConversation}>
           <div className="support-language-note"><Languages size={15} /><span>{chinese ? '您可以使用中文留言。管理员的回复会保存在这里。' : 'Write in English or Chinese. Replies stay in this private conversation.'}</span></div>

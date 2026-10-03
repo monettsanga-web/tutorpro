@@ -13235,3 +13235,113 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 
 .chat-name-button:hover { color: #6b3fd4; text-decoration-color: #6b3fd4; }
 .chat-name-button:focus-visible { outline: 2px solid #7048df; outline-offset: 2px; border-radius: 4px; }
+
+/* ===========================================================================
+   WHO YOU CAN MESSAGE
+   ---------------------------------------------------------------------------
+   The parent and teacher dashboards had no list of people at all: the only
+   way into a conversation was the Message button on a lesson card, so a
+   family with no upcoming lesson could not reach anybody. This is the same
+   idea as the admin Students and Teachers tables — a name you click.
+   =========================================================================== */
+.chat-people-card { display: grid; gap: 14px; }
+
+.chat-people {
+  display: grid;
+  /* minmax(0, 1fr), never a bare 1fr: a bare 1fr is min-content and a long
+     email address would push the column wider than the card. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 12px;
+}
+
+.chat-person {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--portal-line);
+  border-radius: 16px;
+  padding: 13px 14px;
+  background: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.chat-person:hover { border-color: #c9b7f4; box-shadow: 0 12px 30px rgba(50, 21, 104, 0.1); transform: translateY(-2px); }
+.chat-person--support { border-color: rgba(112, 72, 223, 0.32); background: linear-gradient(135deg, #f8f4ff, #fff); }
+
+.chat-person__avatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 14px;
+  background: #7048df;
+  color: #fff;
+  font-size: 1.03rem;
+  font-weight: 900;
+}
+
+.chat-person__avatar--support { background: linear-gradient(135deg, #0084ff, #6d28d9); }
+
+.chat-person > div { display: grid; min-width: 0; gap: 2px; }
+.chat-person strong { min-width: 0; color: #2a1b3d; font-size: 1.08rem; }
+.chat-person small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--portal-muted);
+  font-size: 0.93rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.chat-person__open {
+  display: inline-flex;
+  min-height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #ddd4ee;
+  border-radius: 11px;
+  padding: 0 13px;
+  background: #fff;
+  color: #5b3fb8;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 800;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.chat-person__open:hover { background: #7048df; border-color: #7048df; color: #fff; }
+
+/* On a phone the Message button goes under the name rather than squeezing
+   it into two words per line. */
+@media (max-width: 560px) {
+  .chat-person { grid-template-columns: auto minmax(0, 1fr); }
+  .chat-person__open { grid-column: 1 / -1; justify-content: center; width: 100%; }
+}
+
+/* "Message <teacher>" on a teacher card in My teachers. */
+.ptr-message-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  margin-bottom: 9px;
+  border: 1px solid #ddd4ee;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #fff;
+  color: #5b3fb8;
+  cursor: pointer;
+  font-size: 0.97rem;
+  font-weight: 800;
+  text-align: center;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.ptr-message-button:hover { border-color: #7048df; background: #7048df; color: #fff; }

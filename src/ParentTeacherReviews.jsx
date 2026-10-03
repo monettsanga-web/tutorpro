@@ -123,7 +123,7 @@ function useMyTeachers(studentId, version) {
   }, [studentId, version])
 }
 
-export default function ParentTeacherReviews({ account, mediaVersion = 0, version = 0, onRateBooking }) {
+export default function ParentTeacherReviews({ account, mediaVersion = 0, version = 0, onRateBooking, onOpenChat }) {
   const teachers = useMyTeachers(account.id, version)
   const [expanded, setExpanded] = useState('')
 
@@ -191,7 +191,16 @@ export default function ParentTeacherReviews({ account, mediaVersion = 0, versio
                   </span>
                 </div>
                 <div className="ptr-card__identity">
-                  <h2>{teacher.name}</h2>
+                  {/* The teacher's name opens the chat, the same way a name
+                      does in the admin dashboard and in a lesson card. */}
+                  <h2>{onOpenChat ? (
+                    <button
+                      type="button"
+                      className="chat-name-button"
+                      title={`Message ${teacher.name}`}
+                      onClick={() => onOpenChat(teacher.teacherId, teacher.name)}
+                    >{teacher.name}</button>
+                  ) : teacher.name}</h2>
                   {teacher.specialization && <p>{teacher.specialization}</p>}
                   {teacher.myAverage !== null ? (
                     <div className="ptr-card__score">
@@ -233,6 +242,16 @@ export default function ParentTeacherReviews({ account, mediaVersion = 0, versio
                   </div>
                 )}
               </dl>
+
+              {onOpenChat && (
+                <button
+                  type="button"
+                  className="ptr-message-button"
+                  onClick={() => onOpenChat(teacher.teacherId, teacher.name)}
+                >
+                  <MessageSquareText size={15} /> Message {teacher.name}
+                </button>
+              )}
 
               {nextToRate ? (
                 <div className="ptr-card__cta">

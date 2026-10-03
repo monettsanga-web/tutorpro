@@ -34,6 +34,7 @@ import {
   GraduationCap,
   Globe2,
   HardDrive,
+  Headphones,
   Home,
   KeyRound,
   Languages,
@@ -1318,6 +1319,55 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
           <Send size={17} />
         </button>
       </form>
+    </section>
+  )
+}
+
+/**
+ * The people you can message, as a list of names you click.
+ *
+ * The admin dashboard has had this for a while: a name in the Students or
+ * Teachers table opens a docked chat. Parents and teachers had nothing of
+ * the sort — their only way in was the Message button on a lesson card, so
+ * a parent with no upcoming lesson could not reach anybody at all, and the
+ * "support" page was a full-height form asking a signed-in parent to type
+ * their own name and email again.
+ *
+ * One list, one click, same docked panel in all three dashboards.
+ */
+function ChatPeoplePanel({ kicker, title, intro, people, onOpen, emptyTitle, emptyText }) {
+  return (
+    <section className="portal-card chat-people-card">
+      <div className="portal-card__heading portal-card__heading--small">
+        <div><span className="portal-kicker">{kicker}</span><h2>{title}</h2>{intro && <p>{intro}</p>}</div>
+      </div>
+      {people.length ? (
+        <div className="chat-people">
+          {people.map((person) => (
+            <article className={`chat-person${person.kind === 'support' ? ' chat-person--support' : ''}`} key={person.key || person.id}>
+              <span className={`chat-person__avatar${person.kind === 'support' ? ' chat-person__avatar--support' : ''}`} aria-hidden="true">
+                {person.kind === 'support' ? <Headphones size={19} /> : initials(person.name)}
+              </span>
+              <div>
+                <strong>
+                  <button
+                    type="button"
+                    className="chat-name-button"
+                    title={`Message ${person.name}`}
+                    onClick={() => onOpen(person)}
+                  >{person.name}</button>
+                </strong>
+                <small>{person.subtitle}</small>
+              </div>
+              <button type="button" className="chat-person__open" onClick={() => onOpen(person)} aria-label={`Message ${person.name}`}>
+                <MessageSquareText size={15} /> Message
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyState icon={MessageSquareText} title={emptyTitle} text={emptyText} />
+      )}
     </section>
   )
 }
@@ -3960,6 +4010,9 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const [managedBooking, setManagedBooking] = useState(null)
   const [profileSaved, setProfileSaved] = useState(false)
   const [directChatUser, setDirectChatUser] = useState(null)
+  /* The admin conversation is the same support thread as before, now opened
+     as a docked panel instead of filling the page. */
+  const [supportDockOpen, setSupportDockOpen] = useState(false)
   const [supportLocale, setSupportLocale] = useState(currentVisitorLocale)
   const learners = (account.children?.length ? account.children : [account.child]).filter(Boolean)
   const hasLearnerProfile = learners.length > 0
@@ -3985,6 +4038,34 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
   const completed = bookings.filter((booking) => booking.status === 'completed').length
   const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
   const parentChinaSupport = isChineseVisitor(supportLocale) || isChineseVisitor({ language: '', country: account.registrationCountry })
+  /*
+   * Everyone this family can message: the administrator, plus every teacher
+   * who has ever taught one of their children. Built from every booking on
+   * the account, not just the selected child's, because the parent is one
+   * person writing to one teacher.
+   */
+  const chatPeople = (() => {
+    const list = [{
+      id: 'tutorpro-admin',
+      key: 'tutorpro-admin',
+      kind: 'support',
+      name: 'TutorPro Admin',
+      subtitle: 'Registration, schedules, payments · English & 中文',
+    }]
+    const seen = new Set()
+    allBookings.forEach((booking) => {
+      if (!booking.teacherId || seen.has(booking.teacherId)) return
+      seen.add(booking.teacherId)
+      list.push({
+        id: booking.teacherId,
+        key: booking.teacherId,
+        kind: 'person',
+        name: booking.teacherName || 'Teacher',
+        subtitle: 'Your child’s teacher · lessons, homework, progress',
+      })
+    })
+    return list
+  })()
   const studentSyncCallbacks = useRef({ onAccountChange, onLogout })
   void bookingVersion
 
@@ -4183,7 +4264,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'library', label: 'Library', icon: BookOpen },
     { id: 'rewards', label: 'Rewards', icon: Award },
     { id: 'ai-report', label: 'AI report', icon: Bot },
-    { id: 'support', label: 'Parent support', icon: MessageSquareText },
+    { id: 'support', label: 'Messages', icon: MessageSquareText },
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
@@ -4264,6 +4345,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           mediaVersion={mediaVersion}
           version={bookingVersion}
           onRateBooking={setRatingBooking}
+          onOpenChat={(id, name) => setDirectChatUser({ id, name })}
         />
       )}
 
@@ -4403,17 +4485,25 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'support' && (
         <div className="portal-view parent-support-view">
           <div className="portal-page-heading">
-            <div><span className="portal-kicker">English & 中文 support</span><h1>Parent Support</h1><p>Ask the administrator about registration, schedules, teachers or your child’s learning plan.</p></div>
+            <div><span className="portal-kicker">English & 中文 support</span><h1>Messages</h1><p>Click a name to open the chat. The conversation stays in the corner, so you can look at lessons and schedules while you type.</p></div>
             <span className="support-inbox-live"><i /> Private support</span>
           </div>
+          {parentChinaSupport && <div className="support-language-note support-language-note--portal"><Languages size={15} /><span>Facebook/Messenger may not be accessible in China. Please use the secure website chat; admin will reply from the TutorPro inbox.</span></div>}
+          <ChatPeoplePanel
+            kicker="Your conversations"
+            title="Who would you like to message?"
+            intro="Admin answers registration, schedule and payment questions. Teachers answer about the lessons themselves."
+            people={chatPeople}
+            onOpen={(person) => (person.kind === 'support' ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
+            emptyTitle="No conversations yet"
+            emptyText="Book a class and your teacher will appear here."
+          />
           {!parentChinaSupport && (
             <section className="portal-card parent-support-channel-card">
-              <div><span className="portal-kicker">Messenger available</span><h2>Prefer Facebook Messenger?</h2><p>Parents outside China can message TutorPro Online English directly on Facebook Messenger. If Messenger is unavailable, use the secure website chat below.</p></div>
+              <div><span className="portal-kicker">Messenger available</span><h2>Prefer Facebook Messenger?</h2><p>Parents outside China can message TutorPro Online English directly on Facebook Messenger. If Messenger is unavailable, use the website chat above.</p></div>
               <a className="portal-primary-button" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Chat on Messenger</a>
             </section>
           )}
-          {parentChinaSupport && <div className="support-language-note support-language-note--portal"><Languages size={15} /><span>Facebook/Messenger may not be accessible in China. Please use the secure website chat below; admin will reply from the TutorPro inbox.</span></div>}
-          <SupportChatWidget embedded />
         </div>
       )}
 
@@ -4454,6 +4544,12 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           onClose={() => setDirectChatUser(null)} 
         />
       )}
+      {/* The admin conversation, docked in the corner. Rendered here rather
+          than inside a `.portal-view`: that element carries an identity
+          transform from the motion layer, and any transform makes it the
+          containing block for a position:fixed child — which shrank a fixed
+          panel to the width of the page content and pushed it off a phone. */}
+      {supportDockOpen && <SupportChatWidget docked autoStartForAccount audience="parent" onClose={() => setSupportDockOpen(false)} />}
     </PortalShell>
   )
 }
@@ -4508,6 +4604,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [classroomSaved, setClassroomSaved] = useState(false)
   const [classroomError, setClassroomError] = useState('')
   const [directChatUser, setDirectChatUser] = useState(null)
+  /* The admin conversation, docked in the corner instead of filling the
+     support page. */
+  const [supportDockOpen, setSupportDockOpen] = useState(false)
   const [sampleClassUrl, setSampleClassUrl] = useState(account.teacher.sampleClassUrl || '')
   const [sampleClassSaved, setSampleClassSaved] = useState(false)
   const [savingSampleClass, setSavingSampleClass] = useState(false)
@@ -4519,7 +4618,36 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [payoutSaved, setPayoutSaved] = useState(false)
   const [savingPayout, setSavingPayout] = useState(false)
   const bookings = getBookings({ teacherId: account.id })
-  
+
+  /*
+   * Everyone this teacher can message: the administrator, plus the parent
+   * of every student they teach. Before this, a teacher could only start a
+   * conversation from a lesson card — so a parent whose lessons had all
+   * finished was unreachable.
+   */
+  const chatPeople = (() => {
+    const list = [{
+      id: 'tutorpro-admin',
+      key: 'tutorpro-admin',
+      kind: 'support',
+      name: 'TutorPro Admin',
+      subtitle: 'Schedules, payouts, student concerns',
+    }]
+    const seen = new Set()
+    bookings.forEach((booking) => {
+      if (!booking.studentId || seen.has(booking.studentId)) return
+      seen.add(booking.studentId)
+      list.push({
+        id: booking.studentId,
+        key: booking.studentId,
+        kind: 'person',
+        name: booking.learnerName ? `${booking.learnerName}’s parent` : 'Parent',
+        subtitle: booking.learnerName ? `Family of ${booking.learnerName}` : 'Family account',
+      })
+    })
+    return list
+  })()
+
   // Teacher earnings calculation with new business rules (Trial payouts: ₱40 normal / ₱100 if enrolled, Regular: pesoRate)
   const rate = Number(account.teacher.pesoRate || 350)
   const regularCompletedBookings = bookings.filter((booking) => !booking.isTrialClass && (booking.status === 'completed' || booking.status === 'absent'))
@@ -4979,7 +5107,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'classroom', label: 'Classroom', icon: Video },
     { id: 'courseware', label: 'Courseware', icon: BookOpen },
     { id: 'schedule', label: 'Availability', icon: CalendarDays },
-    { id: 'support', label: 'Support & Chat', icon: MessageSquareText },
+    { id: 'support', label: 'Messages', icon: MessageSquareText },
     { id: 'referrals', label: 'Teacher referrals', icon: Award },
     { id: 'homework', label: 'Homework', icon: BookOpen },
     { id: 'library', label: 'Library', icon: BookOpen },
@@ -5265,21 +5393,26 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <div className="portal-page-heading">
             <div>
               <span className="portal-kicker">TutorPro Helpdesk</span>
-              <h1>Teachers Support</h1>
-              <p>Choose Facebook Messenger or secure website chat. Website chat opens directly from your teacher account.</p>
+              <h1>Messages</h1>
+              <p>Click a name to open the chat. It docks in the corner, so your schedule and bookings stay on screen while you write.</p>
             </div>
             <span className="support-inbox-live"><i /> Teacher support</span>
           </div>
+          <ChatPeoplePanel
+            kicker="Your conversations"
+            title="Who would you like to message?"
+            intro="Admin handles schedules and payouts. Parents are reached through their family account."
+            people={chatPeople}
+            onOpen={(person) => (person.kind === 'support' ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
+            emptyTitle="No conversations yet"
+            emptyText="Accept a booking and that family will appear here."
+          />
           <section className="portal-card teacher-support-channel-card">
-            <div><span className="portal-kicker">Choose a chat channel</span><h2>How would you like to contact admin?</h2><p>Facebook Messenger is quick for non-China access. Website chat works inside TutorPro and will not ask for your email again.</p></div>
+            <div><span className="portal-kicker">Another way to reach admin</span><h2>Prefer Facebook Messenger?</h2><p>Messenger is quick where it is accessible. The website chat above works inside TutorPro and never asks for your email again.</p></div>
             <div className="teacher-support-channel-card__actions">
               <a className="portal-primary-button" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageSquareText size={16} /> Facebook Messenger</a>
-              <a className="portal-secondary-button" href="#teacher-website-support"><MessageSquareText size={16} /> Website chat</a>
             </div>
           </section>
-          <div id="teacher-website-support">
-            <SupportChatWidget embedded autoStartForAccount audience="teacher" />
-          </div>
         </div>
       )}
 
@@ -5488,6 +5621,10 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           onClose={() => setDirectChatUser(null)} 
         />
       )}
+      {/* Outside any `.portal-view`: that element carries an identity
+          transform, which would make it the containing block for this fixed
+          panel and shrink it to the content column. */}
+      {supportDockOpen && <SupportChatWidget docked autoStartForAccount audience="teacher" onClose={() => setSupportDockOpen(false)} />}
     </PortalShell>
   )
 }

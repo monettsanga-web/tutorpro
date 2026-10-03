@@ -68,6 +68,7 @@
     "verify:studentcountries": "node scripts/verify-students-by-country.mjs",
     "verify:directchat": "node scripts/verify-direct-chat.mjs",
     "verify:supportinbox": "node scripts/verify-support-inbox.mjs",
+    "verify:chateverywhere": "node scripts/verify-chat-everywhere.mjs",
     "verify:textfitdash": "node scripts/audit-text-fit-dashboard.mjs",
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:paymenterrors": "node scripts/test-payment-errors.mjs",
