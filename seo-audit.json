@@ -347,7 +347,7 @@
         "ContactPage",
         "BreadcrumbList"
       ],
-      "words": 220
+      "words": 673
     },
     {
       "url": "https://www.tutorpro.site/english-grammar.html",
@@ -891,8 +891,10 @@
       "imgsEmptyAlt": [],
       "imgCount": 2,
       "lazy": 0,
-      "jsonldTypes": [],
-      "words": 279
+      "jsonldTypes": [
+        "FAQPage"
+      ],
+      "words": 929
     },
     {
       "url": "https://www.tutorpro.site/kr/",
@@ -1293,16 +1295,5 @@
       "words": 484
     }
   ],
-  "report": [
-    {
-      "severity": "MED",
-      "page": "/cn/",
-      "message": "only ~279 words of text"
-    },
-    {
-      "severity": "MED",
-      "page": "/contact.html",
-      "message": "only ~220 words of text"
-    }
-  ]
+  "report": []
 }
