@@ -140,7 +140,7 @@ import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToC
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
-import { downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
+import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
 import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES, searchLibraryResources, toggleLibraryBookmark } from './library.js'
@@ -6111,17 +6111,19 @@ export function SupportInbox({ onUnreadChange }) {
       if (supportAttachmentInputRef.current) supportAttachmentInputRef.current.value = ''
       await loadThread(selectedId)
 
-      // Trigger the bilingual secure email notification via Supabase Edge Function!
+      /*
+       * Tell the parent or teacher, in ONE language.
+       *
+       * This used to call the `support-notification` Edge Function, which
+       * is not in this repository and sends English with a Chinese
+       * paragraph underneath to everybody. /api/notify/support deploys with
+       * every push and uses the language on the conversation.
+       */
       if (cloudSyncEnabled() && supabase) {
         try {
-          await supabase.functions.invoke('support-notification', {
-            body: {
-              conversationId: selectedId,
-              messageBody: messageText || "Shared a support file attachment."
-            }
-          });
+          await notifySupportReply(selectedId, messageText || 'Shared a support file attachment.')
         } catch (notiError) {
-          console.warn("Support email notification failed to send:", notiError);
+          console.warn('Support email notification failed to send:', notiError)
         }
       }
     } catch (sendError) {

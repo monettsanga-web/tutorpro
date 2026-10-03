@@ -173,5 +173,51 @@ ok(
   'before the old Supabase function',
 )
 
+/* ================================================================== */
+/* 8. The SUPPORT chat email - the one in the screenshot               */
+/* ================================================================== */
+/* Three different functions send email on this site. The booking and
+   direct-message ones were moved first; the email the teacher actually
+   received came from a third, `support-notification`, which was never
+   committed to this repository at all - it exists only in the Supabase
+   dashboard, which is why searching the code for its wording found
+   nothing. */
+const supportRoute = read('api/notify/support.js')
+ok(/support_conversations/.test(supportRoute), 'the support route reads the conversation it is told about')
+ok(
+  /from '\.\.\/_messageEmail\.js'/.test(supportRoute),
+  'and shares its wording with the direct-message email rather than translating 14 languages twice',
+)
+ok(/'to-user'|'to-admin'/.test(supportRoute), 'it handles both directions')
+ok(
+  /admin_members/.test(supportRoute),
+  'emailing a parent requires an administrator - otherwise a known conversation id would let anyone mail that family',
+)
+ok(/SUPPORT_ADMIN_EMAIL/.test(supportRoute), 'and the to-admin direction can only ever reach one fixed address')
+ok(/501/.test(supportRoute), 'it falls back cleanly before the key is set')
+/* The file DOES contain Chinese - in the comment that quotes the bug. Strip
+   comments before looking, or the explanation fails the test it belongs to. */
+const withoutComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1 ')
+ok(!CJK.test(withoutComments(supportRoute)), 'no Chinese in the code itself, only in the comment explaining the bug')
+
+const chat = read('src/supportChat.js')
+ok(/\/api\/notify\/support/.test(chat), 'the support widget calls the new route')
+ok(
+  chat.indexOf('/api/notify/support') < chat.indexOf("functions.invoke('support-notification'"),
+  'before the uncommitted Edge Function',
+)
+ok(/export async function notifySupportReply/.test(chat), 'and the admin reply path has its own helper')
+
+const dash = read('src/Dashboards.jsx')
+ok(/notifySupportReply\(/.test(dash), 'the admin Support inbox uses it')
+ok(
+  !/functions\.invoke\('support-notification'/.test(dash),
+  'and no longer calls the bilingual Edge Function directly',
+)
+ok(
+  !/bilingual secure email notification/.test(dash),
+  'the comment that advertised the bilingual email is gone with it',
+)
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

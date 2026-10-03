@@ -97,6 +97,72 @@ export async function fetchSupportThread(credentials) {
 }
 
 /**
+ * Send a support-chat email.
+ *
+ * Tries /api/notify/support, which lives in this repository and deploys
+ * with every push, then falls back to the `support-notification` Edge
+ * Function it replaces.
+ *
+ * That Edge Function was never committed here — it exists only in the
+ * Supabase dashboard — and it is the one that sent a teacher an email with
+ * "New Message Notification · 消息通知" and a Chinese paragraph underneath.
+ * Nothing in this repository could change its wording.
+ */
+async function sendSupportEmail(payload) {
+  const headers = { 'Content-Type': 'application/json' }
+  try {
+    const { data: session } = await supabase.auth.getSession()
+    const token = session?.session?.access_token
+    if (token) headers.Authorization = `Bearer ${token}`
+  } catch {
+    // A visitor writing in has no session. The to-admin direction allows it.
+  }
+  try {
+    const response = await fetch('/api/notify/support', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    })
+    // 501 means the Resend key is not in Vercel yet.
+    if (response.status !== 501) {
+      const result = await response.json().catch(() => ({}))
+      if (response.ok) return result
+      throw new Error(result.error || `The email service refused the request (${response.status}).`)
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      // Network failure: fall through to the Edge Function.
+    } else {
+      throw error
+    }
+  }
+  const { data, error } = await supabase.functions.invoke('support-notification', { body: payload })
+  if (error) throw error
+  return data
+}
+
+/**
+ * Tell the parent or teacher that an administrator has replied.
+ *
+ * Sent in the language recorded on their conversation, and in that
+ * language only. The Edge Function this replaces put Chinese under the
+ * English for every recipient.
+ */
+export async function notifySupportReply(conversationId, messageBody) {
+  if (!supabase || !conversationId) return { notified: false, reason: 'not connected' }
+  try {
+    const data = await sendSupportEmail({
+      conversationId,
+      messageBody: messageBody || 'Sent an attachment.',
+      direction: 'to-user',
+    })
+    return { notified: true, data }
+  } catch (error) {
+    return { notified: false, reason: error?.message || 'Email alert could not be sent.' }
+  }
+}
+
+/**
  * Tell the administrator by email that a parent or teacher has written in.
  *
  * WHY THIS EXISTS
@@ -120,16 +186,13 @@ export async function fetchSupportThread(credentials) {
 export async function notifyAdminOfSupportMessage(credentials, messageBody) {
   if (!supabase || !credentials?.conversationId) return { notified: false, reason: 'not connected' }
   try {
-    const { data, error } = await supabase.functions.invoke('support-notification', {
-      body: {
-        conversationId: credentials.conversationId,
-        messageBody: messageBody || 'Sent an attachment.',
-        // Tells the function this came FROM the parent, so it emails the
-        // administrator rather than emailing the parent their own message.
-        direction: 'to-admin',
-      },
+    const data = await sendSupportEmail({
+      conversationId: credentials.conversationId,
+      messageBody: messageBody || 'Sent an attachment.',
+      // Tells the sender this came FROM the parent, so it emails the
+      // administrator rather than emailing the parent their own message.
+      direction: 'to-admin',
     })
-    if (error) throw error
     return { notified: true, data }
   } catch (error) {
     return { notified: false, reason: error?.message || 'Email alert could not be sent.' }
