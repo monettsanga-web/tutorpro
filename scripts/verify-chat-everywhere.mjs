@@ -14,8 +14,10 @@
  *      the dashboard, under a Messenger card you had to scroll past, which
  *      then asked a signed-in parent to type their own name and email.
  *
- * Both are now a Messages page: the admin and every teacher (or every
- * family, for a teacher) as clickable names, opening the same docked panel.
+ * Both are now a Messages page with the administrator as a clickable
+ * name opening a docked panel. Teachers and families are deliberately NOT
+ * listed: every conversation goes through admin, which is the school
+ * owner's rule - see DIRECT_PARENT_TEACHER_CHAT.
  *
  * Run: node scripts/verify-chat-everywhere.mjs   (server on :4173)
  */
@@ -73,14 +75,14 @@ async function messagesPage(id, width) {
   return page
 }
 
-for (const [role, id, expected] of [['parent', PARENT, 'Teacher M'], ['teacher', TEACHER, 'Juan Santos’s parent']]) {
+for (const [role, id] of [['parent', PARENT], ['teacher', TEACHER]]) {
   for (const width of [1440, 390]) {
     const label = `${role} @${width}px`
     const page = await messagesPage(id, width)
 
     const names = await page.locator('.chat-person .chat-name-button').allInnerTexts()
     ok(names.includes('TutorPro Admin'), `${label}: the administrator is in the list of people to message`)
-    ok(names.includes(expected), `${label}: ${expected} is in the list — before this there was no list at all`)
+    ok(names.length === 1, `${label}: the administrator is the only contact (${names.join(' | ')})`)
 
     /* The old page asked a signed-in person who they were. */
     const asksAgain = await page.locator('.portal-view .support-start input').count()
@@ -126,38 +128,12 @@ for (const [role, id, expected] of [['parent', PARENT, 'Teacher M'], ['teacher',
     await page.waitForTimeout(400)
     ok(await page.locator('.support-widget--docked').count() === 0, `${label}: closing it actually closes it`)
 
-    /* A person's name opens the direct chat, same shape. */
-    await page.locator('.chat-person:not(.chat-person--support) .chat-name-button').first().click()
-    await page.waitForTimeout(700)
-    const chat = await page.evaluate(`(() => {
-      const el = document.querySelector('.direct-chat')
-      if (!el) return null
-      const r = el.getBoundingClientRect()
-      const input = el.querySelector('.direct-chat__compose input')
-      return {
-        onscreen: r.top >= -1 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1,
-        width: Math.round(r.width),
-        title: el.querySelector('.direct-chat__head strong')?.textContent?.trim(),
-        fontSize: parseFloat(getComputedStyle(input).fontSize),
-        inputOnScreen: input.getBoundingClientRect().bottom <= innerHeight + 1,
-        /* Measure the box, not the computed display: the rule hides the
-           wrapper, and a child of a hidden parent still reports its own
-           display value. */
-        launcherHidden: !document.querySelector('.support-launcher')
-          || document.querySelector('.support-launcher').getClientRects().length === 0,
-      }
-    })()`)
-    ok(Boolean(chat), `${label}: clicking a person's name opens the direct chat`)
-    ok(chat && chat.title === expected, `${label}: the header names the person (${chat?.title})`)
-    ok(chat && chat.onscreen, `${label}: the chat panel fits on screen (${chat?.width}px wide)`)
-    ok(chat && chat.inputOnScreen, `${label}: the compose box is reachable`)
-    /* Below 16px, iOS Safari zooms the page in on focus and never zooms back. */
-    ok(chat && chat.fontSize >= 16, `${label}: the input is at least 16px so iOS does not zoom (${chat?.fontSize}px)`)
-    ok(chat && chat.launcherHidden, `${label}: the floating launcher is not sitting on top of the chat`)
+    /* There must be no way into a private parent-teacher thread. Every
+       conversation goes through the administrator - see
+       DIRECT_PARENT_TEACHER_CHAT and verify-chat-contacts.mjs. */
+    ok(await page.locator('.chat-person:not(.chat-person--support)').count() === 0, `${label}: nobody but the administrator is offered as a contact`)
+    ok(await page.locator('.direct-chat').count() === 0, `${label}: no direct chat panel is reachable`)
 
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(400)
-    ok(await page.locator('.direct-chat').count() === 0, `${label}: Escape closes the chat`)
     await page.close()
   }
 }

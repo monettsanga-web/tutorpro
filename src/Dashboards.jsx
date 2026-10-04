@@ -291,6 +291,21 @@ const koreaSessionTotal = (sessions, billingPlan = 'weekly', duration = 25) =>
   planCreditCount(billingPlan, sessions) * koreaRateForDuration(duration)
 const formatKrw = (amount) => `₩${Number(amount).toLocaleString('en-US')}`
 
+/**
+ * Can parents and teachers message each other directly?
+ *
+ * No. Every conversation goes through the administrator: a teacher's
+ * Messages page lists TutorPro Admin and nobody else, and so does a
+ * parent's. Admin passes on anything that needs passing on.
+ *
+ * This is a safeguarding decision, not a technical one - the school owner
+ * does not want staff and families holding private conversations the
+ * school cannot see. It is one constant so it can be switched back on in
+ * one line if that ever changes; the chat panel, the emails and the
+ * direct_messages table all still work underneath.
+ */
+const DIRECT_PARENT_TEACHER_CHAT = false
+
 const CHINA_TUITION_PER_25_MINUTES = 25
 const CHINA_PROCESSING_FEE_PER_SESSION = 5
 const chinaSessionTotal = (sessions, billingPlan = 'weekly') => planCreditCount(billingPlan, sessions) * (CHINA_TUITION_PER_25_MINUTES + CHINA_PROCESSING_FEE_PER_SESSION)
@@ -4059,24 +4074,25 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       list.push({ id, key: id, kind: 'person', name, subtitle })
     }
 
-    /* Teachers this family has lessons with. */
-    allBookings.forEach((booking) => {
-      add(booking.teacherId, booking.teacherName || 'Teacher', 'Your child’s teacher · lessons, homework, progress')
-    })
-
-    /* The teacher the administrator assigned, before any lesson is booked.
-       Bookings alone left a newly-assigned family with nobody to write to
-       but the administrator. */
-    learners.forEach((child) => {
-      if (!child?.assignedTeacherId) return
-      const teacher = getAccountById(child.assignedTeacherId)
-      add(child.assignedTeacherId, teacher?.fullName || 'Your teacher', `${child.name}’s teacher`)
-    })
-
-    /* Anyone already in a conversation, so a thread is never orphaned. */
-    listDirectConversations(account.id).forEach((conversation) => {
-      add(conversation.withId, conversation.withName || 'Teacher', 'Existing conversation')
-    })
+    /*
+     * Teachers are deliberately not listed. A parent messages the
+     * administrator, who speaks to the teacher - the school does not want
+     * private staff-to-family threads it cannot see. One constant turns
+     * this back on: DIRECT_PARENT_TEACHER_CHAT.
+     */
+    if (DIRECT_PARENT_TEACHER_CHAT) {
+      allBookings.forEach((booking) => {
+        add(booking.teacherId, booking.teacherName || 'Teacher', 'Your child’s teacher · lessons, homework, progress')
+      })
+      learners.forEach((child) => {
+        if (!child?.assignedTeacherId) return
+        const teacher = getAccountById(child.assignedTeacherId)
+        add(child.assignedTeacherId, teacher?.fullName || 'Your teacher', `${child.name}’s teacher`)
+      })
+      listDirectConversations(account.id).forEach((conversation) => {
+        add(conversation.withId, conversation.withName || 'Teacher', 'Existing conversation')
+      })
+    }
 
     return list
   })()
@@ -4332,7 +4348,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           <div className="student-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Coming up</span><h2>Next lesson</h2></div><button className="portal-text-button" onClick={() => setActive('lessons')}>All lessons <ChevronRight size={15} /></button></div>
-              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
+              {upcoming ? <BookingCard booking={upcoming} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} /> : <EmptyState title="No lesson booked yet" text="Choose a time that works for your family and start with a focused first class." action={() => setActive('book')} actionLabel="Book a class" />}
             </section>
             <section className="portal-card learning-focus-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Personalised path</span><h2>Learning focus</h2></div><span className="portal-card__icon"><Sparkles size={21} /></span></div>
@@ -4359,7 +4375,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           mediaVersion={mediaVersion}
           version={bookingVersion}
           onRateBooking={setRatingBooking}
-          onOpenChat={(id, name) => setDirectChatUser({ id, name })}
+          onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined}
         />
       )}
 
@@ -4371,7 +4387,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
           </section>
           <section className="portal-card lessons-list-card schedule-list-below">
             <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">All requests</span><h2>Lesson details</h2></div></div>
-            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
+            {bookings.length ? bookings.map((booking) => <BookingCard key={booking.id} booking={booking} showTeacher onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} actions={['pending', 'confirmed'].includes(booking.status) ? <button className="portal-danger-link" onClick={() => cancel(booking.id)}>Cancel</button> : booking.status === 'completed' && !booking.studentRating ? <button className="rate-class-button" onClick={() => setRatingBooking(booking)}><Star size={14} /> Rate class</button> : booking.studentRating ? <span className="rated-class-label"><Star size={13} fill="currentColor" /> {booking.studentRating.score}/5</span> : null} />) : <EmptyState title="Your lesson list is ready" text="Once you request a class, all updates will appear here." action={() => setActive('book')} actionLabel="Book the first class" />}
           </section>
         </div>
       )}
@@ -4499,16 +4515,16 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'support' && (
         <div className="portal-view parent-support-view">
           <div className="portal-page-heading">
-            <div><span className="portal-kicker">English & 中文 support</span><h1>Messages</h1><p>Click a name to open the chat. The conversation stays in the corner, so you can look at lessons and schedules while you type.</p></div>
+            <div><span className="portal-kicker">English & 中文 support</span><h1>Messages</h1><p>Click TutorPro Admin to open the chat. It stays in the corner, so you can look at lessons and schedules while you type.</p></div>
             <span className="support-inbox-live"><i /> Private support</span>
           </div>
           {parentChinaSupport && <div className="support-language-note support-language-note--portal"><Languages size={15} /><span>Facebook/Messenger may not be accessible in China. Please use the secure website chat; admin will reply from the TutorPro inbox.</span></div>}
           <ChatPeoplePanel
             kicker="Your conversations"
             title="Who would you like to message?"
-            intro="Admin answers registration, schedule and payment questions. Teachers answer about the lessons themselves."
+            intro="Admin answers everything: registration, schedules, payments, teachers and how your child is getting on. Messages about a teacher reach that teacher through admin."
             people={chatPeople}
-            onOpen={(person) => (person.kind === 'support' ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
+            onOpen={(person) => (person.kind === 'support' || !DIRECT_PARENT_TEACHER_CHAT ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
             emptyTitle="No teachers yet"
             emptyText="Your teacher appears here once a class is booked, or as soon as the administrator assigns one. You can always message admin above."
           />
@@ -4655,40 +4671,29 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     }
 
     /*
-     * Families who have booked with this teacher.
-     *
-     * Bookings were the ONLY source here, which is why a teacher could see
-     * nothing but the administrator: a teacher the admin has just assigned
-     * students to - or whose lessons are all in the past and cleared - has
-     * an empty booking list, and an empty booking list meant an empty
-     * contact list. The person they most need to message is the parent of
-     * a child they have not taught yet.
+     * Families used to be listed here - from bookings, from assigned
+     * students, and from existing threads. They are deliberately gone.
+     * A teacher messages the administrator; the administrator deals with
+     * the parent. See DIRECT_PARENT_TEACHER_CHAT.
      */
-    bookings.forEach((booking) => {
-      add(
-        booking.studentId,
-        booking.learnerName ? `${booking.learnerName}’s parent` : 'Parent',
-        booking.learnerName ? `Family of ${booking.learnerName} · ${booking.status === 'completed' ? 'past lesson' : 'booked lesson'}` : 'Family account',
-      )
-    })
-
-    /* Students the administrator assigned to this teacher, booked or not. */
-    getAccounts('student').forEach((family) => {
-      const learners = (family.children?.length ? family.children : [family.child]).filter(Boolean)
-      const mine = learners.filter((child) => child.assignedTeacherId === account.id)
-      if (!mine.length) return
-      add(
-        family.id,
-        family.parentName ? `${family.parentName}` : `${mine[0].name}’s parent`,
-        `Assigned student${mine.length > 1 ? 's' : ''}: ${mine.map((child) => child.name).join(', ')}`,
-      )
-    })
-
-    /* Anyone already in a conversation with this teacher, so a thread can
-       never be orphaned by a booking being cleared. */
-    listDirectConversations(account.id).forEach((conversation) => {
-      add(conversation.withId, conversation.withName || 'Parent', 'Existing conversation')
-    })
+    if (DIRECT_PARENT_TEACHER_CHAT) {
+      bookings.forEach((booking) => {
+        add(
+          booking.studentId,
+          booking.learnerName ? `${booking.learnerName}’s parent` : 'Parent',
+          booking.learnerName ? `Family of ${booking.learnerName}` : 'Family account',
+        )
+      })
+      getAccounts('student').forEach((family) => {
+        const learners = (family.children?.length ? family.children : [family.child]).filter(Boolean)
+        const mine = learners.filter((child) => child.assignedTeacherId === account.id)
+        if (!mine.length) return
+        add(family.id, family.parentName || `${mine[0].name}’s parent`, `Assigned student${mine.length > 1 ? 's' : ''}: ${mine.map((child) => child.name).join(', ')}`)
+      })
+      listDirectConversations(account.id).forEach((conversation) => {
+        add(conversation.withId, conversation.withName || 'Parent', 'Existing conversation')
+      })
+    }
 
     return list
   })()
@@ -5198,7 +5203,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <div className="teacher-overview-grid">
             <section className="portal-card">
               <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Action centre</span><h2>Booking requests</h2></div><button className="portal-text-button" onClick={() => setActive('bookings')}>View all <ChevronRight size={15} /></button></div>
-              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
+              {bookings.filter((booking) => booking.status === 'pending').slice(0, 3).map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} actions={<><button className="lesson-action lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}><Check size={15} /></button><button className="lesson-action lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}><X size={15} /></button></>} />)}
               {!pending && <EmptyState icon={ClipboardCheck} title="You’re all caught up" text="New lesson requests will appear here for your review." />}
             </section>
             <section className="portal-card teacher-profile-snapshot">
@@ -5237,7 +5242,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
               if (booking.status === 'ongoing') actions = <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
               if (booking.status === 'completed') actions = <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
               if (booking.status === 'absent') actions = <button className="lesson-action lesson-action--wide lesson-action--restore" onClick={() => changeStatus(booking.id, 'confirmed')}><RotateCcw size={13} /> Restore booking</button>
-              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} actions={actions} />
+              return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} actions={actions} />
             }) : <EmptyState title={`No ${bookingStatusFilter === 'all' ? '' : `${bookingStatusFilter} `}bookings`} text="Choose another class status to see matching teacher bookings." />}
           </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Separated calendar statuses</strong><small>Calendar colours distinguish ongoing, completed, absent and cancelled classes. Click a student name to write feedback, view details or unbook the class.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={filteredBookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} onBookingCancel={unbookCalendarClass} showInactiveBookings /></section>}
         </div>
@@ -5261,7 +5266,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             </section>
             <aside className="classroom-privacy-card"><span><ShieldCheck size={27} /></span><h2>Private by design</h2><p>Every confirmed booking receives a different classroom ID and secret token. Only its teacher, student and administrator can enter during the scheduled window.</p><ul><li><Check size={14} /> Unique room for every booking</li><li><Check size={14} /> Camera, microphone and screen sharing</li><li><Check size={14} /> Live annotation and lesson files</li></ul></aside>
           </div>
-          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{classroomHistory.length ? classroomHistory.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={(id, name) => setDirectChatUser({ id, name })} />) : <EmptyState icon={Video} title="No classrooms yet" text="Accept a student booking and its unique classroom will appear here." />}</section>
+          <section className="portal-card classroom-launch-list"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Booked classrooms</span><h2>Launch or resume a class</h2></div></div>{classroomHistory.length ? classroomHistory.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} />) : <EmptyState icon={Video} title="No classrooms yet" text="Accept a student booking and its unique classroom will appear here." />}</section>
         </div>
       )}
 
@@ -5439,16 +5444,16 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
             <div>
               <span className="portal-kicker">TutorPro Helpdesk</span>
               <h1>Messages</h1>
-              <p>Click a name to open the chat. It docks in the corner, so your schedule and bookings stay on screen while you write.</p>
+              <p>Click TutorPro Admin to open the chat. It docks in the corner, so your schedule and bookings stay on screen while you write. Anything for a parent goes through admin.</p>
             </div>
             <span className="support-inbox-live"><i /> Teacher support</span>
           </div>
           <ChatPeoplePanel
             kicker="Your conversations"
             title="Who would you like to message?"
-            intro="Admin handles schedules and payouts. Parents are reached through their family account."
+            intro="Admin handles schedules, payouts and anything to do with a family. Write here and admin will pass it on to the parent."
             people={chatPeople}
-            onOpen={(person) => (person.kind === 'support' ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
+            onOpen={(person) => (person.kind === 'support' || !DIRECT_PARENT_TEACHER_CHAT ? setSupportDockOpen(true) : setDirectChatUser({ id: person.id, name: person.name }))}
             emptyTitle="No families yet"
             emptyText="A family appears here as soon as a lesson is booked with you, or the administrator assigns a student to you. You can always message admin above."
           />
