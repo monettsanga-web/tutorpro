@@ -1749,6 +1749,18 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
         <div className="booking-controls">
           <label><span>Subject</span><select name="subject" value={form.subject} onChange={update}>{SUBJECTS.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
           <label><span>Teacher</span><select name="teacherId" value={selectedTeacherId} onChange={update}>{bookableTeachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}</select></label>
+          {/* A dropdown cannot show a face - an <option> may only contain
+              text - so the chosen teacher is shown beside it. Parents were
+              booking a name with no idea who it belonged to. */}
+          {selectedTeacher && (
+            <div className="booking-teacher-preview">
+              <ProfilePhoto accountId={selectedTeacher.id} name={selectedTeacher.fullName} className="booking-teacher-preview__photo" />
+              <div>
+                <strong>{selectedTeacher.fullName}</strong>
+                <small>{selectedTeacher.teacher?.specialization}{selectedTeacher.teacher?.experience ? ` · ${selectedTeacher.teacher.experience} years teaching` : ''}</small>
+              </div>
+            </div>
+          )}
           {/* Focus options change with the subject — "Reading comprehension"
               makes no sense on a maths lesson. */}
           <label><span>Lesson focus</span><select name="focus" value={form.focus} onChange={update}>{focusOptionsFor(form.subject).map((option) => <option key={option}>{option}</option>)}</select></label>
@@ -4213,9 +4225,19 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     try {
       const media = await saveProfileMedia(`${account.id}-${learner.id}`, 'avatar', file)
       if (media.dataUrl) {
-        const updated = updateStudentProfile(account.id, { profilePhotoUrl: media.dataUrl }, learner.id)
+        const updated = updateStudentProfile(account.id, { profilePhotoUrl: media.sharedDataUrl || media.dataUrl }, learner.id)
         setAccount(updated)
         onAccountChange(updated)
+        /* Same omission as the teacher upload: without this the child's
+           photo stays on the family's own device and the administrator
+           keeps seeing a grey initial. */
+        if (cloudSyncEnabled()) {
+          try {
+            await withTimeout(updateCloudProfile(updated), 10000, 'Supabase did not confirm the photo upload in time.')
+          } catch (syncError) {
+            setMediaError(`Saved on this device, but not shared yet: ${syncError.message}`)
+          }
+        }
       }
       setMediaVersion((value) => value + 1)
     } catch (uploadError) {
@@ -4889,6 +4911,26 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
   const refresh = () => setVersion((value) => value + 1)
 
+  /*
+   * Teachers who uploaded a photo before this was fixed have it in their
+   * profile row but not inside the `teacher` object - and the teacher
+   * object is the only part a parent can read. Rather than asking every
+   * teacher to upload the same picture again, copy it across once, the
+   * next time they open their dashboard, and push it up.
+   */
+  useEffect(() => {
+    const existing = account.profilePhotoUrl
+    if (!existing || account.teacher?.photo) return
+    const updated = updateAccount(account.id, { teacher: { ...account.teacher, photo: existing } })
+    /* No setAccount here on purpose: the teacher's own view already shows
+       the photo from IndexedDB, and re-rendering from inside an effect
+       only risks a render loop. The copy that matters is the cloud one. */
+    if (cloudSyncEnabled()) updateCloudProfile(updated).catch(() => { /* retried on the next dashboard open */ })
+    // Only the photo fields matter here; re-running on every account change
+    // would fight the upload handler.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account.id, account.profilePhotoUrl, account.teacher?.photo])
+
   const uploadTeacherMedia = async (event, kind) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -4896,9 +4938,34 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     try {
       const media = await saveProfileMedia(account.id, kind, file)
       if (kind === 'avatar' && media.dataUrl) {
-        const updated = updateAccount(account.id, { profilePhotoUrl: media.dataUrl })
+        /*
+         * The photo used to be saved to this browser's IndexedDB and to the
+         * local account record, and that was all - uploadTeacherMedia never
+         * called updateCloudProfile the way saveTeacherName does. So the
+         * teacher saw their own photo and nobody else ever did: not the
+         * admin dashboard, not a parent, not the booking list.
+         *
+         * It goes in two places now. `profilePhotoUrl` is read by anyone
+         * who can see the profile row, which is the administrator. The copy
+         * inside `teacher` is the one families get: students read teachers
+         * through the get_public_teachers RPC, which returns full_name and
+         * the teacher JSON and nothing else, so a photo outside that object
+         * is invisible to every parent on the site.
+         */
+        const shared = media.sharedDataUrl || media.dataUrl
+        const updated = updateAccount(account.id, {
+          profilePhotoUrl: shared,
+          teacher: { ...account.teacher, photo: shared },
+        })
         setAccount(updated)
         onAccountChange(updated)
+        if (cloudSyncEnabled()) {
+          try {
+            await withTimeout(updateCloudProfile(updated), 10000, 'Supabase did not confirm the photo upload in time.')
+          } catch (syncError) {
+            setMediaError(`Saved on this device, but not shared yet: ${syncError.message}`)
+          }
+        }
       }
       setMediaVersion((value) => value + 1)
     } catch (uploadError) {
@@ -8050,7 +8117,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   /* One row of the students table. Lifted out of the JSX so the table can
      be grouped by country without duplicating any of it. */
-  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><span className={`table-avatar table-avatar--${avatarTone(student.parentName)}`}>{initials(student.parentName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
+  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><ProfilePhoto accountId={`${student.id}-${rowLearner.id}`} name={rowLearner.name || student.parentName} refreshKey={version} className={`table-avatar-photo table-avatar--${avatarTone(student.parentName)}`} /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
@@ -8169,14 +8236,14 @@ export function AdminDashboard({ account, onHome, onLogout }) {
           </section>
 
           <div className="admin-overview-grid">
-            <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><span>{initials(teacher.fullName)}</span><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button type="button" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id}><Check size={15} /> {processingAccountId === teacher.id ? 'Saving…' : 'Approve'}</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
+            <section className="portal-card admin-action-card"><div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Needs attention</span><h2>Teacher approvals</h2></div><button className="portal-text-button" onClick={() => setActive('teachers')}>Manage all <ChevronRight size={15} /></button></div>{teachers.filter((teacher) => teacher.status === 'pending').slice(0, 4).map((teacher) => <div className="approval-row" key={teacher.id}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><div><strong>{teacher.fullName}</strong><small>{teacher.teacher.specialization} · {teacher.teacher.experience} years</small></div><button type="button" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id}><Check size={15} /> {processingAccountId === teacher.id ? 'Saving…' : 'Approve'}</button></div>)}{!pendingTeachers && <EmptyState icon={UserCheck} title="No profiles waiting" text="New teacher applications will appear here." />}</section>
             <section className="portal-card admin-health-card"><span className="portal-kicker">Platform health</span><h2>Booking flow</h2><div className="health-donut" style={{ '--health': bookingStats.total ? `${Math.round((bookingStats.completed / bookingStats.total) * 100)}%` : '0%' }}><span><strong>{bookingStats.total ? Math.round((bookingStats.completed / bookingStats.total) * 100) : 0}%</strong><small>completed</small></span></div><dl><div><dt><i className="dot dot--orange" />Pending</dt><dd>{bookingStats.pending}</dd></div><div><dt><i className="dot dot--blue" />Confirmed</dt><dd>{bookingStats.confirmed}</dd></div><div><dt><i className="dot dot--green" />Completed</dt><dd>{bookingStats.completed}</dd></div></dl></section>
           </div>
         </div>
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><span>{initials(teacher.fullName)}</span><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (

@@ -13345,3 +13345,60 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 }
 
 .ptr-message-button:hover { border-color: #7048df; background: #7048df; color: #fff; }
+
+/* ===========================================================================
+   FACES, NOT INITIALS
+   ---------------------------------------------------------------------------
+   Teacher and student photos were uploaded and then never seen by anybody
+   else, so every list here fell back to a coloured letter. These are the
+   places that now show the real photo when there is one, and still fall
+   back to the letter when there is not.
+   =========================================================================== */
+.table-avatar-photo {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 13px;
+  background: #7048df;
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: 900;
+}
+
+.table-avatar-photo img { width: 100%; height: 100%; object-fit: cover; }
+.approval-row .table-avatar-photo { width: 42px; height: 42px; }
+
+/* The chosen teacher, beside the booking dropdown. */
+.booking-teacher-preview {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-top: 10px;
+  border: 1px solid var(--portal-line);
+  border-radius: 16px;
+  padding: 11px 13px;
+  background: #faf8ff;
+}
+
+.booking-teacher-preview__photo {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 50%;
+  background: #7048df;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.booking-teacher-preview__photo img { width: 100%; height: 100%; object-fit: cover; }
+.booking-teacher-preview > div { display: grid; min-width: 0; gap: 2px; }
+.booking-teacher-preview strong { color: #2a1b3d; font-size: 1.06rem; }
+.booking-teacher-preview small { overflow: hidden; color: var(--portal-muted); font-size: 0.93rem; text-overflow: ellipsis; }

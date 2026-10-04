@@ -3,12 +3,34 @@ import { Play } from 'lucide-react'
 import { getProfileMedia } from './media.js'
 import { getAccountById, getAccounts } from './auth.js'
 
+/**
+ * The photo for somebody who is not using this device.
+ *
+ * IndexedDB only ever holds what this browser uploaded, so for everyone
+ * else the picture has to come out of the account record. There are three
+ * places it can be, and all three have to be tried:
+ *
+ *   profilePhotoUrl        - on a profile row, which is what an
+ *                            administrator reads;
+ *   teacher.photo          - inside the teacher JSON, which is the ONLY
+ *                            part of a teacher a parent or student can
+ *                            read (get_public_teachers returns nothing
+ *                            else), so without this families see a grey
+ *                            initial where every teacher's face should be;
+ *   children[].profilePhotoUrl - a learner's own photo, keyed
+ *                            "<accountId>-<learnerId>".
+ */
 function cloudProfileMediaUrl(accountId, kind) {
   if (kind !== 'avatar' || !accountId) return ''
   const direct = getAccountById(accountId)
   if (direct?.profilePhotoUrl) return direct.profilePhotoUrl
+  if (direct?.teacher?.photo) return direct.teacher.photo
   const accounts = getAccounts()
   for (const account of accounts) {
+    if (account.id === accountId) {
+      if (account.profilePhotoUrl) return account.profilePhotoUrl
+      if (account.teacher?.photo) return account.teacher.photo
+    }
     const learner = (account.children || []).find((item) => `${account.id}-${item.id}` === accountId)
     if (learner?.profilePhotoUrl) return learner.profilePhotoUrl
   }

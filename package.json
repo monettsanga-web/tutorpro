@@ -70,6 +70,7 @@
     "verify:chateverywhere": "node scripts/verify-chat-everywhere.mjs",
     "verify:adminnamechat": "node scripts/verify-admin-name-chat.mjs",
     "verify:chatcontacts": "node scripts/verify-chat-contacts.mjs",
+    "verify:photos": "node scripts/verify-profile-photos.mjs",
     "verify:textfitdash": "node scripts/audit-text-fit-dashboard.mjs",
     "test:vercel": "node scripts/test-vercel-config.mjs",
     "test:paymenterrors": "node scripts/test-payment-errors.mjs",

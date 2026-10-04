@@ -3,7 +3,21 @@ const STORE_NAME = 'media'
 const DB_VERSION = 1
 
 
-async function imageFileToDataUrl(file) {
+/**
+ * Shrink an image to a data URL.
+ *
+ * Two sizes are made from one upload:
+ *   720px  - the copy kept on this device, good enough to fill a profile hero;
+ *   256px  - the copy that travels to the database so OTHER people can see it.
+ *
+ * The small one matters. A teacher's photo has to reach the admin dashboard
+ * and every family's "Book a class" list, and it rides inside the profile
+ * row as a data URL. At 720px that is 120-200 KB per teacher downloaded by
+ * every visitor who opens the teacher list; at 256px it is around 15-25 KB,
+ * which is smaller than the hero image already on the page and is plenty for
+ * a 46-96px avatar even on a retina screen.
+ */
+async function imageFileToDataUrl(file, maxSide = 720, quality = 0.82) {
   if (!file?.type?.startsWith('image/')) return ''
   const bitmap = await createImageBitmap(file).catch(() => null)
   if (!bitmap) {
@@ -14,7 +28,6 @@ async function imageFileToDataUrl(file) {
       reader.readAsDataURL(file)
     })
   }
-  const maxSide = 720
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
   const width = Math.max(1, Math.round(bitmap.width * scale))
   const height = Math.max(1, Math.round(bitmap.height * scale))
@@ -24,7 +37,7 @@ async function imageFileToDataUrl(file) {
   const context = canvas.getContext('2d')
   context.drawImage(bitmap, 0, 0, width, height)
   bitmap.close?.()
-  return canvas.toDataURL('image/jpeg', 0.82)
+  return canvas.toDataURL('image/jpeg', quality)
 }
 
 function openDatabase() {
@@ -51,6 +64,10 @@ export async function saveProfileMedia(accountId, kind, file) {
   if (file.size > maximumSize) throw new Error(kind === 'avatar' ? 'Profile photos must be under 5 MB.' : 'Introduction videos must be under 50 MB.')
 
   const dataUrl = kind === 'avatar' ? await imageFileToDataUrl(file) : ''
+  /* The copy that is shared with everybody else. Made here rather than at
+     the call site so no caller can forget it and quietly publish a 200 KB
+     photo into a database row. */
+  const sharedDataUrl = kind === 'avatar' ? await imageFileToDataUrl(file, 256, 0.72) : ''
   const database = await openDatabase()
   await new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, 'readwrite')
@@ -60,6 +77,7 @@ export async function saveProfileMedia(accountId, kind, file) {
       kind,
       blob: file,
       dataUrl,
+      sharedDataUrl,
       fileName: file.name,
       mimeType: file.type,
       updatedAt: new Date().toISOString(),
@@ -68,7 +86,7 @@ export async function saveProfileMedia(accountId, kind, file) {
     transaction.onerror = () => reject(transaction.error || new Error('The media file could not be saved.'))
   })
   database.close()
-  return { fileName: file.name, mimeType: file.type, dataUrl, updatedAt: new Date().toISOString() }
+  return { fileName: file.name, mimeType: file.type, dataUrl, sharedDataUrl, updatedAt: new Date().toISOString() }
 }
 
 export async function deleteProfileMediaOwner(accountId) {
