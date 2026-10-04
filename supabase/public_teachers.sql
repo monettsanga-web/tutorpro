@@ -26,7 +26,19 @@ as $$
       'rating', coalesce((p.profile_data->'teacher'->>'rating')::numeric, 0),
       'ratingCount', coalesce((p.profile_data->'teacher'->>'ratingCount')::integer, 0),
       'lessonsCompleted', coalesce((p.profile_data->'teacher'->>'lessonsCompleted')::integer, 0),
-      'availabilitySlots', coalesce(p.profile_data->'teacher'->'availabilitySlots', '[]'::jsonb)
+      'availabilitySlots', coalesce(p.profile_data->'teacher'->'availabilitySlots', '[]'::jsonb),
+      -- The teacher's photo. Without this line a parent sees a grey
+      -- initial no matter what the teacher uploads: this function does not
+      -- pass the teacher record through, it rebuilds it from the fields
+      -- listed here, so a field that is missing here is invisible to every
+      -- family on the site. The browser prefers /api/teachers/public,
+      -- which returns the photo whether or not this file has been run.
+      'photo', coalesce(
+        p.profile_data->'teacher'->>'photo',
+        p.profile_data->>'profilePhotoUrl',
+        ''
+      ),
+      'subjects', coalesce(p.profile_data->'teacher'->'subjects', '[]'::jsonb)
     ) as teacher,
     p.updated_at
   from public.profiles p

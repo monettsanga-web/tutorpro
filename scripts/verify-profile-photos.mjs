@@ -69,6 +69,14 @@ async function dashboard(id, width) {
   await page.route('**/*.{mp4,webm}', (r) => r.abort())
   await page.route('**/auth/v1/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id }) }))
   await page.route('**/rest/v1/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"offline"}' }))
+  /* The real directory route. This is the pipe that actually reaches a
+     family, and the one the database function cannot carry a photo
+     through. */
+  await page.route('**/api/teachers/public', (r) => r.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ version: 'test', count: 1, withPhoto: 1, teachers: [{ id: TEACHER, full_name: 'Teacher M', updated_at: '2026-10-01T00:00:00Z', teacher: { specialization: 'General English', bio: 'Hi', education: 'BA', experience: 8, languages: 'English', rating: 0, ratingCount: 0, lessonsCompleted: 0, availabilitySlots: ['1-10:00', '1-10:30'], subjects: [], photo: PHOTO } }] }),
+  }))
   await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' })
   await page.evaluate(`
     sessionStorage.setItem('tutorpro_ip_timezone','Asia/Manila');
@@ -143,6 +151,43 @@ for (const width of [1440, 390]) {
   ok(preview && preview.name === 'Teacher M', `parent ${size}: it names them (${preview?.name})`)
   ok(preview && preview.photo, `parent ${size}: with their photo, which a <select> can never show`)
   ok(preview && preview.onscreen, `parent ${size}: and the card fits the screen`)
+  await page.close()
+}
+
+/* ---------------- the photo arrives from the directory route ----------------
+ * The family's device knows nothing: no IndexedDB entry, and a teacher
+ * record with no photo in it, exactly like a parent opening the site for
+ * the first time. Everything they see has to come down the wire.
+ */
+{
+  const blind = JSON.parse(JSON.stringify(accounts))
+  blind[2].profilePhotoUrl = ''
+  delete blind[2].teacher.photo
+  const page = await browser.newPage({ viewport: { width: 1440, height: 950 } })
+  await page.route('**/auth/v1/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: PARENT }) }))
+  await page.route('**/rest/v1/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"offline"}' }))
+  await page.route('**/api/teachers/public', (r) => r.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ teachers: [{ id: TEACHER, full_name: 'Teacher M', updated_at: '2026-10-01T00:00:00Z', teacher: { specialization: 'General English', bio: 'Hi', education: 'BA', experience: 8, languages: 'English', rating: 0, ratingCount: 0, lessonsCompleted: 0, availabilitySlots: ['1-10:00'], subjects: [], photo: PHOTO } }] }),
+  }))
+  await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' })
+  await page.evaluate(`
+    localStorage.setItem('tutorpro_accounts_v2', ${JSON.stringify(JSON.stringify(blind))});
+    localStorage.setItem('tutorpro_bookings_v1', ${JSON.stringify(JSON.stringify(bookings))});
+    localStorage.setItem('tutorpro_session_v2', '${PARENT}');`)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(2600)
+  const go = page.locator('button:has-text("My dashboard"):visible').first()
+  if (await go.count()) await go.click()
+  await page.waitForSelector('.portal-nav', { timeout: 20000 })
+  await section(page, 'Book a class')
+  await page.waitForTimeout(1500)
+  const fromRoute = await page.evaluate(`(() => {
+    const img = document.querySelector('.booking-teacher-preview img')
+    return Boolean(img && img.complete && img.naturalWidth > 0)
+  })()`)
+  ok(fromRoute, 'a family with nothing stored locally still gets the photo, over the directory route')
   await page.close()
 }
 

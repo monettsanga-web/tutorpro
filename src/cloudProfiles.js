@@ -203,11 +203,39 @@ export async function fetchCloudProfiles() {
   return (data || []).map(profileRowToAccount)
 }
 
+/**
+ * The approved teacher directory, as a parent or student sees it.
+ *
+ * /api/teachers/public is tried first and the `get_public_teachers` RPC is
+ * the fallback, because the RPC cannot return a photo. It does not pass
+ * the teacher record through; it rebuilds it with jsonb_build_object and a
+ * fixed list of nine fields, and 'photo' is not one of them. So a photo
+ * could be uploaded, resized, saved and synced correctly and a family
+ * would still see a grey letter - the only pipe that reaches them drops
+ * the field. The Vercel route deploys with the site and needs no SQL run
+ * by hand; if a database does have the updated function, either answer
+ * works and this still prefers the one that carries photos.
+ */
 export async function fetchPublicTeachers() {
+  try {
+    const response = await fetch('/api/teachers/public', { headers: { accept: 'application/json' } })
+    if (response.ok) {
+      const payload = await response.json()
+      if (Array.isArray(payload?.teachers)) return payload.teachers.map(publicTeacherRow)
+    }
+  } catch {
+    // Offline, or the site is being served somewhere without the API.
+    // The RPC below still answers, just without photos.
+  }
+
   if (!supabase) return []
   const { data, error } = await supabase.rpc('get_public_teachers')
   if (error) throw new Error(`Approved teachers could not be loaded: ${error.message}`)
-  return (data || []).map((row) => ({
+  return (data || []).map(publicTeacherRow)
+}
+
+function publicTeacherRow(row) {
+  return ({
     id: row.id,
     role: 'teacher',
     status: 'approved',
@@ -216,7 +244,7 @@ export async function fetchPublicTeachers() {
     updatedAt: row.updated_at,
     publicTeacher: true,
     cloudProfile: true,
-  }))
+  })
 }
 
 export async function updateCloudProfile(account) {

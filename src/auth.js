@@ -647,7 +647,18 @@ export function mergeCloudAccounts(cloudAccounts, options = {}) {
         accounts[index] = {
           ...local,
           ...cloudAccount,
-          ...(cloudAccount.publicTeacher ? { teacher: { ...(local.teacher || {}), ...(cloudAccount.teacher || {}) } } : {}),
+          /* A public-teacher answer is a SUBSET of the real record, so it
+             is merged over the local copy rather than replacing it. The
+             photo is pulled out separately: an older database answers
+             without one, and an empty value from that answer must not
+             erase a photo this device already knows about. */
+          ...(cloudAccount.publicTeacher ? {
+            teacher: {
+              ...(local.teacher || {}),
+              ...(cloudAccount.teacher || {}),
+              photo: cloudAccount.teacher?.photo || local.teacher?.photo || '',
+            },
+          } : {}),
           passwordHash: local.passwordHash,
           salt: local.salt,
         }
