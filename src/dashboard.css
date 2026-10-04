@@ -13402,3 +13402,42 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 .booking-teacher-preview > div { display: grid; min-width: 0; gap: 2px; }
 .booking-teacher-preview strong { color: #2a1b3d; font-size: 1.06rem; }
 .booking-teacher-preview small { overflow: hidden; color: var(--portal-muted); font-size: 0.93rem; text-overflow: ellipsis; }
+
+/* The administrator can set a teacher's photo from the Teachers table.
+   Until this existed, the only avatar upload in the product was on a
+   teacher's own profile page, so a missing photo could only be fixed by
+   asking that teacher to sit at a computer. */
+/* Sized here, explicitly. `.table-person > span { width: 40px }` used to
+   size the avatar, and wrapping it in this label made it a grandchild, so
+   that rule stopped applying: the photo collapsed to 16px on a desktop and
+   to nothing at all on a phone. */
+.table-avatar-upload {
+  position: relative;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.table-avatar-upload .table-avatar-photo,
+.table-person > .table-avatar-photo,
+.approval-row > .table-avatar-photo { width: 44px; height: 44px; }
+.table-avatar-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.table-avatar-upload > span {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #7048df;
+  color: #fff;
+  transition: transform 150ms ease;
+}
+.table-avatar-upload:hover > span { transform: scale(1.12); }
+.table-avatar-upload:focus-within > span { outline: 2px solid #7048df; outline-offset: 2px; }
+.table-avatar-upload.is-busy { opacity: 0.55; pointer-events: none; }

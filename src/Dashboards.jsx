@@ -138,6 +138,7 @@ import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './me
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import ParentTeacherReviews from './ParentTeacherReviews.jsx'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
+import { photoFileToDataUrl, shareTeacherPhoto } from './teacherPhotos.js'
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
@@ -4921,11 +4922,11 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   useEffect(() => {
     const existing = account.profilePhotoUrl
     if (!existing || account.teacher?.photo) return
-    const updated = updateAccount(account.id, { teacher: { ...account.teacher, photo: existing } })
+    updateAccount(account.id, { teacher: { ...account.teacher, photo: existing } })
     /* No setAccount here on purpose: the teacher's own view already shows
-       the photo from IndexedDB, and re-rendering from inside an effect
-       only risks a render loop. The copy that matters is the cloud one. */
-    if (cloudSyncEnabled()) updateCloudProfile(updated).catch(() => { /* retried on the next dashboard open */ })
+       the photo from its own storage, and re-rendering from inside an
+       effect only risks a render loop. The copy that matters is shared. */
+    if (cloudSyncEnabled()) shareTeacherPhoto(account.id, existing).catch(() => { /* retried on the next dashboard open */ })
     // Only the photo fields matter here; re-running on every account change
     // would fight the upload handler.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4960,10 +4961,18 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
         setAccount(updated)
         onAccountChange(updated)
         if (cloudSyncEnabled()) {
+          /*
+           * The server route, not a PATCH from here. A browser write to
+           * `profiles` goes through row-level security and the column-lock
+           * trigger, and when it is refused the teacher never finds out:
+           * their own browser still has the picture, so the dashboard
+           * looks right. Three approved teachers and one stored photo on
+           * the live site was the result.
+           */
           try {
-            await withTimeout(updateCloudProfile(updated), 10000, 'Supabase did not confirm the photo upload in time.')
+            await shareTeacherPhoto(account.id, shared)
           } catch (syncError) {
-            setMediaError(`Saved on this device, but not shared yet: ${syncError.message}`)
+            setMediaError(`Saved on this device, but NOT shared with anyone yet: ${syncError.message}`)
           }
         }
       }
@@ -7611,6 +7620,41 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     }
   }
 
+  /*
+   * The administrator sets a teacher's photo.
+   *
+   * There was no way to do this at all: the only avatar upload in the
+   * whole product was on a teacher's own profile page, so a photo could
+   * only be fixed by asking that teacher to sit down at a computer. With
+   * two of three teachers showing a grey letter to every visiting parent,
+   * that is not a workable answer.
+   *
+   * It writes through /api/teachers/photo with the service-role key, so
+   * it cannot be quietly refused by row-level security the way a browser
+   * PATCH could.
+   */
+  const [photoUploadId, setPhotoUploadId] = useState('')
+
+  const uploadTeacherPhoto = async (event, teacher) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !teacher?.id) return
+    setAdminActionError('')
+    setPhotoUploadId(teacher.id)
+    try {
+      const dataUrl = await photoFileToDataUrl(file)
+      await shareTeacherPhoto(teacher.id, dataUrl)
+      updateAccount(teacher.id, { profilePhotoUrl: dataUrl, teacher: { ...(teacher.teacher || {}), photo: dataUrl } })
+      /* refresh() bumps `version`, which is the ProfilePhoto refreshKey on
+         every row, so the new face appears without a page reload. */
+      refresh()
+    } catch (uploadError) {
+      setAdminActionError(`${teacher.fullName}'s photo could not be saved: ${uploadError.message}`)
+    } finally {
+      setPhotoUploadId('')
+    }
+  }
+
   const launchSupportChat = async (email, fullName) => {
     setAdminActionError('')
     try {
@@ -8243,7 +8287,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (

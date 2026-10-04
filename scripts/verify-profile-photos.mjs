@@ -212,6 +212,64 @@ const fallback = await page.evaluate(PHOTO_PROBE)
 ok(fallback.initials > 0, 'a teacher with no photo still shows a letter, not an empty box')
 await page.close()
 
+/* ---------------- the administrator can set a teacher's photo ----------------
+ * This control did not exist. The only avatar upload in the product was
+ * on a teacher's own profile page, so a teacher with no photo could only
+ * be fixed by asking that teacher to sit at a computer - which is why two
+ * of three live teachers were still showing a letter to every parent.
+ */
+{
+  const page = await browser.newPage({ viewport: { width: 1440, height: 950 } })
+  let uploaded = null
+  await page.route('**/auth/v1/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: ADMIN }) }))
+  await page.route('**/rest/v1/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"offline"}' }))
+  await page.route('**/api/teachers/photo', (r) => {
+    try { uploaded = JSON.parse(r.request().postData() || '{}') } catch { uploaded = null }
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, teacherId: uploaded?.teacherId, bytes: (uploaded?.photo || '').length }) })
+  })
+  await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' })
+  const noPhotoAccounts = JSON.parse(JSON.stringify(accounts))
+  noPhotoAccounts[2].profilePhotoUrl = ''
+  delete noPhotoAccounts[2].teacher.photo
+  /* A Supabase session, because the upload route is authenticated - it
+     will not take an unsigned request, and nor should it. */
+  const session = {
+    access_token: 'test-access-token',
+    refresh_token: 'test-refresh-token',
+    token_type: 'bearer',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    user: { id: ADMIN, aud: 'authenticated', role: 'authenticated', email: 'admin@tutorpro.site' },
+  }
+  await page.evaluate(`
+    localStorage.setItem('tutorpro_accounts_v2', ${JSON.stringify(JSON.stringify(noPhotoAccounts))});
+    localStorage.setItem('tutorpro_session_v2', '${ADMIN}');
+    localStorage.setItem('tutorpro-supabase-auth', ${JSON.stringify(JSON.stringify(session))});`)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(2400)
+  const go = page.locator('button:has-text("My dashboard"):visible').first()
+  if (await go.count()) await go.click()
+  await page.waitForSelector('.portal-nav', { timeout: 20000 })
+  await section(page, 'Teachers')
+
+  const control = page.locator('.table-avatar-upload input[type=file]').first()
+  ok(await control.count() > 0, 'admin: there is a photo upload control on each teacher row')
+
+  /* A real 120x120 JPEG, so the resize path runs for real. */
+  const jpeg = Buffer.from(
+    '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAB4AHgBAREA/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oACAEBAAA/APn+iiigD//Z',
+    'base64',
+  )
+  await control.setInputFiles({ name: 'teacher.jpg', mimeType: 'image/jpeg', buffer: jpeg })
+  await page.waitForTimeout(2500)
+
+  ok(Boolean(uploaded?.teacherId), 'admin: choosing a file sends it to the server route')
+  ok(uploaded?.teacherId === TEACHER, 'admin: for the right teacher')
+  ok(typeof uploaded?.photo === 'string' && uploaded.photo.startsWith('data:image/jpeg'), 'admin: as a JPEG data URL')
+  ok(uploaded && uploaded.photo.length < 400 * 1024, `admin: already resized before it is sent (${Math.round((uploaded?.photo?.length || 0) / 1024)} KB)`)
+  await page.close()
+}
+
 await browser.close()
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
