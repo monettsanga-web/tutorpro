@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
+  AudioLines,
   BadgeCheck,
   BookOpen,
   CalendarCheck2,
@@ -14,6 +15,7 @@ import {
   FlaskConical,
   Globe2,
   GraduationCap,
+  Headphones,
   Heart,
   Laptop,
   LayoutDashboard,
@@ -21,13 +23,17 @@ import {
   Menu,
   Mail,
   MessageCircle,
+  MessageSquareText,
   Phone,
+  PenLine,
   ShieldCheck,
   Sparkles,
   Star,
   Target,
+  UserRound,
   UserRoundCheck,
   Users,
+  Video,
   X,
 } from 'lucide-react'
 import AuthModal from './AuthModal.jsx'
@@ -348,8 +354,8 @@ function WhyParents({ onBook }) {
       <div className="container">
         <div className="why-parents__head">
           <span className="portal-kicker">Why parents choose TutorPro</span>
-          <h2 id="why-parents-heading">Everything here is something you can check.</h2>
-          <p>No invented numbers, no borrowed logos. These are the things we can show you before you book.</p>
+          <h2 id="why-parents-heading">Why Parents Choose TutorPro</h2>
+          <p>Everything here is something you can check. No invented numbers, no borrowed logos — these are the things we can show you before you book.</p>
         </div>
         <ul className="why-parents__grid">
           {reasons.map(([Icon, title, detail]) => (
@@ -364,6 +370,90 @@ function WhyParents({ onBook }) {
             Book a free first class <ArrowRight size={18} />
           </button>
           <a className="button button--outline" href="/online-english-classes-for-kids">Explore English programmes</a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * The seven skills, as a section a parent can actually see.
+ *
+ * This existed only in the prerendered HTML, which React throws away the
+ * moment it mounts - so neither a visitor nor Google's renderer ever saw
+ * it. Measured on the live site before this: the rendered DOM contained
+ * none of the prerendered headings.
+ */
+function WhatYourChildLearns({ onBook }) {
+  const skills = [
+    [MessageCircle, 'Speaking', 'Answering in full sentences, holding a conversation, and saying what they mean without rehearsing it first.'],
+    [Headphones, 'Listening', 'Following instructions, understanding a story, and picking out detail in natural speech at normal pace.'],
+    [BookOpen, 'Reading', 'Decoding for younger children, then fluency and comprehension — reading for meaning rather than word by word.'],
+    [AudioLines, 'Pronunciation', 'Individual sounds, word stress and rhythm, with an AI speech coach that scores words and plays the correct sound back.'],
+    [PenLine, 'Grammar', 'Taught inside real sentences your child is trying to say, not as isolated rules to memorise.'],
+    [Sparkles, 'Vocabulary', 'Introduced in context, revisited in later lessons, and sent home in the feedback so it can be practised.'],
+    [Heart, 'Communication', 'The confidence to use all of it with somebody who is not their teacher. Usually the thing parents notice first.'],
+  ]
+
+  return (
+    <section className="why-parents" aria-labelledby="what-they-learn-heading">
+      <div className="container">
+        <div className="why-parents__head">
+          <span className="portal-kicker">Skills, not just lessons</span>
+          <h2 id="what-they-learn-heading">What Your Child Will Learn</h2>
+          <p>Every lesson is built from these seven. The balance is set by what your child needs most right now, not by a fixed syllabus.</p>
+        </div>
+        <ul className="why-parents__grid">
+          {skills.map(([Icon, title, detail]) => (
+            <li key={title}>
+              <span aria-hidden="true"><Icon size={19} /></span>
+              <div><strong>{title}</strong><small>{detail}</small></div>
+            </li>
+          ))}
+        </ul>
+        <div className="why-parents__cta">
+          <button type="button" className="button button--primary button--large" onClick={() => onBook('What your child learns section')}>
+            Book a free trial <ArrowRight size={18} />
+          </button>
+          <a className="button button--outline" href="/online-english-classes-for-kids">Explore our programmes</a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Who teaches the class. An international parent is being asked to put a
+ * stranger in front of their child over video, so this says how teachers
+ * are chosen and links to the profiles rather than asking for trust.
+ */
+function ExperiencedTeachers({ onBook }) {
+  const points = [
+    [Video, 'A recorded teaching interview', 'Every applicant records a lesson and we watch it in full. Teaching children is a different skill from speaking English, and it shows on video.'],
+    [GraduationCap, 'Qualifications and experience checked', 'Education and teaching history are reviewed before anyone is given a student, with particular weight on experience teaching children.'],
+    [UserRound, 'You see them before you book', 'Teacher profiles, qualifications and introduction videos are published. You are never assigned an anonymous tutor.'],
+    [MessageSquareText, 'They write to you after every lesson', 'What was practised, what went well, what to work on next, and the words worth revising at home — in plain language.'],
+  ]
+
+  return (
+    <section className="why-parents" aria-labelledby="teachers-heading">
+      <div className="container">
+        <div className="why-parents__head">
+          <span className="portal-kicker">Who teaches your child</span>
+          <h2 id="teachers-heading">Experienced English Teachers</h2>
+          <p>Teachers are in the Philippines and teach in English. How they are chosen is set out below — and you can read their profiles before you book a single lesson.</p>
+        </div>
+        <ul className="why-parents__grid">
+          {points.map(([Icon, title, detail]) => (
+            <li key={title}>
+              <span aria-hidden="true"><Icon size={19} /></span>
+              <div><strong>{title}</strong><small>{detail}</small></div>
+            </li>
+          ))}
+        </ul>
+        <div className="why-parents__cta">
+          <a className="button button--primary button--large" href="/teachers.html">Meet the teachers <ArrowRight size={18} /></a>
+          <button type="button" className="button button--outline button-reset" onClick={() => onBook('Teachers section')}>Book a free trial</button>
         </div>
       </div>
     </section>
@@ -492,7 +582,7 @@ function CurriculumCarousel({ onBook }) {
     <section className="curriculum-showcase" id="materials" aria-label="English curriculum materials">
       <div className="container">
         <div className="curriculum-showcase__heading">
-          <div><span className="kicker">A world of learning</span><h2>Great lessons start with brilliant materials.</h2></div>
+          <div><span className="kicker">A world of learning</span><h2>Cambridge and Oxford English Learning Materials</h2></div>
           <p>Explore the colourful Cambridge, Oxford and international series that inspire our personalised English lessons.</p>
         </div>
 
@@ -599,8 +689,8 @@ function SeeAClass() {
       <div className="container see-a-class__grid">
         <div className="see-a-class__copy">
           <span className="kicker">See a real class</span>
-          <h2>One minute inside a TutorPro lesson.</h2>
-          <p>Phonics, reading and speaking practice with a real teacher and a real student. No actors, no script — just an ordinary class.</p>
+          <h2>Live Online English Classes for Children</h2>
+          <p>One minute inside a real TutorPro lesson: phonics, reading and speaking practice with a real teacher and a real student. Every class is live — no actors, no script, nothing pre-recorded.</p>
         </div>
         {/* The video is served from our own Supabase storage, so it plays in
             the page for everyone including mainland China - no YouTube, no
@@ -666,9 +756,9 @@ function WhyTutorPro() {
         <div className="section-heading section-heading--split">
           <div>
             <span className="kicker">Why TutorPro Online English</span>
-            <h2>Less pressure. More progress.</h2>
+            <h2>Personalized One-on-One English Lessons</h2>
           </div>
-          <p>Support that meets your child where they are—and gives them a clear path to where they want to be.</p>
+          <p>Less pressure, more progress: one teacher and one child, so the lesson meets your child where they are and gives them a clear path to where they want to be.</p>
         </div>
         <div className="benefit-grid">
           {benefits.map(({ icon: Icon, title, text, color }, index) => (
@@ -712,7 +802,7 @@ function Programmes({ onBook }) {
       <div className="container programmes__grid">
         <div className="programmes__intro">
           <span className="kicker kicker--light">Subjects</span>
-          <h2>Four subjects. One patient teacher.</h2>
+          <h2>English Programs for Primary and Secondary Students</h2>
           <p>
             English, Maths, Science and ICT — taught one-to-one and matched to what
             your child is actually covering at school. Choose a level to see what
@@ -1019,8 +1109,8 @@ function HowItWorks({ onBook }) {
       <div className="container">
         <div className="section-heading section-heading--center">
           <span className="kicker">How it works</span>
-          <h2>From “I’m stuck” to “I’ve got this.”</h2>
-          <p>Getting the right support should feel simple.</p>
+          <h2>How TutorPro Online English Classes Work</h2>
+          <p>From “I’m stuck” to “I’ve got this” in five steps. Getting the right support should feel simple.</p>
         </div>
         <div className="steps">
           {steps.map(({ icon: Icon, title, text }, index) => (
@@ -1487,7 +1577,7 @@ function Pricing({ onBook }) {
         <div className="section-heading section-heading--center">
           <span className="kicker">Simple pricing</span>
           <h2>Choose your child’s rhythm.</h2>
-          <p>Start with a free class. Stay flexible, with no long-term commitment.</p>
+          <p>Start with a free class. Stay flexible, with no long-term commitment. All prices are in US dollars.</p>
         </div>
 
         <div className="pricing-grid">
@@ -1548,7 +1638,7 @@ function FAQ({ onBook }) {
       <div className="container faq__grid">
         <div className="faq__intro">
           <span className="kicker">Good to know</span>
-          <h2>Questions, answered.</h2>
+          <h2>Frequently Asked Questions</h2>
           <p>Your free account keeps your child’s level, curriculum and learning goals together in one place.</p>
           <button className="text-link text-link--arrow button-reset" onClick={onBook}>
             Create a free account <ArrowUpRight size={16} />
@@ -2144,6 +2234,8 @@ export default function App() {
           <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />
           <WhyTutorPro />
+          <WhatYourChildLearns onBook={openRegistration} />
+          <ExperiencedTeachers onBook={openRegistration} />
           <GlobalDiscovery onBook={openRegistration} />
           <Programmes onBook={openRegistration} />
           <CurriculumFramework />

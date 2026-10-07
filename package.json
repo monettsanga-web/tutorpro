@@ -90,6 +90,7 @@
     "test:bookingemail": "node scripts/test-booking-email-route.mjs",
     "audit:seo": "node scripts/audit-seo.mjs",
     "audit:crawl": "node scripts/audit-crawlability.mjs",
+    "verify:homepage": "node scripts/verify-homepage-structure.mjs",
     "seo:indexnow": "node scripts/ping-indexnow.mjs",
     "test:discounts": "node scripts/test-discounts.mjs",
     "test:teacherinvites": "node scripts/test-teacher-invites.mjs",
