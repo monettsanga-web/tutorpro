@@ -44,9 +44,30 @@ const UPDATED = '5 August 2026'
  */
 const CITIES = [
   {
+    slug: 'english-tutor-rizal',
+    title: 'Private English Tutor in Rizal | Online Classes for Kids',
+    description: 'Private one-to-one online English tutor for children in Rizal - Antipolo, Cainta, Taytay and Binangonan. No travel, no waiting. Free first class.',
+    h1: 'Private English tutor for children in Rizal',
+    faqs: [
+      ['Do you come to our house in Antipolo or Cainta?', 'No. Every lesson is online, from our teaching base in the Philippines, which is why there is no travel fee and no waiting for a tutor who is stuck on Ortigas Extension. Your child joins from home on a laptop or tablet.'],
+      ['How is this different from a private tutor who visits?', 'A home tutor in Rizal typically charges a travel premium and can usually only offer the slots that fit their route. Online lessons are 25 or 50 minutes, booked when they suit your family, and the first one is free.'],
+      ['We live in Rodriguez, far from the city. Will the connection be good enough?', 'The classroom is built for ordinary home internet and has a low-bandwidth mode. It runs in the browser with nothing to install.'],
+      ['Can the tutor help with my child’s K to 12 school work?', 'Yes. Teachers can work directly on the reading, writing and speaking tasks your child is set at school, alongside the Cambridge and Oxford coursebooks.'],
+    ],
+    situations: ['A pupil in Antipolo who reads English well but will not speak it aloud in class', 'A family in Cainta or Taytay who gave up on a home tutor because of the travel cost', 'A senior high student in Binangonan preparing for English-medium subjects'],
+    city: 'Rizal',
+    region: 'Calabarzon, Philippines',
+    offset: 0,
+    system: 'the K to 12 curriculum set by the Department of Education',
+    context: `Rizal province sits on the edge of Metro Manila, and that creates a particular problem for parents looking for a private tutor. Good tutors cluster in Quezon City and Pasig, and a home visit to Antipolo, Cainta, Taytay, Binangonan, San Mateo or Rodriguez means either a travel premium or an hour of traffic each way. Many Rizal families end up paying for a tutor's commute rather than their teaching.`,
+    reason: 'getting one-to-one English teaching without paying for a tutor to cross the city',
+    payment: 'GCash, AUB PayMate and PayPal are all accepted, so there is no need for an international card.',
+    localNote: 'A private tutor visiting a home in Rizal commonly charges ₱400 to ₱800 an hour, plus travel, and usually teaches a small group rather than one child.',
+  },
+  {
     slug: 'english-tutor-quezon-city',
     faqs: [
-      ['Do you follow the DepEd K to 12 curriculum?', 'Lessons align with Cambridge and Oxford English, which map closely onto K to 12 English competencies. Teachers can also work directly on your child\\u2019s school reading, writing and speaking tasks if that is the priority.'],
+      ['Do you follow the DepEd K to 12 curriculum?', 'Lessons align with Cambridge and Oxford English, which map closely onto K to 12 English competencies. Teachers can also work directly on your child’s school reading, writing and speaking tasks if that is the priority.'],
       ['My child goes to a public school in Quezon City with a very large class. Can this help?', 'That is the most common reason Quezon City parents come to us. In a class of forty or more, a child may speak English aloud only a few times a term. One-to-one lessons give them twenty-five minutes of speaking every session.'],
       ['Can lessons fit around Quezon City traffic?', 'Yes, and that is one advantage of online lessons: there is no travel at all. Families often book straight after school precisely because nobody has to cross the city.'],
     ],
@@ -132,7 +153,7 @@ const CITIES = [
     slug: 'english-tutor-kuala-lumpur',
     faqs: [
       ['We speak several languages at home. Will English lessons confuse my child?', 'No. Children handle multiple languages well; what they usually lack is dedicated speaking time in each. A weekly one-to-one English lesson gives that without displacing the others.'],
-      ['Do you follow the KSSR or KSSM syllabus?', 'Lessons use Cambridge and Oxford English, which align well with both, and teachers can work on your child\\u2019s actual school topics when that is more useful.'],
+      ['Do you follow the KSSR or KSSM syllabus?', 'Lessons use Cambridge and Oxford English, which align well with both, and teachers can work on your child’s actual school topics when that is more useful.'],
       ['Can we pay from Malaysia?', 'Yes. PayPal works from Malaysian cards and accounts, and lessons are priced in US dollars so there are no surprise conversions on our side.'],
     ],
     situations: ['A child juggling Bahasa Malaysia, Mandarin or Tamil alongside English', 'A pupil in a national school with limited English speaking time', 'A family preparing a child for an international school place'],
@@ -236,11 +257,11 @@ function render(city, all) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Online English Tutor for Kids in ${city.city}</title>
-    <meta name="description" content="One-to-one online English lessons for children aged 4-16 in ${city.city}. Cambridge and Oxford coursebooks, after-school slots, free first class." />
+    <title>${city.title || `Online English Tutor for Kids in ${city.city}`}</title>
+    <meta name="description" content="${city.description || `One-to-one online English lessons for children aged 4-16 in ${city.city}. Cambridge and Oxford coursebooks, after-school slots, free first class.`}" />
     <link rel="canonical" href="${url}" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Online English Tutor for Kids in ${city.city}" />
+    <meta property="og:title" content="${city.title || `Online English Tutor for Kids in ${city.city}`}" />
     <meta property="og:description" content="One-to-one lessons for children aged 4-16. Free first class, no card required." />
     <meta property="og:url" content="${url}" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -261,7 +282,7 @@ function render(city, all) {
 
     <main>
       <div class="wrap">
-        <h1>Online English tutor for children in ${city.city}</h1>
+        <h1>${city.h1 || `Online English tutor for children in ${city.city}`}</h1>
         <p class="lede">One-to-one lessons for children aged 4 to 16 in ${city.city}, taught live by experienced teachers using Cambridge and Oxford coursebooks. The first class is free and needs no card details.</p>
         <p>
           <span class="pill">${city.region}</span>

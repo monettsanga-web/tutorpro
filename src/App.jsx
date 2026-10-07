@@ -237,10 +237,10 @@ function Hero({ onBook }) {
               heading the prerender had carefully put in place, and the whole
               homepage optimisation was being undone a second after load.
               The tagline survives directly underneath, so nothing is lost. */}
-          <h1>Online English Classes for <em>Kids &amp; Teens</em></h1>
-          <p className="hero__tagline">Real confidence, built one lesson at a time.</p>
+          <h1>Online English Classes for <em>Kids</em></h1>
+          <p className="hero__tagline">Live one-to-one lessons for primary and secondary students.</p>
           <p className="hero__lede">
-            Personalised one-to-one online tutoring in English, Maths, Science and ICT for children and teens aged 4–16 — helping them keep up, catch up and thrive at school.
+            Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one — English, Maths, Science and ICT — so they speak for the whole lesson and keep up at school.
           </p>
           <div className="hero__actions">
             <button className="button button--primary button--large" onClick={onBook}>

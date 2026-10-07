@@ -31,9 +31,13 @@ const HERO = {
   // the homepage is the highest-authority page on the site — wasting its H1
   // on a tagline is the single most expensive on-page mistake available.
   // The tagline still appears as the lede, so nothing is lost.
-  heading: 'Online English Classes for Kids & Teens',
-  tagline: 'English confidence, built one lesson at a time.',
-  lede: 'Personalised one-to-one online tutoring for children and teens aged 4–16, helping them speak up, write clearly and thrive at school.',
+  // "Kids & Teens" was dropped from the H1 on purpose. Search Console shows
+  // the page already ranking around position 6 for "english tutor" with no
+  // clicks at all, so the job is relevance and a clearer promise, not more
+  // words. Teens are still named in the lede and have their own page.
+  heading: 'Online English Classes for Kids',
+  tagline: 'Live one-to-one lessons for primary and secondary students.',
+  lede: 'Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one, so they speak for the whole lesson — building confidence in speaking, reading, grammar and writing with an experienced English teacher.',
   proof: ['No commitment', 'From $8 per class', 'Flexible times'],
 }
 
@@ -55,7 +59,7 @@ const SECTIONS = [
     body: 'The classroom includes a star and reward system that celebrates effort, quick reaction buttons so a younger child can signal "I understand" or "please repeat" without interrupting, and English learning games covering vocabulary, sentence building and grammar. An AI speech coach listens during practice and scores pronunciation word by word, so children get instant feedback on how they sound and can hear the correct pronunciation played back.',
   },
   {
-    heading: 'Made for their school years.',
+    heading: 'English classes for primary and secondary students.',
     body: 'Programmes cover Primary and Secondary learners, supporting school English, exam preparation, conversation confidence and writing skills. Primary learners in Years 1 to 6 focus on phonics, reading fluency, everyday vocabulary and the confidence to speak in full sentences. Secondary learners in Years 7 to 11 move into structured writing, comprehension, analysis and the language skills needed for IGCSE-style English assessment.',
   },
   {
@@ -67,8 +71,8 @@ const SECTIONS = [
     body: 'Teachers can record a lesson so parents can watch it back later. Recordings are private to your family and your teacher, and a clear red indicator shows in the classroom whenever recording is active. This is useful for revising new vocabulary, for parents who could not sit in on the class, or for showing a child their own progress over time.',
   },
   {
-    heading: 'Teachers you can check before you book.',
-    body: 'Every teacher applies through a structured process that includes a recorded teaching interview and a review of their qualifications and teaching experience. You can view teacher profiles, qualifications and introduction videos before booking, so you know who will be teaching your child rather than being assigned an anonymous tutor.',
+    heading: 'Experienced English tutors you can check before you book.',
+    body: 'Every English tutor applies through a structured process that includes a recorded teaching interview and a review of their qualifications and teaching experience. You can view teacher profiles, qualifications and introduction videos before booking, so you know who will be teaching your child rather than being assigned an anonymous tutor.',
   },
   {
     heading: 'Looking for a Novakid, 51Talk or Preply alternative?',
