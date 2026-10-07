@@ -1320,21 +1320,5 @@
       "words": 484
     }
   ],
-  "report": [
-    {
-      "severity": "LOW",
-      "page": "/online-english-class-schedule-time-zones.html",
-      "message": "links to /online-english-classes-for-kids.html which redirects to /online-english-classes-for-kids"
-    },
-    {
-      "severity": "LOW",
-      "page": "/online-english-classes-for-kids",
-      "message": "links to /online-english-classes-for-kids.html which redirects to /online-english-classes-for-kids"
-    },
-    {
-      "severity": "LOW",
-      "page": "/online-english-tutor-for-kids.html",
-      "message": "links to /online-english-classes-for-kids.html which redirects to /online-english-classes-for-kids"
-    }
-  ]
+  "report": []
 }

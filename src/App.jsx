@@ -97,29 +97,64 @@ const curriculumSlides = [
 
 const faqs = [
   {
-    question: 'What curricula do you follow?',
+    question: 'Can my child join TutorPro from another country?',
     answer:
-      'Lessons are aligned with Cambridge and Oxford English curricula for Primary and Secondary students. Your tutor will adapt each class to your child’s year level, current goals and schoolwork.',
+      'Yes. Lessons are online and there is no restriction on where a student lives. Children currently learn with us from Asia, Europe, the Middle East and the Americas, and all you need is an ordinary home internet connection.',
   },
   {
-    question: 'Is the first class really free?',
+    question: 'What countries do you accept students from?',
     answer:
-      'Yes. New students can take a free first class before choosing a plan. It is a chance to meet the tutor, discuss goals and experience the teaching approach with no commitment.',
+      'Any country. Teachers are in the Philippines (UTC+8), which fits Asia, the Middle East, Europe, Australia and New Zealand comfortably. For North America the practical option is an early-morning lesson before school.',
   },
   {
-    question: 'What is the difference between the plans?',
+    question: 'Are classes live or recorded?',
     answer:
-      'The Weekly plan is designed for 1–3 classes a week and is paid weekly. The Monthly Package is for 4–7 25-minute classes a week, billed monthly, with priority scheduling and a dedicated tutor.',
+      'Every class is live, with a real teacher and your child talking to each other in real time. Lessons can also be recorded on request so parents can watch them back, but the teaching itself is never pre-recorded.',
   },
   {
-    question: 'Can I change plans later?',
+    question: 'Are classes one-on-one?',
     answer:
-      'Yes. You can start with the rhythm that works now and change as your child’s schedule or learning goals evolve.',
+      'Yes, at every level. One teacher and one child, so your child speaks for the whole lesson. Children are never moved into group speaking clubs as they progress.',
   },
   {
-    question: 'How do online classes work?',
+    question: 'What ages do you teach?',
     answer:
-      'Create a family account, complete your child’s learning profile and choose a lesson rhythm. We use those details to prepare the right one-to-one support and track progress from class to class.',
+      'Children and teenagers from 4 to 16. Lessons for younger children are usually 25 minutes to match their concentration span; older learners often take 50 minutes.',
+  },
+  {
+    question: 'Are beginners welcome?',
+    answer:
+      'Yes. The teacher starts from what your child can actually do rather than from a syllabus. Many of our students speak another language at home and use English only at school.',
+  },
+  {
+    question: 'What learning materials do you use?',
+    answer:
+      'Published Cambridge and Oxford course books, including Power Up, Global English, THiNK, Family and Friends and Oxford Phonics World. Materials are included in the lesson price. TutorPro is an independent tutoring service, not a Cambridge exam centre.',
+  },
+  {
+    question: 'How long is each lesson?',
+    answer:
+      'Lessons are 25 or 50 minutes. You can switch between the two as your child grows. For speaking, two shorter lessons a week usually produce faster progress than one long one.',
+  },
+  {
+    question: 'How do parents book a lesson?',
+    answer:
+      'Create a parent account, choose a teacher and pick a time from the calendar. Slots are shown in your own local time zone, so there is nothing to convert. The first class is free and needs no card details.',
+  },
+  {
+    question: 'How does the free trial work?',
+    answer:
+      'It is a full lesson with a real teacher, not a sales call or a demo. You book it like any other class, with no card required, and decide afterwards whether to continue.',
+  },
+  {
+    question: 'How do parents receive teacher feedback?',
+    answer:
+      'In your dashboard after every lesson: what was practised, what went well, what to work on next, and the words worth revising at home, written in plain language.',
+  },
+  {
+    question: 'What currency are prices in?',
+    answer:
+      'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$7 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
   },
 ]
 
@@ -238,22 +273,22 @@ function Hero({ onBook }) {
               homepage optimisation was being undone a second after load.
               The tagline survives directly underneath, so nothing is lost. */}
           <h1>Online English Classes for <em>Kids</em></h1>
-          <p className="hero__tagline">Live one-to-one lessons for primary and secondary students.</p>
+          <p className="hero__tagline">Live, personalised English lessons for primary and secondary students with experienced teachers.</p>
           <p className="hero__lede">
-            Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one — English, Maths, Science and ICT — so they speak for the whole lesson and keep up at school.
+            TutorPro is an online English school helping children around the world build confidence in speaking, reading, listening, grammar, vocabulary and communication. One teacher, one child, live — in English, Maths, Science and ICT for ages 4–16.
           </p>
           <div className="hero__actions">
             <button className="button button--primary button--large" onClick={onBook}>
-              Book a free first class <ArrowRight size={18} />
+              Book a free trial <ArrowRight size={18} />
             </button>
             <a className="button button--quiet button--large" href="#programmes">
-              Explore subjects
+              Explore our programmes
             </a>
           </div>
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
           <div className="hero__proof" aria-label="TutorPro Online English benefits">
             <span><Check size={15} /> No commitment</span>
-            <span><Check size={15} /> From $8 per class</span>
+            <span><Check size={15} /> From US$8 per class</span>
             <span><Check size={15} /> Flexible times</span>
           </div>
         </div>
