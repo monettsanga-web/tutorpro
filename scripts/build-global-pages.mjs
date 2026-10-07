@@ -70,45 +70,102 @@ const TIMEZONES = [
 const PAGES = [
   {
     slug: 'online-english-classes-for-kids.html',
+    /* Served at the extensionless URL. The .html file is still what gets
+       built and deployed; vercel.json redirects the old address to the
+       clean one and rewrites the clean one back to the file, so the
+       canonical, the schema and the sitemap all name a single URL. */
+    cleanUrl: 'online-english-classes-for-kids',
     label: 'Online English classes',
-    title: 'Online English Classes for Kids | 1-to-1 Lessons',
+    /* NOT "Online English Classes for Kids | TutorPro English" - that is
+       the homepage's title now. Two pages competing for one query split
+       the signal and Search Console reports duplicate titles as a fault.
+       This page takes the variants the homepage does not: "for children",
+       "one-to-one", "lessons". */
+    title: 'Online English Classes for Children | One-to-One Lessons',
     description:
-      'One-to-one online English classes for children aged 4–16, taught live by qualified teachers. Cambridge and Oxford aligned, from $7.',
-    heading: 'Online English classes for kids, one-to-one',
+      'Live one-to-one online English classes for children aged 4-16, taught by experienced teachers. Speaking, reading, grammar and pronunciation. Free first class.',
+    heading: 'Online English classes for children, one to one',
     lede:
-      'Live video lessons for children aged 4 to 16, with one teacher and one child. No group classes, no waiting for a turn to speak — your child talks for the whole lesson.',
+      'Live video lessons for children aged 4 to 16, with one teacher and one child. No group classes and no waiting for a turn to speak - your child talks for the whole lesson.',
     intent: 'the-basics',
     body: `
-        <h2>What "one-to-one" actually changes</h2>
-        <p>In a group class of six, a child speaks for roughly a fifth of the lesson. Over a year that difference compounds into something very visible. Speaking is a skill rather than a body of knowledge, so practice time is the single strongest predictor of progress.</p>
-        <p>Every TutorPro lesson is one teacher and one child. The pace follows your child, mistakes are corrected privately rather than in front of classmates, and a shy child gets the thing they most need: permission to try without an audience.</p>
+        <p class="cta-row">
+          <a class="btn btn--primary" href="/free-trial.html">Book a free trial class</a>
+          <a class="btn" href="/primary-english.html">Explore our English programmes</a>
+        </p>
 
-        <h2>Who these classes are for</h2>
+        <h2>Personalised online English classes for children</h2>
+        <p>Every class is built around one child. The teacher sees what your child can already do, where they hesitate, and what they are being asked to do at school, then teaches to that. A child who reads well but will not speak needs a different lesson from one who chats happily but cannot write a paragraph, and in a one-to-one class they get it.</p>
+        <p>In a group of six, a child speaks for roughly a fifth of the lesson. Speaking is a skill rather than a body of knowledge, so practice time is the strongest predictor of progress - which is why the whole lesson belongs to your child.</p>
+
+        <h2>Experienced English tutors for kids</h2>
+        <p>Every teacher applies through a structured process: a recorded teaching interview that we watch in full, plus a review of their qualifications and teaching experience, with particular weight given to experience teaching children. Only teachers who pass are given students.</p>
+        <p>You can <a href="/teachers.html">read our teachers' profiles and watch their introduction videos</a> before you book, so you know who will be teaching your child rather than being assigned an anonymous tutor.</p>
+
+        <h2>What your child can learn</h2>
         <div class="grid">
-          <div class="card"><h3>Ages 4–7</h3><p>Phonics, first words, songs and games. The goal at this age is that English feels normal and enjoyable rather than a test.</p></div>
-          <div class="card"><h3>Ages 8–11</h3><p>Reading fluency, grammar in context, speaking in full sentences, and support with whatever school is covering.</p></div>
-          <div class="card"><h3>Ages 12–16</h3><p>Writing, comprehension, advanced grammar and exam-style speaking practice.</p></div>
+          <div class="card"><h3>Speaking and conversation</h3><p>Answering in full sentences, holding a conversation, and saying what they mean without rehearsing it first.</p></div>
+          <div class="card"><h3>Reading</h3><p>Decoding for younger children, then fluency, comprehension and reading for meaning rather than word by word.</p></div>
+          <div class="card"><h3>Pronunciation</h3><p>Individual sounds, word stress and rhythm. An AI speech coach scores words during practice and plays the correct sound back.</p></div>
+          <div class="card"><h3>Grammar</h3><p>Taught inside real sentences your child is trying to say, not as isolated rules to memorise.</p></div>
+          <div class="card"><h3>Vocabulary</h3><p>Words introduced in context, revisited in later lessons, and sent home in the lesson feedback to practise.</p></div>
+          <div class="card"><h3>Listening</h3><p>Following instructions, understanding a story, and picking out detail in natural speech at normal pace.</p></div>
+          <div class="card"><h3>Confidence</h3><p>The quiet one. Mistakes are corrected privately rather than in front of classmates, which is often what unlocks the rest.</p></div>
         </div>
 
-        <h2>What a lesson looks like</h2>
-        <p>Lessons run 25 or 50 minutes in our own browser classroom — nothing to install, and no Zoom link to find. The teacher shares materials on screen and writes on them together with your child.</p>
-        <p>A typical lesson opens with easy conversation to warm up, introduces new language, practises it through reading, listening or role-play, and finishes with the child using it freely. Pronunciation practice is supported by an AI coach that scores individual words and plays the correct sound back, so a child can self-correct between lessons.</p>
+        <h2>One-on-one English lessons for kids</h2>
+        <p>Because there is only one child in the room, the teacher can change course inside the lesson rather than at the end of a term. If a task is too easy, it gets harder immediately. If a child is tired after a long school day, the teacher switches to speaking practice instead of writing. If something was forgotten since last week, it is retaught on the spot.</p>
+        <p>Lessons are 25 or 50 minutes. Younger children usually do better with 25, older ones with 50, and you can switch as your child grows. For speaking, two shorter lessons a week generally beat one long one.</p>
 
-        <h2>Materials</h2>
-        <p>English lessons follow published Cambridge and Oxford course books, including Power Up, Global English, Family and Friends, Oxford Phonics World and THiNK. The teacher chooses the level that fits your child. Materials are included in the lesson price — there is nothing extra to buy.</p>
+        <h2>Cambridge and Oxford English learning materials</h2>
+        <p>Lessons follow published course books rather than improvised worksheets: Cambridge Power Up, Power Up Academy, Global English and THiNK, and Oxford Family and Friends, Everybody Up, Grammar Friends and Phonics World. The teacher picks the level that matches your child and moves them up when they are ready. Materials are included - there is nothing extra to buy.</p>
+        <p>To be clear about what that means: we teach from these published series because they are well-sequenced and widely used. TutorPro is an independent tutoring service. We are not a Cambridge exam centre and we have no affiliation with Oxford University Press.</p>
 
-        <h2>After every lesson</h2>
-        <p>Teachers write feedback covering what was practised, what went well, what to work on, and the words worth revising at home. It is written in plain language, so you can follow your child's progress without knowing the subject yourself.</p>`,
+        <h2>English classes for primary and secondary students</h2>
+        <div class="grid">
+          <div class="card"><h3>Ages 4-7</h3><p>Phonics, first words, songs and games. The goal at this age is that English feels normal and enjoyable rather than a test.</p></div>
+          <div class="card"><h3>Ages 8-11</h3><p>Reading fluency, grammar in context, speaking in full sentences, and support with whatever school is covering. See our <a href="/primary-english.html">primary English programme</a>.</p></div>
+          <div class="card"><h3>Ages 12-16</h3><p>Writing, comprehension, advanced grammar and exam-style speaking practice. See our <a href="/secondary-english.html">secondary English programme</a>.</p></div>
+        </div>
+
+        <h2>How TutorPro online English classes work</h2>
+        <div class="grid">
+          <div class="card"><h3>1. Create a parent account</h3><p>A few details about your child - age, school year and what you would like them to work on. No card is needed to start.</p></div>
+          <div class="card"><h3>2. Book a lesson</h3><p>Choose a teacher and a time. Slots are shown in your own time zone, so there is nothing to convert. <a href="/how-it-works.html">See how booking works step by step</a>.</p></div>
+          <div class="card"><h3>3. Meet the teacher online</h3><p>The lesson opens in our own browser classroom. Nothing to install, no meeting link to hunt for - your child clicks once from their dashboard.</p></div>
+          <div class="card"><h3>4. Read the feedback</h3><p>After every class the teacher writes what was practised, what went well, what to work on, and the words to revise at home.</p></div>
+        </div>
+
+        <h2>Why parents choose TutorPro</h2>
+        <ul class="ticks">
+          <li><strong>Experienced teachers</strong>, screened by recorded teaching interview before they are given a student.</li>
+          <li><strong>Genuinely one-to-one</strong>, every lesson, at every level - children are never moved into group speaking clubs as they progress.</li>
+          <li><strong>Primary and secondary programmes</strong>, so a child can stay with the same school as they grow up.</li>
+          <li><strong>Lesson times in your own time zone</strong>, with evening and weekend slots.</li>
+          <li><strong>Written feedback after every class</strong>, in plain language a parent can act on.</li>
+          <li><strong>Learning from home</strong>, on an ordinary laptop or tablet, with no travel.</li>
+          <li><strong>A free first class</strong> with no card required, and <a href="/pricing.html">published prices from $7 per lesson</a>.</li>
+          <li><strong>Refundable credits</strong> - cancel 12 hours ahead and the credit returns in full.</li>
+        </ul>
+
+        <p class="cta-row">
+          <a class="btn btn--primary" href="/free-trial.html">Book a free trial class</a>
+          <a class="btn" href="/faq.html">Read the parent FAQ</a>
+        </p>
+
+        <p>Families in the Philippines may also want our page on finding a <a href="/english-tutor-rizal.html">private English tutor in Rizal</a>, or <a href="/contact.html">a direct conversation with us</a> before booking.</p>`,
     faqs: [
-      ['How much do online English classes cost?', 'Classes are $8 each on a weekly plan of 1–3 lessons, or $7 each on a monthly package of 4 or more. There are no registration fees, materials fees or platform fees. The first class is free.'],
-      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher, so you can see how your child responds before paying anything.'],
-      ['What age can my child start?', 'We teach children from 4 to 16. Lessons for younger children are usually 25 minutes to match their concentration span.'],
-      ['Do we need to install anything?', 'No. Lessons run in our own browser classroom. You click a link and the lesson opens.'],
-      ['What if the time zones do not line up?', 'Teachers are in the Philippines (UTC+8), which suits Asia, the Middle East, Europe and Australia comfortably. For North America, early-morning lessons before school are the usual arrangement.'],
-      ['Can we cancel or get a refund?', 'Cancelling at least 12 hours before a lesson returns the credit in full. Unused credits can be refunded within 14 days of purchase.'],
+      ['What age can children start online English classes?', 'From four years old. Lessons for younger children are 25 minutes, which matches their concentration span, and are built around phonics, songs, games and first words rather than desk work.'],
+      ['Are TutorPro classes one-on-one?', 'Yes, every lesson, at every level. One teacher and one child, so your child speaks for the whole class instead of a fraction of it. Children are never moved into group classes as they progress.'],
+      ['Are the lessons suitable for beginners?', 'Yes. The teacher starts from what your child can actually do rather than from a syllabus, and many of our students speak another language at home and use English only at school.'],
+      ['What English skills will my child learn?', 'Speaking and conversation, reading, pronunciation, grammar, vocabulary and listening - and, for most families, the confidence to use them. The balance is set by what your child needs most.'],
+      ['Do you teach primary and secondary students?', 'Both. Primary lessons focus on phonics, reading fluency and speaking in full sentences; secondary lessons move into writing, comprehension, advanced grammar and exam-style speaking practice.'],
+      ['What learning materials do you use?', 'Published Cambridge and Oxford course books, including Power Up, Global English, THiNK, Family and Friends and Oxford Phonics World. Materials are included in the lesson price. We are an independent tutoring service, not a Cambridge exam centre.'],
+      ['How do parents book a lesson?', 'Create a parent account, choose a teacher and pick a time from the calendar. Slots appear in your own time zone. The first class is free and no card is required to book it.'],
+      ['How can parents receive teacher feedback?', 'It appears in your dashboard after every lesson: what was practised, what went well, what to work on next, and the words worth revising at home. Lessons can also be recorded so you can watch them back.'],
+      ['How does the free trial work?', 'It is a full lesson with a real teacher, not a sales call or a demo. You book it like any other class, without entering card details, and decide afterwards whether to continue.'],
     ],
   },
-
   {
     slug: 'online-english-tutor-for-kids.html',
     label: 'Online English tutor',
@@ -196,7 +253,11 @@ const PAGES = [
 ]
 
 function faqSchema(page) {
-  const url = `${SITE}/${page.slug}`
+  /* `cleanUrl` wins where a page has one: the canonical, the schema and
+     the sitemap must all name the same single address, or Google picks
+     one itself and the other becomes "Alternate page with proper
+     canonical tag" in Search Console. */
+  const url = `${SITE}/${page.cleanUrl || page.slug}`
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -248,14 +309,14 @@ function faqSchema(page) {
 
 function globalNav(current) {
   return `<nav class="pagenav" aria-label="Related guides">
-          ${PAGES.filter((p) => p.slug !== current).map((p) => `<a href="/${p.slug}">${escapeHtml(p.label)}</a>`).join('\n          ')}
+          ${PAGES.filter((p) => p.slug !== current).map((p) => `<a href="/${p.cleanUrl || p.slug}">${escapeHtml(p.label)}</a>`).join('\n          ')}
           <a href="/pricing.html">Pricing</a>
           <a href="/is-tutorpro-legitimate.html">Are we legitimate?</a>
         </nav>`
 }
 
 function page(spec) {
-  const url = `${SITE}/${spec.slug}`
+  const url = `${SITE}/${spec.cleanUrl || spec.slug}`
   return `<!doctype html>
 <html lang="en">
   <head>

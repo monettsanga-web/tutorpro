@@ -75,6 +75,17 @@
       ],
       "destination": "https://www.tutorpro.site/$1",
       "permanent": true
+    },
+    {
+      "source": "/online-english-classes-for-kids.html",
+      "destination": "/online-english-classes-for-kids",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/online-english-classes-for-kids",
+      "destination": "/online-english-classes-for-kids.html"
     }
   ]
 }

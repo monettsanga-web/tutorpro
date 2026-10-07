@@ -402,7 +402,7 @@ function nav(current) {
   return `<nav class="pagenav" aria-label="Main sections">
           ${PAGES.filter((p) => p.slug !== current).map((p) => `<a href="/${p.slug}">${escapeHtml(p.label)}</a>`).join('\n          ')}
           <a href="/pricing.html">Pricing</a>
-          <a href="/online-english-classes-for-kids.html">Online English classes</a>
+          <a href="/online-english-classes-for-kids">Online English classes</a>
         </nav>`
 }
 

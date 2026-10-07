@@ -3,15 +3,15 @@
     {
       "url": "https://www.tutorpro.site/",
       "status": 200,
-      "title": "Online English Classes for Kids &amp; Teens | TutorPro",
-      "description": "One-to-one online English classes for children and teens aged 4–16. Cambridge and Oxford-aligned lessons, experienced tutors, and a free first class.",
+      "title": "Online English Classes for Kids | TutorPro English",
+      "description": "Looking for online English classes for your child? TutorPro gives live one-to-one English lessons to primary and secondary students. Book a free trial.",
       "canonical": "https://www.tutorpro.site/",
       "robots": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
       "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
       "h1": [
         {
           "level": 1,
-          "text": "Online English Classes for Kids &amp; Teens"
+          "text": "Online English Classes for Kids"
         }
       ],
       "imgsNoAlt": [],
@@ -23,7 +23,7 @@
         "FAQPage",
         null
       ],
-      "words": 1679
+      "words": 1701
     },
     {
       "url": "https://www.tutorpro.site/cambridge-english.html",
@@ -675,7 +675,7 @@
         "FAQPage",
         "BreadcrumbList"
       ],
-      "words": 638
+      "words": 639
     },
     {
       "url": "https://www.tutorpro.site/english-tutor-davao-city.html",
@@ -700,7 +700,7 @@
         "FAQPage",
         "BreadcrumbList"
       ],
-      "words": 624
+      "words": 625
     },
     {
       "url": "https://www.tutorpro.site/english-tutor-for-shy-child.html",
@@ -749,7 +749,7 @@
         "FAQPage",
         "BreadcrumbList"
       ],
-      "words": 634
+      "words": 635
     },
     {
       "url": "https://www.tutorpro.site/english-tutor-kuala-lumpur.html",
@@ -774,7 +774,7 @@
         "FAQPage",
         "BreadcrumbList"
       ],
-      "words": 620
+      "words": 621
     },
     {
       "url": "https://www.tutorpro.site/english-tutor-quezon-city.html",
@@ -799,7 +799,32 @@
         "FAQPage",
         "BreadcrumbList"
       ],
-      "words": 696
+      "words": 697
+    },
+    {
+      "url": "https://www.tutorpro.site/english-tutor-rizal.html",
+      "status": 200,
+      "title": "Private English Tutor in Rizal | Online Classes for Kids",
+      "description": "Private one-to-one online English tutor for children in Rizal - Antipolo, Cainta, Taytay and Binangonan. No travel, no waiting. Free first class.",
+      "canonical": "https://www.tutorpro.site/english-tutor-rizal.html",
+      "robots": "",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Private English tutor for children in Rizal"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        "Course",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "words": 745
     },
     {
       "url": "https://www.tutorpro.site/english-tutor-singapore.html",
@@ -824,7 +849,7 @@
         "FAQPage",
         "BreadcrumbList"
       ],
-      "words": 620
+      "words": 621
     },
     {
       "url": "https://www.tutorpro.site/online-english-alternatives.html",

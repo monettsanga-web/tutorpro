@@ -78,6 +78,19 @@ const EXCLUDE = [
   /^index\.html$/,              // handled explicitly as '/'
 ]
 
+/**
+ * Pages served without the .html extension.
+ *
+ * vercel.json redirects the file name to the clean address and rewrites
+ * the clean address back to the file, so the file still exists on disk.
+ * The sitemap has to name the address Google should keep - listing the
+ * .html here would submit a URL that 301s, which is the quickest way to
+ * get a sitemap distrusted.
+ */
+const CLEAN_URLS = new Map([
+  ['online-english-classes-for-kids.html', '/online-english-classes-for-kids'],
+])
+
 function rulesFor(name) {
   const rule = RULES.find((entry) => entry.match.test(name))
   return {
@@ -124,7 +137,7 @@ function collect() {
     if (!file.endsWith('.html')) continue
     if (EXCLUDE.some((pattern) => pattern.test(file))) continue
     const full = join(publicDir, file)
-    pages.push({ path: `/${file}`, name: file, lastmod: lastModified(full) })
+    pages.push({ path: CLEAN_URLS.get(file) || `/${file}`, name: file, lastmod: lastModified(full) })
   }
 
   // The homepage is built by Vite, so its source is the template plus App.jsx.
