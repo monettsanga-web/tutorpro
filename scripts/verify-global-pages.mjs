@@ -26,6 +26,12 @@ const PAGES = [
 const read = (f) => readFileSync(join(pub, f), 'utf8')
 const text = (h) => h.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, ' ')
 
+/* Pages served without the .html extension. Mirrors CLEAN_URLS in
+   build-sitemap.mjs and `cleanUrl` in build-global-pages.mjs. */
+const CLEAN_URLS = new Map([
+  ['online-english-classes-for-kids.html', '/online-english-classes-for-kids'],
+])
+
 for (const f of PAGES) {
   ok(existsSync(join(pub, f)), `${f} exists`)
   const h = read(f)
@@ -33,7 +39,11 @@ for (const f of PAGES) {
 
   ok(words >= 600, `${f}: enough content to rank (${words} words)`)
   ok((h.match(/<h1[\s>]/g) || []).length === 1, `${f}: exactly one H1`)
-  ok(h.includes(`<link rel="canonical" href="https://www.tutorpro.site/${f}"`), `${f}: self-canonical`)
+  /* A page served without its .html extension canonicalises to the clean
+     address, not to the file name. vercel.json 301s the file name there
+     and rewrites the clean address back to the file. */
+  const canonicalPath = CLEAN_URLS.get(f) || `/${f}`
+  ok(h.includes(`<link rel="canonical" href="https://www.tutorpro.site${canonicalPath}"`), `${f}: canonical names the address it is served at (${canonicalPath})`)
   ok(h.includes('hreflang="x-default"'), `${f}: declares x-default for international search`)
   ok(h.includes('"@type":"FAQPage"') || h.includes('"@type": "FAQPage"'), `${f}: FAQPage schema`)
   ok(h.includes('"@type":"Course"') || h.includes('"@type": "Course"'), `${f}: Course schema`)
@@ -72,10 +82,30 @@ ok(/UTC\+8/.test(tz), 'the time-zone page publishes the real teacher time zone')
 
 /* --- discoverability -------------------------------------------------- */
 const sitemap = readFileSync(join(pub, 'sitemap.xml'), 'utf8')
-for (const f of PAGES) ok(sitemap.includes(`/${f}`), `sitemap includes ${f}`)
+for (const f of PAGES) {
+  const path = CLEAN_URLS.get(f) || `/${f}`
+  ok(sitemap.includes(`<loc>https://www.tutorpro.site${path}</loc>`), `sitemap includes ${path}`)
+  /* A sitemap that lists a URL which redirects is the quickest way to get
+     the whole sitemap distrusted. */
+  if (CLEAN_URLS.has(f)) ok(!sitemap.includes(`<loc>https://www.tutorpro.site/${f}</loc>`), `sitemap does NOT list the redirecting ${f}`)
+}
+
+/* The redirect and the rewrite have to exist, or the clean address 404s
+   and the old one is a dead end. */
+const vercel = JSON.parse(readFileSync(join(repo, 'vercel.json'), 'utf8'))
+for (const [file, path] of CLEAN_URLS) {
+  ok(
+    (vercel.redirects || []).some((r) => r.source === `/${file}` && r.destination === path && r.permanent),
+    `vercel.json permanently redirects /${file} to ${path}`,
+  )
+  ok(
+    (vercel.rewrites || []).some((r) => r.source === path && r.destination === `/${file}`),
+    `vercel.json serves ${path} from /${file}`,
+  )
+}
 
 const app = readFileSync(join(repo, 'src', 'App.jsx'), 'utf8')
-ok(app.includes('/online-english-classes-for-kids.html'), 'the homepage footer links to the classes page')
+ok(app.includes('/online-english-classes-for-kids'), 'the homepage footer links to the classes page')
 ok(app.includes('/online-english-tutor-for-kids.html'), 'the homepage footer links to the tutor page')
 ok(app.includes('/online-english-class-schedule-time-zones.html'), 'the homepage footer links to the time-zone guide')
 

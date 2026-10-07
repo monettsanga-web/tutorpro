@@ -328,7 +328,7 @@ function WhyParents({ onBook }) {
           <button type="button" className="button button--primary button--large" onClick={() => onBook('Why parents section')}>
             Book a free first class <ArrowRight size={18} />
           </button>
-          <a className="button button--outline" href="/online-english-classes-for-kids.html">Explore English programmes</a>
+          <a className="button button--outline" href="/online-english-classes-for-kids">Explore English programmes</a>
         </div>
       </div>
     </section>
@@ -1698,7 +1698,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
                 subject page nothing links to is effectively invisible. */}
             <div>
               <h3>Subjects</h3>
-              <a href="/online-english-classes-for-kids.html">Online English classes</a>
+              <a href="/online-english-classes-for-kids">Online English classes</a>
               <a href="/online-english-tutor-for-kids.html">Online English tutor</a>
               <a href="/online-maths-tutor-for-kids.html">Online Maths tutor</a>
               <a href="/online-science-tutor-for-kids.html">Online Science tutor</a>

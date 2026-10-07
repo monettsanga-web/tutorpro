@@ -1064,17 +1064,17 @@
       "words": 784
     },
     {
-      "url": "https://www.tutorpro.site/online-english-classes-for-kids.html",
+      "url": "https://www.tutorpro.site/online-english-classes-for-kids",
       "status": 200,
-      "title": "Online English Classes for Kids | 1-to-1 Lessons",
-      "description": "One-to-one online English classes for children aged 4–16, taught live by qualified teachers. Cambridge and Oxford aligned, from $7.",
-      "canonical": "https://www.tutorpro.site/online-english-classes-for-kids.html",
+      "title": "Online English Classes for Children | One-to-One Lessons",
+      "description": "Live one-to-one online English classes for children aged 4-16, taught by experienced teachers. Speaking, reading, grammar and pronunciation. Free first class.",
+      "canonical": "https://www.tutorpro.site/online-english-classes-for-kids",
       "robots": "index, follow, max-image-preview:large",
       "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
       "h1": [
         {
           "level": 1,
-          "text": "Online English classes for kids, one-to-one"
+          "text": "Online English classes for children, one to one"
         }
       ],
       "imgsNoAlt": [],
@@ -1084,7 +1084,7 @@
       "jsonldTypes": [
         null
       ],
-      "words": 724
+      "words": 1417
     },
     {
       "url": "https://www.tutorpro.site/online-english-tutor-for-kids.html",
@@ -1320,5 +1320,21 @@
       "words": 484
     }
   ],
-  "report": []
+  "report": [
+    {
+      "severity": "LOW",
+      "page": "/online-english-class-schedule-time-zones.html",
+      "message": "links to /online-english-classes-for-kids.html which redirects to /online-english-classes-for-kids"
+    },
+    {
+      "severity": "LOW",
+      "page": "/online-english-classes-for-kids",
+      "message": "links to /online-english-classes-for-kids.html which redirects to /online-english-classes-for-kids"
+    },
+    {
+      "severity": "LOW",
+      "page": "/online-english-tutor-for-kids.html",
+      "message": "links to /online-english-classes-for-kids.html which redirects to /online-english-classes-for-kids"
+    }
+  ]
 }

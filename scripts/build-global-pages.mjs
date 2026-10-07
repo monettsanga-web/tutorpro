@@ -390,7 +390,7 @@ ${spec.body}
     <footer>
       <div class="wrap">
         <a href="/">Home</a>
-        ${PAGES.map((p) => `<a href="/${p.slug}">${escapeHtml(p.label)}</a>`).join('\n        ')}
+        ${PAGES.map((p) => `<a href="/${p.cleanUrl || p.slug}">${escapeHtml(p.label)}</a>`).join('\n        ')}
         <a href="/pricing.html">Pricing</a>
         <a href="/about.html">About</a>
         <a href="/contact.html">Contact</a>
