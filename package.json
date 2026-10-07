@@ -89,6 +89,8 @@
     "test:seometa": "node scripts/test-seo-meta.mjs",
     "test:bookingemail": "node scripts/test-booking-email-route.mjs",
     "audit:seo": "node scripts/audit-seo.mjs",
+    "audit:crawl": "node scripts/audit-crawlability.mjs",
+    "seo:indexnow": "node scripts/ping-indexnow.mjs",
     "test:discounts": "node scripts/test-discounts.mjs",
     "test:teacherinvites": "node scripts/test-teacher-invites.mjs",
     "test:welcome": "node scripts/test-welcome-message.mjs",

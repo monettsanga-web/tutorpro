@@ -39,4 +39,13 @@ Allow: /
 User-agent: ClaudeBot
 Allow: /
 
+# Links like /?book=1 and /?action=book open the booking panel on the home
+# page. They are the home page - the canonical tag says so - but Google
+# crawls each one, reports it under "Alternate page with proper canonical
+# tag", and spends crawl budget doing it. On a site where 33 real pages are
+# sitting at "Discovered - currently not indexed", that budget is better
+# spent elsewhere. The canonical tags stay; this just stops the re-crawling.
+User-agent: *
+Disallow: /*?
+
 Sitemap: https://www.tutorpro.site/sitemap.xml
