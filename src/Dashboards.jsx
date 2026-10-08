@@ -6280,7 +6280,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
   }
 }
 
-export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onGoalChange, onRemove, processing, error, teachers = [], onOpenChat }) {
+export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange, onGoalChange, onRemove, processing, error, teachers = [], onOpenChat, onAccountChange }) {
   const learners = (account.children?.length ? account.children : account.child ? [account.child] : []).filter(Boolean)
   const learner = learners.find((item) => item.id === learnerId) || learners[0] || {
     id: `incomplete-${account.id}`,
@@ -6300,6 +6300,9 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const effectiveStatus = account.status === 'suspended' ? 'suspended' : learner.accessStatus || 'active'
   const learnerBookings = getBookings({ studentId: account.id }).filter((booking) => booking.learnerId ? booking.learnerId === learner.id : learner === learners[0])
   const completedLessons = learnerBookings.filter((booking) => booking.status === 'completed').length
+  const [parentNameDraft, setParentNameDraft] = useState(account.parentName || '')
+  const [parentNameError, setParentNameError] = useState('')
+  const [parentNameSaved, setParentNameSaved] = useState(false)
   const [goalDraft, setGoalDraft] = useState(learner.goal || '')
   const [goalError, setGoalError] = useState('')
   const [goalSaved, setGoalSaved] = useState(false)
@@ -6310,6 +6313,28 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
   const [enrollmentSaving, setEnrollmentSaving] = useState(false)
   const [enrollmentSaved, setEnrollmentSaved] = useState(false)
   const [enrollmentStatus, setEnrollmentStatus] = useState(learner.enrollmentStatus || (learner.trialClass ? 'trial' : 'enrolled'))
+
+  const saveParentName = async () => {
+    const name = parentNameDraft.trim()
+    setParentNameError('')
+    setParentNameSaved(false)
+    if (name.length < 2 || name.length > 100) {
+      setParentNameError('Enter the parent or guardian name (2–100 characters).')
+      return
+    }
+    try {
+      /* Admin-editable, cloud-backed: this changes the profile row's
+         parent_name, so the Students list, emails and future dashboard
+         refreshes all use the same name. */
+      const updated = updateAccount(account.id, { parentName: name, fullName: name })
+      if (cloudSyncEnabled()) await updateCloudProfile(updated)
+      onAccountChange?.(updated)
+      setParentNameSaved(true)
+      window.setTimeout(() => setParentNameSaved(false), 2200)
+    } catch (caught) {
+      setParentNameError(caught.message)
+    }
+  }
 
   const handleSaveBalance = async () => {
     setSavingBalance(true)
@@ -6442,6 +6467,15 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
             try { updateLocalAccount(account.id, { recoveryEmail: stored }) } catch { /* local copy may be read-only */ }
           }}
         />
+        <section className="portal-card admin-parent-name-card">
+          <span className="portal-kicker">Family account</span>
+          <h2>Edit parent or guardian name</h2>
+          <p>Change the name shown in Students, bookings, messages and email notifications. This does not change the parent’s login.</p>
+          <label className="recovery-email-card__field"><span>Parent / guardian name</span><input value={parentNameDraft} maxLength="100" onChange={(event) => { setParentNameDraft(event.target.value); setParentNameError(''); setParentNameSaved(false) }} /></label>
+          {parentNameError && <div className="portal-error" role="alert">{parentNameError}</div>}
+          {parentNameSaved && <span className="saved-label"><Check size={14} /> Parent name saved to Supabase.</span>}
+          <button type="button" className="portal-primary-button" onClick={saveParentName}>Save parent name</button>
+        </section>
         <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Recovery email</dt><dd>{account.recoveryEmail || (recoveryStateFor(account).loginIsReal ? `${account.loginId || account.email} (login)` : 'None - this family cannot reset their password')}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
         <section className="portal-card admin-enrollment-card"><div><span className="portal-kicker">Trial & enrollment</span><h2>Student class stage</h2><p>Mark whether this learner is still on a trial class or already enrolled. This helps admin and teacher payout review.</p></div>{enrollmentSaved && <span className="saved-label"><Check size={14} /> Saved</span>}<div className="admin-enrollment-card__options"><button type="button" className={enrollmentStatus === 'trial' ? 'active' : ''} onClick={() => updateEnrollmentStatus('trial')} disabled={enrollmentSaving || isIncomplete}><Sparkles size={16} /> Trial class</button><button type="button" className={enrollmentStatus === 'enrolled' ? 'active' : ''} onClick={() => updateEnrollmentStatus('enrolled')} disabled={enrollmentSaving || isIncomplete}><UserCheck size={16} /> Enrolled student</button></div><small>{enrollmentSaving ? 'Saving status…' : `Current stage: ${enrollmentStatus === 'trial' ? 'Trial class' : 'Enrolled student'}`}</small></section>
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
@@ -8364,7 +8398,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       <AdminRenderErrorBoundary>
         <PortalShell account={account} role="admin" active="students" onActive={(section) => { exitManagedDashboard(); setActive(section) }} onHome={onHome} onLogout={onLogout} navItems={nav}>
           <RoleErrorBoundary onBack={exitManagedDashboard}>
-            <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} teachers={teachers} onOpenChat={launchSupportChat} />
+            <AdminStudentProfile key={`${managedAccount.id}-${managedLearnerId}`} account={managedAccount} learnerId={managedLearnerId} onBack={exitManagedDashboard} onStatusChange={setLearnerStatus} onGoalChange={setLearnerGoal} onRemove={setStudentToRemove} processing={processingAccountId === managedAccount.id} error={adminActionError} teachers={teachers} onOpenChat={launchSupportChat} onAccountChange={(updated) => { setManagedAccount(updated); refresh() }} />
           </RoleErrorBoundary>
           {studentToRemove && <RemoveStudentDialog profile={studentToRemove} onClose={() => setStudentToRemove(null)} onConfirm={removeStudentRegistration} />}
           {/* A profile page is its own return, so the docked conversation
