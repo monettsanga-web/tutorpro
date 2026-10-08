@@ -52,9 +52,20 @@ async function profilePage(id, width) {
   await page.route('**/auth/v1/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id }) }))
   await page.route('**/rest/v1/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"offline"}' }))
   await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' })
+  /* A Supabase session, because saving a recovery email is authenticated
+     and should be. Without one the helper correctly refuses. */
+  const session = {
+    access_token: 'test-access-token',
+    refresh_token: 'test-refresh-token',
+    token_type: 'bearer',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    user: { id, aud: 'authenticated', role: 'authenticated', email: 'test@tutorpro.site' },
+  }
   await page.evaluate(`
     sessionStorage.setItem('tutorpro_ip_timezone','Asia/Manila');
     localStorage.setItem('tutorpro_accounts_v2', ${JSON.stringify(JSON.stringify(accounts))});
+    localStorage.setItem('tutorpro-supabase-auth', ${JSON.stringify(JSON.stringify(session))});
     localStorage.setItem('tutorpro_session_v2', '${id}');`)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2400)
@@ -151,6 +162,46 @@ for (const width of [1440, 390]) {
   await fine.close()
 }
 
+/* ---------- saving must still look saved after you walk away ----------
+ * The admin side wrote to the database correctly and still looked
+ * broken: its onSaved did nothing, so the dashboard's copy of the family
+ * never learned the address and the next visit showed an empty box.
+ * Reported, reasonably, as "it was not added in Supabase".
+ */
+{
+  const page = await profilePage(PHONE_PARENT, 1440)
+  let saved = null
+  await page.route('**/api/auth/reset', (route) => {
+    const sent = JSON.parse(route.request().postData() || '{}')
+    saved = sent
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, recoveryEmail: sent.email, accountId: sent.accountId, verified: true }),
+    })
+  })
+
+  await page.fill('.recovery-email-card input', 'backup@gmail.com')
+  await page.locator('.recovery-email-card button').first().click()
+  await page.waitForTimeout(1200)
+
+  ok(saved?.email === 'backup@gmail.com', 'the address typed is the address sent to the server')
+  ok(Boolean(saved?.login), 'the login goes with it, so a family whose local id is stale can still be found')
+
+  const after = await page.evaluate(`(() => {
+    const el = document.querySelector('.recovery-email-card')
+    return {
+      confirmed: el.querySelector('.recovery-email-card__confirmed')?.textContent?.replace(/\s+/g, ' ').trim() || '',
+      stillInBox: el.querySelector('input').value,
+      nowOk: Boolean(el.querySelector('.recovery-email-card__state--ok')),
+    }
+  })()`)
+  ok(/backup@gmail\.com/.test(after.confirmed), `it reports what the database came back with (${after.confirmed || 'nothing'})`)
+  ok(after.stillInBox === 'backup@gmail.com', 'and the field keeps the saved value rather than clearing')
+  ok(after.nowOk, 'the card flips from "no way to reset" to "reset possible" without a page reload')
+  await page.close()
+}
+
 /* ---- the contract, in the source ---- */
 import { readFileSync } from 'node:fs'
 const route = readFileSync(new URL('../api/auth/reset.js', import.meta.url), 'utf8')
@@ -162,6 +213,8 @@ ok(/targetId !== auth\.user\.id/.test(route), 'and a parent cannot set a recover
 ok(/profile_data->>recoveryEmail/.test(route), 'a reset request can find an account by its recovery email')
 ok(/recoveryEmail/.test(route.slice(route.indexOf('async function emailCode'), route.indexOf('async function requestCode'))), 'and the code is sent there when the login is a handle')
 ok(/accounts\.tutorpro\.site/.test(helper), 'the client knows which addresses are invented handles')
+ok(/login_id\.eq\.\$\{login\}/.test(route), 'the server can find a family by login when the id is stale')
+ok(/Supabase did not keep the recovery email/.test(route), 'and reads the row back rather than trusting "no error"')
 
 await browser.close()
 console.log(`\n${pass} passed, ${fail} failed`)

@@ -50,7 +50,7 @@ export function recoveryStateFor(account) {
  *
  * Pass an empty string to remove it.
  */
-export async function saveRecoveryEmail(accountId, email) {
+export async function saveRecoveryEmail(accountId, email, login = '') {
   const value = String(email || '').trim().toLowerCase()
   if (value && !isRealEmail(value)) {
     throw new Error(value.endsWith(HANDLE_DOMAIN)
@@ -59,14 +59,29 @@ export async function saveRecoveryEmail(accountId, email) {
   }
 
   if (!supabase) throw new Error('This device is not connected to the shared database.')
-  const { data } = await supabase.auth.getSession()
-  const token = data?.session?.access_token
-  if (!token) throw new Error('Your session has expired. Log out, log back in and try again.')
+
+  /*
+   * An administrator can sit on this dashboard for hours. The local
+   * session survives that - it was deliberately moved to localStorage so
+   * people stop being logged out - but the Supabase ACCESS TOKEN expires
+   * in an hour, and without one this save is refused. The refusal then
+   * reads like "the email did not save", which is exactly how it was
+   * reported.
+   *
+   * So: ask for a refreshed token before giving up on the session.
+   */
+  let { data } = await supabase.auth.getSession()
+  let token = data?.session?.access_token
+  if (!token) {
+    const refreshed = await supabase.auth.refreshSession().catch(() => null)
+    token = refreshed?.data?.session?.access_token || ''
+  }
+  if (!token) throw new Error('Your sign-in has expired. Log out, log back in, and the email will save.')
 
   const response = await fetch('/api/auth/reset', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-    body: JSON.stringify({ action: 'set-recovery-email', accountId, email: value }),
+    body: JSON.stringify({ action: 'set-recovery-email', accountId, email: value, login }),
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok || !payload?.ok) {

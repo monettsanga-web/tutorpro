@@ -13582,3 +13582,15 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   .recovery-email-card__actions { flex-direction: column; align-items: stretch; }
   .recovery-email-card__actions button { width: 100%; justify-content: center; }
 }
+
+/* What the database came back with, not what is typed in the box. The
+   admin side saved correctly and still looked broken without this. */
+.recovery-email-card__confirmed {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #2f7d3a;
+  font-size: 0.93rem;
+  overflow-wrap: anywhere;
+}

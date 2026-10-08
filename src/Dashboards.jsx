@@ -1368,13 +1368,26 @@ function RecoveryEmailCard({ account, onSaved, adminFor = null }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  /*
+   * What the DATABASE came back with, as distinct from what is typed in
+   * the box.
+   *
+   * The admin side used to save correctly and then look like it had not:
+   * its onSaved did nothing, so the dashboard's copy of the family never
+   * learned the address, and navigating away and back showed an empty
+   * field again. Indistinguishable from a failed write, and reported as
+   * exactly that.
+   */
+  const [confirmed, setConfirmed] = useState(state.recoveryEmail || '')
 
   const save = async () => {
     setSaving(true)
     setError('')
     setSaved(false)
     try {
-      const stored = await saveRecoveryEmail(target.id, value)
+      const stored = await saveRecoveryEmail(target.id, value, target.loginId || target.email || '')
+      setConfirmed(stored)
+      setValue(stored)
       setSaved(true)
       onSaved?.(stored)
       window.setTimeout(() => setSaved(false), 2600)
@@ -1397,7 +1410,7 @@ function RecoveryEmailCard({ account, onSaved, adminFor = null }) {
               : `This account signs in with ${state.login || 'a phone number or WeChat ID'}, which is not a mailbox. Without an email address here, a forgotten password can only be fixed by contacting us.`}
           </p>
         </div>
-        {state.reachableAt
+        {state.reachableAt || confirmed
           ? <span className="recovery-email-card__state recovery-email-card__state--ok"><ShieldCheck size={14} /> Reset possible</span>
           : <span className="recovery-email-card__state recovery-email-card__state--warn"><AlertTriangle size={14} /> No way to reset</span>}
       </div>
@@ -1416,6 +1429,11 @@ function RecoveryEmailCard({ account, onSaved, adminFor = null }) {
 
       {error && <div className="portal-error" role="alert">{error}</div>}
       {saved && <span className="saved-label"><Check size={14} /> Saved. A reset code can now be sent here.</span>}
+      {confirmed && !error && (
+        <p className="recovery-email-card__confirmed">
+          <ShieldCheck size={14} /> Stored in the database: <strong>{confirmed}</strong>
+        </p>
+      )}
 
       <div className="recovery-email-card__actions">
         <button type="button" className="portal-primary-button" onClick={save} disabled={saving}>
@@ -6414,8 +6432,17 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       </section>
       {isIncomplete && <div className="student-profile-suspension"><GraduationCap size={20} /><div><strong>This registration is incomplete</strong><span>Open the student account and add the learner name, school year, curriculum and learning goal.</span></div></div>}
       <div className="admin-student-profile-grid">
-        <RecoveryEmailCard account={account} adminFor={account} onSaved={() => { /* admin view re-reads on refresh */ }} />
-        <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
+        <RecoveryEmailCard
+          account={account}
+          adminFor={account}
+          onSaved={(stored) => {
+            /* Write it into the dashboard's own copy of this family too,
+               or the next visit to this page shows an empty box and the
+               save looks like it never happened. */
+            try { updateLocalAccount(account.id, { recoveryEmail: stored }) } catch { /* local copy may be read-only */ }
+          }}
+        />
+        <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Recovery email</dt><dd>{account.recoveryEmail || (recoveryStateFor(account).loginIsReal ? `${account.loginId || account.email} (login)` : 'None - this family cannot reset their password')}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
         <section className="portal-card admin-enrollment-card"><div><span className="portal-kicker">Trial & enrollment</span><h2>Student class stage</h2><p>Mark whether this learner is still on a trial class or already enrolled. This helps admin and teacher payout review.</p></div>{enrollmentSaved && <span className="saved-label"><Check size={14} /> Saved</span>}<div className="admin-enrollment-card__options"><button type="button" className={enrollmentStatus === 'trial' ? 'active' : ''} onClick={() => updateEnrollmentStatus('trial')} disabled={enrollmentSaving || isIncomplete}><Sparkles size={16} /> Trial class</button><button type="button" className={enrollmentStatus === 'enrolled' ? 'active' : ''} onClick={() => updateEnrollmentStatus('enrolled')} disabled={enrollmentSaving || isIncomplete}><UserCheck size={16} /> Enrolled student</button></div><small>{enrollmentSaving ? 'Saving status…' : `Current stage: ${enrollmentStatus === 'trial' ? 'Trial class' : 'Enrolled student'}`}</small></section>
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>
         <section className="portal-card"><span className="portal-kicker">Learning activity</span><h2>Lessons and achievements</h2><dl className="admin-teacher-detail-list"><div><dt>Total bookings</dt><dd>{learnerBookings.length}</dd></div><div><dt>Completed lessons</dt><dd>{learner.lessonsCompleted || completedLessons}</dd></div><div><dt>Upcoming lessons</dt><dd>{learnerBookings.filter((booking) => ['pending', 'confirmed', 'ongoing'].includes(booking.status)).length}</dd></div><div><dt>Achievements</dt><dd>{learner.achievements?.length || 0}</dd></div></dl></section>

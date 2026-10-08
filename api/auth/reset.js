@@ -236,8 +236,24 @@ export default async function handler(req, res) {
       if (recovery && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(recovery)) return sendError(res, 400, 'Enter a valid email address.')
       if (recovery.endsWith('@accounts.tutorpro.site')) return sendError(res, 400, 'That is a login handle, not a mailbox. Use a real email address.')
 
-      const { data: row } = await supabase.from('profiles').select('id, profile_data').eq('id', targetId).maybeSingle()
-      if (!row?.id) return sendError(res, 404, 'That account could not be found.')
+      let { data: row } = await supabase.from('profiles').select('id, profile_data').eq('id', targetId).maybeSingle()
+
+      /*
+       * Older families were created in a browser before the shared
+       * database existed, so the id the dashboard holds is a local one
+       * that matches no row. Falling back to the login they actually
+       * sign in with turns a dead 404 into a save.
+       */
+      if (!row?.id && body.login) {
+        const login = String(body.login).trim().toLowerCase()
+        const { data: byLogin } = await supabase
+          .from('profiles')
+          .select('id, profile_data')
+          .or(`login_id.eq.${login},email.eq.${login}`)
+          .limit(1)
+        row = byLogin?.[0] || null
+      }
+      if (!row?.id) return sendError(res, 404, 'That family has no profile in the shared database yet, so there is nothing to attach an email to. Ask them to log in once, then try again.')
 
       const data = row.profile_data && typeof row.profile_data === 'object' ? row.profile_data : {}
       const next = { ...data }
@@ -247,10 +263,16 @@ export default async function handler(req, res) {
       const { error: writeError } = await supabase
         .from('profiles')
         .update({ profile_data: next, updated_at: new Date().toISOString() })
-        .eq('id', targetId)
+        .eq('id', row.id)
       if (writeError) return sendError(res, 500, `The recovery email could not be saved: ${writeError.message}`)
 
-      return sendJson(res, 200, { ok: true, recoveryEmail: recovery, accountId: targetId })
+      /* Read it back. "No error" is not the same as "it is in the table" -
+         that assumption is what hid the registration bug for weeks. */
+      const { data: check } = await supabase.from('profiles').select('profile_data').eq('id', row.id).maybeSingle()
+      const stored = String(check?.profile_data?.recoveryEmail || '')
+      if (recovery && stored !== recovery) return sendError(res, 500, 'Supabase did not keep the recovery email. Nothing was saved.')
+
+      return sendJson(res, 200, { ok: true, recoveryEmail: stored, accountId: row.id, verified: true })
     }
 
     if (action === 'confirm') {
