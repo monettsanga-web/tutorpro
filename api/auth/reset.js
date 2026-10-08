@@ -260,19 +260,34 @@ export default async function handler(req, res) {
       if (recovery) next.recoveryEmail = recovery
       else delete next.recoveryEmail
 
-      const { error: writeError } = await supabase
+      const shared = { profile_data: next, updated_at: new Date().toISOString() }
+      /*
+       * Keep the JSON copy for old rows and old clients, but also write a
+       * real column when the one-time migration has been run. The fallback
+       * means the feature keeps working during the short window before the
+       * owner runs the SQL; after that, Supabase Table Editor shows the
+       * value directly as `recovery_email` instead of hiding it inside a
+       * JSON cell.
+       */
+      let { error: writeError } = await supabase
         .from('profiles')
-        .update({ profile_data: next, updated_at: new Date().toISOString() })
+        .update({ ...shared, recovery_email: recovery || null })
         .eq('id', row.id)
-      if (writeError) return sendError(res, 500, `The recovery email could not be saved: ${writeError.message}`)
+      if (writeError && !/recovery_email|column .* does not exist|schema cache/i.test(writeError.message || '')) {
+        return sendError(res, 500, `The recovery email could not be saved: ${writeError.message}`)
+      }
+      if (writeError) {
+        const fallback = await supabase.from('profiles').update(shared).eq('id', row.id)
+        if (fallback.error) return sendError(res, 500, `The recovery email could not be saved: ${fallback.error.message}`)
+      }
 
       /* Read it back. "No error" is not the same as "it is in the table" -
-         that assumption is what hid the registration bug for weeks. */
-      const { data: check } = await supabase.from('profiles').select('profile_data').eq('id', row.id).maybeSingle()
-      const stored = String(check?.profile_data?.recoveryEmail || '')
+         that assumption hid the registration bug for weeks. */
+      const { data: check } = await supabase.from('profiles').select('profile_data, recovery_email').eq('id', row.id).maybeSingle()
+      const stored = String(check?.recovery_email || check?.profile_data?.recoveryEmail || '')
       if (recovery && stored !== recovery) return sendError(res, 500, 'Supabase did not keep the recovery email. Nothing was saved.')
 
-      return sendJson(res, 200, { ok: true, recoveryEmail: stored, accountId: row.id, verified: true })
+      return sendJson(res, 200, { ok: true, recoveryEmail: stored, accountId: row.id, verified: true, column: Boolean(check && Object.prototype.hasOwnProperty.call(check, 'recovery_email')) })
     }
 
     if (action === 'confirm') {

@@ -226,6 +226,9 @@ export function profileRowToAccount(row) {
     fullName: row.full_name || data.fullName,
     createdAt: row.created_at || data.createdAt,
     updatedAt: row.updated_at || data.updatedAt,
+    /* Dedicated column after recovery_email.sql; JSON fallback before the
+       migration is run. */
+    recoveryEmail: row.recovery_email || data.recoveryEmail || '',
     cloudProfile: true,
   }
 }
