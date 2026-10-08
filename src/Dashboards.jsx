@@ -4518,6 +4518,22 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               to end in silence, with the contact details only on the public
               site — exactly where a new parent does not think to look. */}
           <WelcomeMessage account={account} learnerName={learner.name} />
+          {/*
+            * A family with no reachable email cannot reset their own
+            * password - and will only discover that on the day they are
+            * locked out. Burying the fix on the profile page means they
+            * find it after they need it, so it sits on the first screen
+            * until it is dealt with, and disappears the moment it is.
+            */}
+          {!recoveryStateFor(account).reachableAt && (
+            <RecoveryEmailCard
+              account={account}
+              onSaved={(stored) => {
+                const updated = updateLocalAccount(account.id, { recoveryEmail: stored })
+                if (updated) { setAccount(updated); onAccountChange(updated) }
+              }}
+            />
+          )}
           <section className="student-welcome">
             <div>
               <span className="portal-kicker">Welcome back, {firstName(account)}</span>
@@ -8342,7 +8358,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   /* One row of the students table. Lifted out of the JSX so the table can
      be grouped by country without duplicating any of it. */
-  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><ProfilePhoto accountId={`${student.id}-${rowLearner.id}`} name={rowLearner.name || student.parentName} refreshKey={version} className={`table-avatar-photo table-avatar--${avatarTone(student.parentName)}`} /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} /></div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
+  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><ProfilePhoto accountId={`${student.id}-${rowLearner.id}`} name={rowLearner.name || student.parentName} refreshKey={version} className={`table-avatar-photo table-avatar--${avatarTone(student.parentName)}`} /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} />{!recoveryStateFor(student).reachableAt && <span className="login-missing-chip" title={`${student.parentName} signed up with ${student.loginId || 'a phone number'}, which is not a mailbox. Open their profile to add a recovery email, or they cannot reset their own password.`}><AlertTriangle size={12} /> No reset email</span>}</div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>

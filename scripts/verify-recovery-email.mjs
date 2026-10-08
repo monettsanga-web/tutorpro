@@ -130,6 +130,27 @@ for (const width of [1440, 390]) {
   await page.close()
 }
 
+/* ---------- it has to find the parent, not wait to be found ----------
+ * The card existed on the profile page and the owner still asked for the
+ * feature twice, which is the clearest possible signal that a thing
+ * nobody can see does not exist. A family who cannot reset their
+ * password now meets it on the first screen after logging in.
+ */
+{
+  const page = await profilePage(PHONE_PARENT, 1440)
+  /* profilePage() ends on My profile; go back to where a parent lands. */
+  await page.locator('.portal-nav button:has-text("Overview")').first().click()
+  await page.waitForTimeout(1200)
+  ok(await page.locator('.recovery-email-card').count() > 0, 'phone account: the card is on the Overview, the first screen after logging in')
+  await page.close()
+
+  const fine = await profilePage(EMAIL_PARENT, 1440)
+  await fine.locator('.portal-nav button:has-text("Overview")').first().click()
+  await fine.waitForTimeout(1200)
+  ok(await fine.locator('.recovery-email-card').count() === 0, 'email account: the Overview is not cluttered for a family who can already reset')
+  await fine.close()
+}
+
 /* ---- the contract, in the source ---- */
 import { readFileSync } from 'node:fs'
 const route = readFileSync(new URL('../api/auth/reset.js', import.meta.url), 'utf8')
