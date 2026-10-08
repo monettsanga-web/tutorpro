@@ -20,7 +20,7 @@
  *     name is also matched case-sensitively.
  *
  *  3. Logins beginning with the fixed prefixes the checks generate
- *     (arenagm/arenaya/arenaot/arenawc/arenachk/arenadup/arena-check), each
+ *     (arenagm/arenaya/arenaot/arenawc/arenachk/arenadup/arena-check/tutorprocheck), each
  *     followed by digits. A real address would have to begin with one of
  *     those seven strings AND continue with nothing but digits.
  *
@@ -36,7 +36,7 @@
 const RESERVED_DOMAINS = /@(?:[\w-]+\.)*example\.(?:com|org|net)$|\.(?:invalid|test|localhost)$/i
 const CHECK_PARENT_NAME = 'Arena Check Parent'
 const CHECK_CHILD_NAME = 'Arena Check Child'
-const CHECK_LOGIN = /^(?:arenagm|arenaya|arenaot|arenawc|arenachk|arenadup|arena-check|arenacheck)[.-]?\d/i
+const CHECK_LOGIN = /^(?:arenagm|arenaya|arenaot|arenawc|arenachk|arenadup|arena-check|arenacheck|tutorprocheck)[.-]?\d/i
 
 export const PROTECTED_LOGINS = ['monettsanga@yahoo.com', 'sejongenglish@yahoo.com']
 
