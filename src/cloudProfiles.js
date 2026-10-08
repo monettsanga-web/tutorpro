@@ -132,10 +132,51 @@ function friendlyAuthMessage(message = '') {
 
 export async function registerCloudProfile({ login, password, provider, account }) {
   if (!supabase) return null
-  const options = { data: metadataFor(account) }
   /* Always an email sign-up. WeChat and WhatsApp handles are mapped to an
      address first — see cloudLoginEmail above for why. */
   const email = cloudLoginEmail(provider, login)
+
+  /*
+   * The server route first, because the browser route does not finish the
+   * job. `supabase.auth.signUp` creates the auth user and relies on a
+   * database trigger to create the matching `profiles` row. On this
+   * project that trigger is not firing. Measured on the live site:
+   *
+   *     POST /auth/v1/signup                       -> 200, user created
+   *     GET  /rest/v1/profiles?id=eq.<new id>      -> 406, 0 rows
+   *
+   * A family with no profile row is invisible to the admin dashboard and
+   * cannot log in from a second device, while their own browser shows
+   * them signed in - which is why registrations appeared to stop.
+   *
+   * /api/auth/register writes the row with the service-role key, reads it
+   * back to prove it exists, and confirms the email address so the parent
+   * can log in immediately instead of waiting for a confirmation mail
+   * that the free plan rate-limits.
+   */
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password, profile: { ...safeAccount(account), loginId: account.loginId || email, authProvider: provider } }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (response.ok && payload?.ok && payload.userId) {
+      /* Sign in straight away so the parent has a real session rather than
+         a local-only one. */
+      const signIn = await supabase.auth.signInWithPassword({ email, password })
+      return { userId: payload.userId, session: signIn.data?.session || null }
+    }
+    if (response.status === 409) throw new Error(payload?.error || 'An account with this login already exists. Try logging in instead.')
+    if (response.status >= 400 && response.status < 500 && payload?.error) throw new Error(payload.error)
+    console.warn('Server registration unavailable, falling back to browser sign-up:', payload?.error || response.status)
+  } catch (routeError) {
+    /* A 4xx is the server telling us something real - pass it on. Anything
+       else (offline, route missing) falls through to the old path. */
+    if (/already exists|valid email|at least 8 characters/i.test(routeError.message || '')) throw routeError
+  }
+
+  const options = { data: metadataFor(account) }
   const result = await supabase.auth.signUp({ email, password, options })
   if (result.error) {
     if (isServiceRestriction(result.error)) throw new Error(serviceRestrictionMessage(result.error))
