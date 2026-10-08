@@ -2684,10 +2684,12 @@ function AdminPaymentsPanel() {
       const { data } = supabase ? await supabase.auth.getSession() : { data: null }
       const token = data?.session?.access_token
       if (!token) throw new Error('Please sign in again before running the check.')
-      const response = await fetch('/api/paypal/diagnose', {
-        method: 'POST',
+      /* GET on create-order. The diagnostic moved there when the project
+         hit Vercel's twelve-function ceiling and new routes started
+         deploying as 404s. */
+      const response = await fetch('/api/paypal/create-order', {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: '{}',
       })
       setGatewayCheck(await response.json())
     } catch (checkError) {

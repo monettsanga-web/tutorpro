@@ -225,10 +225,10 @@ export default function AuthModal({
     setIsSubmitting(true)
     setFormError('')
     try {
-      const response = await fetch('/api/auth/reset-request', {
+      const response = await fetch('/api/auth/reset', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ login }),
+        body: JSON.stringify({ action: 'request', login }),
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.error || 'The code could not be sent just now.')
@@ -265,10 +265,10 @@ export default function AuthModal({
     setIsSubmitting(true)
     setFormError('')
     try {
-      const response = await fetch('/api/auth/reset-confirm', {
+      const response = await fetch('/api/auth/reset', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ login: form.email.trim(), code, password: form.password }),
+        body: JSON.stringify({ action: 'confirm', login: form.email.trim(), code, password: form.password }),
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload?.error || 'That code did not work.')
