@@ -53,6 +53,8 @@ const initialForm = {
   curriculum: '',
   goal: '',
   frequency: '',
+  /* The six digits from WhatsApp or email during a password reset. */
+  resetCode: '',
   terms: false,
 }
 
@@ -199,17 +201,79 @@ export default function AuthModal({
     }
   }
 
+  /*
+   * A six-digit code, sent to WhatsApp where we have a number and to
+   * email otherwise.
+   *
+   * The old flow asked for an email address and used Supabase's reset
+   * LINK. Two problems with that here. A parent who registered with their
+   * WhatsApp number has no mailbox on file at all - their login is
+   * whatsapp.<digits>@accounts.tutorpro.site, a handle this site invents
+   * - so the only route back into their account was to message the owner
+   * and hope. And Supabase's own mail is rate-limited on the free plan,
+   * which is where "email rate limit exceeded" came from.
+   */
+  const [resetHint, setResetHint] = useState('')
+
   const submitPasswordResetRequest = async (event) => {
     event.preventDefault()
+    const login = form.email.trim()
     const nextErrors = {}
-    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) nextErrors.email = 'Enter the email address on your account.'
+    if (login.length < 4) nextErrors.email = 'Enter the email or phone number on your account.'
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) return
     setIsSubmitting(true)
     setFormError('')
     try {
-      await requestPasswordReset(form.email)
-      setView('reset-sent')
+      const response = await fetch('/api/auth/reset-request', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ login }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.error || 'The code could not be sent just now.')
+      setResetHint(payload?.hint || '')
+      setView('reset-code')
+    } catch (error) {
+      /* The server route is the main path; Supabase's email link is kept
+         as a fallback so an email user is never stranded by a deploy. */
+      if (/^\S+@\S+\.\S+$/.test(login)) {
+        try {
+          await requestPasswordReset(login)
+          setView('reset-sent')
+          return
+        } catch (fallbackError) {
+          setFormError(fallbackError.message)
+          return
+        }
+      }
+      setFormError(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const submitResetCode = async (event) => {
+    event.preventDefault()
+    const nextErrors = {}
+    const code = String(form.resetCode || '').replace(/\D/g, '')
+    if (code.length !== 6) nextErrors.resetCode = 'Enter the six digits we sent you.'
+    if (form.password.length < 8 || !/[0-9]/.test(form.password)) nextErrors.password = 'Use 8+ characters with at least one number.'
+    if (form.confirmPassword !== form.password) nextErrors.confirmPassword = 'Passwords do not match.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setIsSubmitting(true)
+    setFormError('')
+    try {
+      const response = await fetch('/api/auth/reset-confirm', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ login: form.email.trim(), code, password: form.password }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.error || 'That code did not work.')
+      setForm((current) => ({ ...current, password: '', confirmPassword: '', resetCode: '' }))
+      setView('reset-complete')
     } catch (error) {
       setFormError(error.message)
     } finally {
@@ -465,12 +529,12 @@ export default function AuthModal({
             <>
               <div className="auth-heading auth-heading--compact">
                 <span className="auth-heading__icon"><Mail size={22} /></span>
-                <div><span>Password help</span><h2 id="auth-title">Reset your student password</h2><p>Enter your registered email and we’ll send a secure reset link.</p></div>
+                <div><span>Password help</span><h2 id="auth-title">Reset your student password</h2><p>Enter the email or WhatsApp number you registered with. We’ll send a six-digit code to whichever one is on your account.</p></div>
               </div>
               {formError && <div className="auth-alert" role="alert">{formError}</div>}
               <form className="auth-form auth-form--login" onSubmit={submitPasswordResetRequest} noValidate>
-                <label><span>Email address</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus autoComplete="email" name="email" value={form.email} onChange={updateField} placeholder="you@example.com" /></div><FieldError>{errors.email}</FieldError></label>
-                <button className="button button--primary button--full auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending reset link…' : 'Send reset link'} {!isSubmitting && <ArrowRight size={17} />}</button>
+                <label><span>Email or WhatsApp number</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input autoFocus autoComplete="username" name="email" value={form.email} onChange={updateField} placeholder="you@example.com or +63 912 345 6789" /></div><FieldError>{errors.email}</FieldError></label>
+                <button className="button button--primary button--full auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending your code…' : 'Send me a code'} {!isSubmitting && <ArrowRight size={17} />}</button>
               </form>
               <p className="auth-switch">Remembered your password? <button onClick={() => switchView('login')}>Back to login</button></p>
             </>
@@ -483,6 +547,49 @@ export default function AuthModal({
               <p>If that email is registered, you’ll receive a secure password reset link. Open it on this device and set your new password.</p>
               <button className="button button--primary button--full" onClick={() => switchView('login')}>Back to login</button>
             </div>
+          )}
+
+          {view === 'reset-code' && (
+            <>
+              <div className="auth-heading auth-heading--compact">
+                <span className="auth-heading__icon"><LockKeyhole size={22} /></span>
+                <div>
+                  <span>Check your messages</span>
+                  <h2 id="auth-title">Enter your six-digit code</h2>
+                  <p>{resetHint ? `Sent to ${resetHint}. It expires in 15 minutes.` : 'If that account exists, a code is on its way. It expires in 15 minutes.'}</p>
+                </div>
+              </div>
+              {formError && <div className="auth-alert" role="alert">{formError}</div>}
+              <form className="auth-form auth-form--login" onSubmit={submitResetCode} noValidate>
+                <label>
+                  <span>Six-digit code</span>
+                  <div className={`input-wrap ${errors.resetCode ? 'input-wrap--error' : ''}`}>
+                    <LockKeyhole size={18} />
+                    <input autoFocus name="resetCode" inputMode="numeric" autoComplete="one-time-code" maxLength="6" value={form.resetCode || ''} onChange={updateField} placeholder="123456" />
+                  </div>
+                  <FieldError>{errors.resetCode}</FieldError>
+                </label>
+                <label>
+                  <span>New password</span>
+                  <div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}>
+                    <LockKeyhole size={18} />
+                    <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={updateField} placeholder="8+ characters" />
+                    <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                  </div>
+                  <FieldError>{errors.password}</FieldError>
+                </label>
+                <label>
+                  <span>Confirm new password</span>
+                  <div className={`input-wrap ${errors.confirmPassword ? 'input-wrap--error' : ''}`}>
+                    <LockKeyhole size={18} />
+                    <input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.confirmPassword} onChange={updateField} placeholder="Repeat password" />
+                  </div>
+                  <FieldError>{errors.confirmPassword}</FieldError>
+                </label>
+                <button className="button button--primary button--full auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Setting your password…' : 'Set new password'} {!isSubmitting && <ArrowRight size={17} />}</button>
+              </form>
+              <p className="auth-switch"><button onClick={() => switchView('reset-request')}>Didn’t get it? Send another code</button></p>
+            </>
           )}
 
           {view === 'reset-password' && (

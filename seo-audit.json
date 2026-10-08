@@ -23,7 +23,7 @@
         "FAQPage",
         null
       ],
-      "words": 2046
+      "words": 2050
     },
     {
       "url": "https://www.tutorpro.site/cambridge-english.html",
@@ -1064,6 +1064,29 @@
       "words": 784
     },
     {
+      "url": "https://www.tutorpro.site/online-english-classes-china.html",
+      "status": 200,
+      "title": "Online English Classes for Kids in China | TutorPro",
+      "description": "Live one-to-one online English classes for children in China. Same time zone, VooV backup, QR payment in RMB. Experienced teachers, free first class.",
+      "canonical": "https://www.tutorpro.site/online-english-classes-china.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Online English classes for children in China"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        null
+      ],
+      "words": 571
+    },
+    {
       "url": "https://www.tutorpro.site/online-english-classes-for-kids",
       "status": 200,
       "title": "Online English Classes for Children | One-to-One Lessons",
@@ -1085,6 +1108,98 @@
         null
       ],
       "words": 1417
+    },
+    {
+      "url": "https://www.tutorpro.site/online-english-classes-italy.html",
+      "status": 200,
+      "title": "Online English Classes for Kids in Italy | TutorPro",
+      "description": "Live one-to-one online English classes for Italian children aged 4-16. Speaking practice, Cambridge-aligned books, experienced teachers. Free first class.",
+      "canonical": "https://www.tutorpro.site/online-english-classes-italy.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Online English classes for children in Italy"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        null
+      ],
+      "words": 631
+    },
+    {
+      "url": "https://www.tutorpro.site/online-english-classes-korea.html",
+      "status": 200,
+      "title": "Online English Classes for Kids in South Korea | TutorPro",
+      "description": "Live one-to-one online English classes for Korean children aged 4-16. Only one hour from Seoul time, taught by experienced teachers. Free first class.",
+      "canonical": "https://www.tutorpro.site/online-english-classes-korea.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Online English classes for children in South Korea"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        null
+      ],
+      "words": 630
+    },
+    {
+      "url": "https://www.tutorpro.site/online-english-classes-poland.html",
+      "status": 200,
+      "title": "Online English Classes for Kids in Poland | TutorPro",
+      "description": "Live one-to-one online English classes for Polish children aged 4-16. Speaking practice and exam support with experienced teachers. Free first class.",
+      "canonical": "https://www.tutorpro.site/online-english-classes-poland.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Online English classes for children in Poland"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        null
+      ],
+      "words": 587
+    },
+    {
+      "url": "https://www.tutorpro.site/online-english-classes-turkey.html",
+      "status": 200,
+      "title": "Online English Classes for Kids in Turkey | TutorPro",
+      "description": "Live one-to-one online English classes for Turkish children aged 4-16. Speaking confidence and exam support with experienced teachers. Free first class.",
+      "canonical": "https://www.tutorpro.site/online-english-classes-turkey.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Online English classes for children in Turkey"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        null
+      ],
+      "words": 553
     },
     {
       "url": "https://www.tutorpro.site/online-english-tutor-for-kids.html",
