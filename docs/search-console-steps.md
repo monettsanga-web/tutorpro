@@ -9,7 +9,7 @@ Time needed: about 15 minutes in total.
 
 ## Job 1 — Tell Google the sitemap exists (5 minutes)
 
-Your sitemap now lists **55 pages**, and almost every page title changed
+Your sitemap lists **56 pages**, and almost every page title changed
 recently. Google will not notice quickly on its own.
 
 1. Open **https://search.google.com/search-console** and sign in.
@@ -27,7 +27,7 @@ recently. Google will not notice quickly on its own.
    ```
 
 5. Click **Submit**.
-6. You should see a row appear saying **Success** and *55 discovered URLs*.
+6. You should see a row appear saying **Success** and *56 discovered URLs*.
    If it says "Couldn't fetch", wait an hour and press the refresh arrow —
    that message is usually just Google not having looked yet.
 
@@ -48,10 +48,13 @@ Paste these four:
 
 ```
 https://www.tutorpro.site/
+https://www.tutorpro.site/online-english-classes-for-kids
+https://www.tutorpro.site/english-tutor-rizal.html
 https://www.tutorpro.site/pricing.html
-https://www.tutorpro.site/online-english-classes-for-kids.html
-https://www.tutorpro.site/contact.html
 ```
+
+The first two changed title, H1 and content this week, so Google is still
+showing the old version. The third is brand new — Google has never seen it.
 
 Google limits you to roughly 10 of these a day. Four is fine.
 
@@ -96,7 +99,7 @@ Run `npm run audit:seo` any time to re-check. As of today, against the live
 site:
 
 ```
-sitemap: 55 URLs
+sitemap: 56 URLs
 HIGH 0 · MED 0 · LOW 0
 ```
 
