@@ -89,10 +89,13 @@ for (const width of [1440, 390]) {
   /* ---- the hero promise ---- */
   ok(dom.h1.length === 1, `${label}: exactly one H1 (${dom.h1.length})`)
   ok(dom.h1[0] === 'Online English Classes for Kids', `${label}: H1 is the search term, rendered (${dom.h1[0]})`)
-  ok(/Live, personalised English lessons for primary and secondary students with experienced teachers/i.test(dom.tagline),
+  ok(/Live, personalized English lessons for primary and secondary students with experienced teachers/i.test(dom.tagline),
     `${label}: the subheading states live, personalised, primary and secondary, experienced teachers`)
   ok(dom.heroButtons.some((b) => /book a free trial/i.test(b)), `${label}: primary CTA is Book a free trial`)
-  ok(dom.heroButtons.some((b) => /explore our programmes/i.test(b)), `${label}: secondary CTA is Explore our programmes`)
+  /* The brief specifies American spelling throughout, and the audience it
+   names is led by the US and Canada. */
+  ok(dom.heroButtons.some((b) => /explore our programs/i.test(b)), `${label}: secondary CTA is Explore our programs`)
+  ok(!/personalised|programmes/i.test(dom.text), `${label}: no British spellings left on the international homepage`)
 
   /* ---- the structure, in the rendered DOM ---- */
   for (const heading of REQUIRED_H2) {

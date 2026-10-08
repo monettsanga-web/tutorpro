@@ -279,7 +279,7 @@ function Hero({ onBook }) {
               homepage optimisation was being undone a second after load.
               The tagline survives directly underneath, so nothing is lost. */}
           <h1>Online English Classes for <em>Kids</em></h1>
-          <p className="hero__tagline">Live, personalised English lessons for primary and secondary students with experienced teachers.</p>
+          <p className="hero__tagline">Live, personalized English lessons for primary and secondary students with experienced teachers.</p>
           <p className="hero__lede">
             TutorPro is an online English school helping children around the world build confidence in speaking, reading, listening, grammar, vocabulary and communication. One teacher, one child, live — in English, Maths, Science and ICT for ages 4–16.
           </p>
@@ -288,7 +288,7 @@ function Hero({ onBook }) {
               Book a free trial <ArrowRight size={18} />
             </button>
             <a className="button button--quiet button--large" href="#programmes">
-              Explore our programmes
+              Explore our programs
             </a>
           </div>
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
@@ -369,7 +369,7 @@ function WhyParents({ onBook }) {
           <button type="button" className="button button--primary button--large" onClick={() => onBook('Why parents section')}>
             Book a free first class <ArrowRight size={18} />
           </button>
-          <a className="button button--outline" href="/online-english-classes-for-kids">Explore English programmes</a>
+          <a className="button button--outline" href="/online-english-classes-for-kids">Explore our programs</a>
         </div>
       </div>
     </section>
@@ -415,7 +415,7 @@ function WhatYourChildLearns({ onBook }) {
           <button type="button" className="button button--primary button--large" onClick={() => onBook('What your child learns section')}>
             Book a free trial <ArrowRight size={18} />
           </button>
-          <a className="button button--outline" href="/online-english-classes-for-kids">Explore our programmes</a>
+          <a className="button button--outline" href="/online-english-classes-for-kids">Explore our programs</a>
         </div>
       </div>
     </section>
@@ -583,7 +583,7 @@ function CurriculumCarousel({ onBook }) {
       <div className="container">
         <div className="curriculum-showcase__heading">
           <div><span className="kicker">A world of learning</span><h2>Cambridge and Oxford English Learning Materials</h2></div>
-          <p>Explore the colourful Cambridge, Oxford and international series that inspire our personalised English lessons.</p>
+          <p>Explore the colourful Cambridge, Oxford and international series that inspire our personalized English lessons.</p>
         </div>
 
         <div
@@ -1279,7 +1279,7 @@ function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
         </div>
 
         <p className="teacher-dashboard-profile-card__bio">
-          {profile.bio || "Enhance your child’s English skills with a friendly, patient tutor. Lessons are personalised for speaking confidence, grammar, reading and school success."}
+          {profile.bio || "Enhance your child’s English skills with a friendly, patient tutor. Lessons are personalized for speaking confidence, grammar, reading and school success."}
         </p>
 
         <div className="teacher-dashboard-profile-card__tabs" role="group" aria-label="Teacher profile sections">
@@ -1540,7 +1540,7 @@ function GlobalDiscovery({ onBook }) {
           <span className="kicker">Global online English classes</span>
           <h2>Looking for a Novakid, 51Talk or Preply alternative?</h2>
           <p>
-            TutorPro Online English helps families around the world find personalised online English classes for children,
+            TutorPro Online English helps families around the world find personalized online English classes for children,
             with friendly 1-to-1 tutoring, school-aligned support and transparent lesson packages.
           </p>
           <ul>
@@ -1792,7 +1792,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
         <div className="footer__main">
           <div className="footer__brand">
             <Logo light />
-            <p>Personalised English tutoring for confident, capable learners.</p>
+            <p>Personalized English tutoring for confident, capable learners.</p>
             <span>Cambridge & Oxford aligned</span>
             <TrustpilotWidget variant="mini" theme="dark" className="footer__trustpilot" />
           </div>
@@ -1839,7 +1839,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <a href="/oxford-english.html">Oxford English</a>
             </div>
             <div>
-              <h3>Programmes</h3>
+              <h3>Programs</h3>
               <a href="/primary-english.html">Primary English (4–11)</a>
               <a href="/secondary-english.html">Secondary English (12–16)</a>
               <a href="/english-for-kids-ages-4-7.html">English for ages 4–7</a>
