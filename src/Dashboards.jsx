@@ -139,6 +139,7 @@ import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js
 import ParentTeacherReviews from './ParentTeacherReviews.jsx'
 import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
 import { photoFileToDataUrl, shareTeacherPhoto } from './teacherPhotos.js'
+import { recoveryStateFor, saveRecoveryEmail } from './recoveryEmail.js'
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
@@ -1351,6 +1352,88 @@ export function DirectChatModal({ currentUserId, currentUserRole, targetUserId, 
  *
  * One list, one click, same docked panel in all three dashboards.
  */
+/**
+ * Add a recovery email to an account that has none.
+ *
+ * A parent who registered with a WhatsApp number or WeChat ID has no
+ * mailbox on file: their login is a handle this site invents so Supabase
+ * has something email-shaped to store. If they forget their password
+ * there is nowhere to send a code. This is where they fix that - and
+ * where an administrator can fix it for a family who cannot.
+ */
+function RecoveryEmailCard({ account, onSaved, adminFor = null }) {
+  const target = adminFor || account
+  const state = recoveryStateFor(target)
+  const [value, setValue] = useState(state.recoveryEmail || '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
+
+  const save = async () => {
+    setSaving(true)
+    setError('')
+    setSaved(false)
+    try {
+      const stored = await saveRecoveryEmail(target.id, value)
+      setSaved(true)
+      onSaved?.(stored)
+      window.setTimeout(() => setSaved(false), 2600)
+    } catch (caught) {
+      setError(caught.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="portal-card recovery-email-card">
+      <div className="portal-card__heading portal-card__heading--small">
+        <div>
+          <span className="portal-kicker">Password recovery</span>
+          <h2>{adminFor ? 'Recovery email for this family' : 'Where should we send a reset code?'}</h2>
+          <p>
+            {state.loginIsReal
+              ? `This account signs in with ${state.login}, so a reset code can already be sent there. You can add a second address as a backup.`
+              : `This account signs in with ${state.login || 'a phone number or WeChat ID'}, which is not a mailbox. Without an email address here, a forgotten password can only be fixed by contacting us.`}
+          </p>
+        </div>
+        {state.reachableAt
+          ? <span className="recovery-email-card__state recovery-email-card__state--ok"><ShieldCheck size={14} /> Reset possible</span>
+          : <span className="recovery-email-card__state recovery-email-card__state--warn"><AlertTriangle size={14} /> No way to reset</span>}
+      </div>
+
+      <label className="recovery-email-card__field">
+        <span>Recovery email</span>
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={value}
+          placeholder="name@example.com"
+          onChange={(event) => { setValue(event.target.value); setError(''); setSaved(false) }}
+        />
+      </label>
+
+      {error && <div className="portal-error" role="alert">{error}</div>}
+      {saved && <span className="saved-label"><Check size={14} /> Saved. A reset code can now be sent here.</span>}
+
+      <div className="recovery-email-card__actions">
+        <button type="button" className="portal-primary-button" onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : state.recoveryEmail ? 'Update recovery email' : 'Save recovery email'}
+        </button>
+        {state.recoveryEmail && (
+          <button type="button" className="portal-secondary-button" disabled={saving} onClick={() => { setValue(''); save() }}>
+            Remove
+          </button>
+        )}
+      </div>
+      <small className="recovery-email-card__note">
+        Used only to send a password reset code. It does not change how you log in, and it is never shown to teachers or other families.
+      </small>
+    </section>
+  )
+}
+
 function ChatPeoplePanel({ kicker, title, intro, people, onOpen, emptyTitle, emptyText }) {
   return (
     <section className="portal-card chat-people-card">
@@ -4668,6 +4751,13 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               <div className="profile-info-row"><div><span>Parent / guardian</span><strong>{account.parentName}</strong></div><div><span>Account login</span><strong>{account.loginId || account.email}</strong></div></div>
               <button className="portal-primary-button" onClick={saveProfile}>Save profile changes</button>
             </section>
+            <RecoveryEmailCard
+              account={account}
+              onSaved={(stored) => {
+                const updated = updateLocalAccount(account.id, { recoveryEmail: stored })
+                if (updated) { setAccount(updated); onAccountChange(updated) }
+              }}
+            />
             <section className="portal-card achievements-card">
               <span className="portal-kicker">Proud moments</span><h2>Achievements</h2>
               <div className="achievement-list"><div><span>🌱</span><div><strong>First step</strong><small>Profile completed</small></div></div><div className={completed ? '' : 'locked'}><span>📚</span><div><strong>Lesson learner</strong><small>Complete a lesson</small></div></div><div className={(learner.streak || 0) >= 3 ? '' : 'locked'}><span>🔥</span><div><strong>On a roll</strong><small>Reach a 3-day streak</small></div></div></div>
@@ -6308,6 +6398,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
       </section>
       {isIncomplete && <div className="student-profile-suspension"><GraduationCap size={20} /><div><strong>This registration is incomplete</strong><span>Open the student account and add the learner name, school year, curriculum and learning goal.</span></div></div>}
       <div className="admin-student-profile-grid">
+        <RecoveryEmailCard account={account} adminFor={account} onSaved={() => { /* admin view re-reads on refresh */ }} />
         <section className="portal-card"><span className="portal-kicker">Family account</span><h2>Parent and login details</h2><dl className="admin-teacher-detail-list"><div><dt>Parent / guardian</dt><dd>{account.parentName || 'Not provided'}</dd></div><div><dt>Account login</dt><dd>{account.loginId || account.email || 'Not provided'}</dd></div><div><dt>Account status</dt><dd>{account.status || 'active'}</dd></div><div><dt>Students in family</dt><dd>{learners.length}</dd></div></dl></section>
         <section className="portal-card admin-enrollment-card"><div><span className="portal-kicker">Trial & enrollment</span><h2>Student class stage</h2><p>Mark whether this learner is still on a trial class or already enrolled. This helps admin and teacher payout review.</p></div>{enrollmentSaved && <span className="saved-label"><Check size={14} /> Saved</span>}<div className="admin-enrollment-card__options"><button type="button" className={enrollmentStatus === 'trial' ? 'active' : ''} onClick={() => updateEnrollmentStatus('trial')} disabled={enrollmentSaving || isIncomplete}><Sparkles size={16} /> Trial class</button><button type="button" className={enrollmentStatus === 'enrolled' ? 'active' : ''} onClick={() => updateEnrollmentStatus('enrolled')} disabled={enrollmentSaving || isIncomplete}><UserCheck size={16} /> Enrolled student</button></div><small>{enrollmentSaving ? 'Saving status…' : `Current stage: ${enrollmentStatus === 'trial' ? 'Trial class' : 'Enrolled student'}`}</small></section>
         <section className="portal-card admin-goal-editor"><span className="portal-kicker">Admin-only learning profile</span><div className="admin-goal-editor__heading"><div><h2>Main Learning Goal</h2><p>Type the personalised goal parents will see in their dashboard and bookings.</p></div>{goalSaved && <span className="saved-label"><Check size={14} /> Saved live</span>}</div><textarea value={goalDraft} onChange={(event) => { setGoalDraft(event.target.value); setGoalError(''); setGoalSaved(false) }} maxLength="180" placeholder="e.g. Speak confidently in complete sentences and prepare for the school interview" disabled={isIncomplete || processing} />{goalError && <div className="portal-error" role="alert">{goalError}</div>}<div className="admin-goal-editor__actions"><small>{goalDraft.length}/180 characters · Only administrators can edit this field</small><button className="portal-primary-button" onClick={saveGoal} disabled={!onGoalChange || isIncomplete || processing || goalDraft.trim() === (learner.goal || '').trim()}><Check size={15} /> {processing ? 'Saving…' : 'Save goal live'}</button></div><dl className="admin-teacher-detail-list"><div><dt>Lesson rhythm</dt><dd>{learner.frequency || 'Not provided'}</dd></div><div><dt>Progress</dt><dd>{learner.progress || 0}%</dd></div><div><dt>Game stars</dt><dd>{learner.gameStars || 0}</dd></div></dl></section>

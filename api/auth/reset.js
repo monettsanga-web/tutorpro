@@ -63,14 +63,21 @@ async function findProfile(supabase, login) {
   const { data } = await supabase
     .from('profiles')
     .select('id, email, login_id, parent_name, profile_data')
-    .or(logins.map((value) => `login_id.eq.${value},email.eq.${value}`).join(','))
+    /* recoveryEmail too: a parent who signed up with a WhatsApp number
+       and later added an email will type that email here, because it is
+       the only address they associate with us. */
+    .or(logins.map((value) => `login_id.eq.${value},email.eq.${value},profile_data->>recoveryEmail.eq.${value}`).join(','))
     .limit(1)
   return data?.[0] || null
 }
 
 async function emailCode(profile, code) {
   const key = process.env.RESEND_API_KEY
-  const to = profile.email && !String(profile.email).endsWith('@accounts.tutorpro.site') ? profile.email : ''
+  /* `whatsapp.639...@accounts.tutorpro.site` is a handle this site
+     invents, not a mailbox. The recovery address a parent added on their
+     profile is the real one. */
+  const primary = profile.email && !String(profile.email).endsWith('@accounts.tutorpro.site') ? profile.email : ''
+  const to = primary || String(profile.profile_data?.recoveryEmail || '').trim()
   if (!key || !to) return { sent: false, reason: key ? 'No email address on this account.' : 'RESEND_API_KEY is not set.' }
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -196,6 +203,54 @@ export default async function handler(req, res) {
     if (action === 'request') {
       if (!login) return sendError(res, 400, 'Enter the email or phone number you registered with.')
       return sendJson(res, 200, await requestCode(supabase, login))
+    }
+
+    /*
+     * Add or change the recovery email on an account.
+     *
+     * It lives on this route rather than a route of its own because
+     * Vercel's Hobby plan caps the project at twelve Serverless
+     * Functions and we are at twelve - a thirteenth silently deploys as
+     * a 404, which is how the reset endpoints failed the first time.
+     *
+     * Two callers, both authenticated: a parent setting their own, and
+     * an administrator setting one for a family who cannot do it
+     * themselves. Admin status is read from `admin_members`, never from
+     * `profiles.role`, which any signed-up visitor could once PATCH.
+     */
+    if (action === 'set-recovery-email') {
+      const header = req.headers?.authorization || ''
+      const bearer = header.startsWith('Bearer ') ? header.slice(7) : ''
+      if (!bearer) return sendError(res, 401, 'Please log in again before changing the recovery email.')
+
+      const { data: auth, error: authError } = await supabase.auth.getUser(bearer)
+      if (authError || !auth?.user?.id) return sendError(res, 401, 'Your login session could not be verified.')
+
+      const targetId = String(body.accountId || auth.user.id)
+      if (targetId !== auth.user.id) {
+        const { data: member } = await supabase.from('admin_members').select('user_id').eq('user_id', auth.user.id).maybeSingle()
+        if (!member?.user_id) return sendError(res, 403, 'Only an administrator can change somebody else\u2019s recovery email.')
+      }
+
+      const recovery = String(body.email || '').trim().toLowerCase()
+      if (recovery && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(recovery)) return sendError(res, 400, 'Enter a valid email address.')
+      if (recovery.endsWith('@accounts.tutorpro.site')) return sendError(res, 400, 'That is a login handle, not a mailbox. Use a real email address.')
+
+      const { data: row } = await supabase.from('profiles').select('id, profile_data').eq('id', targetId).maybeSingle()
+      if (!row?.id) return sendError(res, 404, 'That account could not be found.')
+
+      const data = row.profile_data && typeof row.profile_data === 'object' ? row.profile_data : {}
+      const next = { ...data }
+      if (recovery) next.recoveryEmail = recovery
+      else delete next.recoveryEmail
+
+      const { error: writeError } = await supabase
+        .from('profiles')
+        .update({ profile_data: next, updated_at: new Date().toISOString() })
+        .eq('id', targetId)
+      if (writeError) return sendError(res, 500, `The recovery email could not be saved: ${writeError.message}`)
+
+      return sendJson(res, 200, { ok: true, recoveryEmail: recovery, accountId: targetId })
     }
 
     if (action === 'confirm') {

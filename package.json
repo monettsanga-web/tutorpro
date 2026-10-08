@@ -92,6 +92,7 @@
     "audit:crawl": "node scripts/audit-crawlability.mjs",
     "verify:homepage": "node scripts/verify-homepage-structure.mjs",
     "verify:paymentthanks": "node scripts/verify-payment-thanks.mjs",
+    "verify:recoveryemail": "node scripts/verify-recovery-email.mjs",
     "seo:indexnow": "node scripts/ping-indexnow.mjs",
     "test:discounts": "node scripts/test-discounts.mjs",
     "test:teacherinvites": "node scripts/test-teacher-invites.mjs",
