@@ -13441,3 +13441,88 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 .table-avatar-upload:hover > span { transform: scale(1.12); }
 .table-avatar-upload:focus-within > span { outline: 2px solid #7048df; outline-offset: 2px; }
 .table-avatar-upload.is-busy { opacity: 0.55; pointer-events: none; }
+
+/* ===========================================================================
+   THANK YOU, AFTER A PAYMENT
+   ---------------------------------------------------------------------------
+   This replaced window.alert(), which a phone draws as a grey system box
+   titled "www.tutorpro.site says" - the same chrome a scam site uses -
+   carrying the sentence "Server verified PayPal payment." A parent who has
+   just paid deserves better than a log line in a browser dialog.
+   =========================================================================== */
+.thanks-backdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  padding: 18px;
+  place-items: center;
+  background: rgba(23, 12, 48, 0.55);
+  backdrop-filter: blur(3px);
+  animation: thanks-fade 180ms ease both;
+}
+
+.thanks-dialog {
+  width: min(430px, 100%);
+  /* dvh, not vh: on iOS the address bar makes vh taller than the screen. */
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  border-radius: 24px;
+  padding: 26px 24px 22px;
+  background: #fff;
+  box-shadow: 0 30px 80px rgba(23, 12, 48, 0.32);
+  text-align: center;
+  animation: thanks-pop 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes thanks-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes thanks-pop { from { opacity: 0; transform: translateY(12px) scale(0.97) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  .thanks-backdrop, .thanks-dialog { animation: none; }
+}
+
+.thanks-dialog__tick {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8f8ec;
+  color: #2f9e44;
+}
+
+.thanks-dialog h2 { margin: 0 0 6px; color: #2a1b3d; font-size: 1.6rem; letter-spacing: -0.02em; }
+.thanks-dialog__lede { margin: 0 0 18px; color: var(--portal-muted); font-size: 1.02rem; line-height: 1.55; }
+
+.thanks-dialog__facts {
+  display: grid;
+  gap: 1px;
+  margin: 0 0 16px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #ece6f7;
+  text-align: left;
+}
+
+.thanks-dialog__facts > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  background: #faf8ff;
+}
+
+.thanks-dialog__facts dt { color: var(--portal-muted); font-size: 0.95rem; }
+.thanks-dialog__facts dd { margin: 0; color: #2a1b3d; font-size: 1.04rem; font-weight: 800; }
+/* A PayPal order id is long and must never widen the dialog. */
+.thanks-dialog__ref { overflow-wrap: anywhere; font-size: 0.88rem !important; font-weight: 700 !important; }
+
+.thanks-dialog__note { margin: 0 0 18px; color: var(--portal-muted); font-size: 0.93rem; line-height: 1.5; }
+
+.thanks-dialog__actions { display: grid; gap: 9px; }
+.thanks-dialog__actions .portal-primary-button,
+.thanks-dialog__actions .portal-secondary-button { width: 100%; min-height: 48px; justify-content: center; }

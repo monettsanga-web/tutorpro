@@ -3463,7 +3463,80 @@ function AdminReferralDashboard() {
   )
 }
 
-function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplete }) {
+/**
+ * The thank-you a parent sees the moment a payment goes through.
+ *
+ * WHAT IT REPLACED
+ * ----------------
+ *     window.alert(`🎉 Server verified PayPal payment. 4 booking credits
+ *                   added. New balance: 12.`)
+ *
+ * A browser alert, which the phone renders as a grey system box titled
+ * "www.tutorpro.site says" - the same chrome a scam site uses. The
+ * sentence was written for a developer reading a log: "Server verified"
+ * is reassuring to me and meaningless to a parent who has just handed
+ * over money. There was no thank you in it anywhere. And the emoji drew
+ * an empty box on any device without that glyph, which is why emoji were
+ * removed everywhere else on this site.
+ *
+ * This says thank you, by name, shows what the money bought, and offers
+ * the one thing a parent wants next: booking the class.
+ */
+function PaymentThankYouDialog({ payment, parentName, onClose, onBookClass }) {
+  const closeRef = useRef(null)
+
+  useEffect(() => {
+    closeRef.current?.focus()
+    const onKey = (event) => { if (event.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!payment) return null
+
+  const credits = Number(payment.credits || 0)
+  const firstName = (parentName || '').trim().split(/\s+/)[0]
+
+  /* Rendered into document.body, not into the dashboard. A `.portal-view`
+     carries an identity transform from the motion layer, and any transform
+     makes it the containing block for its position:fixed children - which
+     is how a centred dialog ends up off-centre and clipped on a phone. */
+  return createPortal(
+    <div className="thanks-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <section className="thanks-dialog" role="dialog" aria-modal="true" aria-labelledby="thanks-title">
+        <span className="thanks-dialog__tick" aria-hidden="true"><CheckCircle2 size={34} /></span>
+        <h2 id="thanks-title">Thank you{firstName ? `, ${firstName}` : ''}!</h2>
+        <p className="thanks-dialog__lede">
+          {payment.alreadyCredited
+            ? 'This payment had already been credited, so nothing was charged twice.'
+            : 'Your payment went through and your lesson credits are ready to use.'}
+        </p>
+
+        <dl className="thanks-dialog__facts">
+          {credits > 0 && !payment.alreadyCredited && (
+            <div><dt>Credits added</dt><dd>{credits} {credits === 1 ? 'class' : 'classes'}</dd></div>
+          )}
+          <div><dt>Credits available now</dt><dd>{payment.balance}</dd></div>
+          {payment.amount ? <div><dt>Paid</dt><dd>{payment.amount}</dd></div> : null}
+          {payment.reference ? <div><dt>Reference</dt><dd className="thanks-dialog__ref">{payment.reference}</dd></div> : null}
+        </dl>
+
+        <p className="thanks-dialog__note">
+          PayPal emails your receipt directly. Your credits never expire, and unused
+          credits can be refunded within 14 days.
+        </p>
+
+        <div className="thanks-dialog__actions">
+          <button type="button" className="portal-primary-button" onClick={onBookClass}>Book your next class</button>
+          <button type="button" className="portal-secondary-button" ref={closeRef} onClick={onClose}>Close</button>
+        </div>
+      </section>
+    </div>,
+    document.body,
+  )
+}
+
+function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplete, onBookClass }) {
   const defaultWeeklySessions = Number(account.preferredWeeklySessions || 4)
   const defaultBillingPlan = account.preferredBillingPlan || (defaultWeeklySessions >= 4 ? 'monthly' : 'weekly')
   const [billingPlan, setBillingPlan] = useState(defaultBillingPlan === 'monthly' ? 'monthly' : 'weekly')
@@ -3478,6 +3551,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
   const [gatewayReady, setGatewayReady] = useState(false)
   const [checkoutAttempt, setCheckoutAttempt] = useState(0)
   const [lastPaymentMessage, setLastPaymentMessage] = useState('')
+  const [thankYou, setThankYou] = useState(null)
   const paypalContainerId = `paypal-weekly-plan-${String(account.id || 'student').replace(/[^a-zA-Z0-9_-]/g, '')}`
   const sessionOptions = billingPlan === 'monthly' ? MONTHLY_PACKAGE_OPTIONS : WEEKLY_SESSION_OPTIONS
   const publishedRate = planSessionRate(billingPlan, weeklySessions)
@@ -3632,9 +3706,17 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
               onPaymentComplete(updated)
               const expectedCredits = payingBill ? (openBill?.sessions || 0) : creditCount
               const addedText = payload.alreadyCredited ? 'This payment was already credited.' : `${payload.creditsAdded || expectedCredits} booking credit${(payload.creditsAdded || expectedCredits) > 1 ? 's' : ''} added.`
-              const message = `Server verified PayPal payment. ${addedText} New balance: ${payload.paidLessonsBalance}.`
+              const message = `${addedText} New balance: ${payload.paidLessonsBalance}.`
               setLastPaymentMessage(message)
-              window.alert(`🎉 ${message}`)
+              setThankYou({
+                credits: payload.creditsAdded || expectedCredits,
+                balance: payload.paidLessonsBalance,
+                amount: payload.latestPayment?.amount
+                  ? `${payload.latestPayment.currency || 'USD'} ${payload.latestPayment.amount}`
+                  : '',
+                reference: payload.latestPayment?.orderId || payload.latestPayment?.reference || data.orderID || '',
+                alreadyCredited: Boolean(payload.alreadyCredited),
+              })
             })
             .catch((error) => {
               setGatewayError(error.message)
@@ -4020,6 +4102,12 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
         </div>
       )}
       {lastPaymentMessage && <div className="portal-success student-payment-pro__message" role="status"><CheckCircle2 size={16} /> {lastPaymentMessage}</div>}
+      <PaymentThankYouDialog
+        payment={thankYou}
+        parentName={account.parentName}
+        onClose={() => setThankYou(null)}
+        onBookClass={() => { setThankYou(null); onBookClass?.() }}
+      />
     </section>
   )
 }
@@ -4359,7 +4447,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
             <img src={assetUrl('assets/tutorpro-panda-logo.webp')} alt="TutorPro Online English panda mascot" />
           </section>
 
-          <StudentPaymentGateway account={account} adminPreview={adminPreview} onPaymentComplete={completeStudentPayment} />
+          <StudentPaymentGateway account={account} adminPreview={adminPreview} onPaymentComplete={completeStudentPayment} onBookClass={() => setActive('book')} />
 
           <div className="portal-stat-grid">
             <article><span className="stat-icon stat-icon--orange"><BookOpen size={21} /></span><div><small>Lessons completed</small><strong>{learner.lessonsCompleted || completed}</strong><em>Keep going!</em></div></article>
