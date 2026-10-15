@@ -1,0 +1,105 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Article A / An Board Game cover</title>
+  <desc id="desc">A colorful English grammar board game cover featuring giant A and AN letters, a winding board path, stars, books, and playful classroom objects.</desc>
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="0.45" stop-color="#4C1D95"/>
+      <stop offset="1" stop-color="#090510"/>
+    </radialGradient>
+    <linearGradient id="lime" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#E8FF73"/>
+      <stop offset="1" stop-color="#9BE03F"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#FFD36B"/>
+      <stop offset="1" stop-color="#FF7A1A"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#FFB4E6"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E9D5FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.38"/>
+    </filter>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.74 0 0 0 0 0.91 0 0 0 0 0.31 0 0 0 0.65 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="800" rx="64" fill="url(#bgGlow)"/>
+  <circle cx="180" cy="120" r="90" fill="#BCE94E" opacity="0.12"/>
+  <circle cx="1015" cy="145" r="125" fill="#F59E0B" opacity="0.15"/>
+  <circle cx="1020" cy="610" r="190" fill="#7C3AED" opacity="0.26"/>
+  <path d="M0 585C153 522 248 552 389 599C563 657 725 704 1200 538V800H0V585Z" fill="#160D32" opacity="0.82"/>
+
+  <g opacity="0.58">
+    <path d="M100 195L119 233L161 239L131 269L138 311L100 291L62 311L69 269L39 239L81 233L100 195Z" fill="#BCE94E"/>
+    <path d="M1056 261L1069 287L1098 291L1077 312L1082 341L1056 327L1030 341L1035 312L1014 291L1043 287L1056 261Z" fill="#FFD36B"/>
+    <path d="M245 664L254 682L274 685L260 699L263 719L245 710L227 719L230 699L216 685L236 682L245 664Z" fill="#EC4899"/>
+    <path d="M946 690L957 713L982 716L964 734L968 759L946 747L924 759L928 734L910 716L935 713L946 690Z" fill="#BCE94E"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M171 534C238 440 344 420 461 454C547 479 631 475 697 416C768 352 862 330 968 381" stroke="#BCE94E" stroke-width="38" stroke-linecap="round" opacity="0.95"/>
+    <path d="M171 534C238 440 344 420 461 454C547 479 631 475 697 416C768 352 862 330 968 381" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-dasharray="3 56" opacity="0.8"/>
+    <g transform="translate(122 485)">
+      <rect width="112" height="86" rx="22" fill="url(#tile)"/>
+      <text x="56" y="55" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="950" fill="#321568">a</text>
+    </g>
+    <g transform="translate(335 417)">
+      <rect width="112" height="86" rx="22" fill="url(#tile)"/>
+      <text x="56" y="55" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="950" fill="#321568">an</text>
+    </g>
+    <g transform="translate(590 392)">
+      <rect width="112" height="86" rx="22" fill="url(#tile)"/>
+      <text x="56" y="55" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="950" fill="#321568">a</text>
+    </g>
+    <g transform="translate(836 330)">
+      <rect width="112" height="86" rx="22" fill="url(#tile)"/>
+      <text x="56" y="55" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="950" fill="#321568">an</text>
+    </g>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="134" y="102" width="354" height="276" rx="42" fill="url(#orange)" transform="rotate(-6 134 102)"/>
+    <rect x="164" y="124" width="294" height="218" rx="28" fill="#FFF7ED" transform="rotate(-6 164 124)" opacity="0.96"/>
+    <text x="292" y="276" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="180" font-weight="1000" fill="#7C2D12" transform="rotate(-6 292 276)">A</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="712" y="93" width="376" height="286" rx="42" fill="url(#pink)" transform="rotate(5 712 93)"/>
+    <rect x="742" y="118" width="316" height="226" rx="28" fill="#FDF2F8" transform="rotate(5 742 118)" opacity="0.97"/>
+    <text x="902" y="275" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="140" font-weight="1000" fill="#831843" transform="rotate(5 902 275)">AN</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M459 622C479 565 529 533 594 540C665 548 714 603 711 672C708 720 664 742 590 742C507 742 436 691 459 622Z" fill="#24114F"/>
+    <circle cx="588" cy="611" r="58" fill="#FFD7A8"/>
+    <path d="M529 585C547 531 636 520 667 579C628 565 577 564 529 585Z" fill="#3B0764"/>
+    <circle cx="566" cy="616" r="6" fill="#13051F"/>
+    <circle cx="610" cy="616" r="6" fill="#13051F"/>
+    <path d="M568 646C584 660 607 659 622 646" stroke="#13051F" stroke-width="8" stroke-linecap="round"/>
+    <rect x="512" y="678" width="150" height="72" rx="32" fill="url(#lime)"/>
+    <text x="587" y="725" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="950" fill="#1A2E05">PLAY</text>
+  </g>
+
+  <g filter="url(#softGlow)">
+    <text x="600" y="72" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="950" fill="#BCE94E" letter-spacing="4">TUTORPRO GRAMMAR QUEST</text>
+    <text x="600" y="746" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="1000" fill="#FFFFFF">Article Board Game</text>
+    <text x="600" y="787" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="850" fill="#E9D5FF">Choose the right word before each noun: a or an</text>
+  </g>
+
+  <g font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="58">
+    <text x="101" y="646">🍎</text>
+    <text x="1014" y="526">☂️</text>
+    <text x="69" y="376">📚</text>
+    <text x="1068" y="418">🎲</text>
+  </g>
+</svg>
