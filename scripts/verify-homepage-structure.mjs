@@ -40,6 +40,7 @@ const REQUIRED_H2 = [
   'How TutorPro Online English Classes Work',
   'Why Parents Choose TutorPro',
   'Frequently Asked Questions',
+  'Looking for a Special Discount?',
 ]
 
 /* Seven skills, named on the page rather than implied. */

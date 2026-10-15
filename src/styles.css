@@ -6934,3 +6934,1123 @@ body {
   .why-parents__grid li { padding: 14px 15px; }
   .why-parents__cta .button { width: 100%; justify-content: center; }
 }
+
+/* ---------------------------------------------------------------------------
+   Student registration — responsive, parent-first layout
+   The same two-step flow gets a split layout on desktop, a compact branded
+   card on tablet, and a scrollable full-screen form on phones. These rules are
+   scoped to student registration so login and password recovery stay stable.
+   --------------------------------------------------------------------------- */
+.auth-backdrop:has(.auth-shell--student-register) {
+  background: rgba(20, 13, 37, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+body:has(.auth-shell--student-register) .support-widget,
+body:has(.auth-shell--student-register) .china-mobile-student-prompt,
+body:has(.auth-shell--student-register) .mobile-guest-action-bar,
+body:has(.auth-shell--student-register) .messenger-float {
+  display: none !important;
+}
+
+.auth-shell--student-register {
+  width: min(1100px, 100%);
+  height: min(860px, calc(100dvh - 40px));
+  min-height: min(640px, calc(100dvh - 40px));
+  max-height: calc(100dvh - 40px);
+  grid-template-columns: minmax(300px, 0.84fr) minmax(0, 1.16fr);
+  grid-template-rows: minmax(0, 1fr);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 36px 110px rgba(15, 8, 31, 0.42);
+}
+
+.auth-shell--student-register .auth-story {
+  padding: clamp(32px, 3.7vw, 46px) clamp(28px, 3.5vw, 42px);
+  background:
+    radial-gradient(circle at 13% 10%, rgba(188, 233, 78, 0.17), transparent 31%),
+    radial-gradient(circle at 86% 78%, rgba(255, 79, 135, 0.16), transparent 32%),
+    linear-gradient(150deg, #190d31 0%, #321568 54%, #241044 100%);
+}
+
+.auth-shell--student-register .auth-story__content h2 {
+  font-size: clamp(2.1rem, 3vw, 2.9rem);
+  line-height: 1.08;
+}
+
+.auth-shell--student-register .auth-story__content > p {
+  color: #d1c7e2;
+  font-size: 1rem;
+}
+
+.auth-shell--student-register .auth-story__content ul {
+  gap: 13px;
+  font-size: 0.95rem;
+}
+
+.auth-shell--student-register .auth-panel {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(30px, 3.5vw, 44px) clamp(32px, 4.2vw, 54px) 22px;
+  background: linear-gradient(180deg, #fffefa 0%, #fbfaf6 100%);
+  scrollbar-gutter: stable;
+}
+
+.auth-shell--student-register .auth-heading {
+  gap: 13px;
+  padding-right: 28px;
+}
+
+.auth-shell--student-register .auth-heading__icon {
+  width: 46px;
+  height: 46px;
+  border: 1px solid #e5dcf5;
+  border-radius: 14px;
+  background: #f2edfb;
+  color: #7048df;
+}
+
+.auth-shell--student-register .auth-heading > div > span {
+  color: #7048df;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+}
+
+.auth-shell--student-register .auth-heading h2 {
+  margin-bottom: 6px;
+  font-size: clamp(1.48rem, 2vw, 1.85rem);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+.auth-shell--student-register .auth-heading p {
+  color: #6f687a;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.auth-shell--student-register .auth-progress {
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.auth-shell--student-register .auth-progress span {
+  height: 5px;
+  background: #e9e3f0;
+}
+
+.auth-shell--student-register .auth-progress span::after {
+  background: linear-gradient(90deg, #7048df, #ff4f87);
+}
+
+.auth-step-labels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin: 9px 0 19px;
+}
+
+.auth-step-labels > span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  color: #8a8394;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.auth-step-labels > span i {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #e1dbe9;
+  border-radius: 50%;
+  background: #fff;
+  color: #817991;
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.auth-step-labels > span.is-current {
+  color: #321568;
+}
+
+.auth-step-labels > span.is-current i,
+.auth-step-labels > span.is-complete i {
+  border-color: #321568;
+  background: #321568;
+  color: #fff;
+}
+
+.auth-shell--student-register .auth-form--registration {
+  gap: 14px;
+}
+
+.auth-shell--student-register .auth-form--registration > label,
+.auth-shell--student-register .auth-form--registration .auth-form__row > label {
+  gap: 7px;
+}
+
+.auth-field-hint {
+  display: block;
+  margin-top: -2px;
+  color: #777184;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.auth-shell--student-register .provider-picker {
+  border: 1px solid #e8e2ee;
+  border-radius: 15px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 4px 14px rgba(41, 23, 71, 0.035);
+}
+
+.auth-shell--student-register .provider-picker legend {
+  max-width: 100%;
+  margin-bottom: 9px;
+  color: #392354;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.auth-shell--student-register .provider-picker > div:not(.china-email-guide) {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.auth-shell--student-register .provider-method {
+  min-height: 78px;
+  gap: 4px;
+  border-color: #e5dfeb;
+  border-radius: 12px;
+  padding: 8px 4px 7px;
+  color: #6c6477;
+}
+
+.auth-shell--student-register .provider-method:hover {
+  border-color: #b6a7d2;
+  box-shadow: 0 5px 13px rgba(50, 21, 104, 0.09);
+  transform: translateY(-1px);
+}
+
+.auth-shell--student-register .provider-method.active {
+  border-color: #7048df;
+  background: #f6f2ff;
+  box-shadow: 0 0 0 2px rgba(112, 72, 223, 0.1);
+}
+
+.auth-shell--student-register .provider-method__logo {
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
+  font-size: 1.2rem;
+}
+
+.auth-shell--student-register .provider-method strong {
+  color: #321568;
+  font-size: 0.78rem;
+}
+
+.auth-shell--student-register .provider-method small {
+  font-size: 0.69rem;
+  line-height: 1.2;
+}
+
+.auth-shell--student-register .provider-picker > p {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.auth-shell--student-register .input-wrap,
+.auth-shell--student-register .auth-form select {
+  min-height: 49px;
+  border-color: #ded8e7;
+  border-radius: 12px;
+}
+
+.auth-shell--student-register .input-wrap:focus-within,
+.auth-shell--student-register .auth-form select:focus {
+  border-color: #7048df;
+  box-shadow: 0 0 0 3px rgba(112, 72, 223, 0.12);
+}
+
+.auth-shell--student-register .input-wrap--error,
+.auth-shell--student-register .auth-form select.select-error {
+  border-color: #d95069;
+  box-shadow: 0 0 0 3px rgba(217, 80, 105, 0.08);
+}
+
+.auth-shell--student-register .auth-form__row {
+  gap: 12px;
+}
+
+.auth-shell--student-register .frequency-field label {
+  min-height: 46px;
+  border-color: #ded8e7;
+  border-radius: 11px;
+  font-size: 0.86rem;
+}
+
+.auth-shell--student-register .frequency-field label.selected {
+  border-color: #7048df;
+  background: #f1ebff;
+  color: #321568;
+}
+
+.auth-shell--student-register .check-field {
+  gap: 10px !important;
+}
+
+.auth-shell--student-register .check-field input {
+  accent-color: #7048df;
+}
+
+.auth-shell--student-register .auth-submit,
+.auth-shell--student-register .auth-form__actions .button {
+  min-height: 52px;
+  border-radius: 13px;
+}
+
+.auth-shell--student-register .auth-form__actions .button--outline {
+  border-color: #ded8e7;
+  background: #fff;
+  color: #514762;
+}
+
+.auth-shell--student-register .auth-switch {
+  margin-top: 17px;
+  color: #716a7b;
+  font-size: 0.88rem;
+}
+
+.auth-shell--student-register .auth-panel__foot {
+  margin-top: 20px;
+  color: #7d7688;
+  font-size: 0.8rem;
+}
+
+.auth-shell--student-register :is(.auth-close, .provider-method, .input-wrap button, .auth-form button):focus-visible {
+  outline: 3px solid rgba(112, 72, 223, 0.28);
+  outline-offset: 2px;
+}
+
+@media (min-width: 561px) and (max-width: 1024px) {
+  .auth-backdrop:has(.auth-shell--student-register) {
+    display: grid !important;
+    align-items: center !important;
+    justify-items: center !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+  }
+
+  .auth-shell--student-register {
+    width: min(780px, 100%) !important;
+    height: min(900px, calc(100dvh - 32px)) !important;
+    min-height: min(620px, calc(100dvh - 32px)) !important;
+    max-height: calc(100dvh - 32px) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    border-radius: 24px !important;
+  }
+
+  .auth-shell--student-register .auth-story {
+    display: flex !important;
+    min-height: 0;
+    flex-direction: column;
+    padding: 16px clamp(24px, 4vw, 38px) 15px;
+  }
+
+  .auth-shell--student-register .auth-story::before,
+  .auth-shell--student-register .auth-story::after,
+  .auth-shell--student-register .auth-story__quote,
+  .auth-shell--student-register .auth-story__content .kicker,
+  .auth-shell--student-register .auth-story__content > p,
+  .auth-shell--student-register .auth-story__content ul,
+  .auth-shell--student-register .auth-orbit {
+    display: none !important;
+  }
+
+  .auth-shell--student-register .auth-story__brand > span {
+    width: 35px;
+    height: 35px;
+  }
+
+  .auth-shell--student-register .auth-story__brand strong {
+    font-size: 1.12rem;
+  }
+
+  .auth-shell--student-register .auth-story__content {
+    margin: 10px 0 0;
+  }
+
+  .auth-shell--student-register .auth-story__content h2 {
+    max-width: none;
+    margin: 0;
+    font-size: clamp(1.12rem, 2.2vw, 1.38rem);
+    line-height: 1.16;
+  }
+
+  .auth-shell--student-register .auth-panel {
+    min-height: 0 !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    padding: 25px clamp(28px, 5vw, 48px) 20px !important;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 760px) {
+  .auth-shell--student-register .provider-picker > div:not(.china-email-guide) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .auth-shell--student-register .frequency-field > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-backdrop:has(.auth-shell--student-register) {
+    display: block !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 0 !important;
+    background: #fbfaf6;
+    backdrop-filter: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .auth-shell--student-register {
+    display: grid;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto 1fr;
+    overflow: visible !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fbfaf6;
+    box-shadow: none;
+  }
+
+  .auth-shell--student-register .auth-story {
+    display: flex !important;
+    min-height: 0;
+    flex-direction: column;
+    padding: calc(13px + env(safe-area-inset-top)) 18px 13px;
+  }
+
+  .auth-shell--student-register .auth-story::before,
+  .auth-shell--student-register .auth-story::after,
+  .auth-shell--student-register .auth-story__content,
+  .auth-shell--student-register .auth-story__quote,
+  .auth-shell--student-register .auth-orbit {
+    display: none !important;
+  }
+
+  .auth-shell--student-register .auth-story__brand {
+    min-height: 36px;
+    padding-right: 54px;
+  }
+
+  .auth-shell--student-register .auth-story__brand > span {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
+  .auth-shell--student-register .auth-story__brand strong {
+    font-size: 1.08rem;
+  }
+
+  .auth-shell--student-register .auth-panel {
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 24px 18px calc(28px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .auth-shell--student-register .auth-close {
+    position: fixed !important;
+    top: max(10px, env(safe-area-inset-top)) !important;
+    right: 12px !important;
+    width: 40px;
+    height: 40px;
+    background: #fff;
+  }
+
+  .auth-shell--student-register .auth-heading {
+    gap: 11px;
+    padding-right: 22px;
+  }
+
+  .auth-shell--student-register .auth-heading__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .auth-shell--student-register .auth-heading h2 {
+    font-size: clamp(1.34rem, 5.5vw, 1.56rem);
+  }
+
+  .auth-shell--student-register .auth-heading p {
+    font-size: 0.85rem;
+  }
+
+  .auth-shell--student-register .auth-progress {
+    margin-top: 15px;
+  }
+
+  .auth-step-labels {
+    gap: 7px;
+    margin: 8px 0 16px;
+  }
+
+  .auth-step-labels > span {
+    gap: 6px;
+    font-size: 0.73rem;
+  }
+
+  .auth-step-labels > span i {
+    width: 20px;
+    height: 20px;
+  }
+
+  .auth-shell--student-register .auth-form--registration {
+    gap: 13px;
+  }
+
+  .auth-shell--student-register .provider-picker {
+    padding: 10px;
+  }
+
+  .auth-shell--student-register .provider-picker legend {
+    font-size: 0.81rem;
+  }
+
+  .auth-shell--student-register .provider-picker > div:not(.china-email-guide) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px;
+  }
+
+  .auth-shell--student-register .provider-picker > div:not(.china-email-guide) > .provider-method:last-child:nth-child(odd) {
+    min-height: 58px;
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 9px;
+    padding: 7px 12px;
+  }
+
+  .auth-shell--student-register .provider-method {
+    min-height: 72px;
+    padding: 7px 5px;
+  }
+
+  .auth-shell--student-register .provider-method__logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .auth-shell--student-register .provider-method strong {
+    font-size: 0.76rem;
+  }
+
+  .auth-shell--student-register .provider-method small {
+    font-size: 0.67rem;
+  }
+
+  .auth-shell--student-register .provider-picker > p {
+    align-items: flex-start;
+    font-size: 0.72rem;
+  }
+
+  .auth-shell--student-register .auth-form__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .auth-shell--student-register .frequency-field > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px;
+  }
+
+  .auth-shell--student-register .frequency-field label {
+    min-height: 44px;
+    font-size: 0.73rem;
+  }
+
+  .auth-shell--student-register .auth-form input[type='checkbox'] {
+    width: 18px;
+    min-width: 18px;
+    min-height: 18px !important;
+    height: 18px;
+  }
+
+  .auth-shell--student-register .frequency-field input {
+    width: 1px;
+    min-height: 0 !important;
+    height: 1px;
+  }
+
+  .auth-shell--student-register .auth-form__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .auth-shell--student-register .auth-form__actions .button {
+    width: 100%;
+  }
+
+  .auth-shell--student-register .auth-form__actions .button:first-child {
+    order: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell--student-register,
+  .auth-shell--student-register .auth-orbit,
+  .auth-shell--student-register .provider-method,
+  .auth-shell--student-register .provider-method__logo {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Family class-discount enquiry — placed directly after the plans so parents
+   can ask about eligibility before choosing or booking a package.
+   --------------------------------------------------------------------------- */
+.discount-promo {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(44px, 6vw, 78px) 0;
+  background:
+    radial-gradient(circle at 7% 25%, rgba(255, 79, 135, 0.07), transparent 22%),
+    linear-gradient(180deg, #f8f5ff 0%, #fffdf8 100%);
+}
+
+.discount-promo__card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: clamp(24px, 4vw, 58px);
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 32px;
+  padding: clamp(30px, 5vw, 62px);
+  background:
+    radial-gradient(circle at 88% 15%, rgba(255, 79, 135, 0.22), transparent 30%),
+    radial-gradient(circle at 14% 100%, rgba(188, 233, 78, 0.12), transparent 30%),
+    linear-gradient(135deg, #1d1039 0%, #321568 58%, #4d2d82 100%);
+  box-shadow: 0 30px 75px rgba(50, 21, 104, 0.19);
+  isolation: isolate;
+}
+
+.discount-promo__card::before,
+.discount-promo__card::after {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.discount-promo__card::before {
+  top: -245px;
+  right: -145px;
+  width: 510px;
+  height: 510px;
+}
+
+.discount-promo__card::after {
+  right: -80px;
+  bottom: -285px;
+  width: 570px;
+  height: 570px;
+}
+
+.discount-promo__content {
+  position: relative;
+  z-index: 1;
+  max-width: 690px;
+}
+
+.discount-promo__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(188, 233, 78, 0.24);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: rgba(188, 233, 78, 0.09);
+  color: #dff7a6;
+  font-size: 0.83rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.discount-promo__content h2 {
+  max-width: 620px;
+  margin: 17px 0 15px;
+  color: #fff;
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+.discount-promo__content > p:not(.discount-promo__disclaimer) {
+  max-width: 680px;
+  margin: 0;
+  color: #e1d9ee;
+  font-size: 1.03rem;
+  line-height: 1.7;
+}
+
+.discount-promo__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 23px 0 25px;
+  padding: 0;
+  list-style: none;
+}
+
+.discount-promo__options li {
+  display: inline-flex;
+  min-height: 39px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.discount-promo__options li svg {
+  flex: 0 0 auto;
+  color: #c5ef69;
+}
+
+.discount-promo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 13px 18px;
+}
+
+.discount-promo__cta {
+  min-height: 54px;
+  border-radius: 14px;
+  padding: 0 21px;
+  font-size: 0.98rem;
+  box-shadow: 0 12px 28px rgba(255, 79, 135, 0.23);
+}
+
+.discount-promo__contact-link {
+  color: #f1eafa;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-color: rgba(223, 247, 166, 0.8);
+  text-underline-offset: 4px;
+}
+
+.discount-promo__contact-link:hover {
+  color: #dff7a6;
+}
+
+.discount-promo__disclaimer {
+  max-width: 640px;
+  margin: 14px 0 0;
+  color: #c8bdd9;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.discount-promo__illustration {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 330px;
+  place-items: center;
+  perspective: 900px;
+}
+
+.discount-promo__illustration-orbit {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.discount-promo__illustration-orbit--outer {
+  width: min(100%, 345px);
+  aspect-ratio: 1;
+  animation: discount-orbit 16s linear infinite;
+}
+
+.discount-promo__illustration-orbit--inner {
+  width: min(78%, 270px);
+  aspect-ratio: 1;
+  border-color: rgba(188, 233, 78, 0.18);
+  transform: rotate(-20deg);
+}
+
+.discount-promo__learning-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, 300px);
+  min-height: 285px;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 25px;
+  padding: 20px 21px 19px;
+  background: linear-gradient(155deg, #fffdf7 0%, #f0e9ff 100%);
+  box-shadow: 0 25px 60px rgba(11, 5, 24, 0.32);
+  color: #321568;
+  transform: rotate(2deg);
+  animation: discount-card-float 5.2s ease-in-out infinite;
+}
+
+.discount-promo__learning-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  color: #7251a3;
+}
+
+.discount-promo__learning-card-head > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 11px;
+  background: #e8f5c5;
+  color: #321568;
+}
+
+.discount-promo__learning-card-head small {
+  color: #725d8c;
+  font-size: 0.67rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.discount-promo__learning-card-head > svg {
+  color: #e85a8e;
+}
+
+.discount-promo__family-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 4px;
+}
+
+.discount-promo__family-icons span {
+  display: grid;
+  width: 53px;
+  height: 53px;
+  place-items: center;
+  border: 4px solid #fffdf7;
+  border-radius: 50%;
+  background: #ffc0d3;
+  box-shadow: 0 7px 15px rgba(50, 21, 104, 0.12);
+  color: #321568;
+}
+
+.discount-promo__family-icons span + span {
+  margin-left: -9px;
+}
+
+.discount-promo__family-icons span:nth-child(2) {
+  z-index: 1;
+  width: 67px;
+  height: 67px;
+  background: #dff5a7;
+}
+
+.discount-promo__family-icons span:nth-child(3) {
+  background: #d8c7fb;
+}
+
+.discount-promo__lesson-lines {
+  display: grid;
+  gap: 6px;
+  margin: 3px 2px 13px;
+}
+
+.discount-promo__lesson-lines i {
+  display: block;
+  height: 5px;
+  border-radius: 5px;
+  background: #ded5ed;
+}
+
+.discount-promo__lesson-lines i:first-child {
+  width: 82%;
+  background: #b9a6dd;
+}
+
+.discount-promo__lesson-lines i:last-child {
+  width: 62%;
+}
+
+.discount-promo__learning-card > strong {
+  color: #321568;
+  font-family: 'Nunito', 'Manrope', sans-serif;
+  font-size: 1.38rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.discount-promo__learning-card > small {
+  margin-top: 5px;
+  color: #746a83;
+  font-size: 0.76rem;
+}
+
+.discount-promo__floating-note {
+  position: absolute;
+  z-index: 2;
+  right: -7px;
+  bottom: 36px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 16px;
+  padding: 10px 13px 10px 10px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(12, 7, 28, 0.24);
+  animation: discount-note-float 4.6s ease-in-out infinite;
+}
+
+.discount-promo__floating-note > span {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  place-items: center;
+  border-radius: 11px;
+  background: #fce8ef;
+  color: #d93f79;
+}
+
+.discount-promo__floating-note > div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.discount-promo__floating-note strong {
+  color: #321568;
+  font-size: 0.82rem;
+}
+
+.discount-promo__floating-note small {
+  color: #786f84;
+  font-size: 0.7rem;
+}
+
+.discount-promo__spark {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: #dff7a6;
+  animation: discount-sparkle 2.8s ease-in-out infinite;
+}
+
+.discount-promo__spark--one {
+  top: 27px;
+  right: 22px;
+}
+
+.discount-promo__spark--two {
+  bottom: 34px;
+  left: 12px;
+  color: #ff92b7;
+  animation-delay: -1.4s;
+}
+
+@keyframes discount-card-float {
+  0%, 100% { transform: translateY(0) rotate(2deg); }
+  50% { transform: translateY(-7px) rotate(1deg); }
+}
+
+@keyframes discount-note-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes discount-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes discount-sparkle {
+  0%, 100% { opacity: 0.66; transform: scale(0.9) rotate(-8deg); }
+  50% { opacity: 1; transform: scale(1.1) rotate(8deg); }
+}
+
+@media (max-width: 900px) {
+  .discount-promo__card {
+    grid-template-columns: minmax(0, 1.1fr) minmax(230px, 0.75fr);
+    gap: 25px;
+    padding: 38px;
+  }
+
+  .discount-promo__illustration {
+    min-height: 295px;
+  }
+
+  .discount-promo__learning-card {
+    width: min(100%, 275px);
+    min-height: 267px;
+    padding: 18px;
+  }
+}
+
+@media (max-width: 700px) {
+  .discount-promo {
+    padding: 42px 0;
+  }
+
+  .discount-promo__card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    border-radius: 25px;
+    padding: 30px 26px 22px;
+  }
+
+  .discount-promo__content h2 {
+    margin-top: 14px;
+    font-size: clamp(1.9rem, 7vw, 2.55rem);
+  }
+
+  .discount-promo__content > p:not(.discount-promo__disclaimer) {
+    font-size: 0.96rem;
+    line-height: 1.65;
+  }
+
+  .discount-promo__options {
+    gap: 7px;
+    margin: 19px 0 20px;
+  }
+
+  .discount-promo__options li {
+    min-height: 36px;
+    font-size: 0.77rem;
+  }
+
+  .discount-promo__illustration {
+    min-height: 275px;
+    margin-top: 3px;
+  }
+
+  .discount-promo__illustration-orbit--outer {
+    width: min(88%, 300px);
+  }
+
+  .discount-promo__illustration-orbit--inner {
+    width: min(70%, 235px);
+  }
+
+  .discount-promo__learning-card {
+    width: min(78%, 275px);
+    min-height: 260px;
+  }
+
+  .discount-promo__floating-note {
+    right: 0;
+    bottom: 22px;
+  }
+}
+
+@media (max-width: 430px) {
+  .discount-promo__card {
+    padding: 26px 19px 18px;
+  }
+
+  .discount-promo__actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .discount-promo__cta {
+    width: 100%;
+    min-height: 56px;
+    justify-content: center;
+    padding: 0 14px;
+    font-size: 0.9rem;
+  }
+
+  .discount-promo__contact-link {
+    align-self: center;
+    text-align: center;
+  }
+
+  .discount-promo__disclaimer {
+    font-size: 0.76rem;
+  }
+
+  .discount-promo__illustration {
+    min-height: 245px;
+  }
+
+  .discount-promo__learning-card {
+    width: min(80%, 258px);
+    min-height: 245px;
+    padding: 16px;
+  }
+
+  .discount-promo__floating-note {
+    right: -3px;
+    bottom: 12px;
+    padding: 8px 10px 8px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discount-promo__illustration-orbit,
+  .discount-promo__learning-card,
+  .discount-promo__floating-note,
+  .discount-promo__spark {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

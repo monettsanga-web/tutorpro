@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -73,8 +73,9 @@ export default function AuthModal({
   onAuthenticated,
   onExplore,
   onEnterPortal,
-  onTeacherAccess,
 }) {
+  const authBackdropRef = useRef(null)
+  const authPanelRef = useRef(null)
   const [view, setView] = useState(initialMode)
   const [registerStep, setRegisterStep] = useState(1)
   const [form, setForm] = useState(() => ({ ...initialForm, authProvider: isChineseVisitor(currentVisitorLocale()) ? 'email' : 'gmail' }))
@@ -116,6 +117,17 @@ export default function AuthModal({
     setFormError('')
   }
 
+  // Step changes should always start at the top of the registration form,
+  // especially on a phone where the submit button may be below the fold.
+  const scrollRegistrationToTop = () => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    const behavior = reduceMotion ? 'auto' : 'smooth'
+    window.requestAnimationFrame(() => {
+      authBackdropRef.current?.scrollTo({ top: 0, behavior })
+      authPanelRef.current?.scrollTo({ top: 0, behavior })
+    })
+  }
+
   const validateAccountStep = () => {
     const nextErrors = {}
     if (form.parentName.trim().length < 2) nextErrors.parentName = 'Enter your full name.'
@@ -144,6 +156,7 @@ export default function AuthModal({
     if (validateAccountStep()) {
       setRegisterStep(2)
       setErrors({})
+      scrollRegistrationToTop()
     }
   }
 
@@ -319,11 +332,11 @@ export default function AuthModal({
   const activeAccount = createdAccount || currentAccount
 
   return (
-    <div className="auth-backdrop" role="presentation" onMouseDown={(event) => {
+    <div className="auth-backdrop" ref={authBackdropRef} role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose()
     }}>
-      <section className="auth-shell" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-        <button className="auth-close" onClick={onClose} aria-label="Close registration"><X size={21} /></button>
+      <section className={`auth-shell${view === 'register' ? ' auth-shell--student-register' : ''}`} role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <button type="button" className="auth-close" onClick={onClose} aria-label="Close registration"><X size={21} /></button>
 
         <aside className="auth-story">
           <div className="auth-story__brand">
@@ -348,21 +361,25 @@ export default function AuthModal({
           <i className="auth-orbit auth-orbit--two" />
         </aside>
 
-        <div className="auth-panel">
+        <div className="auth-panel" ref={authPanelRef}>
           {view === 'register' && (
             <>
               <div className="auth-heading">
                 <span className="auth-heading__icon"><UserRound size={22} /></span>
                 <div>
                   <span>{chineseVisitor ? `第 ${registerStep} 步，共 2 步` : registerStep === 1 ? 'Step 1 of 2' : 'Step 2 of 2'}</span>
-                  <h2 id="auth-title">{chineseVisitor ? (registerStep === 1 ? '创建家长账户' : '填写学生学习信息') : registerStep === 1 ? 'Create your account' : 'Tell us about your learner'}</h2>
+                  <h2 id="auth-title">{chineseVisitor ? (registerStep === 1 ? '创建家长账户' : '填写学生学习信息') : registerStep === 1 ? 'Create a parent account' : 'Tell us about your learner'}</h2>
                   <p>{chineseVisitor ? (registerStep === 1 ? '免费开始，无需银行卡，也没有长期合约。' : '我们将根据这些信息准备合适的第一节课。') : registerStep === 1 ? 'Start free. No card or commitment needed.' : 'We’ll use this to shape the right first lesson.'}</p>
                 </div>
               </div>
 
-              <div className="auth-progress" aria-label={`Registration step ${registerStep} of 2`}>
-                <span className="complete" />
-                <span className={registerStep === 2 ? 'complete' : ''} />
+              <div className="auth-progress" role="progressbar" aria-label={chineseVisitor ? '注册进度' : 'Student registration progress'} aria-valuemin="1" aria-valuemax="2" aria-valuenow={registerStep}>
+                <span className="complete" aria-hidden="true" />
+                <span className={registerStep === 2 ? 'complete' : ''} aria-hidden="true" />
+              </div>
+              <div className="auth-step-labels" aria-hidden="true">
+                <span className={registerStep === 1 ? 'is-current' : 'is-complete'}><i>1</i>{chineseVisitor ? '家长账户' : 'Parent account'}</span>
+                <span className={registerStep === 2 ? 'is-current' : ''}><i>2</i>{chineseVisitor ? '学生资料' : 'Student profile'}</span>
               </div>
 
               {formError && <div className="auth-alert" role="alert">{formError}</div>}
@@ -374,11 +391,11 @@ export default function AuthModal({
               )}
 
               {registerStep === 1 ? (
-                <form className="auth-form" onSubmit={continueRegistration} noValidate>
+                <form className="auth-form auth-form--registration" onSubmit={continueRegistration} noValidate>
                   <label>
                     <span>{chineseVisitor ? '家长或监护人姓名' : 'Parent or guardian name'}</span>
                     <div className={`input-wrap ${errors.parentName ? 'input-wrap--error' : ''}`}>
-                      <UserRound size={18} /><input autoFocus autoComplete="name" name="parentName" value={form.parentName} onChange={updateField} placeholder={chineseVisitor ? '请输入您的姓名' : 'Your full name'} />
+                      <UserRound size={18} /><input autoComplete="name" name="parentName" value={form.parentName} onChange={updateField} placeholder={chineseVisitor ? '请输入您的姓名' : 'Your full name'} />
                     </div>
                     <FieldError>{errors.parentName}</FieldError>
                   </label>
@@ -398,6 +415,7 @@ export default function AuthModal({
                         <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
                       </div>
                       <FieldError>{errors.password}</FieldError>
+                      <small className="auth-field-hint">{chineseVisitor ? '至少 8 个字符，并包含至少一个数字。' : 'At least 8 characters, including one number.'}</small>
                     </label>
                     <label>
                       <span>{chineseVisitor ? '确认密码' : 'Confirm password'}</span>
@@ -417,11 +435,11 @@ export default function AuthModal({
                   </button>
                 </form>
               ) : (
-                <form className="auth-form" onSubmit={completeRegistration} noValidate>
+                <form className="auth-form auth-form--registration" onSubmit={completeRegistration} noValidate>
                   <label>
                     <span>{chineseVisitor ? '学生名字' : 'Student’s first name'}</span>
                     <div className={`input-wrap ${errors.childName ? 'input-wrap--error' : ''}`}>
-                      <GraduationCap size={18} /><input autoFocus autoComplete="off" name="childName" value={form.childName} onChange={updateField} placeholder={chineseVisitor ? '请输入学生名字' : 'First name'} />
+                      <GraduationCap size={18} /><input autoComplete="off" name="childName" value={form.childName} onChange={updateField} placeholder={chineseVisitor ? '请输入学生名字' : 'First name'} />
                     </div>
                     <FieldError>{errors.childName}</FieldError>
                   </label>
@@ -472,15 +490,14 @@ export default function AuthModal({
                   {preferredTeacher && <div className="selected-teacher"><UserRound size={16} /><span><strong>{preferredTeacher.fullName} selected</strong><small>{preferredTeacher.teacher.specialization}</small></span></div>}
                   {selectedPlan && <div className="selected-plan"><Sparkles size={16} /> {selectedPlan} plan selected</div>}
                   <div className="auth-form__actions">
-                    <button className="button button--outline" type="button" onClick={() => setRegisterStep(1)}><ArrowLeft size={16} /> {chineseVisitor ? '返回' : 'Back'}</button>
+                    <button className="button button--outline" type="button" onClick={() => { setRegisterStep(1); scrollRegistrationToTop() }}><ArrowLeft size={16} /> {chineseVisitor ? '返回' : 'Back'}</button>
                     <button className="button button--primary" type="submit" disabled={isSubmitting}>
                       {isSubmitting ? (chineseVisitor ? '正在创建账户…' : 'Creating account…') : (chineseVisitor ? '创建免费账户' : 'Create my free account')} {!isSubmitting && <ArrowRight size={17} />}
                     </button>
                   </div>
                 </form>
               )}
-              <p className="auth-switch">{chineseVisitor ? '已经有账户？' : 'Already have an account?'} <button onClick={() => switchView('login')}>{chineseVisitor ? '登录' : 'Log in'}</button></p>
-              <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Applying as a teacher? Open teacher registration</button>
+              <p className="auth-switch">{chineseVisitor ? '已经有账户？' : 'Already have an account?'} <button type="button" onClick={() => switchView('login')}>{chineseVisitor ? '登录' : 'Log in'}</button></p>
             </>
           )}
 
@@ -520,8 +537,7 @@ export default function AuthModal({
               </form>
               <p className="auth-switch auth-switch--compact"><button onClick={() => switchView('reset-request')}>Forgot password?</button></p>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
-              <p className="auth-switch">New to TutorPro Online English? <button onClick={() => switchView('register')}>Create a free account</button></p>
-              <button className="auth-role-link" onClick={onTeacherAccess}><GraduationCap size={16} /> Teacher registration and login</button>
+              <p className="auth-switch">New to TutorPro Online English? <button type="button" onClick={() => switchView('register')}>Create a free account</button></p>
             </>
           )}
 
