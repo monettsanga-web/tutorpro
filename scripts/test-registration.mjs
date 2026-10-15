@@ -99,5 +99,23 @@ for (const provider of ['gmail', 'yahoo', 'wechat', 'whatsapp']) {
   ok(auth.includes(`'${provider}'`), `${provider} is still a recognised sign-up option — none were removed`)
 }
 
+/* ================================================================== */
+/* 6. Student registration stays parent-first and responsive           */
+/* ================================================================== */
+const modal = read('src/AuthModal.jsx')
+const styles = read('src/styles.css')
+const registrationStart = modal.indexOf("{view === 'register' && (")
+const loginStart = modal.indexOf("{view === 'login' && (", registrationStart)
+const registrationView = modal.slice(registrationStart, loginStart)
+ok(registrationStart >= 0 && loginStart > registrationStart, 'the student registration view is clearly separated from login')
+ok(!/teacher registration|onTeacherAccess/i.test(registrationView), 'student registration has no teacher-registration link or action')
+ok(/Create a parent account/.test(registrationView), 'the account step clearly identifies this as a parent account')
+ok(/aria-valuenow=\{registerStep\}/.test(registrationView), 'the two-step student registration progress is accessible')
+const responsiveStyles = styles.slice(styles.indexOf('Student registration — responsive, parent-first layout'))
+ok(/@media \(min-width: 561px\) and \(max-width: 1024px\)/.test(responsiveStyles), 'a dedicated tablet registration layout is defined')
+ok(/@media \(max-width: 560px\)/.test(responsiveStyles) && /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important/.test(responsiveStyles), 'the phone layout has a compact two-column provider picker')
+ok(/height: min\(860px, calc\(100dvh - 40px\)\)/.test(responsiveStyles), 'desktop registration stays within the available viewport height')
+ok(/body:has\(\.auth-shell--student-register\) \.support-widget/.test(responsiveStyles) && /body:has\(\.auth-shell--student-register\) \.china-mobile-student-prompt/.test(responsiveStyles), 'floating support and locale prompts stay out of the registration overlay')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

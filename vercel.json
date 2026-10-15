@@ -55,6 +55,11 @@
       "permanent": true
     },
     {
+      "source": "/online-english-classes-for-kids.html",
+      "destination": "/online-english-classes-for-kids",
+      "permanent": true
+    },
+    {
       "source": "/(.*)",
       "has": [
         {
@@ -74,11 +79,6 @@
         }
       ],
       "destination": "https://www.tutorpro.site/$1",
-      "permanent": true
-    },
-    {
-      "source": "/online-english-classes-for-kids.html",
-      "destination": "/online-english-classes-for-kids",
       "permanent": true
     }
   ],

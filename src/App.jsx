@@ -73,6 +73,7 @@ import ChinaSafeVideo from './ChinaSafeVideo.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import ContactChannels from './ContactChannels.jsx'
 import TrustpilotWidget from './TrustpilotWidget.jsx'
+import { requestOpenSupportChat } from './supportChatEvents.js'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -1630,6 +1631,70 @@ function Pricing({ onBook }) {
   )
 }
 
+function DiscountPromo() {
+  const discountQuestion = 'Hello! I’d like to ask about any available per-class discounts, sibling discounts, or offers for booking multiple lessons per week. Please let me know what my family may be eligible for and confirm the final price.'
+
+  return (
+    <section className="section discount-promo" id="class-discounts" aria-labelledby="discount-promo-title">
+      <div className="container">
+        <div className="discount-promo__card">
+          <div className="discount-promo__content">
+            <span className="discount-promo__eyebrow"><Sparkles size={15} aria-hidden="true" /> Family-friendly options</span>
+            <h2 id="discount-promo-title">Looking for a Special Discount?</h2>
+            <p>
+              At TutorPro English PH, we believe every child deserves quality English education. Contact our customer service team to ask about special discounts per class, sibling discounts, and exclusive offers for students who book multiple lessons per week.
+            </p>
+            <ul className="discount-promo__options" aria-label="Discount options to ask about">
+              <li><BookOpen size={17} aria-hidden="true" /><span>Per-class offers</span></li>
+              <li><Users size={17} aria-hidden="true" /><span>Sibling discounts</span></li>
+              <li><CalendarCheck2 size={17} aria-hidden="true" /><span>Multiple weekly lessons</span></li>
+            </ul>
+            <div className="discount-promo__actions">
+              <button
+                className="button button--primary discount-promo__cta"
+                type="button"
+                onClick={() => requestOpenSupportChat(discountQuestion)}
+              >
+                Ask About Class Discounts <MessageCircle size={17} aria-hidden="true" />
+              </button>
+              <a className="discount-promo__contact-link" href="/contact.html">Prefer another way? Contact us</a>
+            </div>
+            <p className="discount-promo__disclaimer">
+              Availability and eligibility vary. Our customer service team will confirm any offer and the final price before you book.
+            </p>
+          </div>
+
+          <div className="discount-promo__illustration" aria-hidden="true">
+            <span className="discount-promo__illustration-orbit discount-promo__illustration-orbit--outer" />
+            <span className="discount-promo__illustration-orbit discount-promo__illustration-orbit--inner" />
+            <div className="discount-promo__learning-card">
+              <div className="discount-promo__learning-card-head">
+                <span><BookOpen size={20} /></span>
+                <small>LEARNING TOGETHER</small>
+                <Sparkles size={18} />
+              </div>
+              <div className="discount-promo__family-icons">
+                <span><UserRound size={21} /></span>
+                <span><UserRound size={27} /></span>
+                <span><UserRound size={21} /></span>
+              </div>
+              <div className="discount-promo__lesson-lines"><i /><i /><i /></div>
+              <strong>One family.<br />Many bright futures.</strong>
+              <small>English learning, made personal.</small>
+            </div>
+            <div className="discount-promo__floating-note">
+              <span><Users size={17} /></span>
+              <div><strong>Room to grow</strong><small>For every learner</small></div>
+            </div>
+            <span className="discount-promo__spark discount-promo__spark--one"><Sparkles size={18} /></span>
+            <span className="discount-promo__spark discount-promo__spark--two"><Star size={13} /></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function FAQ({ onBook }) {
   const [openIndex, setOpenIndex] = useState(0)
 
@@ -2242,6 +2307,7 @@ export default function App() {
           <HowItWorks onBook={openRegistration} />
           <ParentReviews />
           <Pricing onBook={openRegistration} />
+          <DiscountPromo />
           <FAQ onBook={openRegistration} />
           <ContactChannels />
           <FinalCTA onBook={openRegistration} />

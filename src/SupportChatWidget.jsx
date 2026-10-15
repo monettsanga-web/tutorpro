@@ -14,6 +14,7 @@ import {
 import { translateSupportText } from './supportTranslation.js'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import { SUPPORT_TOPICS, composeEscalationMessage, getSupportAnswer } from './supportKnowledge.js'
+import { SUPPORT_CHAT_OPEN_EVENT } from './supportChatEvents.js'
 
 function accountEmail(account) {
   const candidate = account?.email || account?.loginId || ''
@@ -27,7 +28,7 @@ function accountEmail(account) {
  * It replaced a full page of chat embedded in the middle of the dashboard,
  * which you had to scroll past your own lesson list to reach.
  */
-export default function SupportChatWidget({ embedded = false, docked = false, onClose, autoStartForAccount = false, audience = 'parent' }) {
+export default function SupportChatWidget({ embedded = false, docked = false, onClose, autoStartForAccount = false, audience = 'parent', openOnWebsiteEvent = false }) {
   const [account, setAccount] = useState(getCurrentAccount)
   const [locale, setLocale] = useState(currentVisitorLocale)
   const [open, setOpen] = useState(embedded || docked)
@@ -52,6 +53,22 @@ export default function SupportChatWidget({ embedded = false, docked = false, on
   const chinese = isChineseVisitor({ language: supportLanguage, country: locale.country })
   const supportRoleLabel = audience === 'teacher' ? (chinese ? '教师客服' : 'Teachers Support') : (chinese ? '家长客服' : 'Parent Support')
   const supportStorageKey = account?.id ? `${audience}:${account.id}` : ''
+
+  useEffect(() => {
+    if (!openOnWebsiteEvent) return undefined
+
+    const handleWebsiteOpen = (event) => {
+      const message = String(event.detail?.message || '').trim()
+      if (message) {
+        if (credentials) setDraft(message)
+        else setForm((current) => ({ ...current, message }))
+      }
+      setOpen(true)
+    }
+
+    window.addEventListener(SUPPORT_CHAT_OPEN_EVENT, handleWebsiteOpen)
+    return () => window.removeEventListener(SUPPORT_CHAT_OPEN_EVENT, handleWebsiteOpen)
+  }, [credentials, openOnWebsiteEvent])
 
   useEffect(() => {
     const refreshAccount = () => {

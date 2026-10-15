@@ -87,6 +87,12 @@ const SECTIONS = [
     body: 'All prices are in US dollars, so there is no guessing what a lesson costs. Classes are US$8 per 25-minute lesson on the Weekly plan of 1 to 3 classes a week, and US$7 per lesson on the Monthly Package of 4 or more classes a week, billed monthly with priority scheduling and a dedicated tutor. Fifty-minute lessons are available for older learners. The first class is free for every new family with no card required, prices are published on this page rather than hidden behind a sales call, unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full.',
   },
   {
+    heading: 'Looking for a Special Discount?',
+    body: 'At TutorPro English PH, we believe every child deserves quality English education. Contact our customer service team to ask about special discounts per class, sibling discounts, and exclusive offers for students who book multiple lessons per week. Availability and eligibility vary; customer service will confirm any offer and the final price before you book.',
+    actionText: 'Ask About Class Discounts',
+    actionHref: '/contact.html',
+  },
+  {
     heading: 'Families in any country, lesson times in your own.',
     body: 'TutorPro teaches families worldwide from our teaching base in the Philippines, which is UTC+8. Available slots are shown in your own local time inside your account, so there is no mental arithmetic and no missed lessons. The time difference suits Asia, the Middle East, Europe, Australia and New Zealand comfortably. For families in North America the practical option is an early-morning lesson before school, which suits some children and not others — we would rather say that now than after you have paid. There is no restriction on which country a student may join from.',
   },
@@ -194,6 +200,7 @@ function buildStaticHtml() {
         <section>
           <h2>${escapeHtml(section.heading)}</h2>
           <p>${escapeHtml(section.body)}</p>
+          ${section.actionText && section.actionHref ? `<p><a href="${escapeHtml(section.actionHref)}">${escapeHtml(section.actionText)}</a></p>` : ''}
         </section>`).join('')
 
   const faqItems = FAQS.map((faq) => `

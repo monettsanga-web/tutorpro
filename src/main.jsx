@@ -33,7 +33,7 @@ createRoot(rootElement).render(
       <VisitorCountry />
       <PremiumMotion />
       <App />
-      <SupportChatWidget />
+      <SupportChatWidget openOnWebsiteEvent />
     </ErrorBoundary>
   </StrictMode>,
 )
