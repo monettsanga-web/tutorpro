@@ -8055,6 +8055,14 @@ body:has(.auth-shell--student-register) .messenger-float {
   }
 }
 
+/* FOR THE MEANTIME: the discount enquiry card standing in for the price grid.
+   Inside the pricing section it has no section wrapper of its own, so it gets
+   the vertical breathing room the wrapper used to provide. Flipping
+   SHOW_PRICE_CARDS back to true in src/App.jsx removes this case entirely. */
+.pricing .discount-promo__card--embedded {
+  margin: 6px auto 14px;
+}
+
 /* ===========================================================================
    TEACHER APPLICATION — entry point, desktop-only notice, phone layout
    ---------------------------------------------------------------------------

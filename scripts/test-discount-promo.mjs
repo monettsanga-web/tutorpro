@@ -22,7 +22,9 @@ const faqIndex = app.indexOf('<FAQ onBook={openRegistration} />', promoIndex)
 check(pricingIndex >= 0 && promoIndex > pricingIndex && faqIndex > promoIndex,
   'the discount section sits immediately after pricing and before the FAQ')
 
-const componentStart = app.indexOf('function DiscountPromo()')
+// The component now takes an `embedded` prop (the pricing section borrows the
+// card while the price cards are hidden), so match on the open paren.
+const componentStart = app.indexOf('function DiscountPromo(')
 const componentEnd = app.indexOf('\nfunction FAQ(', componentStart)
 const component = app.slice(componentStart, componentEnd)
 check(component.includes('Looking for a Special Discount?'), 'the requested headline is present')
