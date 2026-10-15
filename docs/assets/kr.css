@@ -1,0 +1,747 @@
+/* =====================================================================
+   Korean pages — shared stylesheet
+   =====================================================================
+   The Korean section used a dark purple theme that matched nothing else on
+   the site. A parent arriving from Naver, then clicking through to the main
+   site, saw two different companies. This brings Korea onto the same warm,
+   light brand as the homepage.
+
+   KOREAN TYPOGRAPHY NOTES (the part most non-Korean sites get wrong)
+
+   1. word-break: keep-all
+      Korean has no spaces inside a word (어절). Default CSS breaks lines
+      anywhere, so 화상영어를 can split as 화상영/어를. To a Korean reader that
+      looks broken. keep-all forces breaks at spaces only. This single
+      property is the biggest visual tell of a professionally made Korean
+      page.
+
+   2. Line height
+      Hangul is denser than Latin text and needs more vertical room. 1.75+
+      for body copy, not the 1.5 that suits English.
+
+   3. Font stack
+      Pretendard is the de-facto standard Korean web font. It is loaded from
+      a CDN with a full system fallback, so the page still renders correctly
+      in the sandboxed preview or if the CDN is blocked.
+
+   4. Numerals and Latin
+      Prices and brand names stay Latin, so the stack must handle both
+      without the jarring width mismatch older Korean fonts produce.
+   ===================================================================== */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  --ink: #321568;
+  --ink-2: #54338f;
+  --text: #2f2450;
+  --muted: #6b6379;
+  --cream: #e9fac6;
+  --cream-2: #fffef9;
+  --paper: #ffffff;
+  --coral: #ff4f87;
+  --coral-dark: #e73876;
+  --gold: #ffd54a;
+  --sky: #dceeff;
+  --mint: #dff5a7;
+  --line: #e7e3ee;
+  --shadow-sm: 0 8px 24px rgba(50, 21, 104, 0.07);
+  --shadow-md: 0 16px 44px rgba(50, 21, 104, 0.10);
+  --shadow-lg: 0 28px 70px rgba(50, 21, 104, 0.15);
+  --radius-sm: 14px;
+  --radius-md: 22px;
+  --radius-lg: 32px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--cream-2);
+  color: var(--text);
+  /* Pretendard is not bundled — Hangul falls through to the reader's own
+     Korean system font, which renders it properly. 'DM Sans' is added so
+     the Latin words match the rest of the site instead of changing face
+     mid-sentence. */
+  font-family: 'Pretendard Variable', Pretendard, 'DM Sans', -apple-system, BlinkMacSystemFont,
+    'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.8;
+  /* See note 1 above. Applied at the root so nothing is missed. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { width: min(1080px, calc(100% - 40px)); margin-inline: auto; }
+.wrap--narrow { width: min(760px, calc(100% - 40px)); }
+
+a { color: var(--coral-dark); }
+
+/* ---------------------------------------------------------------- */
+/* Header                                                            */
+/* ---------------------------------------------------------------- */
+
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 254, 249, 0.88);
+  backdrop-filter: blur(14px);
+}
+
+.site-head__inner {
+  display: flex;
+  min-height: 74px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  font-size: 1.06rem;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.brand img { width: 42px; height: 42px; border-radius: 13px; }
+
+.head-actions { display: flex; align-items: center; gap: 14px; }
+
+.head-lang {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.head-lang:hover { color: var(--ink); }
+
+/* ---------------------------------------------------------------- */
+/* Buttons                                                           */
+/* ---------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 14px 26px;
+  background: var(--coral);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1.006rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 12px 26px rgba(255, 79, 135, 0.28);
+  transition: transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s ease, background .2s ease;
+}
+
+.btn:hover { transform: translateY(-2px); background: var(--coral-dark); box-shadow: 0 16px 32px rgba(255,79,135,.34); }
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.btn--ghost {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--ghost:hover { background: #fff; border-color: #cfc7de; box-shadow: var(--shadow-md); }
+
+.btn--sm { padding: 11px 20px; font-size: .95rem; }
+
+/* ---------------------------------------------------------------- */
+/* Hero                                                              */
+/* ---------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 64px 0 56px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(223,245,167,.55), transparent 44%),
+    radial-gradient(circle at 92% 8%, rgba(255,79,135,.10), transparent 46%),
+    var(--cream-2);
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: 1.08fr .92fr;
+  gap: 52px;
+  align-items: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(50,21,104,.12);
+  border-radius: 999px;
+  padding: 7px 15px;
+  background: rgba(255,255,255,.8);
+  color: var(--ink-2);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0 0 18px;
+  color: var(--ink);
+  font-size: clamp(2rem, 4.2vw, 3rem);
+  font-weight: 800;
+  line-height: 1.32;
+  letter-spacing: -0.03em;
+}
+
+.hero__lede {
+  margin: 0 0 26px;
+  max-width: 30em;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1.85;
+}
+
+.hero__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+
+.hero__note { margin: 0; color: var(--muted); font-size: .93rem; }
+
+.hero__art {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  aspect-ratio: 4 / 3;
+}
+
+.hero__art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------------------------------------------------------------- */
+/* Trust strip                                                       */
+/* ---------------------------------------------------------------- */
+
+.trust {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 46px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.trust div { padding: 20px 18px; background: var(--paper); text-align: center; }
+.trust strong { display: block; color: var(--ink); font-size: 1.32rem; font-weight: 800; letter-spacing: -.02em; }
+.trust span { color: var(--muted); font-size: .88rem; }
+
+/* ---------------------------------------------------------------- */
+/* Sections                                                          */
+/* ---------------------------------------------------------------- */
+
+section { padding: 62px 0; }
+section.tight { padding: 44px 0; }
+section.alt { background: linear-gradient(180deg, #fff 0%, #fcfaff 100%); border-block: 1px solid var(--line); }
+
+.kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--coral-dark);
+  font-size: .88rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: -.025em;
+}
+
+h3 { margin: 0 0 8px; color: var(--ink); font-size: 1.1rem; font-weight: 800; }
+
+p { margin: 0 0 16px; color: var(--muted); }
+
+.section-lede { max-width: 46em; font-size: 1.05rem; }
+
+/* ---------------------------------------------------------------- */
+/* Cards                                                             */
+/* ---------------------------------------------------------------- */
+
+.grid { display: grid; gap: 18px; }
+.grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 26px 24px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s ease;
+}
+
+.card--lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+.card__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 15px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--mint);
+  /* Icons are inline SVG on currentColor rather than emoji: emoji render as
+     empty boxes when the OS lacks the glyph, and look different on every
+     platform even when they work. */
+  color: #3f6212;
+}
+
+.card__icon svg { width: 23px; height: 23px; }
+.card__icon--coral { color: #9d2b52; }
+.card__icon--sky { color: #1f4f82; }
+.card__icon--gold { color: #7a5306; }
+
+.card__icon--coral { background: #ffe3ec; }
+.card__icon--sky { background: var(--sky); }
+.card__icon--gold { background: #fff2c9; }
+
+.card p:last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------- */
+/* Pricing                                                           */
+/* ---------------------------------------------------------------- */
+
+.price-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+
+.price-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 28px 26px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.price-card--feature { border-color: rgba(255,79,135,.4); box-shadow: var(--shadow-md); }
+
+.price-card__tag {
+  position: absolute;
+  top: -12px;
+  left: 26px;
+  border-radius: 999px;
+  padding: 5px 13px;
+  background: var(--coral);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.price-card__amount {
+  display: block;
+  margin: 4px 0 6px;
+  color: var(--ink);
+  font-size: 2.15rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+
+.price-card__amount small { color: var(--muted); font-size: .95rem; font-weight: 600; }
+
+.price-note {
+  margin-top: 18px;
+  border-radius: var(--radius-sm);
+  padding: 15px 18px;
+  background: var(--mint);
+  color: #2f4a12;
+  font-size: .97rem;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- */
+/* Comparison table                                                  */
+/* ---------------------------------------------------------------- */
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+table { width: 100%; border-collapse: collapse; font-size: .98rem; }
+th, td { padding: 15px 18px; text-align: left; border-bottom: 1px solid var(--line); }
+thead th { background: #faf8fd; color: var(--ink); font-size: .88rem; font-weight: 800; }
+tbody tr:last-child td { border-bottom: 0; }
+td strong { color: var(--ink); }
+.yes { color: #1d7a41; font-weight: 800; }
+
+/* ---------------------------------------------------------------- */
+/* Steps                                                             */
+/* ---------------------------------------------------------------- */
+
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; counter-reset: step; }
+
+.step {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 24px 20px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 13px;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--ink);
+  color: var(--gold);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- */
+/* Curriculum strip                                                  */
+/* ---------------------------------------------------------------- */
+
+.books { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 14px; }
+
+.books figure {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.books img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; }
+
+/* ---------------------------------------------------------------- */
+/* FAQ                                                               */
+/* ---------------------------------------------------------------- */
+
+.faq details {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 11px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.faq summary {
+  cursor: pointer;
+  padding: 18px 22px;
+  color: var(--ink);
+  font-size: 1.02rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; float: right; color: var(--coral-dark); font-size: 1.3rem; line-height: 1; }
+.faq details[open] summary::after { content: '\2212'; }
+.faq details[open] summary { border-bottom: 1px solid var(--line); }
+.faq p { margin: 0; padding: 16px 22px 20px; }
+
+/* ---------------------------------------------------------------- */
+/* Contact                                                           */
+/* ---------------------------------------------------------------- */
+
+.contact-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 34px 32px;
+  background:
+    radial-gradient(circle at 6% 0%, rgba(223,245,167,.5), transparent 48%),
+    var(--paper);
+  box-shadow: var(--shadow-md);
+}
+
+.channels { display: flex; flex-wrap: wrap; gap: 11px; margin: 20px 0 16px; }
+
+.channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 20px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: .99rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease;
+}
+
+.channel:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+/* The KakaoTalk tile is a <button> because no KakaoTalk link reliably opens a
+   chat with a phone number, so it copies instead. It must look identical to
+   the surrounding links: a button that looked different would read as a
+   different kind of action. */
+.channel--copy { font-family: inherit; cursor: pointer; }
+.channel--copy:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.channel__dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.fine { color: var(--muted); font-size: .89rem; }
+
+/* ---------------------------------------------------------------- */
+/* Related links                                                     */
+/* ---------------------------------------------------------------- */
+
+.related { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+
+.related a {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s ease;
+}
+
+.related a:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.related span { display: block; margin-top: 7px; color: var(--muted); font-size: .93rem; font-weight: 400; }
+
+/* ---------------------------------------------------------------- */
+/* Final CTA                                                         */
+/* ---------------------------------------------------------------- */
+
+.final {
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  background: linear-gradient(135deg, var(--ink) 0%, #4c1d95 60%, #2b1155 100%);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.final h2 { color: #fff; }
+.final p { color: #d8cfe9; max-width: 40em; margin-inline: auto; }
+.final .btn { background: var(--gold); color: #2b1a05; box-shadow: 0 14px 30px rgba(255,213,74,.3); }
+.final .btn:hover { background: #ffc93a; }
+
+/* ---------------------------------------------------------------- */
+/* Footer                                                            */
+/* ---------------------------------------------------------------- */
+
+.site-foot { border-top: 1px solid var(--line); padding: 34px 0 44px; background: #fbf9f4; }
+.site-foot a { display: inline-block; margin-right: 18px; color: var(--ink-2); font-size: .94rem; font-weight: 600; text-decoration: none; }
+.site-foot a:hover { color: var(--coral-dark); }
+.site-foot p { margin: 12px 0 0; color: var(--muted); font-size: .87rem; }
+
+/* ---------------------------------------------------------------- */
+/* Sticky mobile CTA                                                 */
+/* ---------------------------------------------------------------- */
+
+.sticky-cta { display: none; }
+
+/* ---------------------------------------------------------------- */
+/* Responsive                                                        */
+/* ---------------------------------------------------------------- */
+
+@media (max-width: 940px) {
+  .hero__grid { grid-template-columns: 1fr; gap: 34px; }
+  .hero__art { order: -1; aspect-ratio: 16/10; }
+  .grid--3, .steps { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .related { grid-template-columns: 1fr; }
+  .books { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .trust { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile                                                              */
+/* ------------------------------------------------------------------ */
+/*
+   Audited on a real 375px viewport, the narrowest common phone. Three
+   measured faults drove these rules:
+
+   1. The headline began 423px down a 667px screen, because the hero image
+      was reordered above it. A parent arriving from Naver saw a picture and
+      had to scroll before learning what this is. The image now follows the
+      words and is capped in height.
+
+   2. Seven to eight controls were under 44px tall, the Apple HIG minimum:
+      the brand link at 36px, the language switch at 26px, footer links at
+      27px, an inline link at 19px. Anything below that is genuinely
+      mis-tapped by adult thumbs.
+
+   3. Text at 13px and 14px. Korean at small sizes is harder to read than
+      Latin because the glyphs carry more strokes per character.
+*/
+
+@media (max-width: 860px) {
+  /* Words before picture. The eyebrow, headline and lede lead; the image
+     supports them rather than delaying them. */
+  .hero__grid { grid-template-columns: 1fr; gap: 26px; }
+  .hero__art { order: 2; aspect-ratio: 16 / 10; max-height: 230px; }
+  .grid--3, .grid--2, .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .related { grid-template-columns: 1fr; }
+  .books { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .trust { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 620px) {
+  body {
+    /* 16px minimum: iOS zooms the page on focus for anything smaller. */
+    font-size: 16px;
+    line-height: 1.85;
+  }
+
+  .wrap { width: calc(100% - 32px); }
+
+  /* Consistent vertical rhythm. Sections were 40px, which ran the page
+     together; the eye needs a clear gap to know a new idea has started. */
+  section { padding: 44px 0; }
+  section.tight { padding: 34px 0; }
+
+  h1 { font-size: 1.85rem; line-height: 1.36; }
+  h2 { font-size: 1.42rem; }
+  .hero { padding: 26px 0 36px; }
+  .hero__lede { font-size: 1.03rem; margin-bottom: 22px; }
+  .section-lede { font-size: 1.01rem; }
+
+  /* --- tap targets: everything reaches 44px ----------------------- */
+  .site-head__inner { min-height: 62px; }
+  .site-head .btn { display: none; }   /* the sticky bar already covers this */
+
+  .brand {
+    min-height: 44px;
+    padding-block: 4px;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .brand img { width: 36px; height: 36px; }
+
+  .head-lang {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 10px;
+    font-size: .95rem;
+  }
+
+  .btn { width: 100%; padding: 15px 20px; font-size: 1.02rem; }
+  .hero__cta { flex-direction: column; gap: 10px; }
+
+  .faq summary { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; }
+  .faq summary::after { float: none; }
+  .faq p { padding: 15px 18px 18px; }
+
+  .channel { flex: 1 1 100%; justify-content: center; min-height: 50px; }
+
+  .site-foot a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-right: 14px;
+    font-size: .97rem;
+  }
+
+  /* Inline links inside body copy were 19px tall. Padding lifts the target
+     without disturbing the line above or below. */
+  section p > a { display: inline-block; padding-block: 8px; }
+
+  /* --- readable text ---------------------------------------------- */
+  .price-card__tag { font-size: .9rem; padding: 6px 14px; }
+  .fine, .site-foot p, .hero__note { font-size: .92rem; }
+  .trust span { font-size: .9rem; }
+  .related span { font-size: .95rem; }
+
+  /* --- layout ------------------------------------------------------ */
+  /* minmax(0, 1fr), not 1fr. A bare 1fr track is min-content sized, so one
+     long unbreakable run of Latin text - a book title, a URL, "Power Up,
+     Global English, Family and Friends" - pushes the track wider than its
+     parent and the whole page scrolls sideways. Measured at 377px inside a
+     343px column on the Taiwan page. */
+  .grid--3, .grid--2, .steps, .price-grid, .grid { grid-template-columns: minmax(0, 1fr); }
+  .books { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  .card { padding: 22px 20px; }
+  .contact-card, .final { padding: 26px 22px; }
+  .trust { grid-template-columns: repeat(2, 1fr); margin-top: 30px; }
+  .trust div { padding: 16px 12px; }
+  .trust strong { font-size: 1.22rem; }
+
+  /* Wide tables scroll rather than squash, with a hint that they can. */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 460px; }
+  th, td { padding: 13px 14px; }
+
+  /* --- sticky action bar ------------------------------------------- */
+  .sticky-cta {
+    position: fixed;
+    /* inset:0 resolves against the viewport INCLUDING the scrollbar gutter,
+       so the bar came out 18px wider than the visible area and dragged the
+       page sideways. Pinning left only, with an explicit 100% width, keeps
+       it inside the content box. */
+    position: fixed;
+    inset: auto auto 0 0;
+    width: 100%;
+    z-index: 50;
+    display: flex;
+    gap: 9px;
+    padding: 9px 14px calc(9px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: rgba(255,254,249,.97);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -6px 20px rgba(50,21,104,.07);
+  }
+
+  .sticky-cta .btn {
+    flex: 1;
+    width: auto;
+    min-height: 48px;
+    padding: 12px 10px;
+    font-size: .97rem;
+    box-shadow: none;
+  }
+
+  /* Clears the fixed bar so the last line of the footer is never hidden. */
+  .site-foot { padding-bottom: 104px; }
+}
+
+/* Very narrow phones, 360px and below. */
+@media (max-width: 380px) {
+  h1 { font-size: 1.68rem; }
+  .books { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .sticky-cta .btn { font-size: .92rem; padding: 12px 6px; }
+  .brand { font-size: .94rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn, .card, .channel, .related a { transition: none; }
+  .btn:hover, .card--lift:hover, .channel:hover, .related a:hover { transform: none; }
+}
