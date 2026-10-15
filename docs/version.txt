@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-16 incomplete-registration-guard
+TutorPro English production build 2026-10-16 teacher-application-desktop-only-mobile-registration
