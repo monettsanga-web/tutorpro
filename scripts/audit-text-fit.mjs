@@ -19,7 +19,12 @@
  * Exits non-zero on any finding, so it is both the survey and the check.
  */
 import { readFileSync } from 'node:fs'
-import { chromium } from '/home/user/.npm/_npx/eedcb85d74ea43ba/node_modules/playwright-core/index.mjs'
+/* Resolves whichever Playwright this machine has: project install first,
+ * then a global playwright-core. A hard-coded npx cache path breaks the
+ * moment that cache is cleared. */
+const { chromium } = await (async () => {
+  try { return await import('playwright') } catch { return await import('playwright-core') }
+})()
 
 const BASE = 'http://localhost:4173'
 const WIDTHS = [

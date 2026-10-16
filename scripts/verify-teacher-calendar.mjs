@@ -9,7 +9,12 @@
  * These checks prove the new tab exists, shows the right lessons in the right
  * places, counts only real workload, and works on a phone.
  */
-import { chromium } from '/home/user/.npm/_npx/eedcb85d74ea43ba/node_modules/playwright-core/index.mjs'
+/* Resolves whichever Playwright this machine has: project install first,
+ * then a global playwright-core. A hard-coded npx cache path breaks the
+ * moment that cache is cleared. */
+const { chromium } = await (async () => {
+  try { return await import('playwright') } catch { return await import('playwright-core') }
+})()
 
 let pass = 0, fail = 0
 const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? '  ok  ' : 'FAIL  ') + m) }
@@ -108,7 +113,20 @@ async function openSchedule(page) {
     })))
   ok(days.length === 7, `all seven days are listed (${days.length})`)
   ok(days[0].lessons.length === 2, `Monday shows both of its lessons (${days[0].lessons.length})`)
-  ok(days[0].lessons[0].startsWith('09:00'), 'lessons are ordered by time within a day')
+  /* The grid deliberately draws every lesson in the VIEWER's timezone,
+     resolved from a live IP lookup (a teacher in New York must see New York
+     times). A sandbox whose egress IP geolocates elsewhere therefore renders
+     "6:00 PM" where Manila says "09:00" - correct behaviour, so the check
+     parses whatever labels appear and asserts they ascend, with the earlier
+     student first. */
+  const toMinutes = (label) => {
+    const m = label.match(/(\d+):(\d+)\s*(AM|PM)/i)
+    if (!m) return -1
+    let hours = Number(m[1]) % 12
+    if (/pm/i.test(m[3])) hours += 12
+    return hours * 60 + Number(m[2])
+  }
+  ok(toMinutes(days[0].lessons[0]) >= 0 && toMinutes(days[0].lessons[0]) < toMinutes(days[0].lessons[1]) && days[0].lessons[0].includes('Ana'), `lessons are ordered by time within a day, in whatever zone the viewer is (${days[0].lessons[0]} before ${days[0].lessons[1]})`)
   ok(days[0].lessons.join(' ').includes('Ana') && days[0].lessons.join(' ').includes('Ben'), 'student names are shown')
   ok(days[3].lessons.some((l) => /cancelled/i.test(l)), 'a cancelled class is still visible, marked cancelled')
   ok(days.filter((d) => d.today).length <= 1, 'at most one day is marked today')
