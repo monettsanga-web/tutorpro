@@ -82,7 +82,8 @@ import { formatRecordingDuration, formatRecordingSize, isRecordingStorageAvailab
 import SpeechCoachPanel from './SpeechCoachPanel.jsx'
 import { recordJoin, recordLeave } from './classroomAttendance.js'
 import { formatViewerTime } from './timezone.js'
-import { buildRtcConfiguration, connectionFailureAdvice, fetchDynamicIceServers, hasTurnRelay } from './iceServers.js'
+import { buildRtcConfiguration, connectionFailureAdvice, fetchDynamicIceServers, hasDynamicRelay, hasTurnRelay, lastRelayError } from './iceServers.js'
+import { formatConnectionDiagnostics } from './classroomDoctor.js'
 const MAX_INLINE_SIZE = 8 * 1024 * 1024
 const MAX_STORAGE_SIZE = getClassroomFileSizeLimit()
 const rtcConfiguration = buildRtcConfiguration()
@@ -440,6 +441,11 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const [reconnectKey, setReconnectKey] = useState(0)
   const [participantCount, setParticipantCount] = useState(1)
   const [iceDetail, setIceDetail] = useState('')
+  const [pairType, setPairType] = useState('')
+  /* Offer/answer/ICE message counters for the connection doctor: sig-sent
+     with ans-recv:0 means the other device never answered, which points at
+     ITS camera permission or relay rather than this one. */
+  const signalCounts = useRef({ offSent: 0, offRecv: 0, ansSent: 0, ansRecv: 0, iceSent: 0, iceRecv: 0 })
   const [transportStats, setTransportStats] = useState(null)
   const [annotationMode, setAnnotationMode] = useState(false)
   const [annotationTool, setAnnotationTool] = useState('pen')
@@ -718,7 +724,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       // side received nothing at all.
       publishedTracksRef.current = audioTracks.length + Math.min(videoTracks.length, 1)
       peer.onicecandidate = (event) => {
-        if (event.candidate) transportRef.current?.send({ type: 'ice', candidate: event.candidate })
+        if (event.candidate) { signalCounts.current.iceSent += 1; transportRef.current?.send({ type: 'ice', candidate: event.candidate }) }
       }
       peer.ontrack = (event) => {
         const stream = event.streams[0]
@@ -734,6 +740,18 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       // only way out was for someone to leave and rejoin.
       peer.oniceconnectionstatechange = () => {
         setIceDetail(peer.iceConnectionState)
+        /* What kind of pair did we actually get? host/srflx/relay tells the
+           doctor whether the TURN relay is carrying the lesson or whether
+           the networks found each other directly. */
+        const iceState = peer.iceConnectionState
+        if (['connected', 'completed', 'failed', 'disconnected'].includes(iceState)) {
+          peer.getStats().then((stats) => {
+            let localId = null
+            stats.forEach((report) => { if (report.type === 'candidate-pair' && report.state === 'succeeded') localId = report.localCandidateId })
+            const candidate = localId ? stats.get(localId) : null
+            setPairType(candidate?.candidateType || (iceState === 'connected' || iceState === 'completed' ? 'unknown' : 'none'))
+          }).catch(() => {})
+        }
         if (peer.iceConnectionState !== 'failed') return
         try {
           if (typeof peer.restartIce === 'function') peer.restartIce()
@@ -816,6 +834,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         offerStartedAtRef.current = Date.now()
         const offer = await peer.createOffer({ iceRestart: forceRestart })
         await peer.setLocalDescription(offer)
+        signalCounts.current.offSent += 1
         transportRef.current?.send({ type: 'offer', description: peer.localDescription })
       } catch {
         setConnectionStatus('failed')
@@ -884,6 +903,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         return
       }
       if (message.type === 'offer' && !isHost && !useTencentClassroom) {
+        signalCounts.current.offRecv += 1
         let peer = ensurePeer()
         if (peer.signalingState !== 'stable' || ['failed', 'closed'].includes(peer.connectionState)) peer = resetPeer()
         try {
@@ -891,6 +911,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           await flushIce(peer)
           const answer = await peer.createAnswer()
           await peer.setLocalDescription(answer)
+          signalCounts.current.ansSent += 1
           transportRef.current?.send({ type: 'answer', description: peer.localDescription })
         } catch {
           setConnectionStatus('failed')
@@ -898,6 +919,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         return
       }
       if (message.type === 'answer' && isHost && !useTencentClassroom) {
+        signalCounts.current.ansRecv += 1
         const peer = ensurePeer()
         if (peer.signalingState !== 'have-local-offer') return
         try {
@@ -910,6 +932,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         return
       }
       if (message.type === 'ice' && message.candidate && !useTencentClassroom) {
+        signalCounts.current.iceRecv += 1
         const peer = ensurePeer()
         if (peer.remoteDescription) {
           try { await peer.addIceCandidate(message.candidate) } catch { /* Ignore stale candidates. */ }
@@ -2148,15 +2171,17 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   const connectionAdvice = connectionFailureAdvice({ bothPresent: participantCount > 1 })
   // Surfaced to staff only. Without this a stalled call gives no clue whether
   // signalling, ICE gathering or the relay itself is the problem.
-  const connectionDiagnostics = [
-    `peer:${connectionStatus}`,
-    `ice:${iceDetail || 'n/a'}`,
-    `signalling:${signalingStatus}`,
-    `in-room:${participantCount}`,
-    transportStats ? `sig-sent:${transportStats.sent}/recv:${transportStats.received}` : '',
-    transportStats && !transportStats.databaseEnabled ? 'durable:off' : '',
-    transportStats?.lastError ? `err:${transportStats.lastError}` : '',
-  ].filter(Boolean).join(' · ')
+  const connectionDiagnostics = formatConnectionDiagnostics({
+    connectionStatus,
+    iceDetail,
+    pairType,
+    signalingStatus,
+    participantCount,
+    transportStats,
+    relayMinted: hasDynamicRelay(),
+    relayError: lastRelayError(),
+    signalCounts: signalCounts.current,
+  })
   const connectionHelpText = connectionAdvice.detail
   const showRelayWarning = participantCount > 1
     && !hasTurnRelay()
@@ -2519,7 +2544,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         </div>
       </header>
 
-      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'Connecting from mainland China' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? (voovFallbackLink ? 'Cross-border video is restricted from mainland China. Use the backup meeting below for video. In mainland China install 腾讯会议 (Tencent Meeting), not VooV — the two join the same room.' : 'Cross-border video is restricted from mainland China, so the relay used elsewhere cannot serve this connection. Chat, the lesson board and shared files still work. Ask your teacher for a VooV or WeChat call for the video.') : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''}{account.role !== 'student' ? ` · ${connectionDiagnostics}` : ''}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
+      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'Connecting from mainland China' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? (voovFallbackLink ? 'Cross-border video is restricted from mainland China. Use the backup meeting below for video. In mainland China install 腾讯会议 (Tencent Meeting), not VooV — the two join the same room.' : 'Cross-border video is restricted from mainland China, so the relay used elsewhere cannot serve this connection. Chat, the lesson board and shared files still work. Ask your teacher for a VooV or WeChat call for the video.') : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''} · {connectionDiagnostics}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
 
       <div className="classroom-workspace">
         <section className="classroom-stage">
