@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-16 receive-only-classroom-fallback
+TutorPro English production build 2026-10-16 handshake-tiebreak

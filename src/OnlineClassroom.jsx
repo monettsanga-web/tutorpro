@@ -445,7 +445,20 @@ export default function OnlineClassroom({ booking, account, onExit }) {
   /* Offer/answer/ICE message counters for the connection doctor: sig-sent
      with ans-recv:0 means the other device never answered, which points at
      ITS camera permission or relay rather than this one. */
-  const signalCounts = useRef({ offSent: 0, offRecv: 0, ansSent: 0, ansRecv: 0, iceSent: 0, iceRecv: 0 })
+  const signalCounts = useRef({ offSent: 0, offRecv: 0, ansSent: 0, ansRecv: 0, iceSent: 0, iceRecv: 0, reqSent: 0, reqRecv: 0, rdySent: 0, rdyRecv: 0 })
+  /* WebRTC needs exactly one offerer. isHost derives it from the booking, but
+     if that derivation ever agrees on the same side for both devices (or the
+     booking ids are missing) neither end offers and the pair waits forever.
+     hostMode is the live, correctable copy: when the doctor sees a room of two
+     with no offer or answer for six seconds, the participant ids break the tie
+     deterministically - both devices compute the same winner, one flips, and
+     the handshake runs. tieFired records that this ever happened so the doctor
+     line proves it instead of hiding it. */
+  const [tieOverride, setTieOverride] = useState(null)
+  const [tieFired, setTieFired] = useState(false)
+  const hostMode = tieOverride === null ? isHost : tieOverride
+  const presencePeersRef = useRef([])
+  const handshakeSilenceRef = useRef({ total: 0, since: 0, pairSince: 0 })
   const [transportStats, setTransportStats] = useState(null)
   const [annotationMode, setAnnotationMode] = useState(false)
   const [annotationTool, setAnnotationTool] = useState('pen')
@@ -718,6 +731,16 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     if (!joined || !access.allowed || !relayReady) return undefined
     let active = true
 
+    /* Control-message counters make the handshake visible in the doctor: a
+       guest that never receives an offer and a host that never receives a
+       join-request look identical in the offer/answer counters, but the
+       req/rdy pair tells them apart at a glance. */
+    const sendControl = (msg) => {
+      if (msg.type === 'join-request') signalCounts.current.reqSent += 1
+      if (msg.type === 'teacher-ready') signalCounts.current.rdySent += 1
+      transportRef.current?.send(msg)
+    }
+
     const ensurePeer = () => {
       if (peerRef.current) return peerRef.current
       const peer = new RTCPeerConnection(rtcConfigRef.current)
@@ -765,7 +788,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
           if (typeof peer.restartIce === 'function') peer.restartIce()
           // Only the teacher re-offers, so both sides cannot renegotiate at
           // once and glare.
-          if (isHost) void sendTeacherOffer(true)
+          if (hostMode) void sendTeacherOffer(true)
         } catch { /* The periodic reconnect below is the backstop. */ }
       }
       peer.onconnectionstatechange = () => {
@@ -790,13 +813,13 @@ export default function OnlineClassroom({ booking, account, onExit }) {
                 publishedTracksRef.current = localStreamRef.current.getTracks().length
               } catch { /* Renegotiation below is the fallback. */ }
             }
-            if (isHost) void sendTeacherOffer(true)
-            else transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
+            if (hostMode) void sendTeacherOffer(true)
+            else sendControl({ type: 'join-request', role: account.role, reconnect: true })
           }, 3000)
         }
         else if (['failed', 'disconnected', 'closed'].includes(status)) {
           setConnectionStatus(status)
-          if (status !== 'closed' && !isHost) transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: true })
+          if (status !== 'closed' && !hostMode) sendControl({ type: 'join-request', role: account.role, reconnect: true })
         } else setConnectionStatus('connecting')
       }
       return peer
@@ -858,11 +881,14 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         const others = Array.isArray(message.peers)
           ? message.peers.filter((peer) => String(peer) !== participantIdRef.current)
           : null
+        presencePeersRef.current = others || []
+        const silence = handshakeSilenceRef.current
+        if (others && others.length) { if (!silence.pairSince) silence.pairSince = Date.now() } else silence.pairSince = 0
         const count = others ? Math.max(1, others.length + 1) : Math.max(1, Number(message.count) || 1)
         setParticipantCount(count)
         if (count > 1 && !useTencentClassroom) {
-          if (isHost) transportRef.current?.send({ type: 'teacher-ready' })
-          else transportRef.current?.send({ type: 'join-request', role: account.role })
+          if (hostMode) sendControl({ type: 'teacher-ready' })
+          else sendControl({ type: 'join-request', role: account.role })
         } else if (count === 1) {
           // Presence dropped back to just us. Covers the cases where no 'leave'
           // is ever sent: the other side closed the tab, shut the laptop or
@@ -894,23 +920,25 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         offerStartedAtRef.current = 0
         return
       }
-      if (message.type === 'teacher-ready' && !isHost && !useTencentClassroom) {
-        transportRef.current?.send({ type: 'join-request', role: account.role })
+      if (message.type === 'teacher-ready' && !hostMode && !useTencentClassroom) {
+        signalCounts.current.rdyRecv += 1
+        sendControl({ type: 'join-request', role: account.role })
         return
       }
-      if (message.type === 'join-request' && isHost) {
+      if (message.type === 'join-request') signalCounts.current.reqRecv += 1
+      if (message.type === 'join-request' && hostMode) {
         // A student just arrived. If the teacher is already in the room, tell
         // them immediately so they are not left waiting.
         if (joined) transportRef.current?.send({ type: 'teacher-present', present: true })
       }
-      if (message.type === 'join-request' && isHost && !useTencentClassroom) {
+      if (message.type === 'join-request' && hostMode && !useTencentClassroom) {
         transportRef.current?.send({ type: 'annotation-permission', allowed: annotationPermissionRef.current })
         transportRef.current?.send({ type: 'pointer-permission', allowed: pointerPermissionRef.current })
         if (studentMuted) transportRef.current?.send({ type: 'mute-student', muted: true })
         await sendTeacherOffer(Boolean(message.reconnect))
         return
       }
-      if (message.type === 'offer' && !isHost && !useTencentClassroom) {
+      if (message.type === 'offer' && !hostMode && !useTencentClassroom) {
         signalCounts.current.offRecv += 1
         let peer = ensurePeer()
         if (peer.signalingState !== 'stable' || ['failed', 'closed'].includes(peer.connectionState)) peer = resetPeer()
@@ -926,7 +954,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         }
         return
       }
-      if (message.type === 'answer' && isHost && !useTencentClassroom) {
+      if (message.type === 'answer' && hostMode && !useTencentClassroom) {
         signalCounts.current.ansRecv += 1
         const peer = ensurePeer()
         if (peer.signalingState !== 'have-local-offer') return
@@ -1140,25 +1168,45 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         if (useTencentClassroom) return
         if (status === 'connected' || status === 'local' || status === 'fallback') {
           setConnectionStatus((current) => current === 'connected' ? current : 'waiting')
-          if (account.role === 'teacher') transportRef.current?.send({ type: 'teacher-ready' })
-          else transportRef.current?.send({ type: 'join-request', role: account.role })
+          if (hostMode) sendControl({ type: 'teacher-ready' })
+          else sendControl({ type: 'join-request', role: account.role })
         } else setConnectionStatus(status)
       },
     })
     if (!useTencentClassroom) ensurePeer()
 
     const connectionReminder = useTencentClassroom ? null : window.setInterval(() => {
+      /* Self-healing role tie-break. If two people have been in the room for
+         six seconds and not one offer or answer has flowed, both devices
+         believe they are the same side of the handshake - the one derivation
+         failure WebRTC cannot recover from by itself. Participant ids order
+         the pair identically on both ends, so the lower id hosts: exactly one
+         device flips, the guest's join-request meets the host's offer, and the
+         lesson connects without anybody touching anything. The doctor reports
+         tie:on when this ever fires so the underlying derivation bug stays
+         visible instead of being papered over. */
+      const counts = signalCounts.current
+      const total = counts.offSent + counts.offRecv + counts.ansSent + counts.ansRecv
+      const now = Date.now()
+      const silence = handshakeSilenceRef.current
+      if (!silence.since) silence.since = now
+      if (total !== silence.total) { silence.total = total; silence.since = now }
+      const other = presencePeersRef.current[0]
+      if (other && silence.pairSince && now - silence.pairSince > 6000 && now - silence.since > 6000) {
+        const shouldBeHost = String(participantIdRef.current) < String(other)
+        if (shouldBeHost !== hostMode) { setTieFired(true); setTieOverride(shouldBeHost) }
+      }
       if (peerRef.current?.connectionState === 'connected') return
       // 'connecting' with a long-outstanding offer means the handshake stalled,
       // which the browser never reports as 'failed'. Ask for a restart in that
       // case too, otherwise the pair can wait indefinitely.
       const stalled = offerStartedAtRef.current && Date.now() - offerStartedAtRef.current > 7000
       const needsRestart = ['failed', 'disconnected'].includes(peerRef.current?.connectionState) || stalled
-      if (isHost) {
+      if (hostMode) {
         if (needsRestart) void sendTeacherOffer(true)
-        else transportRef.current?.send({ type: 'teacher-ready' })
+        else sendControl({ type: 'teacher-ready' })
       } else {
-        transportRef.current?.send({ type: 'join-request', role: account.role, reconnect: needsRestart })
+        sendControl({ type: 'join-request', role: account.role, reconnect: needsRestart })
       }
     }, 2500)
 
@@ -1172,7 +1220,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
       pendingIceRef.current = []
       offerStartedAtRef.current = 0
     }
-  }, [joined, access.allowed, relayReady, mediaReady, isHost, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
+  }, [joined, access.allowed, relayReady, mediaReady, hostMode, tieOverride, account.role, roomBooking.id, roomBooking.classroomId, roomBooking.classroomToken, reconnectKey, useTencentClassroom, studentMuted])
 
   useEffect(() => {
     if (!joined || !access.allowed || !useTencentClassroom) return undefined
@@ -2190,6 +2238,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     relayError: lastRelayError(),
     mediaState: mediaReady ? 'ok' : (mediaError ? 'failed' : 'none'),
     mediaError,
+    side: hostMode ? 'host' : 'guest',
+    tieBreak: tieFired,
     signalCounts: signalCounts.current,
   })
   const connectionHelpText = connectionAdvice.detail

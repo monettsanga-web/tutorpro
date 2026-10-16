@@ -19,10 +19,15 @@
  *   media               - whether this device's camera/mic actually started
  *                         (failed + the permission error is the other classic
  *                         cause of a one-sided call);
- *   sig/ans/ice sent    - whether the offer actually reached the other side
- *                         and an answer came back (sig-sent with ans-recv:0
- *                         means the other device never answered - usually
- *                         its camera permission or its own relay);
+ *   side / tie          - which end of the handshake this device believes it
+ *                         is (host offers, guest answers); two devices that
+ *                         agree on the same side can never connect, and the
+ *                         classroom now breaks that tie by participant id -
+ *                         tie:on confesses when the tie-break had to fire;
+ *   sig/ans/req/rdy     - offer, answer, join-request and teacher-ready
+ *                         counters: sig-sent with ans-recv:0 means the other
+ *                         device never answered, req-sent with sig-recv:0
+ *                         means nobody ever offered;
  *   rt-sent / durable   - the Realtime transport's own counters and whether
  *                         the durable (database) path is on.
  *
@@ -54,8 +59,12 @@ export function formatConnectionDiagnostics(facts) {
     relayError ? `relayerr:${relayError}` : '',
     `media:${mediaState}`,
     mediaState === 'failed' && mediaError ? `mediaerr:${mediaError}` : '',
+    `side:${facts?.side || 'n/a'}`,
+    facts?.tieBreak ? 'tie:on' : '',
     `sig-sent:${counts.offSent || 0}/recv:${counts.offRecv || 0}`,
     `ans-sent:${counts.ansSent || 0}/recv:${counts.ansRecv || 0}`,
+    `req-sent:${counts.reqSent || 0}/recv:${counts.reqRecv || 0}`,
+    `rdy-sent:${counts.rdySent || 0}/recv:${counts.rdyRecv || 0}`,
     `ice-sent:${counts.iceSent || 0}/recv:${counts.iceRecv || 0}`,
     transportStats ? `rt-sent:${transportStats.sent}/recv:${transportStats.received}` : '',
     transportStats && !transportStats.databaseEnabled ? 'durable:off' : '',
