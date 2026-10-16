@@ -39,8 +39,12 @@ import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
  * it back to prove it is there. No trigger required, no confirmation email
  * required, and a failure is reported instead of being papered over.
  *
- * It can only ever create a student/family account: the role is hard-coded
- * here, and the database's own insert guard forces the same thing.
+ * It creates exactly two kinds of account: a family (student) account,
+ * active at once, and a teacher APPLICATION, stored as role 'teacher' with
+ * status 'pending' until an administrator approves it. Any other role -
+ * admin above all - is refused before anything is written. The database's
+ * own check constraint allows the same three roles and its trigger resolves
+ * teachers to 'pending' too, so route, trigger and schema agree.
  */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -58,22 +62,69 @@ export default async function handler(req, res) {
     if (password.length < 8) return sendError(res, 400, 'Choose a password of at least 8 characters.')
     if (!profile) return sendError(res, 400, 'The account details were missing.')
 
+    /* WHICH ROLE THIS ROUTE MAY CREATE
+       --------------------------------
+       It used to hard-code `role: 'student'`, while the teacher application
+       in the browser posts here too (src/auth.js -> registerCloudProfile).
+       A completed teacher application therefore landed in `profiles` as an
+       ACTIVE STUDENT: it never appeared in the admin approval queue, and the
+       applicant could sign straight into a family dashboard. The role the
+       client declares is now honoured for exactly two roles:
+
+         student - a family account, active at once (unchanged);
+         teacher - an APPLICATION, stored as role 'teacher' with status
+                   'pending' no matter what the client claimed, so only an
+                   administrator can approve it.
+
+       Anything else - admin above all - is refused here, before any
+       database client is even built. Administrator accounts exist only
+       through the database and the admin route's own check. */
+    const requestedRole = String(profile.role || 'student').trim().toLowerCase()
+    if (requestedRole !== 'student' && requestedRole !== 'teacher') {
+      return sendError(res, 400, 'This route creates family accounts and teacher applications only.')
+    }
+
+    /* The browser validates the application before posting; this route is
+       the last line of defence, so it repeats the same rules. A teacher row
+       written without them would show up in the approval queue as blanks. */
+    if (requestedRole === 'teacher') {
+      const teacher = profile.teacher && typeof profile.teacher === 'object' ? profile.teacher : null
+      const fullName = String(profile.fullName || '').trim()
+      const bio = String(teacher?.bio || '').trim()
+      if (fullName.length < 2 || !String(teacher?.specialization || '').trim() || bio.length < 30 || !teacher?.interview?.completedAt) {
+        return sendError(res, 400, 'Complete the teacher profile and interview before submitting the application.')
+      }
+    }
+
     // An incomplete registration must never reach the database. The browser
     // validates this too, but this route is the last line of defence: a
     // half-filled form (or a client that bypassed the check) must not
-    // create a ghost family in `profiles`.
-    const parentName = String(profile.parentName || '').trim()
-    const child = profile.child && typeof profile.child === 'object'
-      ? profile.child
-      : (Array.isArray(profile.children) ? profile.children[0] : null)
-    const childName = String(child?.name || '').trim()
-    const childYear = String(child?.year || '').trim()
-    const childCurriculum = String(child?.curriculum || '').trim()
-    if (parentName.length < 2 || childName.length < 2 || !childYear || !childCurriculum) {
-      return sendError(res, 400, 'Complete the parent and student profile before creating the account.')
+    // create a ghost family in `profiles`. Family fields only exist on a
+    // student registration, so the check is scoped to that role - a teacher
+    // application carries none of them and has its own rules above.
+    if (requestedRole === 'student') {
+      const parentName = String(profile.parentName || '').trim()
+      const child = profile.child && typeof profile.child === 'object'
+        ? profile.child
+        : (Array.isArray(profile.children) ? profile.children[0] : null)
+      const childName = String(child?.name || '').trim()
+      const childYear = String(child?.year || '').trim()
+      const childCurriculum = String(child?.curriculum || '').trim()
+      if (parentName.length < 2 || childName.length < 2 || !childYear || !childCurriculum) {
+        return sendError(res, 400, 'Complete the parent and student profile before creating the account.')
+      }
     }
 
     const supabase = getSupabaseAdmin()
+
+    /* A teacher application always waits for an administrator: whatever the
+       client claimed, the stored status is 'pending'. The database trigger
+       (handle_tutorpro_user) resolves teachers the same way, so a row
+       written here and a row written by the trigger agree. */
+    const storedStatus = requestedRole === 'teacher' ? 'pending' : 'active'
+    const holderName = requestedRole === 'teacher'
+      ? (String(profile.fullName || '').trim() || 'TutorPro teacher applicant')
+      : (profile.parentName || 'TutorPro parent')
 
     /* `email_confirm: true` is the difference between a parent who can log
        in on their phone tonight and one waiting for an email that the free
@@ -84,8 +135,9 @@ export default async function handler(req, res) {
       password,
       email_confirm: true,
       user_metadata: {
-        role: 'student',
-        display_name: profile.parentName || 'TutorPro parent',
+        role: requestedRole,
+        status: storedStatus,
+        display_name: holderName,
         login_id: profile.loginId || email,
         auth_provider: profile.authProvider || 'email',
       },
@@ -103,18 +155,21 @@ export default async function handler(req, res) {
     if (!userId) return sendError(res, 500, 'Supabase created no user id.')
 
     /* The row the admin dashboard, the bookings and every later login read.
-       Written here rather than hoped for. */
+       Written here rather than hoped for. A teacher application is stored
+       as role 'teacher', status 'pending': that is what puts it in the
+       administrator's approval queue, and what keeps the applicant out of
+       every dashboard until an administrator approves them. */
     const row = {
       id: userId,
-      role: 'student',
-      status: 'active',
+      role: requestedRole,
+      status: storedStatus,
       email,
       login_id: profile.loginId || email,
       auth_provider: profile.authProvider || 'email',
-      parent_name: profile.parentName || null,
-      full_name: profile.parentName || null,
-      display_name: profile.parentName || 'TutorPro parent',
-      profile_data: { ...profile, id: userId, role: 'student', status: 'active' },
+      parent_name: requestedRole === 'teacher' ? null : (profile.parentName || null),
+      full_name: requestedRole === 'teacher' ? (String(profile.fullName || '').trim() || null) : (profile.parentName || null),
+      display_name: holderName,
+      profile_data: { ...profile, id: userId, role: requestedRole, status: storedStatus },
       updated_at: new Date().toISOString(),
     }
 
