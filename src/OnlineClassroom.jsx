@@ -707,7 +707,15 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     // and two of them did not guarantee a camera stream. A peer created with no
     // tracks negotiates perfectly happily and reports "connected" while sending
     // nothing, so both people sat in the room unable to see each other.
-    if (!joined || !access.allowed || !relayReady || !mediaReady) return undefined
+    /* NOTE: mediaReady is deliberately NOT a gate here. When a phone refuses
+       the camera (denied permission, no device, a browser quirk), waiting for
+       media muted the WHOLE device: no message handlers, no peer, no answer -
+       the teacher waited forever on a student who was actually present and
+       whose chat worked fine. A device with no camera now joins receive-only:
+       it can see, hear, answer quizzes and chat, and the pair connects.
+       Enabling media later re-runs this effect (mediaReady is in its deps),
+       which rebuilds the peer with tracks. */
+    if (!joined || !access.allowed || !relayReady) return undefined
     let active = true
 
     const ensurePeer = () => {
@@ -2180,6 +2188,8 @@ export default function OnlineClassroom({ booking, account, onExit }) {
     transportStats,
     relayMinted: hasDynamicRelay(),
     relayError: lastRelayError(),
+    mediaState: mediaReady ? 'ok' : (mediaError ? 'failed' : 'none'),
+    mediaError,
     signalCounts: signalCounts.current,
   })
   const connectionHelpText = connectionAdvice.detail
@@ -2544,7 +2554,7 @@ export default function OnlineClassroom({ booking, account, onExit }) {
         </div>
       </header>
 
-      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'Connecting from mainland China' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? (voovFallbackLink ? 'Cross-border video is restricted from mainland China. Use the backup meeting below for video. In mainland China install 腾讯会议 (Tencent Meeting), not VooV — the two join the same room.' : 'Cross-border video is restricted from mainland China, so the relay used elsewhere cannot serve this connection. Chat, the lesson board and shared files still work. Ask your teacher for a VooV or WeChat call for the video.') : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''} · {connectionDiagnostics}</small></div><div className="classroom-connection-help__actions"><button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
+      {showConnectionHelp && <div className={`classroom-connection-help classroom-connection-help--${connectionStatus}`}><span><WifiOff size={18} /></span><div><strong>{chinaConnection ? 'Connecting from mainland China' : participantCount > 1 ? connectionAdvice.title : 'Waiting for the same booked classroom'}</strong><small>{chinaConnection ? (voovFallbackLink ? 'Cross-border video is restricted from mainland China. Use the backup meeting below for video. In mainland China install 腾讯会议 (Tencent Meeting), not VooV — the two join the same room.' : 'Cross-border video is restricted from mainland China, so the relay used elsewhere cannot serve this connection. Chat, the lesson board and shared files still work. Ask your teacher for a VooV or WeChat call for the video.') : connectionHelpText} Room ID: {roomBooking.classroomId}{showRelayWarning && account.role !== 'student' ? ` · ${connectionAdvice.adminHint}` : ''} · {connectionDiagnostics}</small></div><div className="classroom-connection-help__actions">{!mediaReady && <button type="button" onClick={requestMedia}><Camera size={15} /> Enable camera & mic</button>}<button type="button" onClick={retryConnection}><RefreshCw size={15} /> Retry</button>{voovFallbackLink && <a href={voovFallbackLink} target="_blank" rel="noreferrer"><ExternalLink size={15} /> VooV backup</a>}<button type="button" onClick={() => { setLowBandwidthMode(true); retryConnection() }}>Low bandwidth</button></div></div>}
 
       <div className="classroom-workspace">
         <section className="classroom-stage">

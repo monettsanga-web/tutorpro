@@ -16,6 +16,9 @@
  *                         were minted for this device, and the mint error
  *                         when they were not (the single most common cause
  *                         of "both in the room, no video");
+ *   media               - whether this device's camera/mic actually started
+ *                         (failed + the permission error is the other classic
+ *                         cause of a one-sided call);
  *   sig/ans/ice sent    - whether the offer actually reached the other side
  *                         and an answer came back (sig-sent with ans-recv:0
  *                         means the other device never answered - usually
@@ -36,6 +39,8 @@ export function formatConnectionDiagnostics(facts) {
     transportStats = null,
     relayMinted = false,
     relayError = '',
+    mediaState = 'none',
+    mediaError = '',
     signalCounts = {},
   } = facts || {}
   const counts = signalCounts || {}
@@ -47,6 +52,8 @@ export function formatConnectionDiagnostics(facts) {
     `in-room:${participantCount}`,
     relayMinted ? 'relay:minted' : (relayError ? 'relay:mint-failed' : 'relay:none'),
     relayError ? `relayerr:${relayError}` : '',
+    `media:${mediaState}`,
+    mediaState === 'failed' && mediaError ? `mediaerr:${mediaError}` : '',
     `sig-sent:${counts.offSent || 0}/recv:${counts.offRecv || 0}`,
     `ans-sent:${counts.ansSent || 0}/recv:${counts.ansRecv || 0}`,
     `ice-sent:${counts.iceSent || 0}/recv:${counts.iceRecv || 0}`,

@@ -33,6 +33,11 @@ ok(line.includes('relay:none'), 'no relay and no error reads relay:none')
 ok(line.includes('durable:off'), 'a disabled durable path is flagged')
 ok(line.includes('err:realtime channel closed'), 'transport errors surface')
 
+line = formatConnectionDiagnostics({ ...base, relayMinted: true, mediaState: 'failed', mediaError: 'Camera or microphone permission was denied.', signalCounts: {} })
+ok(line.includes('media:failed') && line.includes('mediaerr:Camera or microphone permission was denied.'), 'a dead camera is named with its permission error')
+line = formatConnectionDiagnostics({ ...base, relayMinted: true, mediaState: 'ok', signalCounts: {} })
+ok(line.includes('media:ok') && !line.includes('mediaerr'), 'a working camera says media:ok with no error')
+
 line = formatConnectionDiagnostics({})
 ok(line.includes('peer:n/a') && line.includes('in-room:0') && line.includes('relay:none'), 'empty facts still produce a readable line')
 
