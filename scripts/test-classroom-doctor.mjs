@@ -38,6 +38,15 @@ ok(line.includes('media:failed') && line.includes('mediaerr:Camera or microphone
 line = formatConnectionDiagnostics({ ...base, relayMinted: true, mediaState: 'ok', signalCounts: {} })
 ok(line.includes('media:ok') && !line.includes('mediaerr'), 'a working camera says media:ok with no error')
 
+line = formatConnectionDiagnostics({ ...base, relayMinted: true, side: 'guest', signalCounts: { reqSent: 9, reqRecv: 0, rdySent: 0, rdyRecv: 7 } })
+ok(line.includes('side:guest'), 'the line says which side of the handshake this device believes it is')
+ok(line.includes('req-sent:9/recv:0') && line.includes('rdy-sent:0/recv:7'), 'join-request/teacher-ready counters separate a silent host from a silent guest')
+ok(!line.includes('tie:'), 'the tie-break flag stays silent until it fires')
+line = formatConnectionDiagnostics({ ...base, side: 'host', tieBreak: true, signalCounts: {} })
+ok(line.includes('side:host') && line.includes('tie:on'), 'a fired tie-break is confessed on the line')
+line = formatConnectionDiagnostics({ ...base, signalCounts: {} })
+ok(line.includes('side:n/a'), 'a missing side reads n/a, not undefined')
+
 line = formatConnectionDiagnostics({})
 ok(line.includes('peer:n/a') && line.includes('in-room:0') && line.includes('relay:none'), 'empty facts still produce a readable line')
 
