@@ -8055,6 +8055,20 @@ body:has(.auth-shell--student-register) .messenger-float {
   }
 }
 
+/* Homepage hero: the teacher-recruitment entry point the owner asked to see
+   above the fold. Quiet like the secondary action, tinted purple so it reads
+   as "for teachers" next to the parent-facing CTAs. */
+.hero__apply-teacher {
+  border-color: #c9b6e8;
+  color: #432a78;
+}
+
+.hero__apply-teacher:hover {
+  border-color: #321568;
+  background: #321568;
+  color: #fff;
+}
+
 /* FOR THE MEANTIME: the discount enquiry card standing in for the price grid.
    Inside the pricing section it has no section wrapper of its own, so it gets
    the vertical breathing room the wrapper used to provide. Flipping
