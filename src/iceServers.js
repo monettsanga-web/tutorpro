@@ -100,19 +100,34 @@ export function buildRtcConfiguration({ relayOnly = false } = {}) {
  * several times and there is no reason to mint fresh credentials each attempt.
  */
 let cachedDynamic = null
+/* WHY the last mint failed, for the connection doctor. An empty relay list
+   with no reason is exactly what made a stalled call undiagnosable: the
+   banner said "reconnecting" while the real fault (a 401, a missing secret,
+   a Cloudflare 4xx) sat swallowed in a catch block. */
+let relayLastError = ''
+
+/** The last relay-mint failure on this device, or '' when none / minted. */
+export function lastRelayError() {
+  return relayLastError
+}
 
 export async function fetchDynamicIceServers() {
   if (cachedDynamic && cachedDynamic.expiresAt > Date.now()) return cachedDynamic.iceServers
-  if (!isSupabaseConfigured || !supabase) return []
+  if (!isSupabaseConfigured || !supabase) { relayLastError = 'supabase not configured on this build'; return [] }
   try {
     const { data, error } = await supabase.functions.invoke('turn-credentials', { body: {} })
-    if (error || !data?.configured || !Array.isArray(data.iceServers) || !data.iceServers.length) return []
+    if (error || !data?.configured || !Array.isArray(data.iceServers) || !data.iceServers.length) {
+      relayLastError = data?.error || error?.message || 'the turn-credentials function returned no relay'
+      return []
+    }
     const expiresAt = data.expiresAt ? new Date(data.expiresAt).getTime() : Date.now() + 30 * 60 * 1000
     cachedDynamic = { iceServers: data.iceServers, expiresAt }
+    relayLastError = ''
     return data.iceServers
-  } catch {
+  } catch (mintError) {
     // Never block a lesson because credentials could not be minted: the direct
-    // peer-to-peer path is still attempted.
+    // peer-to-peer path is still attempted. But say so, loudly, in the doctor.
+    relayLastError = mintError?.message || 'relay mint threw'
     return []
   }
 }
