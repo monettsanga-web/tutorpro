@@ -87,7 +87,7 @@ ok(res.statusCode === 500 && /service role is not configured/i.test(res.body?.er
 
 const source = readFileSync(new URL('../api/auth/register.js', import.meta.url), 'utf8')
 ok(source.includes("const storedStatus = requestedRole === 'teacher' ? 'pending' : 'active'"), 'the route forces teacher applications to status pending')
-ok(/role: requestedRole,\n      status: storedStatus,/.test(source), 'the profiles row carries the declared role and the forced status')
+ok(source.includes('role: requestedRole,\n      status: storedStatus,'), 'the profiles row carries the declared role and the forced status')
 ok(!/user_metadata: \{\n\s*role: 'student'/.test(source) && !/const row = \{\n\s*id: userId,\n\s*role: 'student'/.test(source), 'no hard-coded student role remains in the write path')
 
 console.log(`\n${pass} passed, ${fail} failed`)
