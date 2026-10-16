@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-16 classroom-connection-doctor
+TutorPro English production build 2026-10-16 receive-only-classroom-fallback
