@@ -31,13 +31,21 @@ aspirational.
    `student` and `teacher` (stored `pending`), refuses every other role
    before touching the database, and re-validates teacher profiles
    server-side. Guarded by `scripts/test-register-role.mjs`.
-2. **Classroom dark in production (stage 2).** The full WebRTC classroom
-   exists but `classroomFeature.js` keeps it unloaded to protect the Supabase
-   free tier. Relighting it requires Tencent TRTC credentials
-   (`VITE_TRTC_SDK_APP_ID` + the `trtc-usersig` Edge Function secret) and the
-   Cloudflare TURN key. Plan: a setup/diagnostics screen that names each
-   missing credential, plus this document as the configuration guide. No
-   simulated video, ever.
+2. **Classroom relit globally, mainland China excepted (stage 2, shipped).**
+   Owner decision 2026-10-16: the school serves students everywhere EXCEPT
+   mainland China, whose national network cannot hold a real-time media
+   session. `CLASSROOM_ENABLED` is back to `true` and the lazy imports in
+   `classroomLazy.js` are restored, so the classroom chunk loads only when
+   somebody enters a class (homepage egress unchanged: 3 requests / 4.7 kB
+   per minute). `classroomRegionNotice()` reads the existing IP-country hint
+   and replaces the entry button with a visible, plain explanation for CN
+   visitors - at the card, the three dashboard mounts and the join handler.
+   The default transport is the built-in plain-WebRTC path (Supabase Realtime
+   signalling + TURN); TRTC remains an opt-in only, and is not needed.
+   **Remaining owner task:** set `VITE_CLASSROOM_TURN_URL/USERNAME/CREDENTIAL`
+   in Vercel to a TLS-443 relay (Cloudflare Calls or an HK coturn) so families
+   behind strict NAT or mobile data connect reliably. Without it the call
+   falls back to STUN-only and some networks will fail.
 3. **Price display mismatch (stage 3).** Marketing cards say $10/$20 while
    checkout, dashboards and the pricing page use the owner-confirmed $8/$7.
    Cards are hidden behind `SHOW_PRICE_CARDS` in `src/App.jsx` until the
@@ -51,10 +59,10 @@ aspirational.
 ## 3. Staged plan (next increments, in order)
 
 - **Stage 1 — role integrity (this change).** Done: route fix + suite.
-- **Stage 2 — classroom relight path.** Diagnostics screen listing missing
-  credentials; owner supplies TRTC/TURN keys; flip `classroomFeature.js`;
-  run the 8 classroom suites (`test:handshake`, `:sharing`, `:signalling`,
-  `:roles`, `:presence`, `:media`, `:reach`, `:ice`) against staging.
+- **Stage 2 — classroom relight (shipped).** Global relight with the China
+  gate; all 8 classroom suites green (169 assertions) plus
+  `verify:classroomgate` (11) and `verify:classroomoff` (8). TURN relay
+  configuration remains the owner's Vercel task, documented above.
 - **Stage 3 — pricing truth.** Correct card prices to $8/$7, restore
   `SHOW_PRICE_CARDS = true`, keep the discount card as the standalone
   `#class-discounts` section.
