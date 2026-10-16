@@ -7563,6 +7563,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [showAddTeacher, setShowAddTeacher] = useState(false)
   // Teachers who exist only in this browser and so cannot sign in elsewhere.
   const [teacherToFix, setTeacherToFix] = useState(null)
+  /* Bulk twin of TeacherLoginFixDialog. Profiles created on one browser before
+     logins lived in the shared database stay invisible to every other device
+     until a cloud login exists - the owner hit exactly this: eleven teachers
+     on the laptop, three on the desktop, because eight had never been pushed.
+     One button now runs the per-teacher fix for all of them in sequence. */
+  const [bulkLoginFix, setBulkLoginFix] = useState(null)
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
@@ -7610,6 +7616,40 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   // Added before logins were written to the shared database, so they exist
   // in this browser alone and cannot sign in anywhere else.
   const teachersMissingLogin = teachersWithoutLogin(teachers)
+  const fixAllTeacherLogins = async () => {
+    if (bulkLoginFix?.busy) return
+    setBulkLoginFix({ busy: true, results: [] })
+    const results = []
+    for (const teacher of teachersMissingLogin) {
+      const password = suggestTemporaryPassword()
+      try {
+        const created = await createTeacherWithPassword({
+          fullName: teacher.fullName,
+          email: teacher.email || teacher.loginId,
+          password,
+          specialization: teacher.teacher?.specialization,
+          experience: teacher.teacher?.experience,
+          education: teacher.teacher?.education,
+          languages: teacher.teacher?.languages,
+          bio: teacher.teacher?.bio,
+          status: teacher.status === 'pending' ? 'pending' : 'approved',
+        })
+        const relinked = relinkTeacherAccount(teacher.id, created.id)
+        // Their lessons are keyed on the old id, so move them across and push
+        // each one to the shared database - same contract as the single fix.
+        const moved = reassignTeacherBookings(teacher.id, created.id)
+        if (cloudSyncEnabled()) {
+          await Promise.allSettled(moved.map((booking) => syncBookingNow(booking)))
+          await updateCloudProfile(relinked).catch(() => {})
+        }
+        results.push({ name: teacher.fullName, email: created.email, password, moved: moved.length })
+      } catch (fixError) {
+        results.push({ name: teacher.fullName, error: describeTeacherCreateError(fixError) })
+      }
+    }
+    setBulkLoginFix({ busy: false, results })
+    refresh()
+  }
   const students = getAccounts('student')
   const studentProfiles = students.flatMap((student) => {
     const learners = student.children?.length ? student.children : student.child ? [student.child] : []
@@ -8580,7 +8620,15 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them, or create every shared login at once — their lessons move across with them.</span><div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap' }}><button type="button" className="portal-primary-button" onClick={fixAllTeacherLogins} disabled={bulkLoginFix?.busy}>{bulkLoginFix?.busy ? `Creating ${teachersMissingLogin.length} shared logins…` : `Create shared logins for all ${teachersMissingLogin.length}`}</button><small>Runs here, uploads each profile to the shared database, and every device then sees the same roster.</small></div></div></div>}
+      {bulkLoginFix && !bulkLoginFix.busy && bulkLoginFix.results.length > 0 && (
+        <section className="portal-card" style={{ marginTop: '14px' }}>
+          <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Shared login results</span><h2>Hand each teacher these credentials</h2><p>These profiles now live in the shared database. Your other devices pick them up on their next refresh.</p></div><button type="button" className="portal-text-button" onClick={() => setBulkLoginFix(null)}>Dismiss</button></div>
+          {bulkLoginFix.results.map((item) => (item.error
+            ? <div className="portal-error" role="alert" key={item.name} style={{ margin: '6px 0' }}><strong>{item.name}:</strong> {item.error}</div>
+            : <div key={item.name} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}><strong>{item.name}</strong><span>{item.email}</span><code style={{ background: 'rgba(0,0,0,0.06)', padding: '2px 8px', borderRadius: '6px' }}>{item.password}</code><small>{item.moved} booking{item.moved === 1 ? '' : 's'} moved across</small></div>))}
+        </section>
+      )}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
