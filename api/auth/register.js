@@ -58,6 +58,21 @@ export default async function handler(req, res) {
     if (password.length < 8) return sendError(res, 400, 'Choose a password of at least 8 characters.')
     if (!profile) return sendError(res, 400, 'The account details were missing.')
 
+    // An incomplete registration must never reach the database. The browser
+    // validates this too, but this route is the last line of defence: a
+    // half-filled form (or a client that bypassed the check) must not
+    // create a ghost family in `profiles`.
+    const parentName = String(profile.parentName || '').trim()
+    const child = profile.child && typeof profile.child === 'object'
+      ? profile.child
+      : (Array.isArray(profile.children) ? profile.children[0] : null)
+    const childName = String(child?.name || '').trim()
+    const childYear = String(child?.year || '').trim()
+    const childCurriculum = String(child?.curriculum || '').trim()
+    if (parentName.length < 2 || childName.length < 2 || !childYear || !childCurriculum) {
+      return sendError(res, 400, 'Complete the parent and student profile before creating the account.')
+    }
+
     const supabase = getSupabaseAdmin()
 
     /* `email_confirm: true` is the difference between a parent who can log

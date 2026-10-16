@@ -132,6 +132,32 @@ function friendlyAuthMessage(message = '') {
 
 export async function registerCloudProfile({ login, password, provider, account }) {
   if (!supabase) return null
+
+  // Never persist an incomplete registration to the database. The browser
+  // forms validate this before calling us, but a half-filled account (or a
+  // caller that bypassed the form) must not create a ghost profile row.
+  if (account?.role === 'student') {
+    const parentName = String(account.parentName || '').trim()
+    const child = account.child && typeof account.child === 'object'
+      ? account.child
+      : (Array.isArray(account.children) ? account.children[0] : null)
+    const childName = String(child?.name || '').trim()
+    const childYear = String(child?.year || '').trim()
+    const childCurriculum = String(child?.curriculum || '').trim()
+    if (parentName.length < 2 || childName.length < 2 || !childYear || !childCurriculum) {
+      throw new Error('Complete the parent and student profile before creating the account.')
+    }
+  }
+  if (account?.role === 'teacher') {
+    const teacher = account.teacher || {}
+    const fullName = String(account.fullName || '').trim()
+    const specialization = String(teacher.specialization || '').trim()
+    const bio = String(teacher.bio || '').trim()
+    const interview = teacher.interview || account.interview
+    if (fullName.length < 2 || !specialization || bio.length < 30 || !interview?.completedAt) {
+      throw new Error('Complete the required teacher profile information before registering.')
+    }
+  }
   /* Always an email sign-up. WeChat and WhatsApp handles are mapped to an
      address first — see cloudLoginEmail above for why. */
   const email = cloudLoginEmail(provider, login)

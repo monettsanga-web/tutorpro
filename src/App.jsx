@@ -178,7 +178,7 @@ function Logo({ light = false }) {
   )
 }
 
-function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
+function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeacherApply, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const accountName = currentAccount?.parentName || currentAccount?.fullName || 'TutorPro Online English user'
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
@@ -210,6 +210,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onAdmin
                 <button className="mobile-portal-button mobile-portal-button--primary" onClick={() => openAndClose(onBook)}>Student registration</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onLogin)}>Student login</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onTeacherAccess)}>Teacher portal</button>
+                <button className="mobile-portal-button mobile-portal-button--teacher" onClick={() => openAndClose(onTeacherApply)}>Apply as a teacher</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onAdminAccess)}>Admin portal</button>
               </>
             )}
@@ -452,8 +453,11 @@ function ExperiencedTeachers({ onBook }) {
             </li>
           ))}
         </ul>
+        {/* The "Meet the teachers" button was removed at the owner's request.
+            The section still explains how teachers are chosen, and the
+            header, footer and /teachers.html all still lead to the public
+            profiles — this was only the homepage call-to-action. */}
         <div className="why-parents__cta">
-          <a className="button button--primary button--large" href="/teachers.html">Meet the teachers <ArrowRight size={18} /></a>
           <button type="button" className="button button--outline button-reset" onClick={() => onBook('Teachers section')}>Book a free trial</button>
         </div>
       </div>
@@ -1571,10 +1575,30 @@ function GlobalDiscovery({ onBook }) {
   )
 }
 
+/* ---------------------------------------------------------------------------
+   FOR THE MEANTIME: THE PRICE CARDS ARE HIDDEN
+
+   The Weekly card on this page still read $10 / $20 while the checkout, the
+   dashboard and the crawlable homepage copy all use the owner-confirmed
+   rates of $8 per 25-minute lesson (1-3 a week) and $7 (4 or more). A parent
+   who read the card and then paid the checkout would see two different
+   numbers, which is the one pricing bug this codebase treats as fatal.
+   Rather than publish a third set of numbers while the cards are corrected,
+   the owner asked for them to come down for the meantime and for the
+   "Looking for a Special Discount?" enquiry card to stand in the pricing
+   section instead - families ask, customer service quotes.
+
+   Flip SHOW_PRICE_CARDS back to true to restore the cards AND the standalone
+   discount section below pricing; both keys off this one constant.
+   --------------------------------------------------------------------------- */
+const SHOW_PRICE_CARDS = false
+
 function Pricing({ onBook }) {
   return (
     <section className="section pricing" id="pricing">
       <div className="container">
+        {SHOW_PRICE_CARDS ? (
+          <>
         <div className="section-heading section-heading--center">
           <span className="kicker">Simple pricing</span>
           <h2>Choose your child’s rhythm.</h2>
@@ -1625,20 +1649,25 @@ function Pricing({ onBook }) {
             </button>
           </article>
         </div>
+          </>
+        ) : (
+          /* With the cards down, the pricing section hands its space to the
+             discount enquiry card so #pricing never lands on an empty box.
+             `embedded` renders the card without its own section wrapper. */
+          <DiscountPromo embedded />
+        )}
         <p className="pricing-note"><ShieldCheck size={16} /> Secure booking · Free first class for new students</p>
       </div>
     </section>
   )
 }
 
-function DiscountPromo() {
+function DiscountPromo({ embedded = false }) {
   const discountQuestion = 'Hello! I’d like to ask about any available per-class discounts, sibling discounts, or offers for booking multiple lessons per week. Please let me know what my family may be eligible for and confirm the final price.'
 
-  return (
-    <section className="section discount-promo" id="class-discounts" aria-labelledby="discount-promo-title">
-      <div className="container">
-        <div className="discount-promo__card">
-          <div className="discount-promo__content">
+  const card = (
+    <div className={`discount-promo__card${embedded ? ' discount-promo__card--embedded' : ''}`}>
+        <div className="discount-promo__content">
             <span className="discount-promo__eyebrow"><Sparkles size={15} aria-hidden="true" /> Family-friendly options</span>
             <h2 id="discount-promo-title">Looking for a Special Discount?</h2>
             <p>
@@ -1689,7 +1718,20 @@ function DiscountPromo() {
             <span className="discount-promo__spark discount-promo__spark--one"><Sparkles size={18} /></span>
             <span className="discount-promo__spark discount-promo__spark--two"><Star size={13} /></span>
           </div>
-        </div>
+
+    </div>
+  )
+
+  /* While SHOW_PRICE_CARDS is false the pricing section embeds this card in
+     place of the price grid; rendering the standalone section as well would
+     show the same card twice on one screen. */
+  if (embedded) return card
+  if (!SHOW_PRICE_CARDS) return null
+
+  return (
+    <section className="section discount-promo" id="class-discounts" aria-labelledby="discount-promo-title">
+      <div className="container">
+        {card}
       </div>
     </section>
   )
@@ -1850,7 +1892,7 @@ function PWAInstallPrompt() {
   )
 }
 
-function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
+function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherApply, onAdminAccess, currentAccount, onOpenTeachers, showTeachersLink = true }) {
   return (
     <footer className="footer">
       <div className="container">
@@ -1882,6 +1924,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
                 </>
               )}
               <button onClick={onTeacherAccess}>Teacher portal</button>
+              <button onClick={onTeacherApply}>Apply as a teacher</button>
               <button onClick={onAdminAccess}>Admin portal</button>
             </div>
             {/* Internal links are how Google finds and ranks these pages. A
@@ -1948,6 +1991,27 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onAdminAccess
               <span className="footer__wechat"><MessageCircle size={15} /> <span>WeChat: <b>t_cora</b></span></span>
             </div>
           </div>
+
+          {/* Teachers are recruited, not just let in. "Apply as a teacher"
+              lived only as a small text link under the teacher login form, so
+              the public site never actually invited anyone to apply. The
+              application needs a laptop — the recorded AI interview does not
+              survive a phone browser — and the callout says so up front
+              instead of letting an applicant discover it at step 3. */}
+          <div className="footer__teacher-callout">
+            <div>
+              <h3>Teach with TutorPro Online English</h3>
+              <p>
+                One-to-one Cambridge and Oxford lessons, flexible weekly availability and a
+                focused teacher studio. Applications are reviewed before bookings open.
+              </p>
+              <small>Best completed on a laptop or computer — the application ends with a recorded AI interview.</small>
+            </div>
+            <div className="footer__teacher-callout-actions">
+              <button className="button button--primary" onClick={onTeacherApply}>Apply as a teacher</button>
+              <button className="button button--outline" onClick={onTeacherAccess}>Teacher portal</button>
+            </div>
+          </div>
         </div>
         <div className="footer__bottom">
           <span>© {new Date().getFullYear()} TutorPro Online English · Registered with DTI, Reg. No. 5274092</span>
@@ -1969,6 +2033,11 @@ export default function App() {
   })
   const [authMode, setAuthMode] = useState('register')
   const [roleAccess, setRoleAccess] = useState(null)
+  /* Which screen the teacher portal opens on. 'login' is the default; the
+     public "Apply as a teacher" entry points deep-link straight to the
+     application so an applicant does not have to find the link behind the
+     login form first. */
+  const [roleAccessView, setRoleAccessView] = useState('login')
   const [activePortal, setActivePortal] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState('')
   const [preferredTeacher, setPreferredTeacher] = useState(null)
@@ -2235,10 +2304,13 @@ export default function App() {
     setAuthOpen(true)
   }
 
-  const openRoleAccess = (role) => {
+  const openRoleAccess = (role, view = 'login') => {
     setAuthOpen(false)
+    setRoleAccessView(view)
     setRoleAccess(role)
   }
+
+  const openTeacherApply = () => openRoleAccess('teacher', 'register')
 
   const closeAndExplore = () => {
     setAuthOpen(false)
@@ -2277,6 +2349,7 @@ export default function App() {
         onAccount={openAccount}
         onLogout={logout}
         onTeacherAccess={() => openRoleAccess('teacher')}
+        onTeacherApply={openTeacherApply}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
@@ -2327,6 +2400,7 @@ export default function App() {
         onLogin={openLogin}
         onAccount={openAccount}
         onTeacherAccess={() => openRoleAccess('teacher')}
+        onTeacherApply={openTeacherApply}
         onAdminAccess={() => openRoleAccess('admin')}
         currentAccount={currentAccount}
         onOpenTeachers={() => setShowPublicTeachers(true)}
@@ -2347,8 +2421,9 @@ export default function App() {
       )}
       {roleAccess && (
         <PortalAccess
-          key={roleAccess}
+          key={`${roleAccess}-${roleAccessView}`}
           mode={roleAccess}
+          initialView={roleAccessView}
           onClose={() => setRoleAccess(null)}
           onAuthenticated={setCurrentAccount}
           onEnterPortal={enterPortal}

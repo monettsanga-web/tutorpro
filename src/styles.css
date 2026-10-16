@@ -8054,3 +8054,580 @@ body:has(.auth-shell--student-register) .messenger-float {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* FOR THE MEANTIME: the discount enquiry card standing in for the price grid.
+   Inside the pricing section it has no section wrapper of its own, so it gets
+   the vertical breathing room the wrapper used to provide. Flipping
+   SHOW_PRICE_CARDS back to true in src/App.jsx removes this case entirely. */
+.pricing .discount-promo__card--embedded {
+  margin: 6px auto 14px;
+}
+
+/* ===========================================================================
+   TEACHER APPLICATION — entry point, desktop-only notice, phone layout
+   ---------------------------------------------------------------------------
+   Three things live here:
+
+     .teacher-apply-cta    the "Apply as a teacher" call to action shown above
+                           the teacher login form and under the invitation and
+                           password-reset screens. It used to be a small text
+                           link beneath the form, so the portal read as a door
+                           for people who already had an account.
+
+     .device-notice        what a phone sees instead of the three-step
+                           application. The application ends with a recorded AI
+                           interview, which phone browsers interrupt when the
+                           screen locks or the keyboard opens; the notice says
+                           so plainly and keeps login, invitation codes and
+                           password resets available on the phone.
+
+     .role-access @phone   the teacher modal had almost no phone rules of its
+                           own — only the generic overlay rules at 760px, which
+                           set a width and a max-height but never hid the
+                           marketing aside. On a 390px phone the story panel
+                           took the first screenful and the form needed a long
+                           scroll to reach. It now behaves like the student
+                           modal: full-screen, no rounded corners, story
+                           reduced to a brand strip, safe-area padding.
+
+     .footer__teacher-callout
+                           the public invitation to apply, in the footer.
+   =========================================================================== */
+
+/* The mobile nav lists four portal buttons; the application is the one a
+   visitor is least likely to know exists, so it gets a tint rather than
+   sitting indistinguishable between "Teacher portal" and "Admin portal". */
+.mobile-portal-button--teacher {
+  border-color: #d8c9f2;
+  background: #f8f4ff;
+  color: #321568;
+}
+
+.teacher-apply-cta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid #ddd0f2;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #f8f4ff 0%, #fdf7ff 100%);
+  color: var(--ink);
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.teacher-apply-cta:hover {
+  border-color: #b79ce6;
+  box-shadow: 0 10px 26px rgba(50, 21, 104, 0.13);
+  transform: translateY(-1px);
+}
+
+.teacher-apply-cta__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #321568;
+  color: #fff;
+}
+
+.teacher-apply-cta > span:not(.teacher-apply-cta__icon) {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.teacher-apply-cta strong {
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.teacher-apply-cta small {
+  color: #6d6480;
+  font-size: 0.79rem;
+  line-height: 1.35;
+}
+
+.teacher-apply-cta > svg:last-child {
+  flex: none;
+  color: #8a7aa8;
+}
+
+/* ---------- the "use a computer" notice ---------- */
+
+.device-notice {
+  display: grid;
+  gap: 13px;
+  padding: 6px 0 4px;
+  text-align: left;
+}
+
+.device-notice__icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid #e5dcf5;
+  border-radius: 17px;
+  background: linear-gradient(140deg, #f7f2ff 0%, #fff 100%);
+  color: #321568;
+}
+
+.device-notice h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 4.6vw, 1.62rem);
+  line-height: 1.18;
+}
+
+.device-notice > p {
+  margin: 0;
+  color: #5d5470;
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.device-notice ul {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #ece5f8;
+  border-radius: 15px;
+  background: #fbf9ff;
+  list-style: none;
+}
+
+.device-notice li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #453c58;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.device-notice li > span:first-child {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #bce37a;
+  color: #23400a;
+}
+
+.device-notice li > span:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.device-notice__reassurance {
+  margin: 0;
+  padding-left: 13px;
+  border-left: 3px solid #d8ccf0;
+  color: #6d6480;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+/* ---------- footer invitation ---------- */
+
+.footer__teacher-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+  margin-top: 34px;
+  padding: 24px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(188, 233, 78, 0.11) 0%, rgba(255, 79, 135, 0.09) 100%);
+}
+
+.footer__teacher-callout h3 {
+  margin: 0 0 7px;
+  color: #fff;
+  font-size: 1.16rem;
+}
+
+.footer__teacher-callout p {
+  max-width: 62ch;
+  margin: 0;
+  color: #d6ccea;
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.footer__teacher-callout small {
+  display: block;
+  margin-top: 8px;
+  color: #b3a5cd;
+  font-size: 0.8rem;
+}
+
+.footer__teacher-callout-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- teacher modal on a phone ---------- */
+
+@media (max-width: 760px) {
+  /* The overlay itself scrolls; the panel inside must not scroll separately or
+     the two fight each other and the form jumps under a thumb. */
+  .role-access {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto 1fr !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fbfaf6 !important;
+  }
+
+  /* The marketing aside was the whole first screenful on a 390px phone. Keep
+     the brand, drop the pitch. */
+  .role-access__story {
+    display: flex !important;
+    min-height: 0;
+    flex-direction: column;
+    justify-content: center;
+    padding: calc(13px + env(safe-area-inset-top)) 18px 13px !important;
+    border-radius: 0 !important;
+  }
+
+  .role-access__story > .kicker,
+  .role-access__story h2,
+  .role-access__story p,
+  .role-access__story ul {
+    display: none !important;
+  }
+
+  /* The base badge lives in dashboard.css, which is loaded AFTER styles.css,
+     so these need !important the same way every other phone override in this
+     stylesheet does. 120px of rotated white tile was a quarter of the first
+     screenful; 40px reads as a brand mark. */
+  .role-access__logo {
+    width: 40px !important;
+    height: 40px !important;
+    margin-bottom: 0 !important;
+    border-width: 3px !important;
+    border-radius: 12px !important;
+    transform: none !important;
+  }
+
+  .role-access__logo img {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 3px !important;
+  }
+
+  /* The floating support launcher sat on top of the notice on a 390px phone.
+     The student overlay already hides it for exactly this reason; do the
+     same while the teacher overlay owns the screen. */
+  body:has(.role-access) .support-widget,
+  body:has(.role-access) .messenger-float,
+  body:has(.role-access) .china-mobile-student-prompt {
+    display: none !important;
+  }
+
+  .role-access__panel {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 24px 18px calc(28px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .role-access .auth-close {
+    position: fixed !important;
+    top: max(10px, env(safe-area-inset-top)) !important;
+    right: 12px !important;
+    width: 40px;
+    height: 40px;
+    background: #fff;
+  }
+
+  .role-access .auth-heading {
+    gap: 11px;
+    padding-right: 22px;
+  }
+
+  .role-access .auth-heading h2 {
+    font-size: clamp(1.32rem, 5.4vw, 1.54rem);
+  }
+
+  /* Step 2 pairs fields two-up; on a phone each needs the full width, and a
+     16px font stops iOS Safari zooming the page on focus. */
+  .role-access .auth-form__row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 13px;
+  }
+
+  .role-access .auth-form input,
+  .role-access .auth-form select,
+  .role-access .auth-form textarea,
+  .role-access .input-wrap input {
+    min-height: 48px !important;
+    font-size: 16px !important;
+  }
+
+  .role-access .auth-form textarea {
+    min-height: 112px !important;
+    padding-top: 12px;
+    line-height: 1.5;
+  }
+
+  .role-access .auth-form .button,
+  .role-access .auth-submit {
+    min-height: 50px !important;
+  }
+
+  .role-access .auth-form__actions {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .role-access .auth-form__actions .button {
+    width: 100%;
+  }
+
+  /* Primary action first, "Back" second — the reverse of the desktop reading
+     order, because on a phone the thumb is already at the bottom. */
+  .role-access .auth-form__actions .button--outline {
+    order: 2;
+  }
+
+  .role-access .credential-upload {
+    padding: 13px;
+  }
+
+  .role-access .teacher-apply-cta {
+    min-height: 58px;
+    padding: 10px 12px;
+  }
+
+  .role-access .teacher-apply-cta small {
+    font-size: 0.76rem;
+  }
+
+  .role-access .device-notice {
+    gap: 12px;
+  }
+
+  .role-access .device-notice__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+  }
+
+  .role-access .device-notice > p {
+    font-size: 0.9rem;
+  }
+
+  .footer__teacher-callout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-top: 26px;
+    padding: 20px 18px;
+  }
+
+  .footer__teacher-callout-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .footer__teacher-callout-actions .button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+/* ===========================================================================
+   STUDENT REGISTRATION — phone enhancements
+   ---------------------------------------------------------------------------
+   The phone layout below 560px was already sound: full-screen, safe-area
+   padding, 16px inputs so iOS Safari does not zoom on focus, a two-column
+   provider picker, the brand reduced to a strip. What was missing is the
+   stuff that only shows up when a parent actually fills the form one-handed:
+
+     1. The submit button scrolled out of sight. Step 2 is six fields deep, so
+        by the time a parent reached "lesson rhythm" the way forward had
+        disappeared off the top of the screen. It is now pinned to the bottom
+        of the scroll container with a fade above it, and it clears the home
+        indicator.
+
+     2. The two selects in step 2 looked like read-only text. They now carry a
+        chevron and 48px of height, so they read as tappable.
+
+     3. Tapping "Back" on step 2 scrolled to the top but left the parent
+        looking at the same fields, because step 1 renders at the same scroll
+        offset. The step transition now slides and fades, which makes the
+        change of screen obvious without a spinner.
+
+     4. The guardian confirmation checkbox had an 18px target on a 44px-minimum
+        screen. The row is now 44px tall with the box easy to hit, and the
+        error under it is given room rather than being clipped by the sticky
+        bar.
+
+     5. Long provider labels and step labels could push the row wider than the
+        phone. Both are now clamped instead of overflowing horizontally.
+
+   Everything here is additive and scoped to .auth-shell--student-register
+   inside (max-width: 560px), so login, password recovery, the tablet layout
+   and desktop are untouched.
+   =========================================================================== */
+
+@media (max-width: 560px) {
+  /* 1. keep the way forward on screen ------------------------------------ */
+  .auth-shell--student-register .auth-submit,
+  .auth-shell--student-register .auth-form__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    margin-top: 6px;
+    padding-top: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(251, 250, 246, 0) 0%, #fbfaf6 26%, #fbfaf6 100%);
+  }
+
+  /* The actions row holds Back and the primary button; give the row the sticky
+     treatment and let the buttons sit inside it at full width. */
+  .auth-shell--student-register .auth-form__actions .button {
+    min-height: 50px;
+  }
+
+  /* 2. selects must look tappable ---------------------------------------- */
+  .auth-shell--student-register .auth-form select {
+    min-height: 48px;
+    padding-right: 38px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b5f83' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 13px center;
+    background-repeat: no-repeat;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  /* 4. a thumb-sized guardian confirmation ------------------------------- */
+  .auth-shell--student-register .check-field {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    min-height: 44px;
+    /* Keeps the confirmation and its error clear of the sticky action bar. */
+    margin-bottom: 4px;
+    padding: 11px 13px;
+    border: 1px solid #e7e0f2;
+    border-radius: 13px;
+    background: #fff;
+  }
+
+  .auth-shell--student-register .check-field input[type='checkbox'] {
+    width: 22px;
+    min-width: 22px;
+    min-height: 22px !important;
+    height: 22px;
+    margin-top: 1px;
+  }
+
+  .auth-shell--student-register .check-field > span {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  /* 5. clamp instead of overflowing -------------------------------------- */
+  .auth-shell--student-register .provider-method strong,
+  .auth-shell--student-register .provider-method small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .auth-step-labels {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding-bottom: 2px;
+  }
+
+  .auth-step-labels::-webkit-scrollbar {
+    display: none;
+  }
+
+  .auth-step-labels > span {
+    flex: none;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  /* 3. make the step change visible -------------------------------------- */
+  .auth-shell--student-register .auth-form--registration {
+    animation: student-register-step-in 260ms ease both;
+  }
+
+  /* The frequency choices are the last thing above the sticky bar; three
+     across at 0.73rem was tight on a 320px phone, so let them wrap to two
+     columns there rather than truncating the labels. */
+  .auth-shell--student-register .frequency-field > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .auth-shell--student-register .frequency-field label {
+    min-height: 46px;
+    padding: 6px 4px;
+    line-height: 1.25;
+  }
+
+  .auth-shell--student-register .field-error {
+    padding-right: 2px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-shell--student-register .frequency-field > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@keyframes student-register-step-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell--student-register .auth-form--registration {
+    animation: none !important;
+  }
+
+  .teacher-apply-cta,
+  .teacher-apply-cta:hover {
+    transform: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
