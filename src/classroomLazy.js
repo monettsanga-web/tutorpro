@@ -21,14 +21,18 @@
  * TO RE-ENABLE THE CLASSROOM
  * --------------------------
  * Set CLASSROOM_ENABLED to true in classroomFeature.js and restore the two
- * commented lines below.
+ * lazy imports below (done 2026-10-16 for the global relight; mainland
+ * China is excluded at runtime by classroomRegionNotice()).
  */
 
-// import { lazy } from 'react'
+import { lazy } from 'react'
 
+/* Relit for the global classroom (2026-10-16). The imports stay LAZY: the
+   ~877 kB classroom chunk and the TRTC SDK are fetched only when somebody
+   actually enters a class, never on dashboard load. To switch the classroom
+   off again, comment these two lines out as well as setting
+   CLASSROOM_ENABLED = false, so the chunks leave the build entirely. */
 export const classroomComponents = {
-  // OnlineClassroom: lazy(() => import('./OnlineClassroom.jsx')),
-  // RecordingPlayback: lazy(() => import('./RecordingPlayback.jsx')),
-  OnlineClassroom: null,
-  RecordingPlayback: null,
+  OnlineClassroom: lazy(() => import('./OnlineClassroom.jsx')),
+  RecordingPlayback: lazy(() => import('./RecordingPlayback.jsx')),
 }

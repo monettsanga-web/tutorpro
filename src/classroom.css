@@ -2222,3 +2222,15 @@ body.classroom-active .support-widget {
 }
 
 .classroom-coming-soon svg { opacity: 0.75; }
+
+/* The region-gate explanation is visible copy, not a tooltip: a family told
+   "unavailable" deserves the reason in front of them, on the card itself. */
+.classroom-region-note {
+  display: block;
+  margin-top: 6px;
+  max-width: 46ch;
+  color: #6b7a72;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.45;
+}

@@ -1,4 +1,6 @@
-import { chromium } from '/home/user/.npm/_npx/eedcb85d74ea43ba/node_modules/playwright-core/index.mjs'
+const { chromium } = await (async () => {
+  try { return await import('playwright') } catch { return await import('playwright-core') }
+})()
 const b = await chromium.launch()
 const p = await b.newPage({ viewport:{width:1440,height:900} })
 const calls=[]

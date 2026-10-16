@@ -110,7 +110,7 @@ import WelcomeMessage from './WelcomeMessage.jsx'
 const RecordingPlayback = classroomComponents.RecordingPlayback
 import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
-import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED } from './classroomFeature.js'
+import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED, CLASSROOM_REGION_NOTE, classroomEntryState, classroomRegionNotice } from './classroomFeature.js'
 import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPolicy.js'
 import { SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
 import { fetchThread, listDirectConversations, markThreadRead, mergeThread, readLocalThread, sendDirectMessage, subscribeToDirectMessages } from './directMessages.js'
@@ -1046,6 +1046,10 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
   const meetingLink = classroom.platform === 'voov' ? classroom.voovLink : classroom.zoomLink
   const session = booking.classroomSummary
   const sessionMinutes = session?.elapsedSeconds ? Math.max(1, Math.round(session.elapsedSeconds / 60)) : 0
+  /* One gate for every role: enabled everywhere except the blocked region,
+     where the card shows a plain explanation instead of a button that would
+     fail to connect. See classroomFeature.js. */
+  const classroomEntry = classroomEntryState()
 
   /* The whole row is colour-coded, not just a badge: red down the edge for
      a booked class, amber for a free trial. A teacher scanning a list needs
@@ -1122,12 +1126,13 @@ function BookingCard({ booking, showStudent = false, showTeacher = false, action
             {formatLessonDate(booking.date, booking.time)} at <strong className="lesson-time">{formatTime(booking.time, booking.date)}</strong>
           </span>
         </p>
-        {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{CLASSROOM_ENABLED
+        {['confirmed', 'ongoing'].includes(booking.status) && <div className="lesson-classroom-actions">{classroomEntry.enabled
           ? (onEnterClassroom && <button className="tutorpro-classroom-link" onClick={() => onEnterClassroom(booking)}><Video size={14} /> {booking.status === 'ongoing' ? 'Resume private classroom' : 'Enter private classroom'} <ShieldCheck size={11} /></button>)
-          /* Not a link and not a button: the built-in classroom is switched
-             off, so anything clickable here would be a dead end. The external
-             meeting link beside it is how the lesson actually happens. */
-          : <span className="classroom-coming-soon" title={CLASSROOM_COMING_SOON_NOTE}><Video size={14} /> {CLASSROOM_COMING_SOON_LABEL}</span>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} meeting link</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
+          /* Not a link and not a button: wherever the classroom cannot run -
+             switched off, or a region whose network cannot hold the call -
+             anything clickable here would be a dead end. The note explains
+             why, and the external meeting link beside it remains. */
+          : <span className="classroom-coming-soon" title={classroomEntry.note}><Video size={14} /> {classroomEntry.label}{classroomEntry.note === CLASSROOM_REGION_NOTE && <small className="classroom-region-note">{classroomEntry.note}</small>}</span>}{meetingLink ? <a className="private-class-link" href={meetingLink} target="_blank" rel="noopener noreferrer"><Video size={13} /> {meetingPlatform} meeting link</a> : <span className="meeting-link-pending"><Clock3 size={12} /> External meeting link not configured</span>}</div>}
         {/* The Message button. BookingCard has always accepted an onOpenChat
             prop and five callers pass one, but nothing ever rendered a
             control for it — so the chat was unreachable from a lesson. */}
@@ -4520,7 +4525,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
     )
   }
 
-  if (CLASSROOM_ENABLED && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
+  if (CLASSROOM_ENABLED && !classroomRegionNotice() && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   return (
     <PortalShell account={account} role="student" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
@@ -5329,7 +5334,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
      * still generated database traffic and, worse, marked lessons as ongoing
      * that nobody could actually join.
      */
-    if (!CLASSROOM_ENABLED) return
+    if (!CLASSROOM_ENABLED || classroomRegionNotice()) return
     const activeClassroomBooking = booking.status === 'confirmed'
       ? updateBooking(booking.id, { status: 'ongoing', classStartedAt: new Date().toISOString() })
       : booking
@@ -5454,7 +5459,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
     { id: 'profile', label: 'My profile', icon: UserRound },
   ]
 
-  if (CLASSROOM_ENABLED && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
+  if (CLASSROOM_ENABLED && !classroomRegionNotice() && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   return (
     <PortalShell account={account} role="teacher" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav} adminPreview={adminPreview} mediaVersion={mediaVersion}>
@@ -8365,7 +8370,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
-  if (CLASSROOM_ENABLED && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
+  if (CLASSROOM_ENABLED && !classroomRegionNotice() && classroomBooking && OnlineClassroom) return <Suspense fallback={<ClassroomBootFallback />}><OnlineClassroom booking={classroomBooking} account={account} onExit={() => setClassroomBooking(null)} /></Suspense>
 
   const managedRole = managedAccount?.role?.toLowerCase()
 

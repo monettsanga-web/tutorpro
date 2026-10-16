@@ -1,4 +1,9 @@
-import { chromium } from '/home/user/.npm/_npx/eedcb85d74ea43ba/node_modules/playwright-core/index.mjs'
+/* Resolves whichever Playwright this machine has: the project install
+ * first, then a global playwright-core. The old hard-coded npx cache
+ * path broke the moment the cache was cleared. */
+const { chromium } = await (async () => {
+  try { return await import('playwright') } catch { return await import('playwright-core') }
+})()
 let pass=0, fail=0
 const ok=(c,m)=>{ c?pass++:fail++; console.log((c?'  ok  ':'FAIL  ')+m) }
 const b = await chromium.launch()
