@@ -245,7 +245,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
   )
 }
 
-function Hero({ onBook }) {
+function Hero({ onBook, onTeacherApply }) {
   return (
     /* Motion for this section is owned by PremiumMotion + premium-motion.css,
        which already publishes --premium-scroll-ratio globally and animates the
@@ -292,6 +292,15 @@ function Hero({ onBook }) {
             <a className="button button--quiet button--large" href="#programmes">
               Explore our programs
             </a>
+            {/* Teachers recruit from the homepage's first screen, not only
+                from the footer: the owner wants "Apply as a teacher" visible
+                the moment the homepage loads. Quiet like the secondary
+                action so the parent CTAs keep the lead, tinted so teachers
+                recognise it as theirs. On a phone it opens the portal at the
+                application, which shows the "use a laptop" notice. */}
+            <button className="button button--quiet button--large hero__apply-teacher" onClick={onTeacherApply}>
+              <PenLine size={17} /> Apply as a teacher
+            </button>
           </div>
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
           <div className="hero__proof" aria-label="TutorPro Online English benefits">
@@ -2367,7 +2376,7 @@ export default function App() {
         </main>
       ) : (
         <main>
-          <Hero onBook={openRegistration} />
+          <Hero onBook={openRegistration} onTeacherApply={openTeacherApply} />
           <WhyParents onBook={openRegistration} />
           <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />
