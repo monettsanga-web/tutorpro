@@ -13594,3 +13594,66 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   font-size: 0.93rem;
   overflow-wrap: anywhere;
 }
+
+/* ---------------------------------------------------------------------------
+   Novakid-style month grid for the teacher Bookings page.
+   Every booked day carries its classes as coloured chips ON that day, so a
+   teacher sees the whole month's workload without scrolling a history list.
+   --------------------------------------------------------------------------- */
+.tbcal { display: flex; flex-direction: column; gap: 10px; }
+.tbcal__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tbcal__title { display: inline-flex; align-items: center; gap: 8px; color: var(--portal-ink, #241b3a); }
+.tbcal__title strong { font-size: 1.05rem; }
+.tbcal__nav { display: inline-flex; align-items: center; gap: 6px; }
+.tbcal__nav button {
+  border: 1px solid #e2dcf0; background: #fff; border-radius: 10px;
+  padding: 6px 10px; font-weight: 700; font-size: 0.8rem; color: #432a78;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+}
+.tbcal__nav button:hover { border-color: #7c3aed; }
+.tbcal__dows { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.tbcal__dows span { text-align: center; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #8a7f9c; }
+.tbcal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.tbcal__day {
+  min-height: 92px; border: 1px solid #e8e3f0; border-radius: 12px;
+  background: #fff; padding: 6px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 4px; align-items: stretch;
+}
+.tbcal__day:hover { border-color: #b9a6e8; }
+.tbcal__day--other { opacity: 0.42; background: #faf9fc; }
+.tbcal__day--today { border-color: #7c3aed; box-shadow: inset 0 0 0 1px #7c3aed; }
+.tbcal__day--selected { background: #f3edff; border-color: #7c3aed; }
+.tbcal__num { font-weight: 800; font-size: 0.82rem; color: #241b3a; }
+.tbcal__chips { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tbcal-chip {
+  border: 0; border-radius: 7px; padding: 3px 6px; cursor: pointer;
+  font-size: 0.7rem; font-weight: 800; color: #fff; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tbcal-chip--confirmed { background: #16a34a; }
+.tbcal-chip--ongoing { background: #f59e0b; }
+.tbcal-chip--pending { background: #7c3aed; }
+.tbcal-chip--completed { background: #64748b; }
+.tbcal-chip--absent { background: #dc2626; }
+.tbcal-chip--cancelled { background: #94a3b8; text-decoration: line-through; }
+.tbcal__more { font-size: 0.68rem; font-weight: 700; color: #6b6478; }
+.tbcal__legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.tbcal-legend { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 700; color: #6b6478; text-transform: capitalize; }
+.tbcal-legend::before { content: ''; width: 9px; height: 9px; border-radius: 3px; background: #999; }
+.tbcal-legend--confirmed::before { background: #16a34a; }
+.tbcal-legend--ongoing::before { background: #f59e0b; }
+.tbcal-legend--pending::before { background: #7c3aed; }
+.tbcal-legend--completed::before { background: #64748b; }
+.tbcal-legend--absent::before { background: #dc2626; }
+.tbcal-legend--cancelled::before { background: #94a3b8; }
+.tbcal-daypanel { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.tbcal-daypanel__title {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-weight: 800; font-size: 0.95rem; color: #432a78;
+}
+@media (max-width: 720px) {
+  .tbcal__day { min-height: 64px; padding: 4px; border-radius: 10px; }
+  .tbcal__grid, .tbcal__dows { gap: 4px; }
+  .tbcal-chip { font-size: 0.62rem; padding: 2px 4px; }
+  .tbcal__num { font-size: 0.72rem; }
+}

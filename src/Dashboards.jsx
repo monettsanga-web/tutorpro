@@ -115,6 +115,7 @@ import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPol
 import { SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
 import { fetchThread, listDirectConversations, markThreadRead, mergeThread, readLocalThread, sendDirectMessage, subscribeToDirectMessages } from './directMessages.js'
 import { classroomComponents } from './classroomLazy.js'
+import { BookingsMonthCalendar, nearestBookingKey } from './TeacherBookingsCalendar.jsx'
 const AdminReviewsPanel = lazy(() => import('./AdminReviewsPanel.jsx'))
 const AdminWebsitePanel = lazy(() => import('./AdminWebsitePanel.jsx'))
 const AdminFunnelPanel = lazy(() => import('./AdminFunnelPanel.jsx'))
@@ -4861,8 +4862,14 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   // availability, so a teacher never has to leave the calendar they are
   // looking at to open up more time.
   const [calendarEditing, setCalendarEditing] = useState(false)
-  const [bookingView, setBookingView] = useState('list')
+  /* Opens on the month grid, not the list: the owner's complaint was that
+     booked dates hid at the bottom of a long history scroll. The calendar
+     shows every booked day on its own square, like the Novakid schedule. */
+  const [bookingView, setBookingView] = useState('calendar')
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all')
+  /* The day whose classes the panel under the grid shows. Starts on the
+     nearest booked day so the page never opens on an empty panel. */
+  const [bookingDayKey, setBookingDayKey] = useState(() => nearestBookingKey(getBookings({ teacherId: account.id })))
   const [saved, setSaved] = useState(false)
   const [mediaVersion, setMediaVersion] = useState(0)
   const [mediaError, setMediaError] = useState('')
@@ -4972,7 +4979,35 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const feedbackNeededBookings = bookings
     .filter((booking) => booking.status === 'completed' && !booking.teacherFeedback?.summary?.trim())
     .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
-  const filteredBookings = bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter)
+  /* Upcoming-first. A teacher opens this page to see what is NEXT; the old
+     store order made them scroll past months of completed lessons to reach
+     this week. Future classes ascend, then the history descends behind
+     them, nearest first. */
+  const filteredBookings = (bookingStatusFilter === 'all' ? bookings : bookings.filter((booking) => booking.status === bookingStatusFilter))
+    .slice()
+    .sort((a, b) => {
+      const now = Date.now()
+      const av = new Date(`${a.date}T${a.time || '00:00'}:00`).getTime()
+      const bv = new Date(`${b.date}T${b.time || '00:00'}:00`).getTime()
+      const aUp = av >= now
+      const bUp = bv >= now
+      if (aUp !== bUp) return aUp ? -1 : 1
+      return aUp ? av - bv : bv - av
+    })
+
+  /* One builder for the per-status action buttons, shared by the list and
+     the calendar day panel so the two can never drift apart. */
+  const teacherBookingActions = (booking) => {
+    if (booking.status === 'pending') return <><button className="lesson-action lesson-action--wide lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}>Accept</button><button className="lesson-action lesson-action--wide lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}>Decline</button></>
+    if (booking.status === 'confirmed') return <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
+    if (booking.status === 'ongoing') return <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
+    if (booking.status === 'completed') return <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
+    if (booking.status === 'absent') return <button className="lesson-action lesson-action--wide lesson-action--restore" onClick={() => changeStatus(booking.id, 'confirmed')}><RotateCcw size={13} /> Restore booking</button>
+    return null
+  }
+
+  const dayPanelBookings = filteredBookings.filter((booking) => booking.date === bookingDayKey)
+  const dayPanelLabel = bookingDayKey ? new Date(`${bookingDayKey}T12:00:00`).toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
   /**
    * Everything the schedule tab needs for the week being viewed.
@@ -5531,15 +5566,10 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           <section className="portal-card teacher-booking-status-card"><div><span className="portal-kicker">Class status</span><strong>Choose which bookings to show</strong></div><div className="booking-status-filters teacher-booking-status-filters" role="group" aria-label="Filter teacher bookings by status">{BOOKING_STATUS_OPTIONS.map((option) => <button type="button" key={option.id} className={`booking-status-filter booking-status-filter--${option.id} ${bookingStatusFilter === option.id ? 'active' : ''}`} onClick={() => setBookingStatusFilter(option.id)}><span>{option.label}</span><strong>{bookingStatusCount(option.id)}</strong></button>)}</div></section>
           {bookingView === 'list' ? <section className="portal-card lessons-list-card">
             {filteredBookings.length ? filteredBookings.map((booking) => {
-              let actions = null
-              if (booking.status === 'pending') actions = <><button className="lesson-action lesson-action--wide lesson-action--accept" onClick={() => changeStatus(booking.id, 'confirmed')}>Accept</button><button className="lesson-action lesson-action--wide lesson-action--decline" onClick={() => changeStatus(booking.id, 'declined')}>Decline</button></>
-              if (booking.status === 'confirmed') actions = <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
-              if (booking.status === 'ongoing') actions = <><button className="lesson-action lesson-action--wide lesson-action--complete" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> Complete & feedback</button><button className="lesson-action lesson-action--wide lesson-action--absent" onClick={() => changeStatus(booking.id, 'absent')}><XCircle size={13} /> Mark absent</button></>
-              if (booking.status === 'completed') actions = <button className="lesson-action lesson-action--wide lesson-action--feedback" onClick={() => setFeedbackBooking(booking)}><MessageSquareText size={13} /> {booking.teacherFeedback ? 'Edit feedback' : 'Add feedback'}</button>
-              if (booking.status === 'absent') actions = <button className="lesson-action lesson-action--wide lesson-action--restore" onClick={() => changeStatus(booking.id, 'confirmed')}><RotateCcw size={13} /> Restore booking</button>
+              const actions = teacherBookingActions(booking)
               return <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} actions={actions} />
             }) : <EmptyState title={`No ${bookingStatusFilter === 'all' ? '' : `${bookingStatusFilter} `}bookings`} text="Choose another class status to see matching teacher bookings." />}
-          </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><MessageSquareText size={18} /></span><div><strong>Separated calendar statuses</strong><small>Calendar colours distinguish ongoing, completed, absent and cancelled classes. Click a student name to write feedback, view details or unbook the class.</small></div></div><ScheduleCalendar weekOffset={bookingWeek} onWeekOffset={setBookingWeek} bookings={filteredBookings} onBookingOpen={setManagedBooking} onBookingFeedback={setFeedbackBooking} onBookingCancel={unbookCalendarClass} showInactiveBookings /></section>}
+          </section> : <section className="portal-card booking-calendar-card teacher-booking-calendar"><div className="drag-instruction teacher-feedback-instruction"><span><CalendarDays size={18} /></span><div><strong>Booked days at a glance</strong><small>Every class sits on its own day, coloured by status, and the month opens on your nearest upcoming class. Pick a day to open its classes below, or click a class chip to manage it straight away.</small></div></div><BookingsMonthCalendar bookings={filteredBookings} selectedKey={bookingDayKey} onSelectDay={setBookingDayKey} onOpenBooking={setManagedBooking} /><div className="tbcal-daypanel">{dayPanelBookings.length ? <><div className="tbcal-daypanel__title"><CalendarDays size={15} /> {dayPanelLabel}</div>{dayPanelBookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={openTeacherClassroom} onManageBooking={setManagedBooking} onOpenChat={DIRECT_PARENT_TEACHER_CHAT ? (id, name) => setDirectChatUser({ id, name }) : undefined} actions={teacherBookingActions(booking)} />)}</> : <EmptyState icon={CalendarDays} title="No classes on this day" text="Pick a day carrying coloured chips to see its classes here." />}</div></section>}
         </div>
       )}
 

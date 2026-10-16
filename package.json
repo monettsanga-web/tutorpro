@@ -47,6 +47,7 @@
     "verify:panda": "node scripts/verify-panda-companion.mjs",
     "verify:classroomoff": "node scripts/verify-classroom-disabled.mjs",
     "verify:classroomgate": "node scripts/verify-classroom-gate.mjs",
+    "verify:bookingscal": "node scripts/verify-bookings-calendar.mjs",
     "measure:egress": "node scripts/measure-egress-home.mjs",
     "measure:egressdash": "node scripts/measure-egress-dashboard.mjs",
     "verify:dashsync": "node scripts/verify-dashboard-still-syncs.mjs",

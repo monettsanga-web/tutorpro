@@ -5,7 +5,12 @@
  * measurement, and that pressing the button produces a genuine download
  * containing real data. Nothing here is asserted from source code alone.
  */
-import { chromium } from '/home/user/.npm/_npx/eedcb85d74ea43ba/node_modules/playwright-core/index.mjs'
+/* Resolves whichever Playwright this machine has: project install first,
+ * then a global playwright-core. A hard-coded npx cache path breaks the
+ * moment that cache is cleared. */
+const { chromium } = await (async () => {
+  try { return await import('playwright') } catch { return await import('playwright-core') }
+})()
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
