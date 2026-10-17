@@ -518,10 +518,12 @@ begin
     raise exception 'Enter a valid email address';
   end if;
 
+  -- One conversation per account, forever: a closed thread is reopened, not
+  -- replaced, so a parent or teacher never accumulates a row per visit and
+  -- the admin inbox keeps showing exactly one chat per email address.
   select c.id into conversation_id
   from public.support_conversations c
   where c.account_id = auth.uid()
-    and c.status = 'open'
   order by c.updated_at desc
   limit 1;
 
@@ -545,6 +547,7 @@ begin
     set parent_name = normalized_name,
         email = normalized_email,
         language = coalesce(nullif(trim(visitor_language), ''), language),
+        status = 'open',
         updated_at = now()
     where id = conversation_id;
   end if;

@@ -144,7 +144,7 @@ import { recoveryStateFor, saveRecoveryEmail } from './recoveryEmail.js'
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
-import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
+import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, groupSupportConversationsByEmail, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
 import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES, searchLibraryResources, toggleLibraryBookmark } from './library.js'
@@ -6602,7 +6602,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
  * means a name click anywhere in the admin dashboard opens that person's
  * real conversation, in the same docked panel, without leaving the page.
  */
-export function SupportThreadDock({ conversationId, onClose, onChanged, fallbackName = '' }) {
+export function SupportThreadDock({ conversationId, conversationIds = '', onClose, onChanged, fallbackName = '' }) {
   const [thread, setThread] = useState(null)
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState(null)
@@ -6615,13 +6615,25 @@ export function SupportThreadDock({ conversationId, onClose, onChanged, fallback
   const loadThread = useCallback(async () => {
     if (!conversationId) return
     try {
-      const next = await fetchAdminSupportThread(conversationId)
-      setThread(next)
+      /* One person, one thread on screen: every conversation row their
+         email accumulated is fetched and the messages are merged by id,
+         oldest first, so a parent who wrote from three devices still reads
+         as a single continuous conversation. Replies go to conversationId,
+         the newest row of the group. */
+      const ids = conversationIds ? conversationIds.split(',') : [conversationId]
+      const threads = await Promise.all(ids.map((id) => fetchAdminSupportThread(id)))
+      const base = threads[0] || { status: 'open', messages: [] }
+      const byMessageId = new Map()
+      threads.forEach((thread) => (thread?.messages || []).forEach((message) => byMessageId.set(message.id, message)))
+      const messages = [...byMessageId.values()].sort(
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+      )
+      setThread({ ...base, messages })
       setError('')
     } catch (loadError) {
       setError(loadError.message)
     }
-  }, [conversationId])
+  }, [conversationId, conversationIds])
 
   useEffect(() => {
     let active = true
@@ -6749,15 +6761,21 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
   const loadConversations = useCallback(async () => {
     try {
       const rows = await fetchAdminSupportConversations()
-      setConversations(rows)
-      onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
+      /* One slot per email address, however many conversation rows that
+         person accumulated across sessions, devices and reopens. The dock
+         merges their history and answers on the newest row. */
+      const grouped = groupSupportConversationsByEmail(rows)
+      setConversations(grouped)
+      onUnreadChange?.(grouped.reduce((total, item) => total + Number(item.unread_total || 0), 0))
       setError('')
       /* `initialConversationId` is a conversation opened from elsewhere in
          the admin dashboard. The prop was already being passed before
          SupportInbox accepted it, so the inbox used to ignore it and show
-         whichever conversation happened to be first. */
+         whichever conversation happened to be first. It may name an older
+         row of a group, so match against every id the group carries. */
       if (!selectedId && !threadDismissed) {
-        const openFirst = initialConversationId || rows[0]?.id
+        const target = grouped.find((group) => group.ids.includes(initialConversationId))
+        const openFirst = target?.id || grouped[0]?.id
         if (openFirst) setSelectedId(openFirst)
       }
     } catch (loadError) {
@@ -6807,7 +6825,7 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <section className="support-inbox">
         <aside className="support-conversation-list">
           <label><MessageSquareText size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search parent or email…" /></label>
-          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_count) > 0 && <i>{conversation.unread_count}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
+          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_total) > 0 && <i>{conversation.unread_total}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
         </aside>
 
       </section>
@@ -6816,6 +6834,7 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <SupportThreadDock
         key={selectedId}
         conversationId={selectedId}
+        conversationIds={(selected?.ids || []).join(',')}
         fallbackName={selected?.parent_name || ''}
         onChanged={loadConversations}
         onClose={() => { setThreadDismissed(true); setSelectedId('') }}
