@@ -159,6 +159,7 @@ import { describePaymentError } from './paymentErrors.js'
 import { INVITE_CODE_MINUTES, createTeacherWithPassword, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
 import { describeTeacherCreateError, describeTeacherLogin, hasSharedLogin, suggestTemporaryPassword, teachersWithoutLogin, validateTeacherDetails } from './teacherAccounts.js'
 import { noticeSegments, readDismissedTeacherNotices, rememberDismissedTeacherNotice, shouldShowApplicationNotice } from './teacherApplicationNotice.js'
+import { TEACHER_SHIFTS, buildShiftSlots, teacherShift } from './teacherShifts.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -4856,6 +4857,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   })
   const [version, setVersion] = useState(0)
   const [availabilitySlots, setAvailabilitySlots] = useState(account.teacher.availabilitySlots || [])
+  const [shiftChoice, setShiftChoice] = useState(() => teacherShift(account))
   const [scheduleWeek, setScheduleWeek] = useState(0)
   const [bookingWeek, setBookingWeek] = useState(0)
   const [calendarWeek, setCalendarWeek] = useState(0)
@@ -5457,11 +5459,20 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   }
 
   const saveAvailability = () => {
-    const updated = updateTeacherProfile(account.id, { availabilitySlots })
+    const updated = updateTeacherProfile(account.id, { availabilitySlots, shift: shiftChoice })
     setAccount(updated)
     onAccountChange(updated)
     setSaved(true)
     window.setTimeout(() => setSaved(false), 2000)
+  }
+
+  /* Day shift or night shift, one tap: fills the whole week with the preset
+     window so a teacher - approved or still under review - never has to
+     paint forty cells by hand. They can still paint over it before saving. */
+  const applyShift = (shiftId) => {
+    setShiftChoice(shiftId)
+    setAvailabilitySlots(buildShiftSlots(shiftId))
+    setSaved(false)
   }
 
   const saveClassroom = () => {
@@ -5749,11 +5760,19 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'schedule' && (
         <div className="portal-view">
           <div className="portal-page-heading schedule-page-heading">
-            <div><span className="portal-kicker">Recurring weekly calendar</span><h1>Set availability</h1><p>Click and drag across the calendar to add time. Drag across green slots to make them unavailable.</p></div>
+            <div><span className="portal-kicker">Recurring weekly calendar</span><h1>Set availability</h1><p>Click and drag across the calendar to add time. Drag across green slots to make them unavailable.{account.status !== 'approved' ? ' You can open your hours now, while your profile is still under review - approved teachers book straight into them.' : ''}</p></div>
             <div className="schedule-save-actions"><span>{availabilitySlots.length} slots · {(availabilitySlots.length / 2).toFixed(1)} hours/week</span>{saved && <span className="saved-label"><Check size={14} /> Saved</span>}<button className="portal-primary-button" onClick={saveAvailability}><Check size={16} /> Save availability</button></div>
           </div>
           <section className="portal-card availability-calendar-card">
             <div className="drag-instruction"><span><CalendarDays size={18} /></span><div><strong>Paint your available time</strong><small>Each cell is 30 minutes. Booked lessons are locked and cannot be removed.</small></div></div>
+            <div className="schedule-shift-options" role="group" aria-label="Shift quick fill" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', margin: '4px 0 14px' }}>
+              {Object.values(TEACHER_SHIFTS).map((shift) => (
+                <button key={shift.id} type="button" className={`portal-secondary-button${shiftChoice === shift.id ? ' active' : ''}`} onClick={() => applyShift(shift.id)} title={`Open ${shift.hours} across the whole week`}>
+                  {shift.label} · {shift.hours}
+                </button>
+              ))}
+              <small>One tap opens the shift across the week. Paint over it to adjust, then save.</small>
+            </div>
             <ScheduleCalendar
               weekOffset={scheduleWeek}
               onWeekOffset={setScheduleWeek}
@@ -8660,7 +8679,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             ? <div className="portal-error" role="alert" key={item.name} style={{ margin: '6px 0' }}><strong>{item.name}:</strong> {item.error}</div>
             : <div key={item.name} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}><strong>{item.name}</strong><span>{item.email}</span><code style={{ background: 'rgba(0,0,0,0.06)', padding: '2px 8px', borderRadius: '6px' }}>{item.password}</code><small>{item.moved} booking{item.moved === 1 ? '' : 's'} moved across</small></div>))}
         </section>
-      )}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+      )}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}{teacher.teacher.shift === 'night' ? ' · Night shift' : teacher.teacher.shift === 'day' ? ' · Day shift' : ''}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
