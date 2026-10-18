@@ -144,7 +144,7 @@ import { recoveryStateFor, saveRecoveryEmail } from './recoveryEmail.js'
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
-import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
+import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, groupSupportConversationsByEmail, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
 import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES, searchLibraryResources, toggleLibraryBookmark } from './library.js'
@@ -158,6 +158,9 @@ import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgrad
 import { describePaymentError } from './paymentErrors.js'
 import { INVITE_CODE_MINUTES, createTeacherWithPassword, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
 import { describeTeacherCreateError, describeTeacherLogin, hasSharedLogin, suggestTemporaryPassword, teachersWithoutLogin, validateTeacherDetails } from './teacherAccounts.js'
+import { noticeSegments, readDismissedTeacherNotices, rememberDismissedTeacherNotice, shouldShowApplicationNotice } from './teacherApplicationNotice.js'
+import { TEACHER_SHIFTS, buildShiftSlots, teacherShift } from './teacherShifts.js'
+import { compileStudentRegistrations, registrationDateLabel, registrationsToCsv } from './registrationReport.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -319,6 +322,17 @@ const paymentMethodLabel = {
   chinaQr: 'AUB PayMate / WeChat Pay QR',
   koreaKrw: 'Korea pricing (KRW)',
 }
+/* The assistant card's selects: proficiency levels and the five-point
+   performance rating, exactly as the reference layout offers them. */
+const PROFICIENCY_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper-Intermediate', 'Advanced']
+const PERFORMANCE_RATINGS = [
+  { value: '5', label: '5 - Outstanding' },
+  { value: '4', label: '4 - Exceeds expectations' },
+  { value: '3', label: '3 - Meets expectations' },
+  { value: '2', label: '2 - Approaching expectations' },
+  { value: '1', label: '1 - Needs support' },
+]
+
 const GRAMMAR_FOCUS_OPTIONS = [
   'Sentence structure',
   'Verb tenses',
@@ -2083,10 +2097,40 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     practiceWords: Array.isArray(existing.practiceWords) ? existing.practiceWords : [],
     grammarFocus: Array.isArray(existing.grammarFocus) ? existing.grammarFocus : [],
     resourceLinks: Array.isArray(existing.resourceLinks) ? existing.resourceLinks : [],
+    /* The assistant-card fields the owner asked for, modelled on the
+       reference layout: who the lesson was for, how it went, and the two
+       optional personalization notes. */
+    studentName: existing.studentName || learner?.name || booking.learnerName || '',
+    gender: existing.gender || '',
+    proficiencyLevel: existing.proficiencyLevel || '',
+    performanceRating: existing.performanceRating || '',
+    lessonRedo: existing.lessonRedo || 'no',
+    achievedCompetencies: existing.achievedCompetencies || '',
+    failedCompetencies: existing.failedCompetencies || '',
+    personalSuccess: existing.personalSuccess || '',
+    personalImprovement: existing.personalImprovement || '',
   })
   const [wordDraft, setWordDraft] = useState('')
   const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
   const [error, setError] = useState('')
+
+  /* The assistant card's header: who is writing, and how much they have
+     written - the reference layout opens with exactly this strip. */
+  const teacherAccount = getAccountById(teacherId)
+  const teacherName = teacherAccount?.fullName || 'Teacher'
+  const completedBookings = getBookings({ teacherId }).filter((item) => item.status === 'completed')
+  const writtenCount = completedBookings.filter((item) => item.teacherFeedback?.summary?.trim()).length
+  const clearForm = () => {
+    setForm({
+      summary: '', strength: '', nextStep: '', homework: '',
+      practiceWords: [], grammarFocus: [], resourceLinks: [],
+      studentName: learner?.name || booking.learnerName || '',
+      gender: '', proficiencyLevel: '', performanceRating: '', lessonRedo: 'no',
+      achievedCompetencies: '', failedCompetencies: '', personalSuccess: '', personalImprovement: '',
+    })
+    setWordDraft('')
+    setError('')
+  }
 
   const fillTemplate = (type) => {
     const studentName = learner?.name || 'the student'
@@ -2178,13 +2222,24 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 
   const submit = async (event) => {
     event.preventDefault()
+    if (!form.studentName.trim()) { setError('Enter the student name before saving feedback.'); return }
+    if (!form.strength.trim() || !form.nextStep.trim()) { setError('Areas of Success and Areas for Improvement are required - parents see exactly these two.'); return }
     setSaving(true)
     setError('')
     try {
       const pendingWord = wordDraft.trim()
-      const feedback = pendingWord && !form.practiceWords.some((item) => item.toLowerCase() === pendingWord.toLowerCase())
+      const withWord = pendingWord && !form.practiceWords.some((item) => item.toLowerCase() === pendingWord.toLowerCase())
         ? { ...form, practiceWords: [...form.practiceWords, pendingWord].slice(0, 12) }
         : form
+      /* The reference card has no summary box, but parents read the summary
+         first - so when the teacher leaves it empty it is composed from the
+         required fields instead of arriving blank. */
+      const ratingLabel = PERFORMANCE_RATINGS.find((option) => option.value === withWord.performanceRating)?.label || ''
+      const feedback = {
+        ...withWord,
+        summary: withWord.summary.trim()
+          || [`${withWord.studentName.trim()}${ratingLabel ? ` (${ratingLabel})` : ''}:`, withWord.strength.trim(), withWord.nextStep.trim()].filter(Boolean).join(' '),
+      }
       const saved = saveTeacherFeedback(booking.id, teacherId, feedback)
 
       // The cloud write used to be fire-and-forget: the dialog closed and the
@@ -2211,9 +2266,17 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 
   return (
     <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="portal-dialog feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+      <section className="portal-dialog feedback-dialog feedback-assistant-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
-        <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || booking.learnerName || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
+        <div className="feedback-assistant-heading">
+          <h2 id="feedback-title">⭐ Lesson Feedback Assistant ⭐</h2>
+          <p>By: {teacherName}</p>
+        </div>
+        <div className="feedback-assistant-stats" aria-label="Feedback statistics">
+          <span>👥 Completed classes: <b>{completedBookings.length}</b></span>
+          <span>🌐 Feedback written: <b>{writtenCount}</b></span>
+          <span>⏳ Awaiting feedback: <b>{completedBookings.length - writtenCount}</b></span>
+        </div>
         <div className="feedback-selected-student-card">
           <span><UserRound size={18} /></span>
           <div><small>Selected student</small><strong>{learner?.name || booking.learnerName || 'Student'}</strong><em>{formatLessonDate(booking.date, booking.time, true)} at {formatTime(booking.time, booking.date)} · {booking.focus}</em></div>
@@ -2258,9 +2321,23 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
           </div>
         </div>
 
-        <form className="feedback-form" onSubmit={submit}>
-          <label><span>Class summary * <em>{form.summary.length}/5000</em></span><textarea autoFocus value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="Paste or type up to 5,000 characters. What did you cover and how did the student participate?" maxLength={5000} /></label>
-          <div><label><span>Strength shown</span><input value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="e.g. Clear spoken answers" /></label><label><span>Next learning step</span><input value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="e.g. Use richer vocabulary" /></label></div>
+        <form className="feedback-form feedback-assistant-form" onSubmit={submit}>
+          <div className="feedback-assistant-grid">
+            <label><span>Student Name:</span><input value={form.studentName} onChange={(event) => setForm((current) => ({ ...current, studentName: event.target.value }))} placeholder="e.g. Luna" maxLength={60} /></label>
+            <div className="feedback-assistant-field"><span>Gender:</span><div className="feedback-gender-toggle" role="group" aria-label="Student gender"><button type="button" className={form.gender === 'male' ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, gender: current.gender === 'male' ? '' : 'male' }))}>👦 Male</button><button type="button" className={form.gender === 'female' ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, gender: current.gender === 'female' ? '' : 'female' }))}>👧 Female</button></div></div>
+            <label><span>Level of Proficiency:</span><select value={form.proficiencyLevel} onChange={(event) => setForm((current) => ({ ...current, proficiencyLevel: event.target.value }))}><option value="">-Select Level-</option>{PROFICIENCY_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+            <label><span>Performance Rating:</span><select value={form.performanceRating} onChange={(event) => setForm((current) => ({ ...current, performanceRating: event.target.value }))}><option value="">-Select Rating-</option>{PERFORMANCE_RATINGS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label className="feedback-assistant-full"><span>Is Lesson Redo Required?</span><select value={form.lessonRedo} onChange={(event) => setForm((current) => ({ ...current, lessonRedo: event.target.value }))}><option value="no">No (Finished at least half)</option><option value="yes">Yes (Less than half completed)</option></select></label>
+            <label><span>Achieved Competencies (If Applicable and Provided):</span><textarea value={form.achievedCompetencies} onChange={(event) => setForm((current) => ({ ...current, achievedCompetencies: event.target.value }))} placeholder="Paste competencies here..." maxLength={2000} /></label>
+            <label><span>Failed Competencies (If Applicable and Provided):</span><textarea value={form.failedCompetencies} onChange={(event) => setForm((current) => ({ ...current, failedCompetencies: event.target.value }))} placeholder="Paste competencies here..." maxLength={2000} /></label>
+            <label><span>Areas of Success (From Form): *</span><textarea value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="Required..." maxLength={1000} /></label>
+            <label><span>Areas for Improvement (From Form): *</span><textarea value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="Required..." maxLength={1000} /></label>
+            <label><span>✨ Personalized Success (Optional):</span><small className="feedback-assistant-hint">To guarantee a perfect 5/5 score in personalization, please include specific details here!</small><textarea value={form.personalSuccess} onChange={(event) => setForm((current) => ({ ...current, personalSuccess: event.target.value }))} placeholder="Funny moments, specific extra words they learned well..." maxLength={1000} /></label>
+            <label><span>🎯 Personalized Improvement (Optional):</span><small className="feedback-assistant-hint">To guarantee a perfect 5/5 score in personalization, please include specific details here!</small><textarea value={form.personalImprovement} onChange={(event) => setForm((current) => ({ ...current, personalImprovement: event.target.value }))} placeholder="Custom behavioral notes, specific mispronounced words..." maxLength={1000} /></label>
+          </div>
+          <details className="feedback-more-details">
+            <summary>More lesson details — summary, homework, practice words, grammar, resources</summary>
+          <label><span>Class summary <em>{form.summary.length}/5000</em></span><textarea value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="Optional - left empty, the summary is composed from the required areas above." maxLength={5000} /></label>
           <div className="feedback-practice-grid">
             <fieldset className="feedback-word-practice"><legend>Words or phrases to practise</legend><p>Add up to 12 vocabulary or pronunciation targets. Tap any added word to hear how the student will hear it.</p><div className="feedback-word-entry"><input value={wordDraft} onChange={(event) => setWordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); addPracticeWord() } }} placeholder="Type a word, then press Enter" maxLength="40" /><button type="button" onClick={addPracticeWord} disabled={!wordDraft.trim() || form.practiceWords.length >= 12}><Plus size={15} /> Add</button></div><div className="feedback-chip-list feedback-chip-list--speak">{form.practiceWords.length ? form.practiceWords.map((word) => <span key={word}><button type="button" className="feedback-chip-speak" onClick={() => speakPracticeWord(word)} aria-label={`Hear ${word}`} title={`Hear "${word}" pronounced`}><Volume2 size={12} /></button>{word}<button type="button" onClick={() => setForm((current) => ({ ...current, practiceWords: current.practiceWords.filter((item) => item !== word) }))} aria-label={`Remove ${word}`}><X size={12} /></button></span>) : <small>No practice words selected yet.</small>}</div></fieldset>
             <fieldset className="feedback-grammar-focus"><legend>Grammar to practise</legend><p>Select every grammar area that needs more practice.</p><div>{GRAMMAR_FOCUS_OPTIONS.map((focus) => <label className={form.grammarFocus.includes(focus) ? 'selected' : ''} key={focus}><input type="checkbox" checked={form.grammarFocus.includes(focus)} onChange={() => toggleGrammarFocus(focus)} /><span>{focus}</span></label>)}</div></fieldset>
@@ -2298,7 +2375,12 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
             )}
             {form.resourceLinks.length === 0 && <small style={{ color: '#b9adc7' }}>No resource links added yet.</small>}
           </fieldset>
-          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose} disabled={saving}>Cancel</button><button type="submit" className="portal-primary-button" disabled={saving}>{saving ? 'Saving and sharing…' : 'Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button></div>
+          </details>
+          <div className="portal-dialog__actions feedback-assistant-actions">
+            <button type="submit" className="feedback-assistant-primary" disabled={saving}>{saving ? 'Saving and sharing…' : '💾 Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button>
+            <button type="button" className="feedback-assistant-clear" onClick={clearForm} disabled={saving}>🗑️ Clear</button>
+            <button type="button" className="portal-secondary-button" onClick={onClose} disabled={saving}>Cancel</button>
+          </div>
         </form>
       </section>
     </div>
@@ -4855,6 +4937,7 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   })
   const [version, setVersion] = useState(0)
   const [availabilitySlots, setAvailabilitySlots] = useState(account.teacher.availabilitySlots || [])
+  const [shiftChoice, setShiftChoice] = useState(() => teacherShift(account))
   const [scheduleWeek, setScheduleWeek] = useState(0)
   const [bookingWeek, setBookingWeek] = useState(0)
   const [calendarWeek, setCalendarWeek] = useState(0)
@@ -4893,6 +4976,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [introVideoSaved, setIntroVideoSaved] = useState(false)
   const [savingIntroVideo, setSavingIntroVideo] = useState(false)
   const [payoutMethod, setPayoutMethod] = useState(account.teacher.payoutMethod || 'GCash')
+  /* The 24-hour thank-you-and-checklist card on the profile. The dismissal
+     list lives in this browser; the 24-hour window lives on the account. */
+  const [dismissedNotices, setDismissedNotices] = useState(() => readDismissedTeacherNotices())
   const [payoutDetails, setPayoutDetails] = useState(account.teacher.payoutDetails || '')
   const [payoutSaved, setPayoutSaved] = useState(false)
   const [savingPayout, setSavingPayout] = useState(false)
@@ -5453,11 +5539,20 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   }
 
   const saveAvailability = () => {
-    const updated = updateTeacherProfile(account.id, { availabilitySlots })
+    const updated = updateTeacherProfile(account.id, { availabilitySlots, shift: shiftChoice })
     setAccount(updated)
     onAccountChange(updated)
     setSaved(true)
     window.setTimeout(() => setSaved(false), 2000)
+  }
+
+  /* Day shift or night shift, one tap: fills the whole week with the preset
+     window so a teacher - approved or still under review - never has to
+     paint forty cells by hand. They can still paint over it before saving. */
+  const applyShift = (shiftId) => {
+    setShiftChoice(shiftId)
+    setAvailabilitySlots(buildShiftSlots(shiftId))
+    setSaved(false)
   }
 
   const saveClassroom = () => {
@@ -5745,11 +5840,19 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
       {active === 'schedule' && (
         <div className="portal-view">
           <div className="portal-page-heading schedule-page-heading">
-            <div><span className="portal-kicker">Recurring weekly calendar</span><h1>Set availability</h1><p>Click and drag across the calendar to add time. Drag across green slots to make them unavailable.</p></div>
+            <div><span className="portal-kicker">Recurring weekly calendar</span><h1>Set availability</h1><p>Click and drag across the calendar to add time. Drag across green slots to make them unavailable.{account.status !== 'approved' ? ' You can open your hours now, while your profile is still under review - approved teachers book straight into them.' : ''}</p></div>
             <div className="schedule-save-actions"><span>{availabilitySlots.length} slots · {(availabilitySlots.length / 2).toFixed(1)} hours/week</span>{saved && <span className="saved-label"><Check size={14} /> Saved</span>}<button className="portal-primary-button" onClick={saveAvailability}><Check size={16} /> Save availability</button></div>
           </div>
           <section className="portal-card availability-calendar-card">
             <div className="drag-instruction"><span><CalendarDays size={18} /></span><div><strong>Paint your available time</strong><small>Each cell is 30 minutes. Booked lessons are locked and cannot be removed.</small></div></div>
+            <div className="schedule-shift-options" role="group" aria-label="Shift quick fill" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', margin: '4px 0 14px' }}>
+              {Object.values(TEACHER_SHIFTS).map((shift) => (
+                <button key={shift.id} type="button" className={`portal-secondary-button${shiftChoice === shift.id ? ' active' : ''}`} onClick={() => applyShift(shift.id)} title={`Open ${shift.hours} across the whole week`}>
+                  {shift.label} · {shift.hours}
+                </button>
+              ))}
+              <small>One tap opens the shift across the week. Paint over it to adjust, then save.</small>
+            </div>
             <ScheduleCalendar
               weekOffset={scheduleWeek}
               onWeekOffset={setScheduleWeek}
@@ -5801,6 +5904,15 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'profile' && (
         <div className="portal-view">
+          {shouldShowApplicationNotice(account, dismissedNotices) && (
+            <section className="portal-card teacher-application-notice" role="status" style={{ borderLeft: '4px solid #bce94e', padding: '18px 20px', position: 'relative' }}>
+              <button type="button" className="portal-text-button" style={{ position: 'absolute', top: '10px', right: '12px' }} onClick={() => setDismissedNotices(rememberDismissedTeacherNotice(account.id))} aria-label="Dismiss the application notice">Got it</button>
+              <span className="portal-kicker">Application received</span>
+              <p style={{ margin: '8px 44px 0 0', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
+                {noticeSegments().map((segment, index) => (segment.strong ? <strong key={index}>{segment.text}</strong> : <span key={index}>{segment.text}</span>))}
+              </p>
+            </section>
+          )}
           <section className="teacher-profile-hero"><div className="teacher-profile-photo-wrap"><ProfilePhoto accountId={account.id} name={account.fullName} refreshKey={mediaVersion} className="teacher-profile-photo" /><label title="Upload display photo"><Camera size={16} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherMedia(event, 'avatar')} /></label></div><div><StatusBadge status={account.status} /><h1>{account.fullName}</h1><p>{account.teacher.specialization} · {account.teacher.experience} years experience</p></div><div className="teacher-profile-hero__score"><Star size={21} /><strong>{account.teacher.rating || 'New'}</strong><span>{account.teacher.ratingCount ? `${account.teacher.ratingCount} class ratings` : 'rating'}</span></div></section>
           {mediaError && <div className="portal-error" role="alert">{mediaError}</div>}
           <section className="portal-card teacher-name-editor"><div><span className="portal-kicker">Public teacher name</span><h2>Edit display name</h2><p>This name appears to parents, students, bookings and the Admin Dashboard.</p></div><label><span>Teacher display name</span><input value={teacherName} onChange={(event) => { setTeacherName(event.target.value); setNameSaved(false); setNameError('') }} maxLength="80" /></label><button className="portal-primary-button" onClick={saveTeacherName}>Save name <Check size={16} /></button>{nameSaved && <span className="saved-label"><Check size={14} /> Saved</span>}{nameError && <div className="portal-error" role="alert">{nameError}</div>}</section>
@@ -6602,7 +6714,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
  * means a name click anywhere in the admin dashboard opens that person's
  * real conversation, in the same docked panel, without leaving the page.
  */
-export function SupportThreadDock({ conversationId, onClose, onChanged, fallbackName = '' }) {
+export function SupportThreadDock({ conversationId, conversationIds = '', onClose, onChanged, fallbackName = '' }) {
   const [thread, setThread] = useState(null)
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState(null)
@@ -6615,13 +6727,25 @@ export function SupportThreadDock({ conversationId, onClose, onChanged, fallback
   const loadThread = useCallback(async () => {
     if (!conversationId) return
     try {
-      const next = await fetchAdminSupportThread(conversationId)
-      setThread(next)
+      /* One person, one thread on screen: every conversation row their
+         email accumulated is fetched and the messages are merged by id,
+         oldest first, so a parent who wrote from three devices still reads
+         as a single continuous conversation. Replies go to conversationId,
+         the newest row of the group. */
+      const ids = conversationIds ? conversationIds.split(',') : [conversationId]
+      const threads = await Promise.all(ids.map((id) => fetchAdminSupportThread(id)))
+      const base = threads[0] || { status: 'open', messages: [] }
+      const byMessageId = new Map()
+      threads.forEach((thread) => (thread?.messages || []).forEach((message) => byMessageId.set(message.id, message)))
+      const messages = [...byMessageId.values()].sort(
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+      )
+      setThread({ ...base, messages })
       setError('')
     } catch (loadError) {
       setError(loadError.message)
     }
-  }, [conversationId])
+  }, [conversationId, conversationIds])
 
   useEffect(() => {
     let active = true
@@ -6749,15 +6873,21 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
   const loadConversations = useCallback(async () => {
     try {
       const rows = await fetchAdminSupportConversations()
-      setConversations(rows)
-      onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
+      /* One slot per email address, however many conversation rows that
+         person accumulated across sessions, devices and reopens. The dock
+         merges their history and answers on the newest row. */
+      const grouped = groupSupportConversationsByEmail(rows)
+      setConversations(grouped)
+      onUnreadChange?.(grouped.reduce((total, item) => total + Number(item.unread_total || 0), 0))
       setError('')
       /* `initialConversationId` is a conversation opened from elsewhere in
          the admin dashboard. The prop was already being passed before
          SupportInbox accepted it, so the inbox used to ignore it and show
-         whichever conversation happened to be first. */
+         whichever conversation happened to be first. It may name an older
+         row of a group, so match against every id the group carries. */
       if (!selectedId && !threadDismissed) {
-        const openFirst = initialConversationId || rows[0]?.id
+        const target = grouped.find((group) => group.ids.includes(initialConversationId))
+        const openFirst = target?.id || grouped[0]?.id
         if (openFirst) setSelectedId(openFirst)
       }
     } catch (loadError) {
@@ -6807,7 +6937,7 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <section className="support-inbox">
         <aside className="support-conversation-list">
           <label><MessageSquareText size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search parent or email…" /></label>
-          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_count) > 0 && <i>{conversation.unread_count}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
+          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_total) > 0 && <i>{conversation.unread_total}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
         </aside>
 
       </section>
@@ -6816,6 +6946,7 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <SupportThreadDock
         key={selectedId}
         conversationId={selectedId}
+        conversationIds={(selected?.ids || []).join(',')}
         fallbackName={selected?.parent_name || ''}
         onChanged={loadConversations}
         onClose={() => { setThreadDismissed(true); setSelectedId('') }}
@@ -7563,6 +7694,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [showAddTeacher, setShowAddTeacher] = useState(false)
   // Teachers who exist only in this browser and so cannot sign in elsewhere.
   const [teacherToFix, setTeacherToFix] = useState(null)
+  /* Bulk twin of TeacherLoginFixDialog. Profiles created on one browser before
+     logins lived in the shared database stay invisible to every other device
+     until a cloud login exists - the owner hit exactly this: eleven teachers
+     on the laptop, three on the desktop, because eight had never been pushed.
+     One button now runs the per-teacher fix for all of them in sequence. */
+  const [bulkLoginFix, setBulkLoginFix] = useState(null)
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
@@ -7610,7 +7747,53 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   // Added before logins were written to the shared database, so they exist
   // in this browser alone and cannot sign in anywhere else.
   const teachersMissingLogin = teachersWithoutLogin(teachers)
+  const fixAllTeacherLogins = async () => {
+    if (bulkLoginFix?.busy) return
+    setBulkLoginFix({ busy: true, results: [] })
+    const results = []
+    for (const teacher of teachersMissingLogin) {
+      const password = suggestTemporaryPassword()
+      try {
+        const created = await createTeacherWithPassword({
+          fullName: teacher.fullName,
+          email: teacher.email || teacher.loginId,
+          password,
+          specialization: teacher.teacher?.specialization,
+          experience: teacher.teacher?.experience,
+          education: teacher.teacher?.education,
+          languages: teacher.teacher?.languages,
+          bio: teacher.teacher?.bio,
+          status: teacher.status === 'pending' ? 'pending' : 'approved',
+        })
+        const relinked = relinkTeacherAccount(teacher.id, created.id)
+        // Their lessons are keyed on the old id, so move them across and push
+        // each one to the shared database - same contract as the single fix.
+        const moved = reassignTeacherBookings(teacher.id, created.id)
+        if (cloudSyncEnabled()) {
+          await Promise.allSettled(moved.map((booking) => syncBookingNow(booking)))
+          await updateCloudProfile(relinked).catch(() => {})
+        }
+        results.push({ name: teacher.fullName, email: created.email, password, moved: moved.length })
+      } catch (fixError) {
+        results.push({ name: teacher.fullName, error: describeTeacherCreateError(fixError) })
+      }
+    }
+    setBulkLoginFix({ busy: false, results })
+    refresh()
+  }
   const students = getAccounts('student')
+  /* The compiled registration register the owner asked for: every family,
+     its registration date, month totals, and a CSV that leaves the site. */
+  const registrationReport = compileStudentRegistrations(students)
+  const downloadRegistrationsCsv = () => {
+    const blob = new Blob([registrationsToCsv(registrationReport)], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `tutorpro-student-registrations-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
   const studentProfiles = students.flatMap((student) => {
     const learners = student.children?.length ? student.children : student.child ? [student.child] : []
     if (learners.length) return learners.map((learner) => ({ account: student, learner }))
@@ -8580,7 +8763,15 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them, or create every shared login at once — their lessons move across with them.</span><div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap' }}><button type="button" className="portal-primary-button" onClick={fixAllTeacherLogins} disabled={bulkLoginFix?.busy}>{bulkLoginFix?.busy ? `Creating ${teachersMissingLogin.length} shared logins…` : `Create shared logins for all ${teachersMissingLogin.length}`}</button><small>Runs here, uploads each profile to the shared database, and every device then sees the same roster.</small></div></div></div>}
+      {bulkLoginFix && !bulkLoginFix.busy && bulkLoginFix.results.length > 0 && (
+        <section className="portal-card" style={{ marginTop: '14px' }}>
+          <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Shared login results</span><h2>Hand each teacher these credentials</h2><p>These profiles now live in the shared database. Your other devices pick them up on their next refresh.</p></div><button type="button" className="portal-text-button" onClick={() => setBulkLoginFix(null)}>Dismiss</button></div>
+          {bulkLoginFix.results.map((item) => (item.error
+            ? <div className="portal-error" role="alert" key={item.name} style={{ margin: '6px 0' }}><strong>{item.name}:</strong> {item.error}</div>
+            : <div key={item.name} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}><strong>{item.name}</strong><span>{item.email}</span><code style={{ background: 'rgba(0,0,0,0.06)', padding: '2px 8px', borderRadius: '6px' }}>{item.password}</code><small>{item.moved} booking{item.moved === 1 ? '' : 's'} moved across</small></div>))}
+        </section>
+      )}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}{teacher.teacher.shift === 'night' ? ' · Night shift' : teacher.teacher.shift === 'day' ? ' · Day shift' : ''}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
@@ -8613,6 +8804,27 @@ export function AdminDashboard({ account, onHome, onLogout }) {
           </div>
 
           <p className="students-privacy"><ShieldCheck size={14} /> Countries are estimated from the visitor’s IP at sign-up. Only the country code is stored — never an IP address.</p>
+        </section>
+
+        <section className="portal-card student-registration-report">
+          <div className="portal-card__heading portal-card__heading--small">
+            <div><span className="portal-kicker">Compiled register</span><h2>Student registration dates</h2><p>Every family in registration order with the month totals, exactly as recorded when the account was created. Download the CSV for your own records.</p></div>
+            <button type="button" className="portal-secondary-button" onClick={downloadRegistrationsCsv}><Download size={15} /> Download CSV</button>
+          </div>
+          <div className="registration-months" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '0 0 12px' }}>
+            {registrationReport.months.map((month) => <span className="country-chip" key={month.label}><span>{month.label}</span><b>{month.count}</b></span>)}
+          </div>
+          <div className="admin-table admin-table--registrations">
+            <div className="admin-table__head"><span>Family</span><span>Email</span><span>Registered</span></div>
+            {registrationReport.rows.map((row) => (
+              <div className="admin-table__row" key={row.id || row.email}>
+                <div><strong>{row.name}</strong></div>
+                <div><small>{row.email}</small></div>
+                <div><strong>{registrationDateLabel(row.registeredAt) || 'Unknown date'}</strong></div>
+              </div>
+            ))}
+            {!registrationReport.rows.length && <EmptyState icon={GraduationCap} title="No registrations yet" text="Family registration dates will compile here as soon as the first account is created." />}
+          </div>
         </section>
 
         <section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentCountrySections.length ? studentCountrySections.map((section) => <div className="admin-table__country" key={section.code}>
