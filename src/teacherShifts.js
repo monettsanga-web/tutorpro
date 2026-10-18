@@ -25,7 +25,9 @@ import { buildWeeklySlots } from './schedule.js'
 
 export const TEACHER_SHIFTS = {
   day: { id: 'day', label: 'Day shift', hours: '08:00 – 18:00', start: '08:00', end: '18:00' },
-  night: { id: 'night', label: 'Night shift', hours: '18:00 – 02:00', start: '18:00', end: '02:00' },
+  /* The owner's hours, corrected: Philippine evenings covering European
+     school days run nine at night to three in the morning. */
+  night: { id: 'night', label: 'Night shift', hours: '21:00 – 03:00', start: '21:00', end: '03:00' },
 }
 
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6]

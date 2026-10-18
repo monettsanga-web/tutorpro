@@ -13665,3 +13665,10 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   color: #bce94e;
   background: rgba(188, 233, 78, 0.12);
 }
+
+/* The compiled registration register: three columns of family, email and
+   the date the account was created. */
+.admin-table--registrations .admin-table__head,
+.admin-table--registrations .admin-table__row {
+  grid-template-columns: 1.2fr 1.4fr 1fr;
+}

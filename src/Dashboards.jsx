@@ -160,6 +160,7 @@ import { INVITE_CODE_MINUTES, createTeacherWithPassword, inviteTeacherByEmail, i
 import { describeTeacherCreateError, describeTeacherLogin, hasSharedLogin, suggestTemporaryPassword, teachersWithoutLogin, validateTeacherDetails } from './teacherAccounts.js'
 import { noticeSegments, readDismissedTeacherNotices, rememberDismissedTeacherNotice, shouldShowApplicationNotice } from './teacherApplicationNotice.js'
 import { TEACHER_SHIFTS, buildShiftSlots, teacherShift } from './teacherShifts.js'
+import { compileStudentRegistrations, registrationDateLabel, registrationsToCsv } from './registrationReport.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -7702,6 +7703,18 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
   const students = getAccounts('student')
+  /* The compiled registration register the owner asked for: every family,
+     its registration date, month totals, and a CSV that leaves the site. */
+  const registrationReport = compileStudentRegistrations(students)
+  const downloadRegistrationsCsv = () => {
+    const blob = new Blob([registrationsToCsv(registrationReport)], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `tutorpro-student-registrations-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
   const studentProfiles = students.flatMap((student) => {
     const learners = student.children?.length ? student.children : student.child ? [student.child] : []
     if (learners.length) return learners.map((learner) => ({ account: student, learner }))
@@ -8712,6 +8725,27 @@ export function AdminDashboard({ account, onHome, onLogout }) {
           </div>
 
           <p className="students-privacy"><ShieldCheck size={14} /> Countries are estimated from the visitor’s IP at sign-up. Only the country code is stored — never an IP address.</p>
+        </section>
+
+        <section className="portal-card student-registration-report">
+          <div className="portal-card__heading portal-card__heading--small">
+            <div><span className="portal-kicker">Compiled register</span><h2>Student registration dates</h2><p>Every family in registration order with the month totals, exactly as recorded when the account was created. Download the CSV for your own records.</p></div>
+            <button type="button" className="portal-secondary-button" onClick={downloadRegistrationsCsv}><Download size={15} /> Download CSV</button>
+          </div>
+          <div className="registration-months" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '0 0 12px' }}>
+            {registrationReport.months.map((month) => <span className="country-chip" key={month.label}><span>{month.label}</span><b>{month.count}</b></span>)}
+          </div>
+          <div className="admin-table admin-table--registrations">
+            <div className="admin-table__head"><span>Family</span><span>Email</span><span>Registered</span></div>
+            {registrationReport.rows.map((row) => (
+              <div className="admin-table__row" key={row.id || row.email}>
+                <div><strong>{row.name}</strong></div>
+                <div><small>{row.email}</small></div>
+                <div><strong>{registrationDateLabel(row.registeredAt) || 'Unknown date'}</strong></div>
+              </div>
+            ))}
+            {!registrationReport.rows.length && <EmptyState icon={GraduationCap} title="No registrations yet" text="Family registration dates will compile here as soon as the first account is created." />}
+          </div>
         </section>
 
         <section className="portal-card admin-table-card"><div className="admin-table admin-table--students"><div className="admin-table__head"><span>Family</span><span>Student</span><span>Learning path</span><span>Status</span><span>Controls</span></div>{studentCountrySections.length ? studentCountrySections.map((section) => <div className="admin-table__country" key={section.code}>
