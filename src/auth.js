@@ -467,6 +467,10 @@ export async function registerTeacher(details) {
       experience: Number(details.experience) || 0,
       languages: details.languages.trim(),
       credentials: details.credentials || [],
+      /* Starts the 24-hour thank-you-and-checklist notice on the teacher's
+         profile. It travels with the account so it follows them to their
+         phone, and expires on its own. */
+      applicationNoticeAt: new Date().toISOString(),
       availabilitySlots: buildWeeklySlots([0, 1, 2, 3, 4], '16:00', '20:00'),
       availability: [
         { day: 'Monday', enabled: true, from: '16:00', to: '20:00' },

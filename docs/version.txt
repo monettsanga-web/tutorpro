@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-17 one-chat-per-email
+TutorPro English production build 2026-10-17 teacher-application-notice

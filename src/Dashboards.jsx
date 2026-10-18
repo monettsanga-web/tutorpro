@@ -158,6 +158,7 @@ import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgrad
 import { describePaymentError } from './paymentErrors.js'
 import { INVITE_CODE_MINUTES, createTeacherWithPassword, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
 import { describeTeacherCreateError, describeTeacherLogin, hasSharedLogin, suggestTemporaryPassword, teachersWithoutLogin, validateTeacherDetails } from './teacherAccounts.js'
+import { noticeSegments, readDismissedTeacherNotices, rememberDismissedTeacherNotice, shouldShowApplicationNotice } from './teacherApplicationNotice.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -4893,6 +4894,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [introVideoSaved, setIntroVideoSaved] = useState(false)
   const [savingIntroVideo, setSavingIntroVideo] = useState(false)
   const [payoutMethod, setPayoutMethod] = useState(account.teacher.payoutMethod || 'GCash')
+  /* The 24-hour thank-you-and-checklist card on the profile. The dismissal
+     list lives in this browser; the 24-hour window lives on the account. */
+  const [dismissedNotices, setDismissedNotices] = useState(() => readDismissedTeacherNotices())
   const [payoutDetails, setPayoutDetails] = useState(account.teacher.payoutDetails || '')
   const [payoutSaved, setPayoutSaved] = useState(false)
   const [savingPayout, setSavingPayout] = useState(false)
@@ -5801,6 +5805,15 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'profile' && (
         <div className="portal-view">
+          {shouldShowApplicationNotice(account, dismissedNotices) && (
+            <section className="portal-card teacher-application-notice" role="status" style={{ borderLeft: '4px solid #bce94e', padding: '18px 20px', position: 'relative' }}>
+              <button type="button" className="portal-text-button" style={{ position: 'absolute', top: '10px', right: '12px' }} onClick={() => setDismissedNotices(rememberDismissedTeacherNotice(account.id))} aria-label="Dismiss the application notice">Got it</button>
+              <span className="portal-kicker">Application received</span>
+              <p style={{ margin: '8px 44px 0 0', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
+                {noticeSegments().map((segment, index) => (segment.strong ? <strong key={index}>{segment.text}</strong> : <span key={index}>{segment.text}</span>))}
+              </p>
+            </section>
+          )}
           <section className="teacher-profile-hero"><div className="teacher-profile-photo-wrap"><ProfilePhoto accountId={account.id} name={account.fullName} refreshKey={mediaVersion} className="teacher-profile-photo" /><label title="Upload display photo"><Camera size={16} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherMedia(event, 'avatar')} /></label></div><div><StatusBadge status={account.status} /><h1>{account.fullName}</h1><p>{account.teacher.specialization} · {account.teacher.experience} years experience</p></div><div className="teacher-profile-hero__score"><Star size={21} /><strong>{account.teacher.rating || 'New'}</strong><span>{account.teacher.ratingCount ? `${account.teacher.ratingCount} class ratings` : 'rating'}</span></div></section>
           {mediaError && <div className="portal-error" role="alert">{mediaError}</div>}
           <section className="portal-card teacher-name-editor"><div><span className="portal-kicker">Public teacher name</span><h2>Edit display name</h2><p>This name appears to parents, students, bookings and the Admin Dashboard.</p></div><label><span>Teacher display name</span><input value={teacherName} onChange={(event) => { setTeacherName(event.target.value); setNameSaved(false); setNameError('') }} maxLength="80" /></label><button className="portal-primary-button" onClick={saveTeacherName}>Save name <Check size={16} /></button>{nameSaved && <span className="saved-label"><Check size={14} /> Saved</span>}{nameError && <div className="portal-error" role="alert">{nameError}</div>}</section>
