@@ -322,6 +322,17 @@ const paymentMethodLabel = {
   chinaQr: 'AUB PayMate / WeChat Pay QR',
   koreaKrw: 'Korea pricing (KRW)',
 }
+/* The assistant card's selects: proficiency levels and the five-point
+   performance rating, exactly as the reference layout offers them. */
+const PROFICIENCY_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper-Intermediate', 'Advanced']
+const PERFORMANCE_RATINGS = [
+  { value: '5', label: '5 - Outstanding' },
+  { value: '4', label: '4 - Exceeds expectations' },
+  { value: '3', label: '3 - Meets expectations' },
+  { value: '2', label: '2 - Approaching expectations' },
+  { value: '1', label: '1 - Needs support' },
+]
+
 const GRAMMAR_FOCUS_OPTIONS = [
   'Sentence structure',
   'Verb tenses',
@@ -2086,10 +2097,40 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     practiceWords: Array.isArray(existing.practiceWords) ? existing.practiceWords : [],
     grammarFocus: Array.isArray(existing.grammarFocus) ? existing.grammarFocus : [],
     resourceLinks: Array.isArray(existing.resourceLinks) ? existing.resourceLinks : [],
+    /* The assistant-card fields the owner asked for, modelled on the
+       reference layout: who the lesson was for, how it went, and the two
+       optional personalization notes. */
+    studentName: existing.studentName || learner?.name || booking.learnerName || '',
+    gender: existing.gender || '',
+    proficiencyLevel: existing.proficiencyLevel || '',
+    performanceRating: existing.performanceRating || '',
+    lessonRedo: existing.lessonRedo || 'no',
+    achievedCompetencies: existing.achievedCompetencies || '',
+    failedCompetencies: existing.failedCompetencies || '',
+    personalSuccess: existing.personalSuccess || '',
+    personalImprovement: existing.personalImprovement || '',
   })
   const [wordDraft, setWordDraft] = useState('')
   const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
   const [error, setError] = useState('')
+
+  /* The assistant card's header: who is writing, and how much they have
+     written - the reference layout opens with exactly this strip. */
+  const teacherAccount = getAccountById(teacherId)
+  const teacherName = teacherAccount?.fullName || 'Teacher'
+  const completedBookings = getBookings({ teacherId }).filter((item) => item.status === 'completed')
+  const writtenCount = completedBookings.filter((item) => item.teacherFeedback?.summary?.trim()).length
+  const clearForm = () => {
+    setForm({
+      summary: '', strength: '', nextStep: '', homework: '',
+      practiceWords: [], grammarFocus: [], resourceLinks: [],
+      studentName: learner?.name || booking.learnerName || '',
+      gender: '', proficiencyLevel: '', performanceRating: '', lessonRedo: 'no',
+      achievedCompetencies: '', failedCompetencies: '', personalSuccess: '', personalImprovement: '',
+    })
+    setWordDraft('')
+    setError('')
+  }
 
   const fillTemplate = (type) => {
     const studentName = learner?.name || 'the student'
@@ -2181,13 +2222,24 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 
   const submit = async (event) => {
     event.preventDefault()
+    if (!form.studentName.trim()) { setError('Enter the student name before saving feedback.'); return }
+    if (!form.strength.trim() || !form.nextStep.trim()) { setError('Areas of Success and Areas for Improvement are required - parents see exactly these two.'); return }
     setSaving(true)
     setError('')
     try {
       const pendingWord = wordDraft.trim()
-      const feedback = pendingWord && !form.practiceWords.some((item) => item.toLowerCase() === pendingWord.toLowerCase())
+      const withWord = pendingWord && !form.practiceWords.some((item) => item.toLowerCase() === pendingWord.toLowerCase())
         ? { ...form, practiceWords: [...form.practiceWords, pendingWord].slice(0, 12) }
         : form
+      /* The reference card has no summary box, but parents read the summary
+         first - so when the teacher leaves it empty it is composed from the
+         required fields instead of arriving blank. */
+      const ratingLabel = PERFORMANCE_RATINGS.find((option) => option.value === withWord.performanceRating)?.label || ''
+      const feedback = {
+        ...withWord,
+        summary: withWord.summary.trim()
+          || [`${withWord.studentName.trim()}${ratingLabel ? ` (${ratingLabel})` : ''}:`, withWord.strength.trim(), withWord.nextStep.trim()].filter(Boolean).join(' '),
+      }
       const saved = saveTeacherFeedback(booking.id, teacherId, feedback)
 
       // The cloud write used to be fire-and-forget: the dialog closed and the
@@ -2214,9 +2266,17 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
 
   return (
     <div className="portal-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="portal-dialog feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+      <section className="portal-dialog feedback-dialog feedback-assistant-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
         <button className="portal-dialog__close" onClick={onClose} aria-label="Close"><X size={19} /></button>
-        <div className="portal-dialog__heading"><span><MessageSquareText size={23} /></span><div><small>Post-class feedback</small><h2 id="feedback-title">Feedback for {learner?.name || booking.learnerName || 'the student'}</h2><p>Parents will see this feedback in the completed lesson and student dashboard.</p></div></div>
+        <div className="feedback-assistant-heading">
+          <h2 id="feedback-title">⭐ Lesson Feedback Assistant ⭐</h2>
+          <p>By: {teacherName}</p>
+        </div>
+        <div className="feedback-assistant-stats" aria-label="Feedback statistics">
+          <span>👥 Completed classes: <b>{completedBookings.length}</b></span>
+          <span>🌐 Feedback written: <b>{writtenCount}</b></span>
+          <span>⏳ Awaiting feedback: <b>{completedBookings.length - writtenCount}</b></span>
+        </div>
         <div className="feedback-selected-student-card">
           <span><UserRound size={18} /></span>
           <div><small>Selected student</small><strong>{learner?.name || booking.learnerName || 'Student'}</strong><em>{formatLessonDate(booking.date, booking.time, true)} at {formatTime(booking.time, booking.date)} · {booking.focus}</em></div>
@@ -2261,9 +2321,23 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
           </div>
         </div>
 
-        <form className="feedback-form" onSubmit={submit}>
-          <label><span>Class summary * <em>{form.summary.length}/5000</em></span><textarea autoFocus value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="Paste or type up to 5,000 characters. What did you cover and how did the student participate?" maxLength={5000} /></label>
-          <div><label><span>Strength shown</span><input value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="e.g. Clear spoken answers" /></label><label><span>Next learning step</span><input value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="e.g. Use richer vocabulary" /></label></div>
+        <form className="feedback-form feedback-assistant-form" onSubmit={submit}>
+          <div className="feedback-assistant-grid">
+            <label><span>Student Name:</span><input value={form.studentName} onChange={(event) => setForm((current) => ({ ...current, studentName: event.target.value }))} placeholder="e.g. Luna" maxLength={60} /></label>
+            <div className="feedback-assistant-field"><span>Gender:</span><div className="feedback-gender-toggle" role="group" aria-label="Student gender"><button type="button" className={form.gender === 'male' ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, gender: current.gender === 'male' ? '' : 'male' }))}>👦 Male</button><button type="button" className={form.gender === 'female' ? 'active' : ''} onClick={() => setForm((current) => ({ ...current, gender: current.gender === 'female' ? '' : 'female' }))}>👧 Female</button></div></div>
+            <label><span>Level of Proficiency:</span><select value={form.proficiencyLevel} onChange={(event) => setForm((current) => ({ ...current, proficiencyLevel: event.target.value }))}><option value="">-Select Level-</option>{PROFICIENCY_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+            <label><span>Performance Rating:</span><select value={form.performanceRating} onChange={(event) => setForm((current) => ({ ...current, performanceRating: event.target.value }))}><option value="">-Select Rating-</option>{PERFORMANCE_RATINGS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label className="feedback-assistant-full"><span>Is Lesson Redo Required?</span><select value={form.lessonRedo} onChange={(event) => setForm((current) => ({ ...current, lessonRedo: event.target.value }))}><option value="no">No (Finished at least half)</option><option value="yes">Yes (Less than half completed)</option></select></label>
+            <label><span>Achieved Competencies (If Applicable and Provided):</span><textarea value={form.achievedCompetencies} onChange={(event) => setForm((current) => ({ ...current, achievedCompetencies: event.target.value }))} placeholder="Paste competencies here..." maxLength={2000} /></label>
+            <label><span>Failed Competencies (If Applicable and Provided):</span><textarea value={form.failedCompetencies} onChange={(event) => setForm((current) => ({ ...current, failedCompetencies: event.target.value }))} placeholder="Paste competencies here..." maxLength={2000} /></label>
+            <label><span>Areas of Success (From Form): *</span><textarea value={form.strength} onChange={(event) => setForm((current) => ({ ...current, strength: event.target.value }))} placeholder="Required..." maxLength={1000} /></label>
+            <label><span>Areas for Improvement (From Form): *</span><textarea value={form.nextStep} onChange={(event) => setForm((current) => ({ ...current, nextStep: event.target.value }))} placeholder="Required..." maxLength={1000} /></label>
+            <label><span>✨ Personalized Success (Optional):</span><small className="feedback-assistant-hint">To guarantee a perfect 5/5 score in personalization, please include specific details here!</small><textarea value={form.personalSuccess} onChange={(event) => setForm((current) => ({ ...current, personalSuccess: event.target.value }))} placeholder="Funny moments, specific extra words they learned well..." maxLength={1000} /></label>
+            <label><span>🎯 Personalized Improvement (Optional):</span><small className="feedback-assistant-hint">To guarantee a perfect 5/5 score in personalization, please include specific details here!</small><textarea value={form.personalImprovement} onChange={(event) => setForm((current) => ({ ...current, personalImprovement: event.target.value }))} placeholder="Custom behavioral notes, specific mispronounced words..." maxLength={1000} /></label>
+          </div>
+          <details className="feedback-more-details">
+            <summary>More lesson details — summary, homework, practice words, grammar, resources</summary>
+          <label><span>Class summary <em>{form.summary.length}/5000</em></span><textarea value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} placeholder="Optional - left empty, the summary is composed from the required areas above." maxLength={5000} /></label>
           <div className="feedback-practice-grid">
             <fieldset className="feedback-word-practice"><legend>Words or phrases to practise</legend><p>Add up to 12 vocabulary or pronunciation targets. Tap any added word to hear how the student will hear it.</p><div className="feedback-word-entry"><input value={wordDraft} onChange={(event) => setWordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); addPracticeWord() } }} placeholder="Type a word, then press Enter" maxLength="40" /><button type="button" onClick={addPracticeWord} disabled={!wordDraft.trim() || form.practiceWords.length >= 12}><Plus size={15} /> Add</button></div><div className="feedback-chip-list feedback-chip-list--speak">{form.practiceWords.length ? form.practiceWords.map((word) => <span key={word}><button type="button" className="feedback-chip-speak" onClick={() => speakPracticeWord(word)} aria-label={`Hear ${word}`} title={`Hear "${word}" pronounced`}><Volume2 size={12} /></button>{word}<button type="button" onClick={() => setForm((current) => ({ ...current, practiceWords: current.practiceWords.filter((item) => item !== word) }))} aria-label={`Remove ${word}`}><X size={12} /></button></span>) : <small>No practice words selected yet.</small>}</div></fieldset>
             <fieldset className="feedback-grammar-focus"><legend>Grammar to practise</legend><p>Select every grammar area that needs more practice.</p><div>{GRAMMAR_FOCUS_OPTIONS.map((focus) => <label className={form.grammarFocus.includes(focus) ? 'selected' : ''} key={focus}><input type="checkbox" checked={form.grammarFocus.includes(focus)} onChange={() => toggleGrammarFocus(focus)} /><span>{focus}</span></label>)}</div></fieldset>
@@ -2301,7 +2375,12 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
             )}
             {form.resourceLinks.length === 0 && <small style={{ color: '#b9adc7' }}>No resource links added yet.</small>}
           </fieldset>
-          <div className="portal-dialog__actions"><button type="button" className="portal-secondary-button" onClick={onClose} disabled={saving}>Cancel</button><button type="submit" className="portal-primary-button" disabled={saving}>{saving ? 'Saving and sharing…' : 'Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button></div>
+          </details>
+          <div className="portal-dialog__actions feedback-assistant-actions">
+            <button type="submit" className="feedback-assistant-primary" disabled={saving}>{saving ? 'Saving and sharing…' : '💾 Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button>
+            <button type="button" className="feedback-assistant-clear" onClick={clearForm} disabled={saving}>🗑️ Clear</button>
+            <button type="button" className="portal-secondary-button" onClick={onClose} disabled={saving}>Cancel</button>
+          </div>
         </form>
       </section>
     </div>
