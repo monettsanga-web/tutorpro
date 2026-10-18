@@ -325,6 +325,18 @@ export function saveTeacherFeedback(bookingId, teacherId, feedback) {
       strength: feedback.strength?.trim() || '',
       nextStep: feedback.nextStep?.trim() || '',
       homework: feedback.homework?.trim() || '',
+      /* The assistant-card fields: who the lesson was for and how it went,
+         kept alongside the parent-facing notes so nothing the teacher
+         records is lost. */
+      studentName: feedback.studentName?.trim() || '',
+      gender: feedback.gender === 'male' || feedback.gender === 'female' ? feedback.gender : '',
+      proficiencyLevel: feedback.proficiencyLevel?.trim() || '',
+      performanceRating: feedback.performanceRating?.trim() || '',
+      lessonRedo: feedback.lessonRedo === 'yes' ? 'yes' : 'no',
+      achievedCompetencies: feedback.achievedCompetencies?.trim() || '',
+      failedCompetencies: feedback.failedCompetencies?.trim() || '',
+      personalSuccess: feedback.personalSuccess?.trim() || '',
+      personalImprovement: feedback.personalImprovement?.trim() || '',
       practiceWords,
       grammarFocus,
       resourceLinks,

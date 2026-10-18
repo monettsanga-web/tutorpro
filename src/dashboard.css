@@ -13657,3 +13657,81 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   .tbcal-chip { font-size: 0.62rem; padding: 2px 4px; }
   .tbcal__num { font-size: 0.72rem; }
 }
+
+/* Day-shift / night-shift quick fill on the availability calendar: the
+   chosen shift reads as selected without inventing a new button family. */
+.schedule-shift-options .portal-secondary-button.active {
+  border-color: #bce94e;
+  color: #bce94e;
+  background: rgba(188, 233, 78, 0.12);
+}
+
+/* The compiled registration register: three columns of family, email and
+   the date the account was created. */
+.admin-table--registrations .admin-table__head,
+.admin-table--registrations .admin-table__row {
+  grid-template-columns: 1.2fr 1.4fr 1fr;
+}
+
+/* The feedback assistant card: the owner's reference view is a white card
+   with a two-column form, so the dialog wears white inside the dark portal
+   rather than the other way round. */
+.feedback-assistant-dialog {
+  background: #ffffff;
+  color: #1f2937;
+}
+.feedback-assistant-dialog .portal-dialog__close { color: #6b7280; }
+.feedback-assistant-heading { text-align: center; margin: 4px 0 10px; }
+.feedback-assistant-heading h2 { font-size: 1.9rem; font-weight: 900; color: #111827; margin: 0; }
+.feedback-assistant-heading p { color: #6b7280; margin: 4px 0 0; }
+.feedback-assistant-stats {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  background: #f3f4f6; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 0.956rem; color: #374151;
+}
+.feedback-assistant-stats b { color: #5b4be0; }
+.feedback-assistant-dialog .feedback-selected-student-card,
+.feedback-assistant-dialog .feedback-recommendations {
+  background: #f5f3ff; border-color: #ddd6fe; color: #374151;
+}
+.feedback-assistant-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; margin-bottom: 14px;
+}
+.feedback-assistant-grid label, .feedback-assistant-field { display: flex; flex-direction: column; gap: 6px; }
+.feedback-assistant-grid span, .feedback-assistant-field > span { font-size: 0.956rem; font-weight: 700; color: #374151; }
+.feedback-assistant-hint { font-size: 0.85rem; color: #6b7280; font-weight: 500; }
+.feedback-assistant-full { grid-column: 1 / -1; }
+.feedback-assistant-grid input,
+.feedback-assistant-grid select,
+.feedback-assistant-grid textarea,
+.feedback-more-details input,
+.feedback-more-details select,
+.feedback-more-details textarea {
+  background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px;
+  color: #111827; padding: 10px 12px; font-size: 0.989rem; outline: none; width: 100%;
+}
+.feedback-assistant-grid textarea { min-height: 84px; resize: vertical; }
+.feedback-gender-toggle { display: flex; gap: 10px; }
+.feedback-gender-toggle button {
+  flex: 1; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 10px 12px; font-size: 0.989rem; font-weight: 700; color: #374151; cursor: pointer;
+}
+.feedback-gender-toggle button.active { border-color: #5b4be0; color: #5b4be0; background: #f5f3ff; }
+.feedback-more-details { border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: 4px; }
+.feedback-more-details summary { cursor: pointer; font-weight: 700; color: #5b4be0; margin-bottom: 10px; }
+.feedback-more-details label { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; color: #374151; }
+.feedback-assistant-actions { gap: 10px; }
+.feedback-assistant-primary {
+  flex: 1; background: #5b4be0; color: #fff; border: none; border-radius: 10px;
+  padding: 12px 16px; font-weight: 800; font-size: 1rem; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.feedback-assistant-primary:disabled { opacity: 0.6; cursor: wait; }
+.feedback-assistant-clear {
+  flex: 1; background: #ececef; color: #6b7280; border: none; border-radius: 10px;
+  padding: 12px 16px; font-weight: 800; font-size: 1rem; cursor: pointer;
+}
+.feedback-assistant-dialog .portal-error { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+@media (max-width: 700px) {
+  .feedback-assistant-grid { grid-template-columns: 1fr; }
+}
