@@ -1,5 +1,1 @@
-<<<<<<< HEAD
 TutorPro English production build 2026-10-17 teacher-application-notice
-=======
-TutorPro English production build 2026-10-17 one-chat-per-email
->>>>>>> origin/main
