@@ -13,16 +13,26 @@ const ok = (condition, label) => {
 }
 
 ok(Object.keys(TEACHER_SHIFTS).join(',') === 'day,night', 'exactly two shifts are offered: day and night')
+<<<<<<< HEAD
 ok(TEACHER_SHIFTS.day.hours === '08:00 – 18:00' && TEACHER_SHIFTS.night.hours === '21:00 – 03:00', 'the shift windows are the owner\'s hours: day 08:00-18:00, night 21:00-03:00')
+=======
+ok(TEACHER_SHIFTS.day.hours === '08:00 – 18:00' && TEACHER_SHIFTS.night.hours === '18:00 – 02:00', 'the shift windows are the agreed hours')
+>>>>>>> origin/main
 
 const day = buildShiftSlots('day')
 ok(day.length === 7 * 20, 'day shift opens ten hours on each of the seven days')
 ok(day.includes('0-08:00') && day.includes('0-17:30') && !day.includes('0-18:00'), 'day slots run 08:00 up to but not including 18:00')
 
 const night = buildShiftSlots('night')
+<<<<<<< HEAD
 ok(night.length === 7 * 12, 'night shift opens six hours on each of the seven days')
 ok(night.includes('0-21:00') && night.includes('0-23:30'), 'the evening half of the night shift starts at 21:00')
 ok(night.includes('0-00:00') && night.includes('0-02:30') && !night.includes('0-03:00'), 'the after-midnight half stops at 03:00')
+=======
+ok(night.length === 7 * 16, 'night shift opens eight hours on each of the seven days')
+ok(night.includes('0-18:00') && night.includes('0-23:30'), 'the evening half of the night shift is present')
+ok(night.includes('0-00:00') && night.includes('0-01:30') && !night.includes('0-02:00'), 'the after-midnight half stops at 02:00')
+>>>>>>> origin/main
 ok(buildShiftSlots('nope').length === 0, 'an unknown shift opens nothing')
 
 ok(teacherShift({ teacher: { shift: 'night' } }) === 'night', 'a stored night shift reads back')
