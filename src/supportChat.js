@@ -260,6 +260,34 @@ export async function fetchAdminSupportConversations() {
   return data || []
 }
 
+/**
+ * One conversation per email address, however many rows exist.
+ *
+ * A row is created per visitor session and per reopen after a close, so the
+ * same parent or teacher could occupy five slots in the admin inbox while
+ * their history sat split across them. The owner's rule is one chat per
+ * email: rows are folded by normalized email (name as a last resort for the
+ * pre-email era), newest row first inside each group. The group keeps every
+ * conversation id so the thread dock can show the whole merged history and
+ * answer on the newest one.
+ */
+export function groupSupportConversationsByEmail(conversations) {
+  const groups = new Map()
+  for (const conversation of conversations || []) {
+    const email = String(conversation.email || conversation.parent_email || '').trim().toLowerCase()
+    const key = email || `name:${String(conversation.parent_name || '').trim().toLowerCase() || conversation.id}`
+    const unread = Number(conversation.unread_count || 0)
+    const existing = groups.get(key)
+    if (!existing) {
+      groups.set(key, { ...conversation, unread_total: unread, ids: [conversation.id] })
+    } else {
+      existing.ids.push(conversation.id)
+      existing.unread_total += unread
+    }
+  }
+  return [...groups.values()]
+}
+
 export async function fetchAdminSupportThread(conversationId) {
   requireSupabase()
   const { data, error } = await supabase.rpc('get_admin_support_thread', { target_conversation_id: conversationId })

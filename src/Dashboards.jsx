@@ -144,7 +144,7 @@ import { recoveryStateFor, saveRecoveryEmail } from './recoveryEmail.js'
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
 import { checkSyncHealth, syncHealthMessage } from './syncHealth.js'
 import { formatDateKey, HALF_HOUR_TIMES, makeSlotKey, minutesToTime, timeToMinutes, weekDates, weekdayIndex } from './schedule.js'
-import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
+import { notifySupportReply, downloadSupportAttachment, fetchAdminSupportConversations, fetchAdminSupportThread, groupSupportConversationsByEmail, sendAdminSupportMessage, setSupportConversationStatus, uploadAdminSupportAttachment } from './supportChat.js'
 import { translateSupportText } from './supportTranslation.js'
 import { createHomework, getHomework, HOMEWORK_TYPES, homeworkStats, removeHomework, updateHomework } from './homework.js'
 import { getLibraryBookmarks, getRecommendedLibraryResources, LIBRARY_CATEGORIES, searchLibraryResources, toggleLibraryBookmark } from './library.js'
@@ -158,6 +158,7 @@ import { buildBackup, downloadBackup, estimateDatabaseBytes, formatBytes, upgrad
 import { describePaymentError } from './paymentErrors.js'
 import { INVITE_CODE_MINUTES, createTeacherWithPassword, inviteTeacherByEmail, isValidEmail } from './teacherInvites.js'
 import { describeTeacherCreateError, describeTeacherLogin, hasSharedLogin, suggestTemporaryPassword, teachersWithoutLogin, validateTeacherDetails } from './teacherAccounts.js'
+import { noticeSegments, readDismissedTeacherNotices, rememberDismissedTeacherNotice, shouldShowApplicationNotice } from './teacherApplicationNotice.js'
 import { MAX_DISCOUNT_PERCENT, RATE_PRESETS, describeStudentPricing, resolveStudentPrice, studentPricing, validateDiscountInput, validateRateInput } from './discounts.js'
 import { MAX_REQUEST_SESSIONS, activePaymentRequest, buildPaymentRequest, cancelPaymentRequest, describePaymentRequest, settledPaymentRequest, suggestedRequestAmount, validatePaymentRequestInput } from './paymentRequests.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -4893,6 +4894,9 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
   const [introVideoSaved, setIntroVideoSaved] = useState(false)
   const [savingIntroVideo, setSavingIntroVideo] = useState(false)
   const [payoutMethod, setPayoutMethod] = useState(account.teacher.payoutMethod || 'GCash')
+  /* The 24-hour thank-you-and-checklist card on the profile. The dismissal
+     list lives in this browser; the 24-hour window lives on the account. */
+  const [dismissedNotices, setDismissedNotices] = useState(() => readDismissedTeacherNotices())
   const [payoutDetails, setPayoutDetails] = useState(account.teacher.payoutDetails || '')
   const [payoutSaved, setPayoutSaved] = useState(false)
   const [savingPayout, setSavingPayout] = useState(false)
@@ -5801,6 +5805,15 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
 
       {active === 'profile' && (
         <div className="portal-view">
+          {shouldShowApplicationNotice(account, dismissedNotices) && (
+            <section className="portal-card teacher-application-notice" role="status" style={{ borderLeft: '4px solid #bce94e', padding: '18px 20px', position: 'relative' }}>
+              <button type="button" className="portal-text-button" style={{ position: 'absolute', top: '10px', right: '12px' }} onClick={() => setDismissedNotices(rememberDismissedTeacherNotice(account.id))} aria-label="Dismiss the application notice">Got it</button>
+              <span className="portal-kicker">Application received</span>
+              <p style={{ margin: '8px 44px 0 0', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
+                {noticeSegments().map((segment, index) => (segment.strong ? <strong key={index}>{segment.text}</strong> : <span key={index}>{segment.text}</span>))}
+              </p>
+            </section>
+          )}
           <section className="teacher-profile-hero"><div className="teacher-profile-photo-wrap"><ProfilePhoto accountId={account.id} name={account.fullName} refreshKey={mediaVersion} className="teacher-profile-photo" /><label title="Upload display photo"><Camera size={16} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherMedia(event, 'avatar')} /></label></div><div><StatusBadge status={account.status} /><h1>{account.fullName}</h1><p>{account.teacher.specialization} · {account.teacher.experience} years experience</p></div><div className="teacher-profile-hero__score"><Star size={21} /><strong>{account.teacher.rating || 'New'}</strong><span>{account.teacher.ratingCount ? `${account.teacher.ratingCount} class ratings` : 'rating'}</span></div></section>
           {mediaError && <div className="portal-error" role="alert">{mediaError}</div>}
           <section className="portal-card teacher-name-editor"><div><span className="portal-kicker">Public teacher name</span><h2>Edit display name</h2><p>This name appears to parents, students, bookings and the Admin Dashboard.</p></div><label><span>Teacher display name</span><input value={teacherName} onChange={(event) => { setTeacherName(event.target.value); setNameSaved(false); setNameError('') }} maxLength="80" /></label><button className="portal-primary-button" onClick={saveTeacherName}>Save name <Check size={16} /></button>{nameSaved && <span className="saved-label"><Check size={14} /> Saved</span>}{nameError && <div className="portal-error" role="alert">{nameError}</div>}</section>
@@ -6602,7 +6615,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
  * means a name click anywhere in the admin dashboard opens that person's
  * real conversation, in the same docked panel, without leaving the page.
  */
-export function SupportThreadDock({ conversationId, onClose, onChanged, fallbackName = '' }) {
+export function SupportThreadDock({ conversationId, conversationIds = '', onClose, onChanged, fallbackName = '' }) {
   const [thread, setThread] = useState(null)
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState(null)
@@ -6615,13 +6628,25 @@ export function SupportThreadDock({ conversationId, onClose, onChanged, fallback
   const loadThread = useCallback(async () => {
     if (!conversationId) return
     try {
-      const next = await fetchAdminSupportThread(conversationId)
-      setThread(next)
+      /* One person, one thread on screen: every conversation row their
+         email accumulated is fetched and the messages are merged by id,
+         oldest first, so a parent who wrote from three devices still reads
+         as a single continuous conversation. Replies go to conversationId,
+         the newest row of the group. */
+      const ids = conversationIds ? conversationIds.split(',') : [conversationId]
+      const threads = await Promise.all(ids.map((id) => fetchAdminSupportThread(id)))
+      const base = threads[0] || { status: 'open', messages: [] }
+      const byMessageId = new Map()
+      threads.forEach((thread) => (thread?.messages || []).forEach((message) => byMessageId.set(message.id, message)))
+      const messages = [...byMessageId.values()].sort(
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+      )
+      setThread({ ...base, messages })
       setError('')
     } catch (loadError) {
       setError(loadError.message)
     }
-  }, [conversationId])
+  }, [conversationId, conversationIds])
 
   useEffect(() => {
     let active = true
@@ -6749,15 +6774,21 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
   const loadConversations = useCallback(async () => {
     try {
       const rows = await fetchAdminSupportConversations()
-      setConversations(rows)
-      onUnreadChange?.(rows.reduce((total, item) => total + Number(item.unread_count || 0), 0))
+      /* One slot per email address, however many conversation rows that
+         person accumulated across sessions, devices and reopens. The dock
+         merges their history and answers on the newest row. */
+      const grouped = groupSupportConversationsByEmail(rows)
+      setConversations(grouped)
+      onUnreadChange?.(grouped.reduce((total, item) => total + Number(item.unread_total || 0), 0))
       setError('')
       /* `initialConversationId` is a conversation opened from elsewhere in
          the admin dashboard. The prop was already being passed before
          SupportInbox accepted it, so the inbox used to ignore it and show
-         whichever conversation happened to be first. */
+         whichever conversation happened to be first. It may name an older
+         row of a group, so match against every id the group carries. */
       if (!selectedId && !threadDismissed) {
-        const openFirst = initialConversationId || rows[0]?.id
+        const target = grouped.find((group) => group.ids.includes(initialConversationId))
+        const openFirst = target?.id || grouped[0]?.id
         if (openFirst) setSelectedId(openFirst)
       }
     } catch (loadError) {
@@ -6807,7 +6838,7 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <section className="support-inbox">
         <aside className="support-conversation-list">
           <label><MessageSquareText size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search parent or email…" /></label>
-          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_count) > 0 && <i>{conversation.unread_count}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
+          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_total) > 0 && <i>{conversation.unread_total}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
         </aside>
 
       </section>
@@ -6816,6 +6847,7 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <SupportThreadDock
         key={selectedId}
         conversationId={selectedId}
+        conversationIds={(selected?.ids || []).join(',')}
         fallbackName={selected?.parent_name || ''}
         onChanged={loadConversations}
         onClose={() => { setThreadDismissed(true); setSelectedId('') }}
@@ -7563,6 +7595,12 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [showAddTeacher, setShowAddTeacher] = useState(false)
   // Teachers who exist only in this browser and so cannot sign in elsewhere.
   const [teacherToFix, setTeacherToFix] = useState(null)
+  /* Bulk twin of TeacherLoginFixDialog. Profiles created on one browser before
+     logins lived in the shared database stay invisible to every other device
+     until a cloud login exists - the owner hit exactly this: eleven teachers
+     on the laptop, three on the desktop, because eight had never been pushed.
+     One button now runs the per-teacher fix for all of them in sequence. */
+  const [bulkLoginFix, setBulkLoginFix] = useState(null)
   const [adminBooking, setAdminBooking] = useState(false)
   const [bookingStudentId, setBookingStudentId] = useState('')
   const [classroomBooking, setClassroomBooking] = useState(null)
@@ -7610,6 +7648,40 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   // Added before logins were written to the shared database, so they exist
   // in this browser alone and cannot sign in anywhere else.
   const teachersMissingLogin = teachersWithoutLogin(teachers)
+  const fixAllTeacherLogins = async () => {
+    if (bulkLoginFix?.busy) return
+    setBulkLoginFix({ busy: true, results: [] })
+    const results = []
+    for (const teacher of teachersMissingLogin) {
+      const password = suggestTemporaryPassword()
+      try {
+        const created = await createTeacherWithPassword({
+          fullName: teacher.fullName,
+          email: teacher.email || teacher.loginId,
+          password,
+          specialization: teacher.teacher?.specialization,
+          experience: teacher.teacher?.experience,
+          education: teacher.teacher?.education,
+          languages: teacher.teacher?.languages,
+          bio: teacher.teacher?.bio,
+          status: teacher.status === 'pending' ? 'pending' : 'approved',
+        })
+        const relinked = relinkTeacherAccount(teacher.id, created.id)
+        // Their lessons are keyed on the old id, so move them across and push
+        // each one to the shared database - same contract as the single fix.
+        const moved = reassignTeacherBookings(teacher.id, created.id)
+        if (cloudSyncEnabled()) {
+          await Promise.allSettled(moved.map((booking) => syncBookingNow(booking)))
+          await updateCloudProfile(relinked).catch(() => {})
+        }
+        results.push({ name: teacher.fullName, email: created.email, password, moved: moved.length })
+      } catch (fixError) {
+        results.push({ name: teacher.fullName, error: describeTeacherCreateError(fixError) })
+      }
+    }
+    setBulkLoginFix({ busy: false, results })
+    refresh()
+  }
   const students = getAccounts('student')
   const studentProfiles = students.flatMap((student) => {
     const learners = student.children?.length ? student.children : student.child ? [student.child] : []
@@ -8580,7 +8652,15 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'teachers' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them to create a real login — their lessons move across with them.</span></div></div>}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Team management</span><h1>Teachers</h1><p>Add teachers, review credentials and control access to their dashboard.</p></div><button className="portal-primary-button" onClick={() => setShowAddTeacher(true)}><Plus size={17} /> Add teacher</button></div>{teachersMissingLogin.length > 0 && <div className="portal-error login-missing-banner" role="alert"><KeyRound size={18} /><div><strong>{teachersMissingLogin.length} teacher{teachersMissingLogin.length === 1 ? '' : 's'} cannot log in from their own device</strong><span>{teachersMissingLogin.map((item) => item.fullName).join(', ')} {teachersMissingLogin.length === 1 ? 'exists' : 'exist'} only in this browser, because they were added before logins were saved to the shared database. Press the key button beside them, or create every shared login at once — their lessons move across with them.</span><div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap' }}><button type="button" className="portal-primary-button" onClick={fixAllTeacherLogins} disabled={bulkLoginFix?.busy}>{bulkLoginFix?.busy ? `Creating ${teachersMissingLogin.length} shared logins…` : `Create shared logins for all ${teachersMissingLogin.length}`}</button><small>Runs here, uploads each profile to the shared database, and every device then sees the same roster.</small></div></div></div>}
+      {bulkLoginFix && !bulkLoginFix.busy && bulkLoginFix.results.length > 0 && (
+        <section className="portal-card" style={{ marginTop: '14px' }}>
+          <div className="portal-card__heading portal-card__heading--small"><div><span className="portal-kicker">Shared login results</span><h2>Hand each teacher these credentials</h2><p>These profiles now live in the shared database. Your other devices pick them up on their next refresh.</p></div><button type="button" className="portal-text-button" onClick={() => setBulkLoginFix(null)}>Dismiss</button></div>
+          {bulkLoginFix.results.map((item) => (item.error
+            ? <div className="portal-error" role="alert" key={item.name} style={{ margin: '6px 0' }}><strong>{item.name}:</strong> {item.error}</div>
+            : <div key={item.name} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}><strong>{item.name}</strong><span>{item.email}</span><code style={{ background: 'rgba(0,0,0,0.06)', padding: '2px 8px', borderRadius: '6px' }}>{item.password}</code><small>{item.moved} booking{item.moved === 1 ? '' : 's'} moved across</small></div>))}
+        </section>
+      )}<section className="portal-card admin-table-card"><div className="admin-table admin-table--teachers"><div className="admin-table__head"><span>Teacher</span><span>Profile</span><span>Credentials</span><span>Status</span><span>Controls</span></div>{teachers.map((teacher) => <div className="admin-table__row" key={teacher.id}><div className="table-person"><label className={`table-avatar-upload${photoUploadId === teacher.id ? ' is-busy' : ''}`} title={`Upload a photo for ${teacher.fullName}`}><ProfilePhoto accountId={teacher.id} name={teacher.fullName} refreshKey={version} className="table-avatar-photo" /><span><Camera size={13} /></span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => uploadTeacherPhoto(event, teacher)} /></label><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(teacher.email || teacher.loginId, teacher.fullName)} title={`Message ${teacher.fullName}`}>{teacher.fullName}</button></strong><small>{teacher.loginId || teacher.email}</small></div></div><div><strong>{teacher.teacher.specialization}</strong><small>{teacher.teacher.experience} years · {teacher.teacher.languages}</small></div><div><strong>{teacher.teacher.credentials?.length || 0} files</strong><small>{teacher.teacher.credentials?.join(', ') || teacher.teacher.education}</small></div><div><StatusBadge status={teacher.status} />{!hasSharedLogin(teacher) && <span className="login-missing-chip" title={describeTeacherLogin(teacher)}><KeyRound size={12} /> No phone login</span>}</div><div className="table-actions">{!hasSharedLogin(teacher) && <button type="button" className="table-action table-action--fix-login" onClick={() => setTeacherToFix(teacher)} title={`Create a database login for ${teacher.fullName} so they can sign in on their own device`}><KeyRound size={16} /></button>}<button type="button" className="table-access-button" onClick={() => openManagedTeacher(teacher.id)} disabled={processingAccountId === teacher.id} title="Access teacher dashboard"><Eye size={15} /> {processingAccountId === teacher.id ? 'Opening…' : 'Open'}</button>{teacher.status !== 'approved' && <button type="button" className="table-action table-action--approve" onClick={() => setStatus(teacher.id, 'approved')} disabled={processingAccountId === teacher.id} title="Approve and synchronize teacher"><UserCheck size={16} /></button>}{teacher.status !== 'rejected' && !teacher.systemProfile && <button type="button" className="table-action table-action--reject" onClick={() => setStatus(teacher.id, 'rejected')} disabled={processingAccountId === teacher.id} title="Reject teacher"><XCircle size={16} /></button>}{teacher.status === 'approved' && <button type="button" className="table-action table-action--suspend" onClick={() => setStatus(teacher.id, 'suspended')} disabled={processingAccountId === teacher.id} title="Suspend teacher"><Ban size={16} /></button>}{!teacher.systemProfile && <button type="button" className="table-action table-action--delete" onClick={() => setTeacherToRemove(teacher)} disabled={processingAccountId === teacher.id} title={`Delete ${teacher.fullName}'s teacher profile`}><Trash2 size={16} /></button>}</div></div>)}</div></section></div>
       )}
 
       {active === 'students' && (
