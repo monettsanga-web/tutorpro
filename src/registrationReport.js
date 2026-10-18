@@ -32,6 +32,7 @@ export function compileStudentRegistrations(students = []) {
     else months.push({ label, count: 1 })
   }
 
+<<<<<<< HEAD
   /* Compiled BY DATE, the way the owner reads a sign-up sheet: one section
      per calendar day with that day's families under it. */
   const days = []
@@ -46,6 +47,11 @@ export function compileStudentRegistrations(students = []) {
     rows,
     months,
     days,
+=======
+  return {
+    rows,
+    months,
+>>>>>>> origin/main
     total: rows.length,
     latest: rows.length ? rows[rows.length - 1].registeredAt : '',
   }

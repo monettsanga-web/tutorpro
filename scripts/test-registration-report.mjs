@@ -29,9 +29,12 @@ ok(report.rows[0].name === 'Family NoStamp', 'a missing stamp sorts first instea
 ok(report.rows[1].name === 'Family Reyes' && report.rows[3].name === 'Family Cruz', 'rows run oldest registration first')
 ok(report.months.map((month) => month.label).join('|') === 'Unknown date|September 2026|October 2026', 'months compile in register order')
 ok(report.months[2].count === 2, 'October counts both October families')
+<<<<<<< HEAD
 ok(report.days.length === 4, 'one compiled section per registration day')
 ok(report.days[1].label.includes('September') && report.days[1].label.includes('2026') && report.days[1].rows.length === 1, 'each day section carries its families')
 ok(report.days[3].rows.map((row) => row.name).join(',') === 'Family Cruz', 'the newest day section holds the newest family')
+=======
+>>>>>>> origin/main
 ok(report.latest === '2026-10-16T08:00:00Z', 'the newest registration is reported')
 
 ok(monthLabel('2026-10-16T08:00:00Z') === 'October 2026', 'month labels read like a heading')
