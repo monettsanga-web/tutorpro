@@ -13,11 +13,7 @@ const ok = (condition, label) => {
 }
 
 ok(Object.keys(TEACHER_SHIFTS).join(',') === 'day,night', 'exactly two shifts are offered: day and night')
-<<<<<<< HEAD
 ok(TEACHER_SHIFTS.day.hours === '08:00 – 18:00' && TEACHER_SHIFTS.night.hours === '21:00 – 03:00', 'the shift windows are the owner\'s hours: day 08:00-18:00, night 21:00-03:00')
-=======
-ok(TEACHER_SHIFTS.day.hours === '08:00 – 18:00' && TEACHER_SHIFTS.night.hours === '18:00 – 02:00', 'the shift windows are the agreed hours')
->>>>>>> origin/main
 
 const day = buildShiftSlots('day')
 ok(day.length === 7 * 20, 'day shift opens ten hours on each of the seven days')
