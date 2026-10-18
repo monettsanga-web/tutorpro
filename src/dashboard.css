@@ -13657,3 +13657,18 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   .tbcal-chip { font-size: 0.62rem; padding: 2px 4px; }
   .tbcal__num { font-size: 0.72rem; }
 }
+
+/* Day-shift / night-shift quick fill on the availability calendar: the
+   chosen shift reads as selected without inventing a new button family. */
+.schedule-shift-options .portal-secondary-button.active {
+  border-color: #bce94e;
+  color: #bce94e;
+  background: rgba(188, 233, 78, 0.12);
+}
+
+/* The compiled registration register: three columns of family, email and
+   the date the account was created. */
+.admin-table--registrations .admin-table__head,
+.admin-table--registrations .admin-table__row {
+  grid-template-columns: 1.2fr 1.4fr 1fr;
+}

@@ -18,7 +18,7 @@ const SETTINGS_ROW_ID = 'public'
 /** Who may open the public teacher directory. */
 export const TEACHER_VISIBILITY = {
   PUBLIC: 'public',       // Anyone, including search engines and logged-out visitors
-  PARENTS: 'parents',     // Only signed-in accounts (parents, teachers, admin)
+  PARENTS: 'parents',     // Only signed-in families and admin; teacher accounts never see it
   HIDDEN: 'hidden',       // Nobody on the public site; admin dashboard still shows everything
 }
 
@@ -113,12 +113,17 @@ export function teacherDirectoryVisibility() {
 
 /**
  * Should this viewer be offered the teacher directory?
- * Admins and teachers always keep access so they can check how it looks.
+ * Admins always keep access so they can check how it looks, and families
+ * follow the visibility setting. Teacher accounts never see it: the
+ * directory exists for parents choosing a teacher, and the owner's rule is
+ * that only parents and admin browse it - staff review of profiles happens
+ * in the admin dashboard, not by wearing a parent's hat on the public site.
  */
 export function canViewTeacherDirectory(account) {
   const visibility = teacherDirectoryVisibility()
   const role = String(account?.role || '').toLowerCase()
-  if (role === 'admin' || role === 'teacher') return true
+  if (role === 'admin') return true
+  if (role === 'teacher') return false
   if (visibility === TEACHER_VISIBILITY.PUBLIC) return true
   if (visibility === TEACHER_VISIBILITY.PARENTS) return Boolean(account)
   return false
