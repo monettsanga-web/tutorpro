@@ -8637,7 +8637,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
   /* One row of the students table. Lifted out of the JSX so the table can
      be grouped by country without duplicating any of it. */
-  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><ProfilePhoto accountId={`${student.id}-${rowLearner.id}`} name={rowLearner.name || student.parentName} refreshKey={version} className={`table-avatar-photo table-avatar--${avatarTone(student.parentName)}`} /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} />{!recoveryStateFor(student).reachableAt && <span className="login-missing-chip" title={`${student.parentName} signed up with ${student.loginId || 'a phone number'}, which is not a mailbox. Open their profile to add a recovery email, or they cannot reset their own password.`}><AlertTriangle size={12} /> No reset email</span>}</div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
+  const renderStudentRow = ({ account: student, learner: rowLearner }) => <div className="admin-table__row" key={rowLearner.id}><div className="table-person"><ProfilePhoto accountId={`${student.id}-${rowLearner.id}`} name={rowLearner.name || student.parentName} refreshKey={version} className={`table-avatar-photo table-avatar--${avatarTone(student.parentName)}`} /><div><strong><button type="button" className="chat-name-button" onClick={() => launchSupportChat(student.email || student.loginId, student.parentName)} title={`Message ${student.parentName}`}>{student.parentName}</button></strong><small title={student.loginId || student.email}>{student.loginId || student.email}</small><small>Registered {registrationDateLabel(student.createdAt) || 'on an unknown date'}</small></div></div><div><strong>{rowLearner.name}</strong><small>{rowLearner.year}</small></div><div><strong>{rowLearner.curriculum}</strong><small>{rowLearner.goal}</small></div><div><StatusBadge status={rowLearner.accessStatus} />{!recoveryStateFor(student).reachableAt && <span className="login-missing-chip" title={`${student.parentName} signed up with ${student.loginId || 'a phone number'}, which is not a mailbox. Open their profile to add a recovery email, or they cannot reset their own password.`}><AlertTriangle size={12} /> No reset email</span>}</div><div className="table-actions"><button type="button" className="table-access-button" onClick={() => openManagedStudent(student.id, rowLearner.id)} disabled={processingAccountId === student.id} title="Access student dashboard"><Eye size={15} /> {processingAccountId === student.id ? 'Opening…' : 'Open'}</button>{!rowLearner.incomplete && (rowLearner.accessStatus === 'active' ? <button className="table-action table-action--suspend" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'suspended')} title={`Suspend ${rowLearner.name}'s profile`}><Ban size={16} /></button> : <button className="table-action table-action--approve" onClick={() => setLearnerStatus(student.id, rowLearner.id, 'active')} title={`Restore ${rowLearner.name}'s profile`}><UserCheck size={16} /></button>)}<button className="table-action table-action--delete" onClick={() => setStudentToRemove({ account: student, learner: rowLearner })} title={`Remove ${rowLearner.name}'s registration`}><Trash2 size={16} /></button></div></div>
 
   return (
     <PortalShell account={account} role="admin" active={active} onActive={setActive} onHome={onHome} onLogout={onLogout} navItems={nav}>
@@ -8808,7 +8808,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
 
         <section className="portal-card student-registration-report">
           <div className="portal-card__heading portal-card__heading--small">
-            <div><span className="portal-kicker">Compiled register</span><h2>Student registration dates</h2><p>Every family in registration order with the month totals, exactly as recorded when the account was created. Download the CSV for your own records.</p></div>
+            <div><span className="portal-kicker">Compiled register</span><h2>Student registration dates</h2><p>Every family compiled by the date they registered - one section per day, month totals above, and a CSV for your records.</p></div>
             <button type="button" className="portal-secondary-button" onClick={downloadRegistrationsCsv}><Download size={15} /> Download CSV</button>
           </div>
           <div className="registration-months" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '0 0 12px' }}>
@@ -8816,11 +8816,16 @@ export function AdminDashboard({ account, onHome, onLogout }) {
           </div>
           <div className="admin-table admin-table--registrations">
             <div className="admin-table__head"><span>Family</span><span>Email</span><span>Registered</span></div>
-            {registrationReport.rows.map((row) => (
-              <div className="admin-table__row" key={row.id || row.email}>
-                <div><strong>{row.name}</strong></div>
-                <div><small>{row.email}</small></div>
-                <div><strong>{registrationDateLabel(row.registeredAt) || 'Unknown date'}</strong></div>
+            {registrationReport.days.map((day) => (
+              <div className="admin-table__country" key={day.key}>
+                <div className="admin-table__country-head"><strong>📅 {day.label}</strong><small>{day.rows.length} registration{day.rows.length === 1 ? '' : 's'} that day</small></div>
+                {day.rows.map((row) => (
+                  <div className="admin-table__row" key={row.id || row.email}>
+                    <div><strong>{row.name}</strong></div>
+                    <div><small>{row.email}</small></div>
+                    <div><strong>{registrationDateLabel(row.registeredAt) || 'Unknown date'}</strong></div>
+                  </div>
+                ))}
               </div>
             ))}
             {!registrationReport.rows.length && <EmptyState icon={GraduationCap} title="No registrations yet" text="Family registration dates will compile here as soon as the first account is created." />}

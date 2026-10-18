@@ -32,9 +32,20 @@ export function compileStudentRegistrations(students = []) {
     else months.push({ label, count: 1 })
   }
 
+  /* Compiled BY DATE, the way the owner reads a sign-up sheet: one section
+     per calendar day with that day's families under it. */
+  const days = []
+  for (const row of rows) {
+    const key = row.registeredAt ? String(row.registeredAt).slice(0, 10) : 'unknown'
+    const existing = days.find((day) => day.key === key)
+    if (existing) existing.rows.push(row)
+    else days.push({ key, label: registrationDateLabel(row.registeredAt) || 'Unknown date', rows: [row] })
+  }
+
   return {
     rows,
     months,
+    days,
     total: rows.length,
     latest: rows.length ? rows[rows.length - 1].registeredAt : '',
   }
