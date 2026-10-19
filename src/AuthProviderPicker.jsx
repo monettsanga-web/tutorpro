@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { MdAlternateEmail } from 'react-icons/md'
-import { SiGmail, SiWhatsapp, SiWechat } from 'react-icons/si'
+import { SiGmail } from 'react-icons/si'
 import { FaYahoo } from 'react-icons/fa6'
 import { CheckCircle2, CircleAlert } from 'lucide-react'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
@@ -8,8 +8,6 @@ import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from
 const authProviderOptions = [
   { id: 'gmail', label: 'Gmail', action: 'Use Gmail address', Icon: SiGmail },
   { id: 'yahoo', label: 'Yahoo Mail', action: 'Use Yahoo address', Icon: FaYahoo },
-  { id: 'wechat', label: 'WeChat', action: 'Use WeChat ID', Icon: SiWechat },
-  { id: 'whatsapp', label: 'WhatsApp', action: 'Use phone number', Icon: SiWhatsapp },
   { id: 'email', label: 'Other email', action: 'Any email provider', Icon: MdAlternateEmail },
 ]
 
