@@ -8645,3 +8645,18 @@ body:has(.auth-shell--student-register) .messenger-float {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Near-native Filipino teachers: the SPA home states the owner's
+   positioning in its own tinted chapter, and every public teacher card
+   carries the badge so the promise survives into the directory. */
+.filipino-teachers {
+  background: linear-gradient(180deg, #f5f1ff 0%, #fdfcff 100%);
+  border-top: 1px solid #e9e2fb;
+  border-bottom: 1px solid #e9e2fb;
+}
+.teacher-near-native {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #f5f3ff; border: 1px solid #ddd6fe; color: #5b4be0;
+  border-radius: 999px; padding: 3px 10px;
+  font-size: 0.78rem; font-weight: 700; margin-top: 6px;
+}
