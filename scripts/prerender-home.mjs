@@ -36,7 +36,7 @@ const HERO = {
   // clicks at all, so the job is relevance and a clearer promise, not more
   // words. Teens are still named in the lede and have their own page.
   heading: 'Online English Classes for Kids',
-  tagline: 'Live, personalized English lessons for primary and secondary students with experienced teachers.',
+  tagline: 'Live one-to-one classes with near-native Filipino English teachers — clear, patient, and trusted by families worldwide.',
   lede: 'Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one, so they speak for the whole lesson — building confidence in speaking, reading, grammar and writing with an experienced English teacher.',
   proof: ['No commitment', 'From $8 per class', 'Flexible times'],
 }
@@ -57,6 +57,10 @@ const SECTIONS = [
   {
     heading: 'Experienced English Teachers',
     body: 'Every teacher applies through a structured process that includes a recorded teaching interview we watch in full and a review of their qualifications and teaching experience, with particular weight given to experience teaching children. Only teachers who pass are given students. You can view teacher profiles, qualifications and introduction videos before booking, so you know who will be teaching your child rather than being assigned an anonymous tutor.',
+  },
+  {
+    heading: 'Near-Native Filipino English Teachers',
+    body: 'Every TutorPro class is taught live by a Filipino teacher who speaks English at a near-native level. English is an official language of the Philippines - used in its schools, government and business - so our teachers have learnt, studied and worked in English all their lives. Filipino English is known for a clear, neutral accent that children around the world find easy to follow, and Filipino teaching culture prizes the patience and encouragement a shy or beginner child needs before they will speak. As with every TutorPro teacher, each one passes a recorded teaching interview and a credential check before their first class.',
   },
   {
     heading: 'What Your Child Will Learn',

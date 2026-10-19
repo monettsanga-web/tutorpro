@@ -281,7 +281,7 @@ function Hero({ onBook, onTeacherApply }) {
               homepage optimisation was being undone a second after load.
               The tagline survives directly underneath, so nothing is lost. */}
           <h1>Online English Classes for <em>Kids</em></h1>
-          <p className="hero__tagline">Live, personalized English lessons for primary and secondary students with experienced teachers.</p>
+          <p className="hero__tagline">Live one-to-one classes with near-native Filipino English teachers — clear, patient, and trusted by families worldwide.</p>
           <p className="hero__lede">
             TutorPro is an online English school helping children around the world build confidence in speaking, reading, listening, grammar, vocabulary and communication. One teacher, one child, live — in English, Maths, Science and ICT for ages 4–16.
           </p>
@@ -381,6 +381,52 @@ function WhyParents({ onBook }) {
             Book a free first class <ArrowRight size={18} />
           </button>
           <a className="button button--outline" href="/online-english-classes-for-kids">Explore our programs</a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * NEAR-NATIVE FILIPINO ENGLISH TEACHERS
+ *
+ * The owner's positioning for parents searching from anywhere in the
+ * world: the teachers are Filipino English speakers at a near-native
+ * level, and the site should say so proudly. Every claim below is the
+ * kind this site already refuses to fake - official-language status is
+ * a matter of public record, the accent and warmth points are what
+ * families worldwide choose Filipino teachers for, and the vetting line
+ * is the same recorded-interview process described elsewhere.
+ */
+function FilipinoTeachers({ onBook }) {
+  const points = [
+    [AudioLines, 'Clear, near-native accent', 'Filipino English is known for being easy to understand - the reason families across Europe, the Middle East and Asia choose Filipino teachers for their children.'],
+    [Heart, 'Warm, patient classrooms', 'Filipino teaching culture prizes patience and encouragement, which is exactly what a shy or beginner child needs before they will speak.'],
+    [Globe2, 'English, all day, officially', 'English is an official language of the Philippines - used in its schools, government and business - so our teachers have learnt, studied and worked in English all their lives.'],
+    [UserRoundCheck, 'Checked before they meet your child', 'Every teacher passes a recorded teaching interview and a credential check before their first class.'],
+  ]
+
+  return (
+    <section className="why-parents filipino-teachers" aria-labelledby="filipino-teachers-heading">
+      <div className="container">
+        <div className="why-parents__head">
+          <span className="portal-kicker">Our teachers</span>
+          <h2 id="filipino-teachers-heading">Near-Native Filipino English Teachers</h2>
+          <p>Every TutorPro class is taught live by a Filipino teacher who speaks English at a near-native level - with the clarity, warmth and patience that families around the world choose Filipino teachers for.</p>
+        </div>
+        <ul className="why-parents__grid">
+          {points.map(([Icon, title, detail]) => (
+            <li key={title}>
+              <span aria-hidden="true"><Icon size={19} /></span>
+              <div><strong>{title}</strong><small>{detail}</small></div>
+            </li>
+          ))}
+        </ul>
+        <div className="why-parents__cta">
+          <button type="button" className="button button--primary button--large" onClick={() => onBook('Filipino teachers section')}>
+            Book a class with a Filipino teacher <ArrowRight size={18} />
+          </button>
+          <a className="button button--outline" href="/teachers.html">Meet the teachers</a>
         </div>
       </div>
     </section>
@@ -1280,6 +1326,7 @@ function PublicTeacherCard({ teacher, onChooseTeacher, onViewProfile }) {
               <BadgeCheck size={18} fill="#1877f2" color="#1877f2" />
             </div>
             <p>{profile.specialization || 'English Teacher'} · {profile.languages || 'English'}</p>
+            <span className="teacher-near-native" title="English is an official language of the Philippines; our teachers speak it at a near-native level">🇵 Near-native English · Philippines</span>
             {teacher.status === 'approved' && <span className="teacher-dashboard-profile-card__top-badge">TOP Tutor</span>}
           </div>
           <button type="button" className="teacher-dashboard-profile-card__save" aria-label={`Save ${teacher.fullName}`}>♡</button>
@@ -1411,6 +1458,7 @@ function PublicTeacherProfileDetail({ teacher, onBack, onChooseTeacher }) {
             <div>
               <div className="public-teacher-profile-detail__name"><h1>{teacher.fullName}</h1><BadgeCheck size={24} fill="#1877f2" color="#1877f2" /></div>
               <p>{profile.specialization || 'Professional English Teacher'} · {profile.languages || 'English'}</p>
+              <span className="teacher-near-native" title="English is an official language of the Philippines; our teachers speak it at a near-native level">🇵 Near-native English · Philippines</span>
               <div className="public-teacher-profile-detail__badges"><span>1-to-1 classes</span><span>{Number(profile.experience || 0)} years experience</span><span>{profile.education || 'Education verified'}</span></div>
             </div>
             <div className="public-teacher-profile-detail__rating"><Star size={20} fill="#facc15" color="#facc15" /><strong>{average || 'New'}</strong><small>{reviews.length || profile.ratingCount || 0} reviews</small></div>
@@ -2383,6 +2431,7 @@ export default function App() {
           <WhyTutorPro />
           <WhatYourChildLearns onBook={openRegistration} />
           <ExperiencedTeachers onBook={openRegistration} />
+          <FilipinoTeachers onBook={openRegistration} />
           <GlobalDiscovery onBook={openRegistration} />
           <Programmes onBook={openRegistration} />
           <CurriculumFramework />

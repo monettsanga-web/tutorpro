@@ -438,3 +438,18 @@ details p { margin: 12px 0 0; color: var(--muted); }
   content: '✓';
   font-weight: 900;
 }
+
+/* Near-native Filipino English teachers band: the owner's positioning for
+   parents arriving from search anywhere in the world. Tinted so it reads
+   as its own chapter between the hero and the practical sections. */
+.filipino-band {
+  background: linear-gradient(180deg, #f5f1ff 0%, #fdfcff 100%);
+  border-top: 1px solid #e9e2fb;
+  border-bottom: 1px solid #e9e2fb;
+  padding: 44px 0;
+}
+.filipino-band h2 { margin: 6px 0 10px; }
+.filipino-band p { color: #4b4560; }
+.filipino-band__points { list-style: none; margin: 18px 0 20px; padding: 0; display: grid; gap: 12px; }
+.filipino-band__points li { background: #ffffff; border: 1px solid #e9e2fb; border-radius: 12px; padding: 14px 16px; color: #4b4560; }
+.filipino-band__points strong { color: #321568; }
