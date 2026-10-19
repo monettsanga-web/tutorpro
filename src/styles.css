@@ -8660,3 +8660,18 @@ body:has(.auth-shell--student-register) .messenger-float {
   border-radius: 999px; padding: 3px 10px;
   font-size: 0.78rem; font-weight: 700; margin-top: 6px;
 }
+
+/* Interview audio failure is an infrastructure state, not an applicant
+   mistake: amber, explicit, and it names the setup file that fixes it. */
+.teacher-interview-upload-failed {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412;
+  border-radius: 12px; padding: 12px 14px; margin: 12px 0;
+}
+.teacher-interview-upload-failed small { display: block; margin-top: 2px; }
+.teacher-interview-submit-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.teacher-interview-submit-row .button { flex: 1; }
+.interview-audio-missing {
+  background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412;
+  border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; font-weight: 700;
+}

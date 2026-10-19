@@ -6329,6 +6329,9 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
             <h2>AI teacher interview</h2>
             <p>Internal evaluation and full applicant transcript. Never shown to the applicant.</p>
           </div>
+          {interview?.recordingStatus === 'secure-upload-unavailable' || interview?.recordingStatus === 'secure-upload-skipped' ? (
+            <span className="interview-audio-missing" title={interview.recordingNotice || 'Private audio was not stored for this interview'}>Private audio not stored - run teacher_interview_recordings.sql in Supabase</span>
+          ) : null}
           {interview ? (
             <span className={`interview-recommendation interview-recommendation--${recommendationClass}`}>{interview.overallRecommendation}</span>
           ) : (
