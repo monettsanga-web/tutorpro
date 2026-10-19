@@ -96,8 +96,12 @@ ok(/rate limit/i.test(source), 'a rate limit is explained as "wait a minute", no
 /* ================================================================== */
 const auth = read('src/auth.js')
 for (const provider of ['gmail', 'yahoo', 'wechat', 'whatsapp']) {
-  ok(auth.includes(`'${provider}'`), `${provider} is still a recognised sign-up option — none were removed`)
+  ok(auth.includes(`'${provider}'`), `${provider} is still recognised so existing accounts can log in`)
 }
+const picker = read('src/AuthProviderPicker.jsx')
+ok(!/id: 'wechat'|id: 'whatsapp'/.test(picker), 'new registrations offer email methods only - the owner requires a reachable email')
+ok(/id: 'gmail'/.test(picker) && /id: 'yahoo'/.test(picker) && /id: 'email'/.test(picker), 'gmail, yahoo and other-email remain the sign-up methods')
+ok(/register-email-promise/.test(read('src/AuthModal.jsx')), 'registration explains why a real email is required, at the field itself')
 
 /* ================================================================== */
 /* 6. Student registration stays parent-first and responsive           */

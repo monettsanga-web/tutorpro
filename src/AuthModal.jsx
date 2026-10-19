@@ -28,8 +28,6 @@ const yearOptions = [
 ]
 
 function providerField(provider) {
-  if (provider === 'wechat') return { label: 'WeChat ID', placeholder: 'Your WeChat ID', inputMode: 'text' }
-  if (provider === 'whatsapp') return { label: 'WhatsApp number', placeholder: '+63 912 345 6789', inputMode: 'tel' }
   return { label: provider === 'gmail' ? 'Gmail address' : provider === 'yahoo' ? 'Yahoo Mail address' : 'Email address', placeholder: provider === 'gmail' ? 'you@gmail.com' : provider === 'yahoo' ? 'you@yahoo.com' : 'you@example.com', inputMode: 'email' }
 }
 
@@ -37,8 +35,6 @@ function validProviderLogin(provider, value) {
   const login = value.trim()
   if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
   if (provider === 'yahoo') return /^[^\s@]+@yahoo\.[a-z.]{2,}$/i.test(login)
-  if (provider === 'wechat') return /^[a-z][-_a-z0-9]{5,19}$/i.test(login)
-  if (provider === 'whatsapp') return /^\+?[0-9\s()-]{8,20}$/.test(login)
   return /^\S+@\S+\.\S+$/.test(login)
 }
 
@@ -401,11 +397,28 @@ export default function AuthModal({
                   </label>
                   <AuthProviderPicker value={form.authProvider} onSelect={(provider) => { setForm((current) => ({ ...current, authProvider: provider, email: '' })); setErrors((current) => ({ ...current, email: '' })) }} />
                   <label>
-                    <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}</span>
+                    <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}<em className="field-required">{chineseVisitor ? '必填' : 'required'}</em></span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
                       <Mail size={18} /><input autoComplete={['gmail', 'yahoo', 'email'].includes(form.authProvider) ? 'email' : 'username'} inputMode={providerField(form.authProvider).inputMode} name="email" value={form.email} onChange={updateField} placeholder={providerField(form.authProvider).placeholder} />
                     </div>
                     <FieldError>{errors.email}</FieldError>
+                    {/* The owner's requirement: a reachable email is part of a
+                        successful registration, because it is how feedback
+                        arrives and how either side opens a conversation. A
+                        senior-UX registration says why at the moment of
+                        asking, not in a terms page nobody reads. */}
+                    <div className="register-email-promise">
+                      <div className="register-email-promise__head"><Mail size={15} /> {chineseVisitor ? '为什么注册需要真实邮箱' : 'Why registration needs a real email'}</div>
+                      <ul>
+                        <li>{chineseVisitor ? '每节课后的书面反馈与课程确认会发送到这个邮箱。' : 'Class confirmations and the written feedback after every lesson arrive here.'}</li>
+                        <li>{chineseVisitor ? '我们的管理团队可以通过邮箱联系您，安排课程与付款事宜。' : 'Our admin team can contact you here about schedules, payments and any question.'}</li>
+                        <li>{chineseVisitor ? '您可以从家长仪表盘直接给我们留言，并随时重置密码。' : 'It lets you message us from your parent dashboard and reset your password anytime.'}</li>
+                      </ul>
+                      <small>{chineseVisitor ? '我们绝不分享您的邮箱；除非您主动索取，否则不发送营销邮件。QQ、163、126、Outlook、Yahoo 均可使用。' : 'We never share your email and send no marketing unless you ask. QQ, 163, 126, Outlook and Yahoo all work.'}</small>
+                    </div>
+                    {form.email.trim() && validProviderLogin(form.authProvider, form.email) && (
+                      <p className="field-success" role="status">{chineseVisitor ? '邮箱格式正确——第一节课的确认信将发送到这里。' : `Looks good — your first class confirmation will go to ${form.email.trim()}.`}</p>
+                    )}
                   </label>
                   <div className="auth-form__row">
                     <label>

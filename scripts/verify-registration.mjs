@@ -39,8 +39,6 @@ const PROVIDERS = [
   { key: 'default', label: 'Gmail (the option already selected)', login: `arenagm${stamp}@gmail.com` },
   { key: 'yahoo', label: 'Yahoo Mail', login: `arenaya${stamp}@yahoo.com` },
   { key: 'email', label: 'Other email', login: `arenaot${stamp}@example.com` },
-  { key: 'wechat', label: 'WeChat ID', login: `arenawc${stamp}` },
-  { key: 'whatsapp', label: 'WhatsApp number', login: `+63917${stamp.slice(-7)}` },
 ]
 
 const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] })
