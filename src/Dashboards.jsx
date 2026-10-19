@@ -2114,6 +2114,17 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
   const [resourceDraft, setResourceDraft] = useState({ title: '', url: '', resourceType: 'link' })
   const [error, setError] = useState('')
 
+  /* Step 1 of the reference workflow: compose a copyable AI prompt from
+     the entered fields, exactly as the Novakid assistant the owner showed
+     us does. The generation count is this device's honest tally for this
+     teacher, kept in the stats strip like the reference's "Your Total
+     Generations" - never an invented number. */
+  const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [promptCopied, setPromptCopied] = useState(false)
+  const [generationCount, setGenerationCount] = useState(() => {
+    try { return Number(window.localStorage.getItem(`tutorpro_prompt_generations_${teacherId}`) || 0) || 0 } catch { return 0 }
+  })
+
   /* The assistant card's header: who is writing, and how much they have
      written - the reference layout opens with exactly this strip. */
   const teacherAccount = getAccountById(teacherId)
@@ -2130,6 +2141,50 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
     })
     setWordDraft('')
     setError('')
+    setGeneratedPrompt('')
+    setPromptCopied(false)
+  }
+
+  const composeFeedbackPrompt = () => {
+    const ratingLabel = PERFORMANCE_RATINGS.find((option) => option.value === form.performanceRating)?.label || ''
+    return [
+      'Write warm, specific post-lesson feedback for the parent of this student. Plain English, 120-180 words, no bullet lists.',
+      '',
+      `Student: ${form.studentName.trim()}${form.gender ? ` (${form.gender})` : ''}`,
+      `Level of proficiency: ${form.proficiencyLevel || 'not set'}`,
+      `Performance rating: ${form.performanceRating ? `${form.performanceRating}/5${ratingLabel ? ` (${ratingLabel})` : ''}` : 'not set'}`,
+      `Lesson redo required: ${form.lessonRedo === 'yes' ? 'Yes - less than half of the lesson was completed' : 'No - at least half of the lesson was completed'}`,
+      `Achieved competencies: ${form.achievedCompetencies.trim() || 'none listed'}`,
+      `Failed competencies: ${form.failedCompetencies.trim() || 'none listed'}`,
+      `Areas of success: ${form.strength.trim()}`,
+      `Areas for improvement: ${form.nextStep.trim()}`,
+      `Personalized success notes: ${form.personalSuccess.trim() || 'none'}`,
+      `Personalized improvement notes: ${form.personalImprovement.trim() || 'none'}`,
+      '',
+      'Mention one concrete success and one concrete next step from the notes above. Keep the tone encouraging and honest, and address the parent directly.',
+    ].join('\n')
+  }
+
+  const generatePrompt = () => {
+    if (!form.studentName.trim()) { setError('Enter the student name before generating the prompt.'); return }
+    if (!form.strength.trim() || !form.nextStep.trim()) { setError('Areas of Success and Areas for Improvement are required - the prompt is built from them.'); return }
+    setError('')
+    setPromptCopied(false)
+    setGeneratedPrompt(composeFeedbackPrompt())
+    setGenerationCount((count) => {
+      const next = count + 1
+      try { window.localStorage.setItem(`tutorpro_prompt_generations_${teacherId}`, String(next)) } catch { /* private browsing */ }
+      return next
+    })
+  }
+
+  const copyGeneratedPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPrompt)
+      setPromptCopied(true)
+    } catch {
+      setError('Copy failed - select the prompt text and copy it manually.')
+    }
   }
 
   const fillTemplate = (type) => {
@@ -2276,6 +2331,7 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
           <span>👥 Completed classes: <b>{completedBookings.length}</b></span>
           <span>🌐 Feedback written: <b>{writtenCount}</b></span>
           <span>⏳ Awaiting feedback: <b>{completedBookings.length - writtenCount}</b></span>
+          <span>✨ Your generations: <b>{generationCount}</b></span>
         </div>
         <div className="feedback-selected-student-card">
           <span><UserRound size={18} /></span>
@@ -2376,8 +2432,19 @@ export function FeedbackDialog({ booking, teacherId, onClose, onSaved }) {
             {form.resourceLinks.length === 0 && <small style={{ color: '#b9adc7' }}>No resource links added yet.</small>}
           </fieldset>
           </details>
+          {generatedPrompt && (
+            <div className="feedback-prompt-output">
+              <div className="feedback-prompt-output__head"><span>✨ Generated feedback prompt</span><small>Step 1 complete - copy this into your AI assistant, or keep it with your notes.</small></div>
+              <textarea readOnly value={generatedPrompt} onFocus={(event) => event.target.select()} aria-label="Generated feedback prompt" />
+              <div className="feedback-prompt-output__actions">
+                <button type="button" onClick={copyGeneratedPrompt}>{promptCopied ? '✅ Copied' : '📋 Copy prompt'}</button>
+                <button type="button" onClick={generatePrompt}>🔁 Regenerate</button>
+              </div>
+            </div>
+          )}
           <div className="portal-dialog__actions feedback-assistant-actions">
-            <button type="submit" className="feedback-assistant-primary" disabled={saving}>{saving ? 'Saving and sharing…' : '💾 Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button>
+            <button type="button" className="feedback-assistant-primary" onClick={generatePrompt} disabled={saving}>✨ Step 1: Generate prompt</button>
+            <button type="submit" className="feedback-assistant-save" disabled={saving}>{saving ? 'Saving and sharing…' : '💾 Step 2: Save feedback & complete class'} {saving ? <CloudUpload size={16} /> : <Check size={16} />}</button>
             <button type="button" className="feedback-assistant-clear" onClick={clearForm} disabled={saving}>🗑️ Clear</button>
             <button type="button" className="portal-secondary-button" onClick={onClose} disabled={saving}>Cancel</button>
           </div>
