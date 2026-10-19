@@ -13735,3 +13735,31 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 @media (max-width: 700px) {
   .feedback-assistant-grid { grid-template-columns: 1fr; }
 }
+
+/* Step 1 output: the generated prompt reads as what it is - text to lift
+   into an AI assistant - so it gets the code-panel treatment, dark against
+   the white card, with copy and regenerate within reach of the thumb. */
+.feedback-prompt-output {
+  background: #111827; border-radius: 12px; padding: 14px; margin: 4px 0 12px;
+}
+.feedback-prompt-output__head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.feedback-prompt-output__head span { color: #f9fafb; font-weight: 800; }
+.feedback-prompt-output__head small { color: #9ca3af; }
+.feedback-prompt-output textarea {
+  width: 100%; min-height: 190px; resize: vertical;
+  background: #1f2937; color: #e5e7eb; border: 1px solid #374151; border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem;
+  line-height: 1.5; padding: 10px 12px; outline: none;
+}
+.feedback-prompt-output__actions { display: flex; gap: 8px; margin-top: 8px; }
+.feedback-prompt-output__actions button {
+  background: #374151; color: #f9fafb; border: none; border-radius: 8px;
+  padding: 8px 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+}
+.feedback-prompt-output__actions button:hover { background: #4b5563; }
+.feedback-assistant-save {
+  flex: 1; background: #ffffff; color: #5b4be0; border: 2px solid #5b4be0;
+  border-radius: 10px; padding: 12px 16px; font-weight: 800; font-size: 1rem;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.feedback-assistant-save:disabled { opacity: 0.6; cursor: wait; }
