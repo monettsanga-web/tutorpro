@@ -49,19 +49,37 @@ on conflict (id) do update set
   allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "Interview participants upload private recordings" on storage.objects;
+-- The session check must run security definer: a storage policy evaluates
+-- with the applicant's own role, and row-level security on the session
+-- table hides those rows from anon - an inline exists() could never see
+-- the session and rejected every single upload.
+create or replace function public.teacher_interview_upload_allowed(session_id text, token text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.teacher_interview_sessions s
+    where s.id::text = session_id
+      and s.access_token_hash = encode(extensions.digest(token, 'sha256'), 'hex')
+      and s.completed_at is null
+      and s.expires_at > now()
+  );
+$$;
+
+revoke all on function public.teacher_interview_upload_allowed(text, text) from public;
+grant execute on function public.teacher_interview_upload_allowed(text, text) to anon, authenticated;
+
+drop policy if exists "Interview participants upload private recordings" on storage.objects;
 create policy "Interview participants upload private recordings"
   on storage.objects for insert
   to anon, authenticated
   with check (
     bucket_id = 'teacher-interview-recordings'
-    and exists (
-      select 1
-      from public.teacher_interview_sessions s
-      where s.id::text = (storage.foldername(name))[1]
-        and s.access_token_hash = encode(extensions.digest((storage.foldername(name))[2], 'sha256'), 'hex')
-        and s.completed_at is null
-        and s.expires_at > now()
-    )
+    and public.teacher_interview_upload_allowed((storage.foldername(name))[1], (storage.foldername(name))[2])
   );
 
 drop policy if exists "Admins read private interview recordings" on storage.objects;
