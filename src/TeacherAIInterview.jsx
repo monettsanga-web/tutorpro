@@ -161,6 +161,7 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
   const [answerTranscript, setAnswerTranscript] = useState('')
   const [recordedAnswer, setRecordedAnswer] = useState(null)
   const [uploadProgress, setUploadProgress] = useState(null)
+  const [uploadFailure, setUploadFailure] = useState('')
   const startedAtRef = useRef(0)
   const mediaRecorderRef = useRef(null)
   const mediaStreamRef = useRef(null)
@@ -456,29 +457,40 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
     else setIndex((value) => value + 1)
   }
 
-  const submitCompletedInterview = async () => {
+  /* A failed private-audio upload must not silently swallow the applicant's
+     recordings: the failure is surfaced with a retry, and only an explicit
+     second choice submits the application without its audio. */
+  const submitCompletedInterview = async (skipUpload = false) => {
     setEvaluating(true)
     setError('')
+    setUploadFailure('')
     try {
       let evaluation = await evaluateInterview(applicant, transcript, microDemoPrompt, startedAtRef.current)
       let recordingCredentials = null
       if (!uploadResultRef.current) {
-        try {
-          const uploaded = await uploadTeacherInterviewRecordings({
-            applicant,
-            transcript,
-            recordings: recordingsRef.current.filter(Boolean),
-            onProgress: (completed, total) => setUploadProgress({ completed, total }),
-          })
-          uploadResultRef.current = uploaded
-        } catch (uploadError) {
+        if (skipUpload) {
           uploadResultRef.current = {
             credentials: null,
             summary: {
               recordingCount: recordingsRef.current.filter(Boolean).length,
-              recordingStatus: 'secure-upload-unavailable',
-              recordingNotice: uploadError.message,
+              recordingStatus: 'secure-upload-skipped',
+              recordingNotice: 'The applicant chose to submit without private audio after an upload failure.',
             },
+          }
+        } else {
+          try {
+            const uploaded = await uploadTeacherInterviewRecordings({
+              applicant,
+              transcript,
+              recordings: recordingsRef.current.filter(Boolean),
+              onProgress: (completed, total) => setUploadProgress({ completed, total }),
+            })
+            uploadResultRef.current = uploaded
+          } catch (uploadError) {
+            setUploadFailure(uploadError.message)
+            setEvaluating(false)
+            setUploadProgress(null)
+            return
           }
         }
       }
@@ -518,8 +530,16 @@ export default function TeacherAIInterview({ applicant, onBack, onComplete, subm
         <p>Your recorded responses and reviewed transcripts are ready for the TutorPro Online English hiring team. A real team member will review your application, credentials and interview before following up. Compensation and platform policy details will be discussed by a human recruiter if you move forward.</p>
         <div className="teacher-interview-complete-summary"><strong>{transcript.length}</strong><span>recorded answers</span><strong>100%</strong><span>interview progress</span></div>
         {uploadProgress && <div className="teacher-interview-upload"><UploadCloud size={18} /><span><strong>Securing recorded answers</strong><small>{uploadProgress.completed} of {uploadProgress.total} uploaded</small></span></div>}
+        {uploadFailure && <div className="teacher-interview-upload-failed" role="alert"><UploadCloud size={18} /><span><strong>Private audio could not be secured yet</strong><small>{uploadFailure} You can retry the upload, or submit now with your transcripts alone - the hiring team review continues either way.</small></span></div>}
         {error && <div className="auth-error" role="alert">{error}</div>}
-        <button type="button" className="button button--primary button--full" onClick={submitCompletedInterview} disabled={evaluating || submitting}>{evaluating || submitting ? 'Securing recordings and submitting…' : 'Submit recorded application'} <Send size={16} /></button>
+        {uploadFailure && !evaluating && !submitting ? (
+          <div className="teacher-interview-submit-row">
+            <button type="button" className="button button--primary" onClick={() => submitCompletedInterview(false)}>Retry upload & submit <Send size={16} /></button>
+            <button type="button" className="button button--outline" onClick={() => submitCompletedInterview(true)}>Submit without audio</button>
+          </div>
+        ) : (
+          <button type="button" className="button button--primary button--full" onClick={() => submitCompletedInterview(false)} disabled={evaluating || submitting}>{evaluating || submitting ? 'Securing recordings and submitting…' : 'Submit recorded application'} <Send size={16} /></button>
+        )}
       </section>
     )
   }
