@@ -479,3 +479,77 @@ details p { margin: 12px 0 0; color: var(--muted); }
 }
 .trial-form__note { font-size: 0.85rem; color: #6b7280; margin: 2px 0 0; }
 @media (max-width: 760px) { .trial-band__grid { grid-template-columns: 1fr; } }
+
+/* Playful premium country hero: violet gradients, mint and sunshine
+   accents, floating classroom charms, and the 3D Filipino-teacher
+   illustration - the children's-EdTech look the owner asked for.
+   Decoration only: every float stops under reduced motion. */
+.page-hero--playful {
+  position: relative; overflow: hidden; color: #fff; padding: 56px 0 72px;
+  background:
+    radial-gradient(900px 480px at 88% -10%, #8b5cf6 0%, transparent 60%),
+    radial-gradient(700px 420px at -8% 30%, #6d28d9 0%, transparent 55%),
+    linear-gradient(160deg, #4c1d95 0%, #5b21b6 48%, #6d28d9 100%);
+}
+.page-hero--playful h1 { color: #fff; font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.12; }
+.page-hero--playful .lede { color: #ede9fe; }
+.ph-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+.ph-kicker {
+  display: inline-block; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #f5f3ff; border-radius: 999px; padding: 7px 14px; font-size: 0.85rem; font-weight: 800; margin-bottom: 14px;
+}
+.ph-native { color: #fde047 !important; font-weight: 700; }
+.ph-badges { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; }
+.ph-badges li {
+  background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px; padding: 7px 12px; font-size: 0.85rem; font-weight: 700; color: #f5f3ff;
+}
+.page-hero--playful .ph-cta {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 50%, #ec4899 100%); color: #fff; border: none;
+  border-radius: 999px; padding: 13px 22px; font-weight: 900; font-size: 1.02rem;
+  box-shadow: 0 12px 28px rgba(168, 85, 247, 0.4); transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.page-hero--playful .ph-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(168, 85, 247, 0.5); }
+.page-hero--playful .ph-cta-ghost {
+  background: rgba(255, 255, 255, 0.1); color: #fff; border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px; padding: 11px 20px; font-weight: 800;
+}
+.page-hero--playful .ph-cta-ghost:hover { background: rgba(255, 255, 255, 0.2); }
+.ph-visual { position: relative; }
+.ph-visual img {
+  width: 100%; max-width: 480px; height: auto; display: block; margin-inline: auto;
+  border-radius: 26px; filter: drop-shadow(0 22px 44px rgba(20, 8, 50, 0.45));
+}
+.ph-orbit {
+  position: absolute; background: rgba(255, 255, 255, 0.95); color: #5b21b6; border-radius: 999px;
+  padding: 8px 14px; font-weight: 900; box-shadow: 0 10px 24px rgba(20, 8, 50, 0.35);
+  animation: ph-float 5s ease-in-out infinite;
+}
+.ph-orbit--abc { top: 6%; right: 2%; }
+.ph-orbit--star { bottom: 22%; left: 0; animation-delay: 1.4s; }
+.ph-card {
+  position: absolute; bottom: -14px; right: 4%; background: #fff; color: #1f2937;
+  border-radius: 16px; padding: 12px 16px; box-shadow: 0 14px 34px rgba(20, 8, 50, 0.4);
+  display: flex; flex-direction: column; gap: 2px; max-width: 260px;
+}
+.ph-card strong { color: #321568; font-size: 1rem; }
+.ph-card span { color: #6b7280; font-size: 0.8rem; font-weight: 600; }
+.ph-float { position: absolute; font-size: 1.5rem; opacity: 0.85; animation: ph-float 6s ease-in-out infinite; pointer-events: none; }
+.ph-float--star1 { top: 14%; left: 5%; color: #fde047; }
+.ph-float--star2 { top: 26%; right: 8%; color: #7ef0b2; animation-delay: 1.6s; }
+.ph-float--book { bottom: 16%; left: 10%; animation-delay: 0.8s; }
+.ph-float--bubble { top: 8%; right: 28%; animation-delay: 2.6s; }
+@keyframes ph-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+@media (max-width: 860px) {
+  .ph-grid { grid-template-columns: 1fr; gap: 28px; }
+  .ph-visual { order: -1; }
+  .ph-card { position: static; margin: 12px auto 0; max-width: 320px; }
+  .page-hero--playful { padding: 40px 0 52px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-float, .ph-orbit { animation: none; }
+  .page-hero--playful .ph-cta:hover { transform: none; }
+}
