@@ -237,7 +237,7 @@ function render(entry, all) {
     <header class="site-head">
       <div class="wrap site-head__inner">
         <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" width="40" height="40" />TutorPro Online English</a>
-        <a class="btn btn--primary" href="/free-trial.html">Book a free trial</a>
+        <a class="btn btn--primary" href="/?book=1">Register now</a>
       </div>
     </header>
 
@@ -251,6 +251,8 @@ function render(entry, all) {
         <span class="ph-float ph-float--star2" aria-hidden="true">⭐</span>
         <span class="ph-float ph-float--book" aria-hidden="true">📚</span>
         <span class="ph-float ph-float--bubble" aria-hidden="true">💬</span>
+        <span class="ph-float ph-float--rainbow" aria-hidden="true">🌈</span>
+        <span class="ph-float ph-float--pencil" aria-hidden="true">✏️</span>
         <div class="wrap ph-grid">
           <div class="ph-copy">
             <span class="ph-kicker">For families in ${escapeHtml(entry.country)} · Ages 4–16</span>
@@ -264,7 +266,7 @@ function render(entry, all) {
               <li>🎁 Free trial available</li>
             </ul>
             <p class="cta-row">
-              <a class="btn btn--primary ph-cta" href="/?book=1">Start free trial →</a>
+              <a class="btn btn--primary ph-cta" href="/?book=1">Register now →</a>
               <a class="btn ph-cta-ghost" href="/pricing.html">See prices in US dollars</a>
             </p>
           </div>
@@ -273,11 +275,12 @@ function render(entry, all) {
             <span class="ph-orbit ph-orbit--abc">ABC</span>
             <span class="ph-orbit ph-orbit--star">✦</span>
             <div class="ph-card">
-              <strong>First class free</strong>
+              <strong>🎉 First class free!</strong>
               <span>No card · no commitment · your time zone</span>
             </div>
           </div>
         </div>
+        <svg class="ph-wave" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true"><path d="M0,40 C240,90 480,0 720,35 C960,70 1200,10 1440,45 L1440,90 L0,90 Z" fill="#ffffff"/></svg>
       </section>
 
       <section class="filipino-band">
@@ -356,7 +359,7 @@ function render(entry, all) {
           <h2>Questions from ${escapeHtml(entry.adjective)} parents</h2>
           ${entry.faqs.map(([q, a], index) => `<details${index === 0 ? ' open' : ''}><summary>${escapeHtml(q)}</summary><p>${escapeHtml(a)}</p></details>`).join('\n          ')}
           <p class="cta-row">
-            <a class="btn btn--primary" href="/free-trial.html">Book a free trial class</a>
+            <a class="btn btn--primary" href="/?book=1">Register now</a>
             <a class="btn" href="/contact.html">Ask us a question first</a>
           </p>
         </div>
