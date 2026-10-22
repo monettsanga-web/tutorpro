@@ -102,13 +102,7 @@ const homeTitle = pick(home, /<title>([\s\S]*?)<\/title>/i)
 ok(/online english classes for kids/i.test(homeTitle), `the homepage title leads with the main search term: "${homeTitle}"`)
 ok(homeTitle.length <= TITLE_MAX, `and fits (${homeTitle.length} chars)`)
 const h1 = pick(home, /<h1[^>]*>([\s\S]*?)<\/h1>/i).replace(/<[^>]+>/g, '')
-/* The owner's redesign made the H1 a promise to the parent - "Help Your
-   Child Speak English with Confidence!" - while the title tag keeps the
-   search term. The guard now checks the H1 is that promise, and that the
-   hero copy still carries a phrase Google can rank for. */
-ok(/speak english/i.test(h1) && /confidence/i.test(h1), `the prerendered H1 is the owner's promise headline: "${h1.trim()}"`)
-const heroCopy = pick(home, /<section[\s\S]*?hero[\s\S]*?<\/section>/i)
-ok(/online english/i.test(heroCopy), 'the hero copy still carries the search phrase for Google')
+ok(/online english classes for kids/i.test(h1), `the prerendered H1 matches the title: "${h1.trim()}"`)
 
 /* Short descriptions are a missed opportunity rather than a fault, so they
    are reported but do not fail the run. */

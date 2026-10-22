@@ -28,7 +28,7 @@ ok(description.length > 0 && description.length <= 160, `homepage description su
 const appTagline = app.match(/hero__tagline">([^<]*)</)?.[1] || ''
 const prerenderTagline = prerender.match(/tagline: '([^']*)',/)?.[1] || ''
 ok(appTagline.length > 0 && appTagline === prerenderTagline, 'hero tagline matches between React and the prerender')
-ok(/Filipino teachers/i.test(appTagline), 'hero tagline names the Filipino teachers')
+ok(/near-native Filipino English teachers/i.test(appTagline), 'hero tagline states near-native Filipino teachers')
 
 ok(app.includes('function FilipinoTeachers'), 'the homepage renders a Filipino teachers section')
 ok(app.includes('teacher-near-native'), 'public teacher cards carry the near-native badge')
