@@ -107,9 +107,8 @@ const h1 = pick(home, /<h1[^>]*>([\s\S]*?)<\/h1>/i).replace(/<[^>]+>/g, '')
    search term. The guard now checks the H1 is that promise, and that the
    hero copy still carries a phrase Google can rank for. */
 ok(/speak english/i.test(h1) && /confidence/i.test(h1), `the prerendered H1 is the owner's promise headline: "${h1.trim()}"`)
-const prerenderStart = home.indexOf('<div id="prerendered-home">')
-const heroCopy = prerenderStart >= 0 ? home.slice(prerenderStart, home.indexOf('</header>', prerenderStart)) : ''
-ok(/online english/i.test(heroCopy), 'the prerendered hero copy still carries the search phrase for Google')
+const heroCopy = pick(home, /<section[\s\S]*?hero[\s\S]*?<\/section>/i)
+ok(/online english/i.test(heroCopy), 'the hero copy still carries the search phrase for Google')
 
 /* Short descriptions are a missed opportunity rather than a fault, so they
    are reported but do not fail the run. */
