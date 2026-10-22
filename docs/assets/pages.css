@@ -453,3 +453,29 @@ details p { margin: 12px 0 0; color: var(--muted); }
 .filipino-band__points { list-style: none; margin: 18px 0 20px; padding: 0; display: grid; gap: 12px; }
 .filipino-band__points li { background: #ffffff; border: 1px solid #e9e2fb; border-radius: 12px; padding: 14px 16px; color: #4b4560; }
 .filipino-band__points strong { color: #321568; }
+
+/* Country-page trial band: register yourself, or ask us to book the
+   trial for you - the two things a parent arriving from search actually
+   wants to do, side by side above the practical sections. */
+.trial-band { padding: 44px 0; background: #ffffff; border-bottom: 1px solid #e9e2fb; }
+.trial-band__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.trial-band__register, .trial-band__contact {
+  border: 1px solid #e9e2fb; border-radius: 16px; padding: 22px;
+  background: linear-gradient(180deg, #fdfcff 0%, #f7f4ff 100%);
+}
+.trial-band h2 { margin: 6px 0 8px; font-size: 1.5rem; }
+.trial-band__points { list-style: none; margin: 12px 0 16px; padding: 0; display: grid; gap: 8px; }
+.trial-band__points li { color: #4b4560; padding-left: 20px; position: relative; }
+.trial-band__points li::before { content: '\2713'; position: absolute; left: 0; color: #5b4be0; font-weight: 900; }
+.trial-form { display: grid; gap: 10px; }
+.trial-form label { display: grid; gap: 5px; font-size: 0.9rem; font-weight: 700; color: #374151; }
+.trial-form input, .trial-form select, .trial-form textarea {
+  border: 1px solid #d8d2e8; border-radius: 10px; padding: 10px 12px;
+  font: inherit; color: #1f2937; background: #ffffff; width: 100%;
+}
+.trial-form textarea { min-height: 74px; resize: vertical; }
+.trial-form input:focus, .trial-form select:focus, .trial-form textarea:focus {
+  outline: 2px solid #5b4be0; outline-offset: 1px; border-color: #5b4be0;
+}
+.trial-form__note { font-size: 0.85rem; color: #6b7280; margin: 2px 0 0; }
+@media (max-width: 760px) { .trial-band__grid { grid-template-columns: 1fr; } }
