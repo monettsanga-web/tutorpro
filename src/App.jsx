@@ -13,10 +13,12 @@ import {
   ChevronRight,
   Clock3,
   FlaskConical,
+  Gift,
   Globe2,
   GraduationCap,
   Headphones,
   Heart,
+  House,
   Laptop,
   LayoutDashboard,
   LogOut,
@@ -194,9 +196,9 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
       <div className="header-inner">
         <Logo />
         <nav className={`nav ${menuOpen ? 'nav--open' : ''}`} aria-label="Main navigation">
-          <a href="#programmes" onClick={closeMenu}>Subjects</a>
-          {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Teachers</a>}
-          <a href="#journey" onClick={closeMenu}>How it works</a>
+          <a href="#programmes" onClick={closeMenu}>Courses</a>
+          {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); closeMenu(); onOpenTeachers(); }}>Our Teachers</a>}
+          <a href="#journey" onClick={closeMenu}>How It Works</a>
           <a href="#pricing" onClick={closeMenu}>Pricing</a>
           <a href="#contact" onClick={closeMenu}>Contact</a>
           <div className="nav__mobile-actions">
@@ -228,6 +230,7 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
             </div>
           ) : (
             <>
+              <button className="header-register-now" onClick={onBook}>Register Now <ArrowRight size={15} /></button>
               <button className="header-portal-link" onClick={onLogin}>Student login</button>
               <button className="header-portal-link" onClick={onTeacherAccess}>Teacher portal</button>
               <button className="header-portal-link header-portal-link--admin" onClick={onAdminAccess}>Admin portal</button>
@@ -245,85 +248,99 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
   )
 }
 
+const HERO_AGES = ['4–5', '6–7', '8–10', '11–13', '14+']
+
+/*
+ * THE PLAYFUL PREMIUM HERO
+ *
+ * The owner's brief: a world-class children's EdTech first screen -
+ * vibrant violet, mint and sunshine yellow, rounded and soft, with a
+ * 3D illustration of a Filipino teacher and child among original
+ * mascots, and an age-picker card that leads into the free trial.
+ * Novakid's page was the mood board, not the template: the layout,
+ * copy and characters here are TutorPro's own, and every trust signal
+ * below is something the platform actually does.
+ */
 function Hero({ onBook, onTeacherApply }) {
+  const [ageBand, setAgeBand] = useState(() => {
+    try { return window.sessionStorage.getItem('tutorpro_trial_age_band') || '' } catch { return '' }
+  })
+  const chooseAge = (band) => {
+    setAgeBand(band)
+    try { window.sessionStorage.setItem('tutorpro_trial_age_band', band) } catch { /* private browsing */ }
+  }
   return (
-    /* Motion for this section is owned by PremiumMotion + premium-motion.css,
-       which already publishes --premium-scroll-ratio globally and animates the
-       hero copy. A second parallax system here silently lost to its
-       fill-mode 'both' animations, so the depth below is driven from those
-       existing variables instead of duplicating the machinery. */
-    <section className="hero hero--banner" id="top">
-      <div className="hero__dots" aria-hidden="true" />
-      {/* Decorative background carries no information the copy does not, but
-          it is the brand image, so it is described rather than hidden. */}
-      <div className="hero__bg-stage" aria-hidden="true">
-        <img
-          className="hero__bg"
-          src={assetUrl('assets/tutorpro-hero.webp')}
-          alt="TutorPro Online English E-Learning Academy — our teachers, for ages 5 to 12"
-        />
-      </div>
-      {/* Depth layers. Each drifts at a different rate, which is what reads as
-          three-dimensional rather than as a flat image sliding about. */}
-      <span className="hero__orb hero__orb--1" aria-hidden="true" />
-      <span className="hero__orb hero__orb--2" aria-hidden="true" />
-      <span className="hero__orb hero__orb--3" aria-hidden="true" />
+    <section className="hero hero--playful" id="top">
+      <span className="hero-float hero-float--star1" aria-hidden="true">✦</span>
+      <span className="hero-float hero-float--star2" aria-hidden="true">✦</span>
+      <span className="hero-float hero-float--star3" aria-hidden="true">⭐</span>
+      <span className="hero-float hero-float--book" aria-hidden="true">📚</span>
+      <span className="hero-float hero-float--bubble" aria-hidden="true">💬</span>
       <div className="container hero__grid">
         <div className="hero__content">
-          <div className="eyebrow">
-            <span><Sparkles size={14} /></span>
-            English · Maths · Science · ICT · Ages 4–16
+          <div className="eyebrow"><span><Sparkles size={14} /></span>English · Maths · Science · ICT · Ages 4–16</div>
+          <h1>Help Your Child <em className="hero-mint">Speak English</em> with Confidence!</h1>
+          <p className="hero__tagline">Fun, interactive online English lessons with caring Filipino teachers. Learn English, build confidence, and shine!</p>
+          <ul className="hero-badges" aria-label="Why parents trust TutorPro">
+            <li><UserRoundCheck size={15} /> Qualified teachers</li>
+            <li><Sparkles size={15} /> Interactive lessons</li>
+            <li><House size={15} /> Learn from home</li>
+            <li><Gift size={15} /> Free trial available</li>
+          </ul>
+          <div className="hero-age-card">
+            <h2>Let’s Find Your Child’s English Level!</h2>
+            <p>Start your learning journey today.</p>
+            <div className="hero-age-card__ages" role="group" aria-label="Child's age group">
+              {HERO_AGES.map((band) => (
+                <button key={band} type="button" className={ageBand === band ? 'active' : ''} aria-pressed={ageBand === band} onClick={() => chooseAge(band)}>{band}</button>
+              ))}
+            </div>
+            <button type="button" className="hero-age-card__cta" onClick={() => onBook(`Hero age card${ageBand ? ` (ages ${ageBand})` : ''}`)}>
+              Start free trial <ArrowRight size={18} />
+            </button>
+            <small>{ageBand ? `Ages ${ageBand} - lovely. The booking will ask for the closest school year.` : 'Pick an age group - it takes one tap.'}</small>
           </div>
-          {/* The H1 must match the prerendered one in scripts/prerender-home.mjs.
-              Google renders JavaScript, so React's H1 is what finally gets
-              indexed — a tagline here silently overwrote the search-targeted
-              heading the prerender had carefully put in place, and the whole
-              homepage optimisation was being undone a second after load.
-              The tagline survives directly underneath, so nothing is lost. */}
-          <h1>Online English Classes for <em>Kids</em></h1>
-          <p className="hero__tagline">Live one-to-one classes with near-native Filipino English teachers — clear, patient, and trusted by families worldwide.</p>
-          <p className="hero__lede">
-            TutorPro is an online English school helping children around the world build confidence in speaking, reading, listening, grammar, vocabulary and communication. One teacher, one child, live — in English, Maths, Science and ICT for ages 4–16.
-          </p>
           <div className="hero__actions">
-            <button className="button button--primary button--large" onClick={onBook}>
-              Book a free trial <ArrowRight size={18} />
-            </button>
-            <a className="button button--quiet button--large" href="#programmes">
-              Explore our programs
-            </a>
-            {/* Teachers recruit from the homepage's first screen, not only
-                from the footer: the owner wants "Apply as a teacher" visible
-                the moment the homepage loads. Quiet like the secondary
-                action so the parent CTAs keep the lead, tinted so teachers
-                recognise it as theirs. On a phone it opens the portal at the
-                application, which shows the "use a laptop" notice. */}
-            <button className="button button--quiet button--large hero__apply-teacher" onClick={onTeacherApply}>
-              <PenLine size={17} /> Apply as a teacher
-            </button>
+            <button className="button button--primary button--large" onClick={onBook}>Book a free trial <ArrowRight size={18} /></button>
+            <a className="button button--quiet button--large" href="#programmes">Explore our programs</a>
+            <button className="button button--quiet button--large hero__apply-teacher" onClick={onTeacherApply}><PenLine size={17} /> Apply as a teacher</button>
           </div>
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
-          <div className="hero__proof" aria-label="TutorPro Online English benefits">
-            <span><Check size={15} /> No commitment</span>
-            <span><Check size={15} /> From US$8 per class</span>
-            <span><Check size={15} /> Flexible times</span>
-          </div>
         </div>
+        <div className="hero__visual hero__visual--playful">
+          <img
+            src={assetUrl('assets/hero-filipino-classroom.png')}
+            alt="A happy Filipino teacher teaching an excited child on a laptop, surrounded by friendly animal mascots, books and stars"
+            width={1024}
+            height={1024}
+            decoding="async"
+          />
+          <span className="hero-orbit hero-orbit--abc" aria-hidden="true">ABC</span>
+          <span className="hero-orbit hero-orbit--star" aria-hidden="true">✦</span>
+          <span className="hero-orbit hero-orbit--note" aria-hidden="true">🎈</span>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-        {/* The banner artwork is the hero background, not a framed card. It
-            already carries the brand mark, the teachers and the "E-Learning
-            Academy" wordmark, so the old photo frame and its floating badges
-            would sit on top of that same artwork. */}
-        <div className="hero__visual">
-          <div className="progress-card">
-            <div className="progress-card__top">
-              <span className="progress-card__icon"><Target size={18} /></span>
-              <span><small>Learning goal</small><strong>Confident speaking</strong></span>
-            </div>
-            <div className="progress-card__bar"><span /></div>
-            <div className="progress-card__foot"><span>Great progress</span><strong>82%</strong></div>
-          </div>
-        </div>
+/* Verified signals only: the registration number is on the public
+   register, the teacher count is fetched live from the public
+   directory, and the reviews are the ones published unedited. */
+function HeroProof() {
+  const [teacherCount, setTeacherCount] = useState(0)
+  useEffect(() => {
+    let active = true
+    fetchPublicTeachers().then((payload) => { if (active) setTeacherCount(payload?.teachers?.length || 0) }).catch(() => {})
+    return () => { active = false }
+  }, [])
+  return (
+    <section className="hero-proof" aria-label="Verified trust signals">
+      <div className="container hero-proof__row">
+        <span><ShieldCheck size={16} /> Registered business · DTI Reg. No. 5274092</span>
+        {teacherCount > 0 && <span><UserRoundCheck size={16} /> {teacherCount} approved teachers with public profiles</span>}
+        <span><Star size={16} /> Parent reviews published unedited on Trustpilot</span>
+        <span><Heart size={16} /> First class free — no card, no commitment</span>
       </div>
     </section>
   )
@@ -2425,6 +2442,7 @@ export default function App() {
       ) : (
         <main>
           <Hero onBook={openRegistration} onTeacherApply={openTeacherApply} />
+          <HeroProof />
           <WhyParents onBook={openRegistration} />
           <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />

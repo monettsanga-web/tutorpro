@@ -35,8 +35,8 @@ const HERO = {
   // the page already ranking around position 6 for "english tutor" with no
   // clicks at all, so the job is relevance and a clearer promise, not more
   // words. Teens are still named in the lede and have their own page.
-  heading: 'Online English Classes for Kids',
-  tagline: 'Live one-to-one classes with near-native Filipino English teachers — clear, patient, and trusted by families worldwide.',
+  heading: 'Help Your Child Speak English with Confidence!',
+  tagline: 'Fun, interactive online English lessons with caring Filipino teachers. Learn English, build confidence, and shine!',
   lede: 'Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one, so they speak for the whole lesson — building confidence in speaking, reading, grammar and writing with an experienced English teacher.',
   proof: ['No commitment', 'From $8 per class', 'Flexible times'],
 }
