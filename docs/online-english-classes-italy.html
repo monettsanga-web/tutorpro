@@ -60,6 +60,37 @@
         </div>
       </section>
 
+      <section class="trial-band" id="trial">
+        <div class="wrap">
+          <div class="trial-band__grid">
+            <div class="trial-band__register">
+              <span class="kicker">Register your child</span>
+              <h2>Create your parent account</h2>
+              <p>About two minutes: your name, a real email address, and your child's age and school year. Then you book the free first class yourself - in your own time zone, with no card and no commitment.</p>
+              <ul class="trial-band__points">
+                <li><strong>Free first class.</strong> A full lesson with a real teacher before you pay anything.</li>
+                <li><strong>Your time zone, your slots.</strong> Every slot is shown in your local time when you book.</li>
+                <li><strong>Feedback after every lesson.</strong> Written notes in your parent dashboard, plus homework and practice words.</li>
+              </ul>
+              <p class="cta-row"><a class="btn btn--primary" href="/?book=1">Register & book the free class</a></p>
+            </div>
+            <div class="trial-band__contact">
+              <span class="kicker">Prefer to talk first?</span>
+              <h2>Ask us to book the trial for you</h2>
+              <form class="trial-form" id="trial-form">
+                <label>Parent name<input name="parentName" required maxlength="80" placeholder="Your name" autocomplete="name" /></label>
+                <label>Email address<input type="email" name="email" required maxlength="120" placeholder="you@example.com" autocomplete="email" /></label>
+                <label>Child's age<select name="age"><option value="4">4 years old</option><option value="5">5 years old</option><option value="6">6 years old</option><option value="7">7 years old</option><option value="8">8 years old</option><option value="9">9 years old</option><option value="10">10 years old</option><option value="11">11 years old</option><option value="12">12 years old</option><option value="13">13 years old</option><option value="14">14 years old</option><option value="15">15 years old</option><option value="16">16 years old</option></select></label>
+                <label>Preferred days or times<input name="times" maxlength="120" placeholder="e.g. weekends after 4pm" /></label>
+                <label>Anything we should know? (optional)<textarea name="message" maxlength="600" placeholder="Shy beginner, exam prep, sibling to schedule together…"></textarea></label>
+                <button class="btn btn--primary" type="submit">Send trial request</button>
+                <p class="trial-form__note" id="trial-note">Your request lands in our support inbox and we reply to your email, usually within one day. No mailing lists, ever.</p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section>
         <div class="wrap wrap--narrow">
           <h2>Lesson times from Italy</h2>
@@ -129,5 +160,46 @@
         <p>© 2026 TutorPro Online English · DTI Business Name Registration 5274092 · One-to-one online classes for children worldwide, taught from the Philippines.</p>
       </div>
     </footer>
+
+    <script>
+      (function () {
+        var form = document.getElementById('trial-form');
+        if (!form) return;
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var note = document.getElementById('trial-note');
+          var button = form.querySelector('button[type="submit"]');
+          var fields = new FormData(form);
+          var parentName = String(fields.get('parentName') || '').trim();
+          var email = String(fields.get('email') || '').trim();
+          if (parentName.length < 2 || !/^S+@S+.S+$/.test(email)) {
+            note.textContent = 'Please add your name and a valid email address so we can answer you.';
+            return;
+          }
+          var times = String(fields.get('times') || '').trim() || 'flexible';
+          var extra = String(fields.get('message') || '').trim();
+          var firstMessage = 'Trial request from the Italy page. Child age ' + String(fields.get('age') || '') + '. Preferred times: ' + times + '.' + (extra ? ' Notes: ' + extra : '');
+          button.disabled = true;
+          note.textContent = 'Sending your request…';
+          fetch('https://losmkvvwzijipqrlelyt.supabase.co/rest/v1/rpc/create_support_conversation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': 'sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL',
+              'Authorization': 'Bearer sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL'
+            },
+            body: JSON.stringify({ parent_name: parentName, parent_email: email, visitor_language: 'en', first_message: firstMessage })
+          }).then(function (response) {
+            if (!response.ok) throw new Error('request failed');
+            form.reset();
+            button.disabled = false;
+            note.textContent = 'Thank you - your trial request is in our inbox. We will reply to ' + email + ', usually within one day.';
+          }).catch(function () {
+            button.disabled = false;
+            note.innerHTML = 'Sending failed. Email us directly at <a href="mailto:sejongenglish@yahoo.com">sejongenglish@yahoo.com</a>, or register above and book the free class yourself.';
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
