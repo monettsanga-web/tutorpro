@@ -4818,7 +4818,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
               <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', textAlign: 'center', background: '#fff' }}>
                 <thead>
                   <tr style={{ background: 'rgba(112, 72, 223, 0.08)', borderBottom: '2px solid rgba(112, 72, 223, 0.15)' }}>
-                    <th style={{ padding: '14px', color: '#7048df', fontSize: '1.015rem', fontWeight: 'bold', width: '150px' }}>年齡 Age</th>
+                    <th style={{ padding: '14px', color: '#7048df', fontSize: '1.015rem', fontWeight: 'bold', width: '150px' }}>Age</th>
                     {Array.from({ length: 12 }).map((_, i) => (
                       <th key={i} style={{ padding: '14px', color: '#321568', fontSize: '1.015rem', fontWeight: '900', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>Lv.{i}</th>
                     ))}
@@ -4826,7 +4826,7 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
                 </thead>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid rgba(112, 72, 223, 0.1)' }}>
-                    <td style={{ padding: '14px', color: '#321568', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>年級對應<br/><small style={{ color: '#665578', fontSize: '0.945rem' }}>Grade</small></td>
+                    <td style={{ padding: '14px', color: '#321568', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)' }}>Grade level</td>
                     {['K1', 'K2', 'K3', 'Pre-school', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'].map((g, idx) => (
                       <td key={idx} style={{ padding: '14px', color: '#463650', fontSize: '1.015rem', fontWeight: 'bold', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>{g}</td>
                     ))}
@@ -4863,29 +4863,29 @@ export function StudentDashboard({ account: initialAccount, onAccountChange, onH
                     <td style={{ padding: '24px 14px', color: '#ef4444', fontSize: '1.015rem', fontWeight: 'bold', background: 'rgba(112, 72, 223, 0.02)', verticalAlign: 'middle' }}>Outcomes</td>
                     <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
-                        <li>熟練掌握26個字母及44個基本發音及拼讀</li>
-                        <li style={{ marginTop: '6px' }}>能夠拼讀和拼寫簡單單詞</li>
-                        <li style={{ marginTop: '6px' }}>逐漸建立英語閱讀與溝通基礎</li>
+                        <li>Master the 26 letters and 44 basic phonics sounds, including blending.</li>
+                        <li style={{ marginTop: '6px' }}>Blend and spell simple words.</li>
+                        <li style={{ marginTop: '6px' }}>Gradually build a foundation for English reading and communication.</li>
                       </ul>
                     </td>
                     <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
-                        <li>完全掌握自然拼讀及字母組合發音</li>
-                        <li style={{ marginTop: '6px' }}>培養閱讀與寫作表達能力</li>
-                        <li style={{ marginTop: '6px' }}>可以進行日常流利溝通</li>
+                        <li>Fully master phonics, including letter-combination sounds.</li>
+                        <li style={{ marginTop: '6px' }}>Develop reading and written expression.</li>
+                        <li style={{ marginTop: '6px' }}>Communicate fluently in everyday conversation.</li>
                       </ul>
                     </td>
                     <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
-                        <li>自如用英語表達觀點、喜好、想法</li>
-                        <li style={{ marginTop: '6px' }}>進行段落和100詞內短寫作</li>
-                        <li style={{ marginTop: '6px' }}>熟練使用多種閱讀策略</li>
+                        <li>Express views, preferences and ideas freely in English.</li>
+                        <li style={{ marginTop: '6px' }}>Write paragraphs and short pieces of up to 100 words.</li>
+                        <li style={{ marginTop: '6px' }}>Apply a range of reading strategies with confidence.</li>
                       </ul>
                     </td>
                     <td colSpan={3} style={{ padding: '20px 16px', fontSize: '0.989rem', color: '#51435f', textAlign: 'left', verticalAlign: 'top', lineHeight: '1.6', borderLeft: '1px solid rgba(112, 72, 223, 0.1)' }}>
                       <ul style={{ listStyleType: 'disc', paddingLeft: '14px', margin: 0 }}>
-                        <li>流暢與英語母語者全方位交流交際</li>
-                        <li style={{ marginTop: '6px' }}>複雜問題解讀，達到美國中學閱讀水準</li>
+                        <li>Communicate fluently and naturally with native speakers on academic and social topics.</li>
+                        <li style={{ marginTop: '6px' }}>Interpret complex texts at a US junior-high reading level.</li>
                       </ul>
                     </td>
                   </tr>
