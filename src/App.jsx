@@ -2093,12 +2093,20 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
 }
 
 export default function App() {
-  // Landing pages link back with ?book=1 so the registration form is already
-  // open on arrival, instead of asking the parent to find the button again.
-  // Resolved during the first render so there is no extra pass.
+  // Landing pages and every country page link back with ?book=1 so the
+  // registration form is already open on arrival, instead of asking the
+  // parent to find the button again. Resolved during the first render so
+  // there is no extra pass.
+  //
+  // The old `&& !getCurrentAccount()` guard meant a visitor who already had
+  // any session in the browser - an admin checking her own buttons, a parent
+  // coming back for a second child - got the bare homepage instead of the
+  // form they had just asked for. An explicit ?book=1 is an explicit intent,
+  // so it now always opens the form; the modal itself handles signing the
+  // new family in afterwards.
   const [authOpen, setAuthOpen] = useState(() => {
     try {
-      return new URL(window.location.href).searchParams.get('book') === '1' && !getCurrentAccount()
+      return new URL(window.location.href).searchParams.get('book') === '1'
     } catch { return false }
   })
   const [authMode, setAuthMode] = useState('register')
