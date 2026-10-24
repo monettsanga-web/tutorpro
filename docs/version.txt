@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-24 admin-teacher-calendar
+TutorPro English production build 2026-10-24 curriculum-english
