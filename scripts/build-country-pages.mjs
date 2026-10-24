@@ -56,7 +56,7 @@ const COUNTRIES = [
     timezone: 'KST is UTC+9, one hour ahead of Manila. A 17:00 lesson in Seoul is 16:00 for the teacher — ordinary working hours on both sides, which is why Korean families can book the 16:00–21:00 slots that are hardest to get elsewhere.',
     school: 'English is a compulsory subject from 3rd grade of 초등학교 (elementary school), and the jump in difficulty at 중학교 (middle school) is where many families start looking for help. Lessons can follow your child\u2019s school textbook directly, or work on speaking, which school classes rarely have time for.',
     instead: 'A 학원 (hagwon) class usually means one teacher and a roomful of children, where a quiet child can go a whole session without speaking English aloud. Travel is on top. These lessons are one-to-one, from home, and the whole 25 or 50 minutes belongs to your child.',
-    pay: 'Payment is by PayPal in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['Is the teacher Korean or a native English speaker?', 'Teachers are Filipino and teach entirely in English. Many have taught Korean children for years and are used to starting from a learner who reads well but hesitates to speak.'],
       ['Can lessons follow my child\u2019s school textbook?', 'Yes. Teachers can work directly from the school book and homework, alongside the Cambridge and Oxford course books, if keeping up at school is the priority.'],
@@ -78,7 +78,7 @@ const COUNTRIES = [
     timezone: 'China and the Philippines are both UTC+8. There is no time difference at all, so any slot that suits your child after school suits the teacher too.',
     school: 'English is part of the curriculum from primary school and the pressure rises through 初中. Lessons can support the school book and the speaking practice that large classes make difficult, or work separately on reading, phonics and conversation.',
     instead: 'Classes run in our own browser classroom with a low-bandwidth mode. If cross-border video is unstable, ask the administrator for a VooV / 腾讯会议 link instead — the lesson is the same either way.',
-    pay: 'Families in China can pay by QR code: RMB25 per 25-minute lesson plus an RMB5 processing fee per session. Send the receipt to the administrator and the credits are added once it is checked. PayPal in US dollars is also accepted.',
+    pay: 'Families in China can pay by QR code: RMB25 per 25-minute lesson plus an RMB5 processing fee per session. Send the receipt to the administrator and the credits are added once it is checked. Debit and credit cards, charged in US dollars, are also accepted.',
     faqs: [
       ['Will the video connection work from China?', 'The classroom has a low-bandwidth mode built in, and a VooV / Tencent Meeting link is available as a backup. Families who have trouble with one usually find the other works.'],
       ['Can we pay in RMB?', 'Yes. QR payment is RMB25 per 25-minute lesson plus an RMB5 processing fee per session. Send the receipt and the credits are added after the administrator verifies it.'],
@@ -100,13 +100,13 @@ const COUNTRIES = [
     timezone: 'Italy is UTC+1 in winter and UTC+2 in summer, so Manila is 6 to 7 hours ahead. In practice the earliest after-school slots work best: a 15:00 lesson in Rome is 21:00 for the teacher, and later Italian times become late-night ones in Manila. We would rather say that plainly than have you find out when you try to book 19:00.',
     school: 'English is taught from scuola primaria and continues through scuola secondaria, but class sizes mean a child can read and write English far better than they can speak it. Many Italian families also prepare for Cambridge English qualifications, and lessons can be pointed at the speaking and listening parts of those.',
     instead: 'A private tutor at home in Italy means travel, a fixed local rate and whatever times that tutor has left. These lessons are one-to-one from home, 25 or 50 minutes, booked when it suits your family.',
-    pay: 'Payment is by PayPal in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate; there is no separate fee from us.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate; there is no separate fee from us.',
     faqs: [
       ['Does the teacher speak Italian?', 'No. Teachers are Filipino and teach entirely in English, which is deliberate: a child who knows the teacher cannot switch to Italian stops waiting to be rescued and starts trying.'],
       ['What time are lessons available in Italy?', 'The earliest after-school slots are the most reliable. 15:00 to 17:00 Italian time is 21:00 to 23:00 in Manila, which teachers do cover; later Italian evenings are much harder.'],
       ['Can lessons prepare my child for a Cambridge exam?', 'Teachers can focus on the speaking and listening skills those exams test, using Cambridge course books. TutorPro is not a Cambridge exam centre and does not register candidates — your school or a local centre does that.'],
       ['Is this suitable for a complete beginner?', 'Yes. Lessons for younger children start with phonics, songs and first words, and the teacher begins from what your child can already do.'],
-      ['How do I pay from Italy?', 'PayPal, in US dollars. Prices are published on the site: US$8 per 25-minute lesson, or US$7 on four or more a week.'],
+      ['How do I pay from Italy?', 'By debit or credit card, in US dollars. Prices are published on the site: US$8 per 25-minute lesson, or US$7 on four or more a week.'],
     ],
   },
   {
@@ -122,7 +122,7 @@ const COUNTRIES = [
     timezone: 'Poland is UTC+1 in winter and UTC+2 in summer, so Manila is 6 to 7 hours ahead. The earliest after-school slots are the ones we cover most reliably: a 15:00 lesson in Warsaw is 21:00 for the teacher. Later Polish evenings are much harder to staff, and it is better to know that before you book.',
     school: 'English is taught from the early years of szkoła podstawowa, and the egzamin ósmoklasisty at the end of it includes a modern foreign language, which for most pupils is English. Lessons can work on the speaking and listening that classroom time rarely stretches to, or support directly what the school is covering.',
     instead: 'Group courses and school lessons give a child a few sentences of speaking each week. One-to-one means the whole lesson is theirs, with mistakes corrected privately instead of in front of classmates.',
-    pay: 'Payment is by PayPal in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate; we add nothing on top.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate; we add nothing on top.',
     faqs: [
       ['Does the teacher speak Polish?', 'No. Teachers are Filipino and teach entirely in English. For a child who understands more than they will say, that is usually the point.'],
       ['Can lessons help with the egzamin ósmoklasisty?', 'Teachers can work on the language skills the exam tests — reading, listening, writing and the grammar it rests on — using the exam-style practice your child brings and Cambridge and Oxford course books.'],
@@ -144,13 +144,13 @@ const COUNTRIES = [
     timezone: 'Turkey is UTC+3 all year, so Manila is 5 hours ahead. A 16:00 lesson in Istanbul is 21:00 for the teacher, and the earlier after-school slots are the ones we can cover most reliably.',
     school: 'English begins in ilkokul and continues through ortaokul, where the LGS exam at the end includes English. Classroom English leans heavily on grammar and vocabulary, so speaking is usually where a child needs the practice, and that is what a one-to-one lesson is for.',
     instead: 'A dershane or private course is a group, with travel on top. Here your child speaks for the whole lesson, from home, and you get written feedback afterwards saying exactly what was covered.',
-    pay: 'Payment is by PayPal in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate.',
     faqs: [
       ['Does the teacher speak Turkish?', 'No. Teachers are Filipino and teach entirely in English, which pushes a child to produce the language rather than translate their way around it.'],
       ['Can lessons help with LGS English?', 'Teachers can work on the reading, vocabulary and grammar the exam tests, and on the speaking that the exam does not test but school and life do.'],
       ['What time are lessons available in Turkey?', 'Manila is 5 hours ahead. Early after-school times are best: 16:00 in Istanbul is 21:00 for the teacher.'],
       ['My child is shy about speaking. Will this help?', 'That is the most common reason families come to us. One-to-one means no classmates listening, and mistakes are corrected quietly as they go.'],
-      ['How do I pay from Turkey?', 'PayPal, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
+      ['How do I pay from Turkey?', 'By debit or credit card, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
     ],
   },
 ]
