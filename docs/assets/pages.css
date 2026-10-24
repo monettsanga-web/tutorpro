@@ -705,3 +705,18 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 @media (prefers-reduced-motion: reduce) {
   .btn--primary:hover, .btn:hover { transform: none; }
 }
+
+/* EUROPE WELCOME 2026-10-24 ---------------------------------------------
+   The country cloud at the foot of every country page and the index
+   list of nations: chip links on one rhythm, so families (and Google)
+   can walk between country pages in one hop. */
+.country-cloud { padding: 34px 0 8px; }
+.country-cloud ul, .country-index {
+  list-style: none; display: flex; flex-wrap: wrap; gap: 9px; margin: 14px 0 0; padding: 0;
+}
+.country-cloud li a, .country-index li a {
+  display: inline-block; background: #fff; border: 1px solid #e9d5ff; color: #6d28d9;
+  border-radius: 999px; padding: 8px 15px; font-size: 0.9rem; font-weight: 800;
+  text-decoration: none; box-shadow: 0 3px 0 #f3e8ff; transition: transform 120ms ease, background 120ms ease;
+}
+.country-cloud li a:hover, .country-index li a:hover { background: #f5f3ff; transform: translateY(-2px); }

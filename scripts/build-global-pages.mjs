@@ -94,6 +94,22 @@ const PAGES = [
           <a class="btn" href="/primary-english.html">Explore our English programmes</a>
         </p>
 
+        <h2>European families are welcome</h2>
+        <p>Children across Europe learn with us every week. European after-school hours fall in the Philippine evening, so our night-shift teachers keep those slots open on purpose - and every time is shown in your own zone when you book. Payment is by debit or credit card, and the first class is free.</p>
+        <ul class="country-index">
+          <li><a href="/online-english-classes-germany.html">Germany</a></li>
+          <li><a href="/online-english-classes-france.html">France</a></li>
+          <li><a href="/online-english-classes-spain.html">Spain</a></li>
+          <li><a href="/online-english-classes-portugal.html">Portugal</a></li>
+          <li><a href="/online-english-classes-netherlands.html">Netherlands</a></li>
+          <li><a href="/online-english-classes-greece.html">Greece</a></li>
+          <li><a href="/online-english-classes-italy.html">Italy</a></li>
+          <li><a href="/online-english-classes-poland.html">Poland</a></li>
+          <li><a href="/online-english-classes-turkey.html">Turkey</a></li>
+          <li><a href="/online-english-classes-korea.html">South Korea</a></li>
+          <li><a href="/online-english-classes-china.html">China</a></li>
+        </ul>
+
         <h2>Personalised online English classes for children</h2>
         <p>Every class is built around one child. The teacher sees what your child can already do, where they hesitate, and what they are being asked to do at school, then teaches to that. A child who reads well but will not speak needs a different lesson from one who chats happily but cannot write a paragraph, and in a one-to-one class they get it.</p>
         <p>In a group of six, a child speaks for roughly a fifth of the lesson. Speaking is a skill rather than a body of knowledge, so practice time is the strongest predictor of progress - which is why the whole lesson belongs to your child.</p>
