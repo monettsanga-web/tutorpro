@@ -13876,3 +13876,16 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   color: #7a7390; padding: 14px 16px; font-size: 0.92rem; margin: 4px 0 8px;
 }
 .admin-teacher-calendar > small { display: block; color: #9a93ad; font-size: 0.78rem; margin-top: 10px; }
+
+/* DESIGN POLISH PASS 2026-10-24 -----------------------------------------
+   The portals join the same family: rounded friendly primary actions,
+   Nunito headings like the marketing site, and cards on the shared
+   radius-and-shadow language. */
+.portal-primary-button,
+.portal-secondary-button,
+.portal-text-button { border-radius: 999px; }
+.portal-secondary-button { font-weight: 800; }
+.portal-view h1,
+.portal-card h2,
+.portal-card h3 { font-family: 'Nunito', 'Manrope', ui-rounded, 'DM Sans', sans-serif; letter-spacing: -0.015em; color: #321568; }
+.portal-card { border: 1px solid rgba(50, 21, 104, 0.07); border-radius: 20px; box-shadow: 0 14px 40px rgba(50, 21, 104, 0.08); }

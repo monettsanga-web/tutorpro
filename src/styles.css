@@ -8697,3 +8697,22 @@ body:has(.auth-shell--student-register) .messenger-float {
   text-transform: uppercase; letter-spacing: 0.04em;
   background: #ede9fe; border-radius: 999px; padding: 2px 8px; margin-left: 6px;
 }
+
+/* DESIGN POLISH PASS 2026-10-24 -----------------------------------------
+   Same language as the static pages: pill buttons everywhere, a soft
+   tinted stage behind the hero so the artwork sits in light instead of
+   flat cream, and section kickers as quiet pills. Markup untouched. */
+.button { border-radius: 999px; }
+.hero--banner {
+  background:
+    radial-gradient(720px 420px at 88% 6%, rgba(223, 245, 167, 0.55) 0%, transparent 62%),
+    radial-gradient(640px 380px at 6% 78%, rgba(233, 213, 255, 0.6) 0%, transparent 60%),
+    #fdfaf2;
+}
+.kicker, .eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #fff; border: 1px solid #eadcf9; border-radius: 999px;
+  padding: 7px 15px; font-weight: 800; color: #6d28d9;
+  box-shadow: 0 3px 0 #f3e8ff;
+}
+.section-heading h2 { letter-spacing: -0.02em; }
