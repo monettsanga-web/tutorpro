@@ -32,7 +32,8 @@ check(component.includes('At TutorPro English PH, we believe every child deserve
   'the requested promotional copy is present')
 check(component.includes('Ask About Class Discounts'), 'the CTA uses the requested label')
 check(component.includes('href="/contact.html"'), 'a visible fallback links to the existing Contact Us page')
-check(component.includes('requestOpenSupportChat(discountQuestion)'), 'the CTA opens the configured website support chat')
+check(/discount-promo__cta"[\s\S]{0,60}href="\/contact\.html"|href="\/contact\.html"[\s\S]{0,10}>[\s\S]{0,40}Ask About Class Discounts/.test(component) || component.includes('discount-promo__cta" href="/contact.html"'), 'the discount CTA itself is a link to Contact Us')
+check(!component.includes('requestOpenSupportChat'), 'the CTA no longer depends on the support chat widget')
 check(/eligibility vary[\s\S]*final price before you book/i.test(component),
   'the copy says customer service confirms eligibility and final pricing')
 check(!/[$%]\s?\d/.test(component), 'the promotion introduces no discount amounts or percentages')
