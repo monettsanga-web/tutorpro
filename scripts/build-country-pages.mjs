@@ -153,6 +153,121 @@ const COUNTRIES = [
       ['How do I pay from Turkey?', 'By debit or credit card, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
     ],
   },
+
+  {
+    slug: 'online-english-classes-germany',
+    situations: ['A Grundschule child meeting English for the first time in class 3', 'A Gymnasium pupil whose grades slip as the texts get harder', 'A family replacing costly Nachhilfe hours with focused one-to-one time'],
+    country: 'Germany',
+    adjective: 'German',
+    title: 'Online English Classes for Kids in Germany | TutorPro',
+    description: 'Live one-to-one online English classes for children in Germany, aged 4-16. After-school slots in your time zone, card payment, free first class.',
+    h1: 'Online English classes for children in Germany',
+    lede: 'One teacher, one child, live on video. German after-school hours fall in the Philippine evening, which is exactly when our night-shift teachers work.',
+    timezone: 'Germany runs on CET (UTC+1, UTC+2 in summer). Manila is 6-7 hours ahead, so a 16:00 lesson in Berlin is 22:00 or 23:00 for the teacher - precisely the window our night-shift teachers open, which is why European after-school slots exist at all.',
+    school: 'English becomes a compulsory subject in most German states from class 3 or 5, and Gymnasium expectations rise quickly. Lessons can follow the school book, or build the speaking confidence German classrooms rarely have time to practise.',
+    instead: 'Nachhilfe usually means a small group after an already long school day, with travel on top. These lessons are one-to-one, from home, and the whole 25 or 50 minutes belongs to your child.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    faqs: [
+      ['How do I pay from Germany?', 'By debit or credit card, in US dollars, at the published rates: US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. There is no registration fee.'],
+      ['What time are lessons in German time?', 'After-school and early-evening slots. Every time is shown in your own zone when you book, and night-shift teachers cover the European evening on purpose.'],
+      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
+    ],
+  },
+  {
+    slug: 'online-english-classes-france',
+    situations: ['A CP or CE1 pupil starting English at primary school', 'A collégien whose spoken English lags far behind the written work', 'A family wanting real conversation beyond soutien scolaire'],
+    country: 'France',
+    adjective: 'French',
+    title: 'Online English Classes for Kids in France | TutorPro',
+    description: 'Live one-to-one online English classes for children in France, aged 4-16. Evening slots in French time, card payment, and a free first class.',
+    h1: 'Online English classes for children in France',
+    lede: 'One teacher, one child, live on video. French after-school hours sit in the Philippine evening, so night-shift teachers keep those slots open.',
+    timezone: 'France runs on CET (UTC+1, UTC+2 in summer). Manila is 6-7 hours ahead, so a 17:00 lesson in Paris is late evening for the teacher - covered by teachers who choose the night shift.',
+    school: 'English starts in primary school (CP) and counts heavily in the brevet and the lycée, where oral expression is usually the weakest skill. Lessons give the speaking time a thirty-pupil class cannot.',
+    instead: 'Soutien scolaire and cours particuliers are usually groups or generalist tutors. These lessons are one-to-one with a specialist English teacher, from home, with written feedback after every class.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    faqs: [
+      ['How do I pay from France?', 'By debit or credit card, in US dollars, at the published rates. Your bank converts at its own rate; we add nothing on top.'],
+      ['What time are lessons in French time?', 'After-school and early-evening slots, shown in your own zone when you book. The European evening is our night shift, so the slots exist.'],
+      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
+    ],
+  },
+  {
+    slug: 'online-english-classes-spain',
+    situations: ['A Primaria child in a bilingual programme asked to do more in English', 'A Secundaria or Bachillerato student preparing B1 or B2 speaking exams', 'A family juggling academia schedules with everything else'],
+    country: 'Spain',
+    adjective: 'Spanish',
+    title: 'Online English Classes for Kids in Spain | TutorPro',
+    description: 'Live one-to-one online English classes for children in Spain, aged 4-16. After-school slots in peninsular time, card payment, free first class.',
+    h1: 'Online English classes for children in Spain',
+    lede: 'One teacher, one child, live on video. Peninsular after-school hours fall in the Philippine evening - the night-shift window our teachers open on purpose.',
+    timezone: 'Peninsular Spain runs on CET (UTC+1, UTC+2 in summer); the Canary Islands one hour earlier. Manila is 6-7 hours ahead of the peninsula, so after-school slots sit in the Philippine evening and are bookable.',
+    school: 'Many Spanish regions teach subjects bilingually from Primaria, and Cambridge-style B1 and B2 exams are common in Secundaria. Lessons can target the speaking papers those exams reward.',
+    instead: 'An academia teaches in groups on a fixed timetable, with travel on top. These lessons are one-to-one, at your hour, and the whole session belongs to your child.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    faqs: [
+      ['How do I pay from Spain?', 'By debit or credit card, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
+      ['What time are lessons in Spanish time?', 'After-school and early-evening slots, shown in your own zone when you book, including Canary Islands time.'],
+      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
+    ],
+  },
+  {
+    slug: 'online-english-classes-portugal',
+    situations: ['A 3rd or 4th year pupil starting English at school', 'A preparatory or secondary student whose oral work lags the written', 'A family outside Lisbon or Porto with few local options'],
+    country: 'Portugal',
+    adjective: 'Portuguese',
+    title: 'Online English Classes for Kids in Portugal | TutorPro',
+    description: 'Live one-to-one online English classes for children in Portugal, aged 4-16. After-school slots in Lisbon time, card payment, free first class.',
+    h1: 'Online English classes for children in Portugal',
+    lede: 'One teacher, one child, live on video. Lisbon after-school hours sit at the far edge of the Philippine evening - night-shift teachers keep them open.',
+    timezone: 'Portugal runs on WET (UTC+0, UTC+1 in summer). Manila is 7-8 hours ahead, so a 17:00 lesson in Lisbon approaches midnight for the teacher - night-shift hours, and bookable.',
+    school: 'English is compulsory from the 3rd year and continues through secondary, where oral exams count. One-to-one practice is the fastest way to close the gap between writing and speaking.',
+    instead: 'Explicadores are often generalists shared between subjects and students. These lessons are specialist English, one child per session, from home.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    faqs: [
+      ['How do I pay from Portugal?', 'By debit or credit card, in US dollars, at the published rates. Your bank converts at its own rate; we add nothing on top.'],
+      ['What time are lessons in Lisbon time?', 'After-school and early-evening slots, shown in your own zone when you book.'],
+      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
+    ],
+  },
+  {
+    slug: 'online-english-classes-netherlands',
+    situations: ['A group 7 or 8 pupil starting English late but living in a fluent country', 'A VMBO, HAVO or VWO student who writes well yet hesitates to speak', 'An expat family keeping English strong alongside a Dutch school'],
+    country: 'Netherlands',
+    adjective: 'Dutch',
+    title: 'Online English Classes for Kids: Netherlands | TutorPro',
+    description: 'Live one-to-one online English classes for children in the Netherlands, aged 4-16. After-school slots in your time zone, card payment, free first class.',
+    h1: 'Online English classes for children in the Netherlands',
+    lede: 'One teacher, one child, live on video. Dutch after-school hours fall in the Philippine evening - the night-shift window our teachers open on purpose.',
+    timezone: 'The Netherlands runs on CET (UTC+1, UTC+2 in summer). Manila is 6-7 hours ahead, so after-school slots sit in the Philippine evening and are bookable every week.',
+    school: 'Dutch children start English around age 10 and quickly outgrow beginner material, so the real need is speaking confidence and exam-level precision rather than basics. Lessons pitch to that.',
+    instead: 'Bijles helps with schoolwork but rarely gives sustained conversation. These lessons are speaking-first, one-to-one, with written feedback after every class.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    faqs: [
+      ['How do I pay from the Netherlands?', 'By debit or credit card, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
+      ['What time are lessons in Dutch time?', 'After-school and early-evening slots, shown in your own zone when you book.'],
+      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
+    ],
+  },
+  {
+    slug: 'online-english-classes-greece',
+    situations: ['A primary pupil studying English alongside a frontistirio', 'A Gymnasio or Lykeio student preparing B1, B2 or Proficiency speaking', 'A family on an island with limited local choices'],
+    country: 'Greece',
+    adjective: 'Greek',
+    title: 'Online English Classes for Kids in Greece | TutorPro',
+    description: 'Live one-to-one online English classes for children in Greece, aged 4-16. After-school slots in Athens time, card payment, and a free first class.',
+    h1: 'Online English classes for children in Greece',
+    lede: 'One teacher, one child, live on video. Athens after-school hours sit in the Philippine late evening - night-shift teachers keep those slots open.',
+    timezone: 'Greece runs on EET (UTC+2, UTC+3 in summer). Manila is 5-6 hours ahead, so a 17:00 lesson in Athens is 22:00 or 23:00 for the teacher - night-shift hours, and bookable.',
+    school: 'Greek children often study English from a young age and sit international B1, B2 and Proficiency exams in their teens. Lessons target the speaking and writing those exams score.',
+    instead: 'A frontistirio teaches in groups on a fixed schedule. These lessons are one-to-one, at your hour, and every minute is your child speaking or writing with feedback.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    faqs: [
+      ['How do I pay from Greece?', 'By debit or credit card, in US dollars, at the published rates. Your bank converts at its own rate; we add nothing on top.'],
+      ['What time are lessons in Greek time?', 'After-school and early-evening slots, shown in your own zone when you book.'],
+      ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
+    ],
+  },
 ]
 
 function schema(entry) {
@@ -371,6 +486,16 @@ function render(entry, all) {
           <nav class="pagenav" aria-label="Other countries">
             ${others.map((item) => `<a href="/${item.slug}.html">${escapeHtml(item.country)}</a>`).join('\n            ')}
           </nav>
+        </div>
+      </section>
+      <section class="country-cloud">
+        <div class="wrap wrap--narrow">
+          <span class="kicker">Families join from</span>
+          <h2>European and worldwide countries welcome</h2>
+          <p>Wherever you are, lessons are shown in your own time zone, payment is by debit or credit card, and the first class is free.</p>
+          <ul>
+            ${COUNTRIES.filter((other) => other.slug !== entry.slug).map((other) => `<li><a href="/${other.slug}.html">${escapeHtml(other.country)}</a></li>`).join('\n            ')}
+          </ul>
         </div>
       </section>
     </main>
