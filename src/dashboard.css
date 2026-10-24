@@ -13846,3 +13846,33 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   .shift-pick__btn:hover, .shift-pick__btn.is-active { transform: none; }
   .shift-pick__tick { transition: none; }
 }
+
+/* ADMIN > TEACHERS: the calendar drawer. One tap on the calendar icon
+   in a teacher row opens their live weekly availability, read-only,
+   right inside the table - shift label and weekly hours on top, the
+   same ScheduleCalendar the teacher edits, drawn in the admin's own
+   time zone. */
+.table-action--calendar { background: rgba(124, 58, 237, 0.1); color: #6d28d9; }
+.table-action--calendar:hover { background: rgba(124, 58, 237, 0.2); }
+.table-action--calendar.is-open { background: #6d28d9; color: #fff; }
+.admin-teacher-calendar {
+  grid-column: 1 / -1; margin: 4px 0 10px; padding: 16px 16px 12px;
+  background: linear-gradient(180deg, #faf8ff 0%, #f4f0ff 100%);
+  border: 1px solid #e4dcf9; border-radius: 16px;
+}
+.admin-teacher-calendar__head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 14px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.admin-teacher-calendar__head strong { display: block; font-size: 1.05rem; color: #321568; }
+.admin-teacher-calendar__head small { display: block; color: #7a7390; font-weight: 700; margin-top: 2px; }
+.admin-teacher-calendar__sum {
+  background: #fff; border: 1px solid #e4dcf9; border-radius: 999px;
+  padding: 7px 14px; font-size: 0.82rem; font-weight: 800; color: #5b4b8a;
+  box-shadow: 0 4px 12px rgba(50, 21, 104, 0.08);
+}
+.admin-teacher-calendar__empty {
+  background: #fff; border: 1px dashed #c9bdf0; border-radius: 12px;
+  color: #7a7390; padding: 14px 16px; font-size: 0.92rem; margin: 4px 0 8px;
+}
+.admin-teacher-calendar > small { display: block; color: #9a93ad; font-size: 0.78rem; margin-top: 10px; }
