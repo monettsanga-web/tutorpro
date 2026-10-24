@@ -73,7 +73,6 @@ import ChinaSafeVideo from './ChinaSafeVideo.jsx'
 import SupportChatWidget from './SupportChatWidget.jsx'
 import ContactChannels from './ContactChannels.jsx'
 import TrustpilotWidget from './TrustpilotWidget.jsx'
-import { requestOpenSupportChat } from './supportChatEvents.js'
 
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`
 
@@ -1720,7 +1719,6 @@ function Pricing({ onBook }) {
 }
 
 function DiscountPromo({ embedded = false }) {
-  const discountQuestion = 'Hello! I’d like to ask about any available per-class discounts, sibling discounts, or offers for booking multiple lessons per week. Please let me know what my family may be eligible for and confirm the final price.'
 
   const card = (
     <div className={`discount-promo__card${embedded ? ' discount-promo__card--embedded' : ''}`}>
@@ -1736,13 +1734,9 @@ function DiscountPromo({ embedded = false }) {
               <li><CalendarCheck2 size={17} aria-hidden="true" /><span>Multiple weekly lessons</span></li>
             </ul>
             <div className="discount-promo__actions">
-              <button
-                className="button button--primary discount-promo__cta"
-                type="button"
-                onClick={() => requestOpenSupportChat(discountQuestion)}
-              >
+              <a className="button button--primary discount-promo__cta" href="/contact.html">
                 Ask About Class Discounts <MessageCircle size={17} aria-hidden="true" />
-              </button>
+              </a>
               <a className="discount-promo__contact-link" href="/contact.html">Prefer another way? Contact us</a>
             </div>
             <p className="discount-promo__disclaimer">
