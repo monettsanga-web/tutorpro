@@ -8716,3 +8716,67 @@ body:has(.auth-shell--student-register) .messenger-float {
   box-shadow: 0 3px 0 #f3e8ff;
 }
 .section-heading h2 { letter-spacing: -0.02em; }
+
+/* NOVAKID-LANGUAGE PASS 2026-10-24 --------------------------------------
+   The owner asked for the reference site's design language: a lead
+   widget in the hero, organic curve dividers, tinted bands, teacher
+   faces early, and reviews beside the price. All original drawing and
+   code; only the ideas are shared. */
+.hero-age-widget {
+  margin: 22px 0 4px; padding: 16px 18px 18px; max-width: 520px;
+  background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(50, 21, 104, 0.08);
+  border-radius: 22px; box-shadow: 0 18px 44px rgba(50, 21, 104, 0.12);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.hero-age-widget__label {
+  display: block; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #6d28d9; margin-bottom: 10px;
+}
+.hero-age-widget__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.hero-age-widget__chips button {
+  min-width: 44px; min-height: 44px; border-radius: 14px; cursor: pointer;
+  border: 2px solid #e9d5ff; background: #faf5ff; color: #6b21a8;
+  font: inherit; font-weight: 800; font-size: 1rem;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.hero-age-widget__chips button:hover { transform: translateY(-2px); border-color: #c084fc; }
+.hero-age-widget__chips button.is-on {
+  background: linear-gradient(135deg, #7c3aed, #a855f7); border-color: transparent;
+  color: #fff; box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35);
+}
+.hero-age-widget__cta { margin-top: 14px; width: 100%; }
+.teacher-strip { position: relative; background: linear-gradient(180deg, #f4fbe4 0%, #fdfaf2 100%); padding: 26px 0 72px; }
+.teacher-strip__curve { position: absolute; top: -1px; left: 0; width: 100%; height: 64px; display: block; }
+.teacher-strip__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 8px; }
+.teacher-strip__card {
+  background: #fff; border: 1px solid rgba(50, 21, 104, 0.07); border-radius: 22px;
+  padding: 22px 16px 18px; text-align: center; box-shadow: 0 14px 36px rgba(50, 21, 104, 0.1);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.teacher-strip__card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(50, 21, 104, 0.16); }
+.teacher-strip__photo { width: 84px; height: 84px; margin-bottom: 8px; }
+.teacher-strip__photo strong, .teacher-strip__photo img { width: 84px; height: 84px; border-radius: 999px; font-size: 2rem; }
+.teacher-strip__card strong { color: #321568; font-family: 'Nunito', 'Manrope', ui-rounded, sans-serif; font-size: 1.05rem; }
+.teacher-strip__card small { color: #716981; font-weight: 700; font-size: 0.85rem; }
+.teacher-strip__card span {
+  margin-top: 6px; background: #f4fbe4; border: 1px solid #dff5a7; color: #4d7c0f;
+  border-radius: 999px; padding: 4px 12px; font-size: 0.78rem; font-weight: 800;
+}
+.teacher-strip__cta { text-align: center; margin-top: 26px; }
+.pricing { border-radius: 44px 44px 0 0; background: linear-gradient(180deg, #fbf7ff 0%, #fdfaf2 60%); }
+.pricing__trust { display: flex; justify-content: center; margin: 4px 0 10px; }
+.age-band-hint {
+  background: #f5f3ff; border: 1px solid #ddd6fe; color: #5b4be0; border-radius: 10px;
+  padding: 8px 12px; font-size: 0.9rem; font-weight: 700; margin: 0 0 10px;
+}
+@media (max-width: 900px) {
+  .teacher-strip__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .teacher-strip__grid { grid-template-columns: 1fr; }
+  .hero-age-widget { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-age-widget__chips button:hover, .teacher-strip__card:hover { transform: none; }
+}

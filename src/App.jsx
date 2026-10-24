@@ -244,7 +244,66 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
   )
 }
 
+const HERO_CHIP_AGES = ['4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16']
+const bandForAge = (age) => {
+  const n = Number(age)
+  if (n <= 5) return '4–5'
+  if (n <= 7) return '6–7'
+  if (n <= 10) return '8–10'
+  if (n <= 13) return '11–13'
+  return '14+'
+}
+
+/* A first look at the teaching team, pulled live from the public
+   directory so every face, name and year here is real. The curve on
+   top is an organic section divider in the spirit of the reference
+   design the owner shared - drawn here, not borrowed. */
+function TeacherPreviewStrip({ onOpenTeachers }) {
+  const [teachers, setTeachers] = useState([])
+  useEffect(() => {
+    let active = true
+    fetchPublicTeachers().then((rows) => { if (active) setTeachers(rows.slice(0, 4)) }).catch(() => {})
+    return () => { active = false }
+  }, [])
+  if (!teachers.length) return null
+  return (
+    <section className="teacher-strip" aria-label="Meet some of our teachers">
+      <svg className="teacher-strip__curve" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 L1440,0 L1440,24 C1080,64 360,64 0,24 Z" fill="#fdfaf2" /></svg>
+      <div className="container">
+        <div className="section-heading section-heading--center">
+          <span className="kicker">A real person, not an app</span>
+          <h2>Meet your child’s teachers</h2>
+          <p>Every teacher passes a recorded teaching interview and a credential check before their first class.</p>
+        </div>
+        <div className="teacher-strip__grid">
+          {teachers.map((teacher) => (
+            <article className="teacher-strip__card" key={teacher.id}>
+              <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="teacher-strip__photo" />
+              <strong>{teacher.fullName}</strong>
+              <small>{teacher.teacher?.specialization || 'English'} · {teacher.teacher?.experience || 1}+ years</small>
+              <span>{teacher.teacher?.languages || 'English'}</span>
+            </article>
+          ))}
+        </div>
+        <div className="teacher-strip__cta">
+          <button className="button button--outline" onClick={onOpenTeachers}>Meet all our teachers <ArrowRight size={17} /></button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Hero({ onBook, onTeacherApply }) {
+  const [heroAge, setHeroAge] = useState(() => {
+    try { return window.sessionStorage.getItem('tutorpro_trial_age') || '' } catch { return '' }
+  })
+  const chooseAge = (age) => {
+    setHeroAge(age)
+    try {
+      window.sessionStorage.setItem('tutorpro_trial_age', age)
+      window.sessionStorage.setItem('tutorpro_trial_age_band', bandForAge(age))
+    } catch { /* private browsing */ }
+  }
   return (
     /* Motion for this section is owned by PremiumMotion + premium-motion.css,
        which already publishes --premium-scroll-ratio globally and animates the
@@ -284,6 +343,17 @@ function Hero({ onBook, onTeacherApply }) {
           <p className="hero__lede">
             TutorPro is an online English school helping children around the world build confidence in speaking, reading, listening, grammar, vocabulary and communication. One teacher, one child, live — in English, Maths, Science and ICT for ages 4–16.
           </p>
+          <div className="hero-age-widget" role="group" aria-label="Child's age">
+            <span className="hero-age-widget__label">Child’s age</span>
+            <div className="hero-age-widget__chips">
+              {HERO_CHIP_AGES.map((age) => (
+                <button key={age} type="button" className={heroAge === age ? 'is-on' : ''} aria-pressed={heroAge === age} onClick={() => chooseAge(age)}>{age}</button>
+              ))}
+            </div>
+            <button type="button" className="button button--primary hero-age-widget__cta" onClick={() => onBook(`Hero age chip (age ${heroAge || 'not set'})`)}>
+              Get my child’s learning plan <ArrowRight size={17} />
+            </button>
+          </div>
           <div className="hero__actions">
             <button className="button button--primary button--large" onClick={onBook}>
               Book a free trial <ArrowRight size={18} />
@@ -1653,6 +1723,7 @@ function Pricing({ onBook }) {
   return (
     <section className="section pricing" id="pricing">
       <div className="container">
+        <div className="pricing__trust"><TrustpilotWidget variant="mini" theme="light" className="pricing__trustpilot" /></div>
         {SHOW_PRICE_CARDS ? (
           <>
         <div className="section-heading section-heading--center">
@@ -2419,6 +2490,7 @@ export default function App() {
       ) : (
         <main>
           <Hero onBook={openRegistration} onTeacherApply={openTeacherApply} />
+          <TeacherPreviewStrip onOpenTeachers={() => setShowPublicTeachers(true)} />
           <WhyParents onBook={openRegistration} />
           <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />

@@ -74,6 +74,11 @@ export default function AuthModal({
   const authPanelRef = useRef(null)
   const [view, setView] = useState(initialMode)
   const [registerStep, setRegisterStep] = useState(1)
+  /* The homepage age chips remember their choice for this tab, so the
+     school-year question arrives with context instead of cold. */
+  const [trialAgeBand] = useState(() => {
+    try { return window.sessionStorage.getItem('tutorpro_trial_age_band') || '' } catch { return '' }
+  })
   const [form, setForm] = useState(() => ({ ...initialForm, authProvider: isChineseVisitor(currentVisitorLocale()) ? 'email' : 'gmail' }))
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
@@ -457,6 +462,7 @@ export default function AuthModal({
                     <FieldError>{errors.childName}</FieldError>
                   </label>
                   <div className="auth-form__row">
+                    {trialAgeBand && !form.year && <p className="age-band-hint">{chineseVisitor ? `您在首页选择了 ${trialAgeBand} 岁——请选择最接近的年级。` : `You chose ages ${trialAgeBand} on the homepage - pick the closest school year.`}</p>}
                     <label>
                       <span>{chineseVisitor ? '在读年级' : 'School year'}</span>
                       <select className={errors.year ? 'select-error' : ''} name="year" value={form.year} onChange={updateField}>
