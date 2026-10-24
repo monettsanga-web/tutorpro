@@ -15,8 +15,9 @@
  *
  * HONESTY RULES OBSERVED
  * ----------------------
- * - Pricing mirrors the real rates: 25min ₩15,000, 50min ₩30,000, matching
- *   the $8 / $16 shown everywhere else.
+ * - Pricing shows the owner's Korea rates: 25min ₩8,000, 50min ₩16,000.
+ *   These are the won prices Korean families actually pay - a local rate
+ *   the owner set deliberately below the $8 / $16 list shown elsewhere.
  * - No invented reviews, no star ratings, no fabricated student counts.
  * - Only English claims Cambridge/Oxford alignment, matching the English site.
  * - Teachers are described as Philippine-based, because they are, and because
@@ -272,7 +273,7 @@ ${siteHeader()}
                 <a class="btn" href="/">첫 수업 무료로 신청하기</a>
                 <a class="btn btn--ghost" href="#pricing">수업료 보기</a>
               </div>
-              <p class="hero__note">25분 ₩15,000 · 50분 ₩30,000 · 카드 등록 없음 · 약정 없음</p>
+              <p class="hero__note">25분 ₩8,000 · 50분 ₩16,000 · 카드 등록 없음 · 약정 없음</p>
             </div>
             <div class="hero__art">
               <img src="/assets/tutorpro-hero.webp" alt="온라인으로 영어를 배우는 어린이" width="800" height="600" loading="eager" />
@@ -316,7 +317,7 @@ const PAGES = [
     file: 'kr/index.html',
     title: 'TutorPro 온라인 영어 — 어린이 1:1 화상영어 | 첫 수업 무료',
     description:
-      '필리핀 강사와 함께하는 어린이 1:1 화상영어. 케임브리지·옥스퍼드 커리큘럼, 25분 ₩15,000 / 50분 ₩30,000. 첫 수업 무료 체험, 카드 등록 없음.',
+      '필리핀 강사와 함께하는 어린이 1:1 화상영어. 케임브리지·옥스퍼드 커리큘럼, 25분 ₩8,000 / 50분 ₩16,000. 첫 수업 무료 체험, 카드 등록 없음.',
     keywords: '화상영어, 어린이 화상영어, 초등 영어 과외, 1:1 온라인 영어, 필리핀 화상영어, 케임브리지 영어, 온라인 영어 수업',
     hero: { eyebrow: '한국 학부모를 위한 안내' },
     heading: '아이가 영어로<br />말하기 시작합니다',
@@ -346,12 +347,12 @@ const PAGES = [
             <div class="price-card price-card--feature">
               <span class="price-card__tag">유아·초등 저학년 추천</span>
               <h3>25분 수업</h3>
-              <span class="price-card__amount">₩15,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩8,000 <small>/ 1회</small></span>
               <p>집중력에 맞춘 길이입니다.</p>
             </div>
             <div class="price-card">
               <h3>50분 수업</h3>
-              <span class="price-card__amount">₩30,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩16,000 <small>/ 1회</small></span>
               <p>초등 고학년·중고등의 심화 학습에 적합합니다.</p>
             </div>
           </div>
@@ -416,7 +417,7 @@ const PAGES = [
           <span class="kicker">자주 묻는 질문</span>
           <h2>궁금하실 만한 것들</h2>
           <details open><summary>첫 수업은 정말 무료인가요?</summary><p>네. 카드 등록 없이 실제 수업을 체험하신 후 계속할지 결정하시면 됩니다.</p></details>
-          <details><summary>수업료는 얼마인가요?</summary><p>25분 수업은 ₩15,000, 50분 수업은 ₩30,000입니다. 등록비와 교재비가 없습니다.</p></details>
+          <details><summary>수업료는 얼마인가요?</summary><p>25분 수업은 ₩8,000, 50분 수업은 ₩16,000입니다. 등록비와 교재비가 없습니다.</p></details>
           <details><summary>몇 살부터 수업할 수 있나요?</summary><p>4세부터 16세까지 수업하고 있습니다. 연령과 수준에 맞춰 수업 내용과 교재를 조정합니다.</p></details>
           <details><summary>수업 시간은 한국 시간으로 언제 가능한가요?</summary><p>한국과 필리핀은 1시간 차이여서 방과 후 오후와 저녁 시간대 수업이 원활하게 가능합니다.</p></details>
           <details><summary>별도 프로그램을 설치해야 하나요?</summary><p>아닙니다. 저희가 직접 개발한 브라우저 교실에서 진행되며, 링크를 클릭하면 바로 입장합니다.</p></details>
@@ -464,7 +465,7 @@ const PAGES = [
                                   "offers": {
                                         "@type": "Offer",
                                         "category": "Paid",
-                                        "price": "15000",
+                                        "price": "8000",
                                         "priceCurrency": "KRW",
                                         "availability": "https://schema.org/InStock",
                                         "url": "https://www.tutorpro.site/kr/"
@@ -476,7 +477,7 @@ const PAGES = [
                                   "@type": "Offer",
                                   "name": "25분 수업",
                                   "category": "Paid",
-                                  "price": "15000",
+                                  "price": "8000",
                                   "priceCurrency": "KRW",
                                   "availability": "https://schema.org/InStock",
                                   "url": "https://www.tutorpro.site/kr/"
@@ -485,7 +486,7 @@ const PAGES = [
                                   "@type": "Offer",
                                   "name": "50분 수업",
                                   "category": "Paid",
-                                  "price": "30000",
+                                  "price": "16000",
                                   "priceCurrency": "KRW",
                                   "availability": "https://schema.org/InStock",
                                   "url": "https://www.tutorpro.site/kr/"
@@ -501,7 +502,7 @@ const PAGES = [
                                   "name": "수업료는 얼마인가요?",
                                   "acceptedAnswer": {
                                         "@type": "Answer",
-                                        "text": "25분 수업은 ₩15,000, 50분 수업은 ₩30,000입니다. 첫 수업은 무료로 체험하실 수 있으며 카드 등록도 필요하지 않습니다."
+                                        "text": "25분 수업은 ₩8,000, 50분 수업은 ₩16,000입니다. 첫 수업은 무료로 체험하실 수 있으며 카드 등록도 필요하지 않습니다."
                                   }
                             },
                             {
@@ -617,12 +618,12 @@ const PAGES = [
             <div class="price-card price-card--feature">
               <span class="price-card__tag">유아·초등 저학년 추천</span>
               <h3>25분 수업</h3>
-              <span class="price-card__amount">₩15,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩8,000 <small>/ 1회</small></span>
               <p>집중력에 맞춘 길이입니다. 짧고 자주 하는 편이 어린 아이에게 효과적입니다.</p>
             </div>
             <div class="price-card">
               <h3>50분 수업</h3>
-              <span class="price-card__amount">₩30,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩16,000 <small>/ 1회</small></span>
               <p>초등 고학년과 중고등학생에게 권해 드립니다. 읽기·쓰기까지 다룰 수 있습니다.</p>
             </div>
           </div>
@@ -649,14 +650,14 @@ const PAGES = [
           <h2>궁금하실 만한 것들</h2>
           <details open><summary>화상영어란 무엇인가요?</summary><p>화상 통화로 진행하는 영어 수업입니다. TutorPro는 그룹 수업 없이 항상 1:1로 진행하여 아이가 수업 시간 내내 영어로 말할 수 있도록 합니다.</p></details>
           <details><summary>그룹 수업과 무엇이 다른가요?</summary><p>그룹 수업에서는 아이가 말하는 시간이 전체의 5분의 1 이하로 줄어듭니다. 1:1 수업에서는 수업 내내 아이만 말하며, 수업 속도도 아이 수준에 맞춥니다.</p></details>
-          <details><summary>수업료는 얼마인가요?</summary><p>25분 수업은 ₩15,000, 50분 수업은 ₩30,000입니다. 등록비와 교재비가 없으며 첫 수업은 무료입니다.</p></details>
+          <details><summary>수업료는 얼마인가요?</summary><p>25분 수업은 ₩8,000, 50분 수업은 ₩16,000입니다. 등록비와 교재비가 없으며 첫 수업은 무료입니다.</p></details>
           <details><summary>첫 수업은 정말 무료인가요?</summary><p>네. 카드 등록 없이 실제 수업을 체험하신 후 계속할지 결정하시면 됩니다.</p></details>
         </div>
       </section>`,
     schema: faqSchema(`${SITE}/kr/hwasang-yeongeo.html`, [
       ['화상영어란 무엇인가요?', '화상영어는 화상 통화로 진행하는 영어 수업입니다. TutorPro는 그룹 수업 없이 항상 1:1로 진행하여 아이가 수업 시간 내내 영어로 말할 수 있도록 합니다.'],
       ['그룹 수업과 무엇이 다른가요?', '그룹 수업에서는 아이가 말하는 시간이 전체의 5분의 1 이하로 줄어듭니다. 1:1 수업에서는 수업 내내 아이만 말하며, 수업 속도도 아이 수준에 맞춥니다.'],
-      ['수업료는 얼마인가요?', '25분 수업은 ₩15,000, 50분 수업은 ₩30,000입니다. 등록비와 교재비가 없으며 첫 수업은 무료입니다.'],
+      ['수업료는 얼마인가요?', '25분 수업은 ₩8,000, 50분 수업은 ₩16,000입니다. 등록비와 교재비가 없으며 첫 수업은 무료입니다.'],
       ['첫 수업은 정말 무료인가요?', '네. 카드 등록 없이 실제 수업을 체험하신 후 계속할지 결정하시면 됩니다.'],
     ]),
   },
@@ -665,7 +666,7 @@ const PAGES = [
     slug: 'kr/choding-yeongeo.html',
     title: '초등 영어 온라인 과외 — 학년별 학습 안내 | TutorPro',
     description:
-      '초등학생 영어를 온라인 1:1로 지도합니다. 저학년 파닉스부터 고학년 읽기·문법·말하기까지 학년별 목표와 수업 방식을 안내합니다. 25분 ₩15,000, 첫 수업 무료.',
+      '초등학생 영어를 온라인 1:1로 지도합니다. 저학년 파닉스부터 고학년 읽기·문법·말하기까지 학년별 목표와 수업 방식을 안내합니다. 25분 ₩8,000, 첫 수업 무료.',
     keywords: '초등 영어, 초등 영어 과외, 초등 화상영어, 온라인 영어 과외, 초등학생 영어회화, 파닉스',
     hero: { eyebrow: '초등 1학년 ~ 6학년' },
     heading: '초등 영어,<br />학년에 맞게 1:1로 지도합니다',
@@ -733,12 +734,12 @@ const PAGES = [
             <div class="price-card price-card--feature">
               <span class="price-card__tag">1~3학년 추천</span>
               <h3>25분 수업</h3>
-              <span class="price-card__amount">₩15,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩8,000 <small>/ 1회</small></span>
               <p>저학년의 집중력에 맞춘 길이입니다.</p>
             </div>
             <div class="price-card">
               <h3>50분 수업</h3>
-              <span class="price-card__amount">₩30,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩16,000 <small>/ 1회</small></span>
               <p>4~6학년의 심화 학습에 적합합니다.</p>
             </div>
           </div>
@@ -827,7 +828,7 @@ const PAGES = [
             <table>
               <thead><tr><th></th><th>필리핀 강사</th><th>미국·영국 강사</th></tr></thead>
               <tbody>
-                <tr><td><strong>수업료</strong></td><td class="yes">25분 ₩15,000</td><td>보통 2~4배</td></tr>
+                <tr><td><strong>수업료</strong></td><td class="yes">25분 ₩8,000</td><td>보통 2~4배</td></tr>
                 <tr><td><strong>같은 예산의 수업 횟수</strong></td><td class="yes">많음</td><td>적음</td></tr>
                 <tr><td><strong>억양</strong></td><td>미국식에 가까움</td><td class="yes">해당 국가 억양</td></tr>
                 <tr><td><strong>시차</strong></td><td class="yes">1시간</td><td>13~16시간</td></tr>
@@ -840,11 +841,11 @@ const PAGES = [
             <div class="price-card price-card--feature">
               <span class="price-card__tag">가장 많이 선택</span>
               <h3>25분 수업</h3>
-              <span class="price-card__amount">₩15,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩8,000 <small>/ 1회</small></span>
             </div>
             <div class="price-card">
               <h3>50분 수업</h3>
-              <span class="price-card__amount">₩30,000 <small>/ 1회</small></span>
+              <span class="price-card__amount">₩16,000 <small>/ 1회</small></span>
             </div>
           </div>
           <p class="price-note">✓ 등록비·교재비 없음 · <strong>첫 수업 무료, 카드 등록 불필요</strong></p>
@@ -858,14 +859,14 @@ const PAGES = [
           <details open><summary>필리핀 강사의 발음은 괜찮은가요?</summary><p>필리핀은 영어가 공용어이며 대학 교육이 영어로 진행됩니다. 발음은 미국식에 가깝지만 완전히 동일하지는 않습니다. 특정 국가의 억양을 그대로 익히기를 원하신다면 해당 국가 강사가 더 적합합니다.</p></details>
           <details><summary>강사는 어떻게 선발하나요?</summary><p>지원자는 녹화된 시범 수업을 제출해야 하며 저희가 직접 심사합니다. 학력과 교육 경력을 확인하고, 아동 대상 수업 경험을 중요하게 평가합니다.</p></details>
           <details><summary>한국 학원과 무엇이 다른가요?</summary><p>TutorPro는 한국 학원이 아니라 필리핀에 등록된 사업체(DTI 제5274092호)이며, 강사들은 필리핀에서 온라인으로 수업합니다.</p></details>
-          <details><summary>수업료는 얼마인가요?</summary><p>25분 ₩15,000, 50분 ₩30,000입니다. 등록비와 교재비가 없고 첫 수업은 무료입니다.</p></details>
+          <details><summary>수업료는 얼마인가요?</summary><p>25분 ₩8,000, 50분 ₩16,000입니다. 등록비와 교재비가 없고 첫 수업은 무료입니다.</p></details>
         </div>
       </section>`,
     schema: faqSchema(`${SITE}/kr/philippine-hwasang-yeongeo.html`, [
       ['필리핀 강사의 발음은 괜찮은가요?', '필리핀은 영어가 공용어이며 대학 교육이 영어로 진행됩니다. 발음은 미국식에 가깝지만 완전히 동일하지는 않습니다. 특정 국가의 억양을 그대로 익히기를 원하신다면 해당 국가 강사가 더 적합합니다.'],
       ['강사는 어떻게 선발하나요?', '지원자는 녹화된 시범 수업을 제출해야 하며 저희가 직접 심사합니다. 학력과 교육 경력을 확인하고, 아동 대상 수업 경험을 중요하게 평가합니다.'],
       ['한국 학원과 무엇이 다른가요?', 'TutorPro는 한국 학원이 아니라 필리핀에 등록된 사업체(DTI 제5274092호)이며, 강사들은 필리핀에서 온라인으로 수업합니다.'],
-      ['수업료는 얼마인가요?', '25분 ₩15,000, 50분 ₩30,000입니다. 등록비와 교재비가 없고 첫 수업은 무료입니다.'],
+      ['수업료는 얼마인가요?', '25분 ₩8,000, 50분 ₩16,000입니다. 등록비와 교재비가 없고 첫 수업은 무료입니다.'],
     ]),
   },
 ]

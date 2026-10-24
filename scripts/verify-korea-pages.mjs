@@ -49,8 +49,8 @@ for (const p of PAGES) {
 // $10 per 25-minute lesson and $20 per 50-minute lesson, expressed in won.
 for (const p of PAGES) {
   const h = read(p)
-  ok(h.includes('₩15,000'), `${p}: shows the real 25-minute price (₩15,000)`)
-  ok(h.includes('₩30,000'), `${p}: shows the real 50-minute price (₩30,000)`)
+  ok(h.includes('₩8,000'), `${p}: shows the real 25-minute price (₩8,000)`)
+  ok(h.includes('₩16,000'), `${p}: shows the real 50-minute price (₩16,000)`)
   ok(!/₩\s?9,000|₩\s?5,000|무제한/.test(h), `${p}: no invented cheaper price or "unlimited" claim`)
 }
 
