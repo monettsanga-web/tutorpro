@@ -39,6 +39,164 @@ const publicDir = resolve(here, '..', 'public')
 const SITE = 'https://www.tutorpro.site'
 const DTI = '5274092'
 
+/* UI STRINGS ------------------------------------------------------------
+   Every label the template writes, in English and in Simplified Chinese.
+   A country entry opts into a language with `ui: 'zh'`; everything else
+   stays exactly as it was. The owner's reason: Chinese parents should
+   not have to read English to enrol their child. */
+const UI = {
+  en: {
+    lang: 'en',
+    visitorLang: 'en',
+    registerNow: 'Register now',
+    crumbHome: 'Home',
+    crumbClasses: 'Online English classes',
+    kicker: (c) => `For families in ${c} · Ages 4–16`,
+    badges: ['✔ Qualified teachers', '✨ Interactive lessons', '🏠 Learn from home', '🎁 Free trial available'],
+    ctaRegister: 'Register now →',
+    ctaPrices: 'See prices in US dollars',
+    heroAlt: 'A happy Filipino teacher teaching an excited child on a laptop, surrounded by friendly animal mascots, books and stars',
+    cardTitle: '🎉 First class free!',
+    cardSub: 'No card · no commitment · your time zone',
+    teachKicker: 'Our teachers',
+    teachH2: 'Near-native Filipino English teachers',
+    teachP: 'Every TutorPro class is taught live by a Filipino teacher who speaks English at a near-native level. English is an official language of the Philippines - used in its schools, government and business - so our teachers have learnt, studied and worked in English all their lives, and teach it with a clear, neutral accent that children around the world find easy to follow.',
+    teachPts: [
+      ['Clear, near-native accent.', 'Filipino English is known for being easy to understand - the reason families across Europe, the Middle East and Asia choose Filipino teachers for their children.'],
+      ['Warm, patient classrooms.', 'Filipino teaching culture prizes patience and encouragement, which is exactly what a shy or beginner child needs before they will speak.'],
+      ['Checked before they meet your child.', 'Every teacher passes a recorded teaching interview and a credential check before their first class.'],
+    ],
+    teachCta: 'Meet the teachers',
+    regKicker: 'Register your child',
+    regH2: 'Create your parent account',
+    regP: 'About two minutes: your name, a real email address, and your child\'s age and school year. Then you book the free first class yourself - in your own time zone, with no card and no commitment.',
+    regPts: [
+      ['Free first class.', 'A full lesson with a real teacher before you pay anything.'],
+      ['Your time zone, your slots.', 'Every slot is shown in your local time when you book.'],
+      ['Feedback after every lesson.', 'Written notes in your parent dashboard, plus homework and practice words.'],
+    ],
+    regCta: 'Register & book the free class',
+    talkKicker: 'Prefer to talk first?',
+    talkH2: 'Ask us to book the trial for you',
+    fName: 'Parent name', fNamePh: 'Your name',
+    fEmail: 'Email address',
+    fAge: "Child's age", fAgeSuf: 'years old',
+    fTimes: 'Preferred days or times', fTimesPh: 'e.g. weekends after 4pm',
+    fNotes: 'Anything we should know? (optional)', fNotesPh: 'Shy beginner, exam prep, sibling to schedule together…',
+    fSubmit: 'Send trial request',
+    fNote: 'Your request lands in our support inbox and we reply to your email, usually within one day. No mailing lists, ever.',
+    hTimes: (c) => `Lesson times from ${c}`,
+    schedP: 'Slots appear in your own local time when you book.',
+    schedLink: 'How scheduling works across time zones',
+    hSchool: (c) => `English at school in ${c}`,
+    hDiff: 'How this differs from what you have locally',
+    hWho: (c) => `Who we are usually asked to help in ${c}`,
+    coverP: 'Lessons cover speaking, listening, reading, pronunciation, grammar and vocabulary, weighted towards whichever of those your child actually needs.',
+    coverLink: 'How the classes work',
+    hTeach: 'Who teaches your child',
+    teachWhoP: 'Teachers live in the Philippines and teach in English. Every applicant records a teaching interview we watch in full, and their credentials are checked before they are given a student — ',
+    teachWhoLink: 'their profiles and introduction videos are public',
+    teachWhoP2: (c, dti) => `. TutorPro Online English is registered in the Philippines, DTI ${dti}. We say so plainly rather than implying a presence in ${c} that we do not have.`,
+    hPay: (c) => `Paying from ${c}`,
+    payExtra: ' First class free, no card. ',
+    payLink: 'Cancellation and refunds',
+    faqH: (a) => `Questions from ${a} parents`,
+    faqCta2: 'Ask us a question first',
+    hOther: 'Other countries we teach from the Philippines',
+    cloudKicker: 'Families join from',
+    cloudH2: 'European and worldwide countries welcome',
+    cloudP: 'Wherever you are, lessons are shown in your own time zone, payment is by debit or credit card, and the first class is free.',
+    foot: ['Home', 'Online English classes', 'Pricing', 'Teachers', 'FAQ', 'Contact'],
+    footCopy: (y, dti) => `© ${y} TutorPro Online English · DTI Business Name Registration ${dti} · One-to-one online classes for children worldwide, taught from the Philippines.`,
+    jsInvalid: 'Please add your name and a valid email address so we can answer you.',
+    jsSending: 'Sending your request…',
+    jsFirst: (c) => `Trial request from the ${c} page. Child age `,
+    jsTimes: '. Preferred times: ',
+    jsNotes: ' Notes: ',
+    jsOk1: 'Thank you - your trial request is in our inbox. We will reply to ',
+    jsOk2: ', usually within one day.',
+    jsFail: 'Sending failed. Email us directly at ',
+    jsFail2: ', or register above and book the free class yourself.',
+    courseName: (c) => `Online English classes for children in ${c}`,
+    offerDesc: 'First 25-minute one-to-one class free. Lessons from US$7 afterwards.',
+  },
+  zh: {
+    lang: 'zh-Hans',
+    visitorLang: 'zh',
+    registerNow: '立即注册',
+    crumbHome: '首页',
+    crumbClasses: '在线英语课',
+    kicker: (c) => `面向${c}家庭 · 4–16岁`,
+    badges: ['✔ 持证教师', '✨ 互动课堂', '🏠 在家上课', '🎁 免费试听'],
+    ctaRegister: '立即注册 →',
+    ctaPrices: '查看美元价格',
+    heroAlt: '一位开心的菲律宾老师正通过笔记本电脑教一个兴奋的孩子,周围是友好的动物吉祥物、书本和星星',
+    cardTitle: '🎉 首节课免费!',
+    cardSub: '无需绑卡 · 无需合约 · 您的时区',
+    teachKicker: '我们的老师',
+    teachH2: '接近母语水平的菲律宾英语老师',
+    teachP: 'TutorPro 的每一节课都由菲律宾老师实时视频授课,他们的英语接近母语水平。英语是菲律宾的官方语言——学校、政府和商业都使用英语——因此我们的老师从小到大用英语学习、工作和生活,口音清晰中立,世界各地的孩子都容易听懂。',
+    teachPts: [
+      ['清晰、接近母语的口音。', '菲律宾英语以易懂著称——这正是欧洲、中东和亚洲家庭为孩子选择菲律宾老师的原因。'],
+      ['温暖、耐心的课堂。', '菲律宾教学文化重视耐心与鼓励,这正是害羞或零基础的孩子敢于开口之前最需要的。'],
+      ['见到您的孩子之前先过筛查。', '每位老师在带第一个学生之前,都要通过录制试讲面试和资质审查。'],
+    ],
+    teachCta: '认识我们的老师',
+    regKicker: '为孩子注册',
+    regH2: '创建家长账户',
+    regP: '大约两分钟:您的姓名、真实邮箱、孩子的年龄和年级。之后您就可以用自己的时区自行预约免费首节课——无需绑卡、无需承诺。',
+    regPts: [
+      ['免费首节课。', '在您付费之前,先上一节有真实老师的完整课。'],
+      ['您的时区,您的时段。', '预约时所有时段都显示为您的本地时间。'],
+      ['每节课后都有反馈。', '家长仪表盘里有书面反馈,外加作业和练习词。'],
+    ],
+    regCta: '注册并预约免费课',
+    talkKicker: '想先沟通一下?',
+    talkH2: '让我们帮您预约试听',
+    fName: '家长姓名', fNamePh: '您的姓名',
+    fEmail: '邮箱地址',
+    fAge: '孩子年龄', fAgeSuf: '岁',
+    fTimes: '期望的上课时间', fTimesPh: '例如:周末下午4点后',
+    fNotes: '还有其他想告诉我们的吗?(选填)', fNotesPh: '害羞零基础、备考、兄弟姐妹一起排课……',
+    fSubmit: '发送试听申请',
+    fNote: '您的申请会进入我们的支持收件箱,我们会回复您的邮箱,通常在一天之内。绝不发送营销邮件。',
+    hTimes: (c) => `来自${c}的上课时间`,
+    schedP: '预约时,时段会显示为您的本地时间。',
+    schedLink: '跨时区排课是如何工作的',
+    hSchool: (c) => `${c}学校的英语课`,
+    hDiff: '与您本地辅导班的不同',
+    hWho: (c) => `在${c},我们通常帮助这样的孩子`,
+    coverP: '课程覆盖说、听、读、发音、语法和词汇,并侧重您的孩子真正需要的那几项。',
+    coverLink: '课程如何进行',
+    hTeach: '谁教您的孩子',
+    teachWhoP: '老师居住在菲律宾,用英语授课。每位申请者都要录制一段我们会完整观看的试讲面试,资质审查通过后才会被分配学生——',
+    teachWhoLink: '他们的简介和介绍视频公开可看',
+    teachWhoP2: (c, dti) => `。TutorPro Online English 注册于菲律宾,DTI 登记号 ${dti}。我们如实说明,而不是暗示在${c}设有我们并不存在的机构。`,
+    hPay: (c) => `从${c}如何付款`,
+    payExtra: ' 首节课免费,无需绑卡。 ',
+    payLink: '取消与退款',
+    faqH: (a, c) => `${c}家长常见问题`,
+    faqCta2: '先问我们一个问题',
+    hOther: '我们从菲律宾授课的其他国家',
+    cloudKicker: '学员来自',
+    cloudH2: '欢迎欧洲及世界各国的家庭',
+    cloudP: '无论您在哪里,课程都显示为您的本地时间,付款支持借记卡或信用卡,第一节课免费。',
+    foot: ['首页', '在线英语课', '价格', '老师', '常见问题', '联系我们'],
+    footCopy: (y, dti) => `© ${y} TutorPro Online English · 菲律宾 DTI 商业登记 ${dti} · 面向全球儿童的一对一在线课程,由菲律宾授课。`,
+    jsInvalid: '请填写您的姓名和有效邮箱,以便我们回复您。',
+    jsSending: '正在发送……',
+    jsFirst: (c) => `来自${c}页面的试听申请。孩子年龄 `,
+    jsTimes: '。期望时间: ',
+    jsNotes: ' 备注: ',
+    jsOk1: '谢谢您——试听申请已进入我们的收件箱。我们会回复 ',
+    jsOk2: ',通常在一天之内。',
+    jsFail: '发送失败。请直接发邮件至 ',
+    jsFail2: ',或在上方注册并自行预约免费课。',
+    courseName: (c) => `${c}儿童在线英语一对一课程`,
+    offerDesc: '首节25分钟一对一课程免费,之后每节最低7美元。',
+  },
+}
+
 const escapeHtml = (value) => String(value)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
@@ -47,6 +205,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-korea',
     situations: ["A 초등학교 pupil who scores well on written tests and will not answer aloud", "A 중학교 student whose school English suddenly got harder this year", "A family cutting back on hagwon hours but not on English"],
     country: 'South Korea',
+    countryZh: '韩国',
     adjective: 'Korean',
     title: 'Online English Classes for Kids in South Korea | TutorPro',
     description: 'Live one-to-one online English classes for Korean children aged 4-16. Only one hour from Seoul time, taught by experienced teachers. Free first class.',
@@ -67,30 +226,33 @@ const COUNTRIES = [
   },
   {
     slug: 'online-english-classes-china',
-    situations: ["A primary pupil who needs phonics and reading before the pressure of 初中", "A child whose school English is strong on paper and thin in conversation", "A family who wants an English teacher without a cross-border video that freezes"],
+    ui: 'zh',
+    situations: ['需要拼音和阅读打底、还没面对初中压力的小学生', '书面英语强、开口交流弱的孩子', '想要一位跨境视频不卡顿的英语老师的家庭'],
     country: 'China',
+    countryZh: '中国',
     adjective: 'Chinese',
-    title: 'Online English Classes for Kids in China | TutorPro',
-    description: 'Live one-to-one online English classes for children in China. Same time zone, VooV backup, QR payment in RMB. Experienced teachers, free first class.',
-    h1: 'Online English classes for children in China',
-    lede: 'One teacher, one child, live on video — in the same time zone as your family, with a Tencent Meeting fallback when cross-border video is unstable.',
+    title: '中国儿童在线英语一对一课程 | TutorPro',
+    description: '面向中国4–16岁孩子的实时一对一在线英语课。同时区、腾讯会议备用、人民币二维码付款。经验丰富的老师,首节课免费。',
+    h1: '中国儿童在线英语一对一课程',
+    lede: '一位老师、一个孩子、实时视频——与您家庭处于同一时区;跨境视频不稳定时,可切换腾讯会议。',
     nativeLink: ['/cn/', 'Read this page in Chinese (中文)'],
-    timezone: 'China and the Philippines are both UTC+8. There is no time difference at all, so any slot that suits your child after school suits the teacher too.',
-    school: 'English is part of the curriculum from primary school and the pressure rises through 初中. Lessons can support the school book and the speaking practice that large classes make difficult, or work separately on reading, phonics and conversation.',
-    instead: 'Classes run in our own browser classroom with a low-bandwidth mode. If cross-border video is unstable, ask the administrator for a VooV / 腾讯会议 link instead — the lesson is the same either way.',
-    pay: 'Families in China can pay by QR code: RMB25 per 25-minute lesson plus an RMB5 processing fee per session. Send the receipt to the administrator and the credits are added once it is checked. Debit and credit cards, charged in US dollars, are also accepted.',
+    timezone: '中国和菲律宾同为 UTC+8,完全没有时差。孩子放学后方便的任何时段,老师也正好方便。',
+    school: '英语从小学起就是必修课,进入初中后压力逐渐加大。课程可以配合课本,补充大班课难以做到的口语练习,也可以单独训练阅读、拼音和会话。',
+    instead: '课程在我们自己的浏览器教室中进行,内置低带宽模式。如果跨境视频不稳定,可向管理员索取 VooV / 腾讯会议 链接——课程内容完全相同。',
+    pay: '中国家庭可用二维码付款:每节25分钟课 RMB25,另加每次 RMB5 手续费。把回执发给管理员,核验后即加课时。也接受以美元结算的借记卡和信用卡。',
     faqs: [
-      ['Will the video connection work from China?', 'The classroom has a low-bandwidth mode built in, and a VooV / Tencent Meeting link is available as a backup. Families who have trouble with one usually find the other works.'],
-      ['Can we pay in RMB?', 'Yes. QR payment is RMB25 per 25-minute lesson plus an RMB5 processing fee per session. Send the receipt and the credits are added after the administrator verifies it.'],
-      ['Can we communicate in Chinese?', 'Yes. The support chat on the site answers in Chinese, and the administrator replies in Chinese. The lessons themselves are taught in English.'],
-      ['Is there a Chinese version of this website?', 'Yes — the Chinese pages are at /cn/, with the same information in Simplified Chinese.'],
-      ['What time are lessons available?', 'China and the Philippines share UTC+8, so there is no time difference and any after-school slot works.'],
+      ['从中国上课,视频连接稳定吗?', '教室内置低带宽模式,并备用 VooV / 腾讯会议 链接。一种不顺畅的家庭,通常另一种就没问题。'],
+      ['可以用人民币付款吗?', '可以。二维码付款为每节25分钟课 RMB25,另加每次 RMB5 手续费。发送回执后,管理员核验即加课时。'],
+      ['可以用中文沟通吗?', '可以。网站的支持聊天用中文回复,管理员也用中文回复。课程本身用英语授课。'],
+      ['网站有中文版吗?', '有——中文页面在 /cn/,信息相同,为简体中文。'],
+      ['上课时间有哪些?', '中国与菲律宾同为 UTC+8,没有时差,放学后的任何时段都可以。'],
     ],
   },
   {
     slug: 'online-english-classes-italy',
     situations: ["A scuola primaria pupil who is losing confidence in English before it has started", "A ragazzo preparing for a Cambridge qualification who needs speaking practice, not more grammar drills", "A family whose local private tutor costs more per hour than four lessons here"],
     country: 'Italy',
+    countryZh: '意大利',
     adjective: 'Italian',
     title: 'Online English Classes for Kids in Italy | TutorPro',
     description: 'Live one-to-one online English classes for Italian children aged 4-16. Speaking practice, Cambridge-aligned books, experienced teachers. Free first class.',
@@ -113,6 +275,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-poland',
     situations: ["A szkoła podstawowa pupil heading for the egzamin ósmoklasisty", "A child with good grammar marks who cannot hold a conversation", "A family who wants regular speaking practice without driving anywhere"],
     country: 'Poland',
+    countryZh: '波兰',
     adjective: 'Polish',
     title: 'Online English Classes for Kids in Poland | TutorPro',
     description: 'Live one-to-one online English classes for Polish children aged 4-16. Speaking practice and exam support with experienced teachers. Free first class.',
@@ -135,6 +298,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-turkey',
     situations: ["An ortaokul student working towards LGS English", "A child who learned English rules thoroughly and never had to use them", "A family looking for one-to-one practice instead of a dershane group"],
     country: 'Turkey',
+    countryZh: '土耳其',
     adjective: 'Turkish',
     title: 'Online English Classes for Kids in Turkey | TutorPro',
     description: 'Live one-to-one online English classes for Turkish children aged 4-16. Speaking confidence and exam support with experienced teachers. Free first class.',
@@ -158,6 +322,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-germany',
     situations: ['A Grundschule child meeting English for the first time in class 3', 'A Gymnasium pupil whose grades slip as the texts get harder', 'A family replacing costly Nachhilfe hours with focused one-to-one time'],
     country: 'Germany',
+    countryZh: '德国',
     adjective: 'German',
     title: 'Online English Classes for Kids in Germany | TutorPro',
     description: 'Live one-to-one online English classes for children in Germany, aged 4-16. After-school slots in your time zone, card payment, free first class.',
@@ -177,6 +342,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-france',
     situations: ['A CP or CE1 pupil starting English at primary school', 'A collégien whose spoken English lags far behind the written work', 'A family wanting real conversation beyond soutien scolaire'],
     country: 'France',
+    countryZh: '法国',
     adjective: 'French',
     title: 'Online English Classes for Kids in France | TutorPro',
     description: 'Live one-to-one online English classes for children in France, aged 4-16. Evening slots in French time, card payment, and a free first class.',
@@ -196,6 +362,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-spain',
     situations: ['A Primaria child in a bilingual programme asked to do more in English', 'A Secundaria or Bachillerato student preparing B1 or B2 speaking exams', 'A family juggling academia schedules with everything else'],
     country: 'Spain',
+    countryZh: '西班牙',
     adjective: 'Spanish',
     title: 'Online English Classes for Kids in Spain | TutorPro',
     description: 'Live one-to-one online English classes for children in Spain, aged 4-16. After-school slots in peninsular time, card payment, free first class.',
@@ -215,6 +382,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-portugal',
     situations: ['A 3rd or 4th year pupil starting English at school', 'A preparatory or secondary student whose oral work lags the written', 'A family outside Lisbon or Porto with few local options'],
     country: 'Portugal',
+    countryZh: '葡萄牙',
     adjective: 'Portuguese',
     title: 'Online English Classes for Kids in Portugal | TutorPro',
     description: 'Live one-to-one online English classes for children in Portugal, aged 4-16. After-school slots in Lisbon time, card payment, free first class.',
@@ -234,6 +402,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-netherlands',
     situations: ['A group 7 or 8 pupil starting English late but living in a fluent country', 'A VMBO, HAVO or VWO student who writes well yet hesitates to speak', 'An expat family keeping English strong alongside a Dutch school'],
     country: 'Netherlands',
+    countryZh: '荷兰',
     adjective: 'Dutch',
     title: 'Online English Classes for Kids: Netherlands | TutorPro',
     description: 'Live one-to-one online English classes for children in the Netherlands, aged 4-16. After-school slots in your time zone, card payment, free first class.',
@@ -253,6 +422,7 @@ const COUNTRIES = [
     slug: 'online-english-classes-greece',
     situations: ['A primary pupil studying English alongside a frontistirio', 'A Gymnasio or Lykeio student preparing B1, B2 or Proficiency speaking', 'A family on an island with limited local choices'],
     country: 'Greece',
+    countryZh: '希腊',
     adjective: 'Greek',
     title: 'Online English Classes for Kids in Greece | TutorPro',
     description: 'Live one-to-one online English classes for children in Greece, aged 4-16. After-school slots in Athens time, card payment, and a free first class.',
@@ -272,22 +442,24 @@ const COUNTRIES = [
 
 function schema(entry) {
   const url = `${SITE}/${entry.slug}.html`
+  const t = UI[entry.ui || 'en']
+  const cname = t.lang === 'zh' ? (entry.countryZh || entry.country) : entry.country
   return {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'Course',
         '@id': `${url}#course`,
-        name: `Online English classes for children in ${entry.country}`,
+        name: t.courseName(cname),
         description: entry.description,
         url,
-        inLanguage: 'en',
+        inLanguage: t.lang === 'zh' ? 'zh-Hans' : 'en',
         audience: { '@type': 'EducationalAudience', educationalRole: 'student', audienceType: 'Children aged 4-16' },
         provider: {
           '@type': 'EducationalOrganization',
           name: 'TutorPro Online English',
           url: SITE,
-          areaServed: entry.country,
+          areaServed: cname,
           identifier: { '@type': 'PropertyValue', propertyID: 'DTI Business Name Registration', value: DTI },
           address: { '@type': 'PostalAddress', addressCountry: 'PH' },
         },
@@ -299,7 +471,7 @@ function schema(entry) {
           offers: {
             '@type': 'Offer', price: '8', priceCurrency: 'USD',
             availability: 'https://schema.org/InStock',
-            description: 'First 25-minute one-to-one class free. Lessons from US$7 afterwards.',
+            description: t.offerDesc,
             url,
           },
         }],
@@ -313,9 +485,9 @@ function schema(entry) {
         '@type': 'BreadcrumbList',
         '@id': `${url}#breadcrumbs`,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
-          { '@type': 'ListItem', position: 2, name: 'Online English classes', item: `${SITE}/online-english-classes-for-kids` },
-          { '@type': 'ListItem', position: 3, name: entry.country, item: url },
+          { '@type': 'ListItem', position: 1, name: t.crumbHome, item: SITE },
+          { '@type': 'ListItem', position: 2, name: t.crumbClasses, item: `${SITE}/online-english-classes-for-kids` },
+          { '@type': 'ListItem', position: 3, name: cname, item: url },
         ],
       },
     ],
@@ -325,9 +497,12 @@ function schema(entry) {
 function render(entry, all) {
   const url = `${SITE}/${entry.slug}.html`
   const others = all.filter((item) => item.slug !== entry.slug)
+  const t = UI[entry.ui || 'en']
+  const cname = t.lang === 'zh' ? (entry.countryZh || entry.country) : entry.country
+  const localName = (item) => (t.lang === 'zh' ? (item.countryZh || item.country) : item.country)
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${t.lang}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -352,13 +527,13 @@ function render(entry, all) {
     <header class="site-head">
       <div class="wrap site-head__inner">
         <a class="brand" href="/"><img src="/assets/tutorpro-panda-logo.webp" alt="TutorPro Online English" width="40" height="40" />TutorPro Online English</a>
-        <a class="btn btn--primary" href="/?book=1">Register now</a>
+        <a class="btn btn--primary" href="/?book=1">${t.registerNow}</a>
       </div>
     </header>
 
     <main>
       <nav class="crumbs" aria-label="Breadcrumb">
-        <a href="/">Home</a> › <a href="/online-english-classes-for-kids">Online English classes</a> › <span>${escapeHtml(entry.country)}</span>
+        <a href="/">${t.crumbHome}</a> › <a href="/online-english-classes-for-kids">${t.crumbClasses}</a> › <span>${escapeHtml(cname)}</span>
       </nav>
 
       <section class="page-hero page-hero--playful">
@@ -370,28 +545,25 @@ function render(entry, all) {
         <span class="ph-float ph-float--pencil" aria-hidden="true">✏️</span>
         <div class="wrap ph-grid">
           <div class="ph-copy">
-            <span class="ph-kicker">For families in ${escapeHtml(entry.country)} · Ages 4–16</span>
+            <span class="ph-kicker">${escapeHtml(t.kicker(cname))}</span>
             <h1>${escapeHtml(entry.h1)}</h1>
             <p class="lede">${escapeHtml(entry.lede)}</p>
-            ${entry.nativeLink ? `<p><a class="text-link ph-native" href="${entry.nativeLink[0]}">${escapeHtml(entry.nativeLink[1])}</a></p>` : ''}
+            ${entry.nativeLink && t.lang === 'en' ? `<p><a class="text-link ph-native" href="${entry.nativeLink[0]}">${escapeHtml(entry.nativeLink[1])}</a></p>` : ''}
             <ul class="ph-badges">
-              <li>✔ Qualified teachers</li>
-              <li>✨ Interactive lessons</li>
-              <li>🏠 Learn from home</li>
-              <li>🎁 Free trial available</li>
+              ${t.badges.map((badge) => `<li>${badge}</li>`).join('\n              ')}
             </ul>
             <p class="cta-row">
-              <a class="btn btn--primary ph-cta" href="/?book=1">Register now →</a>
-              <a class="btn ph-cta-ghost" href="/pricing.html">See prices in US dollars</a>
+              <a class="btn btn--primary ph-cta" href="/?book=1">${t.ctaRegister}</a>
+              <a class="btn ph-cta-ghost" href="/pricing.html">${t.ctaPrices}</a>
             </p>
           </div>
           <div class="ph-visual" aria-hidden="false">
-            <img src="/assets/hero-filipino-classroom.png" alt="A happy Filipino teacher teaching an excited child on a laptop, surrounded by friendly animal mascots, books and stars" width="1024" height="1024" loading="eager" decoding="async" />
+            <img src="/assets/hero-filipino-classroom.png" alt="${t.heroAlt}" width="1024" height="1024" loading="eager" decoding="async" />
             <span class="ph-orbit ph-orbit--abc">ABC</span>
             <span class="ph-orbit ph-orbit--star">✦</span>
             <div class="ph-card">
-              <strong>🎉 First class free!</strong>
-              <span>No card · no commitment · your time zone</span>
+              <strong>${t.cardTitle}</strong>
+              <span>${t.cardSub}</span>
             </div>
           </div>
         </div>
@@ -400,15 +572,15 @@ function render(entry, all) {
 
       <section class="filipino-band">
         <div class="wrap wrap--narrow">
-          <span class="kicker">Our teachers</span>
-          <h2>Near-native Filipino English teachers</h2>
-          <p>Every TutorPro class is taught live by a Filipino teacher who speaks English at a near-native level. English is an official language of the Philippines - used in its schools, government and business - so our teachers have learnt, studied and worked in English all their lives, and teach it with a clear, neutral accent that children around the world find easy to follow.</p>
+          <span class="kicker">${t.teachKicker}</span>
+          <h2>${t.teachH2}</h2>
+          <p>${t.teachP}</p>
           <ul class="filipino-band__points">
-            <li><strong>Clear, near-native accent.</strong> Filipino English is known for being easy to understand - the reason families across Europe, the Middle East and Asia choose Filipino teachers for their children.</li>
-            <li><strong>Warm, patient classrooms.</strong> Filipino teaching culture prizes patience and encouragement, which is exactly what a shy or beginner child needs before they will speak.</li>
-            <li><strong>Checked before they meet your child.</strong> Every teacher passes a recorded teaching interview and a credential check before their first class.</li>
+            <li><strong>${t.teachPts[0][0]}</strong> ${t.teachPts[0][1]}</li>
+            <li><strong>${t.teachPts[1][0]}</strong> ${t.teachPts[1][1]}</li>
+            <li><strong>${t.teachPts[2][0]}</strong> ${t.teachPts[2][1]}</li>
           </ul>
-          <p class="cta-row"><a class="btn btn--primary" href="/teachers.html">Meet the teachers</a></p>
+          <p class="cta-row"><a class="btn btn--primary" href="/teachers.html">${t.teachCta}</a></p>
         </div>
       </section>
 
@@ -416,27 +588,27 @@ function render(entry, all) {
         <div class="wrap">
           <div class="trial-band__grid">
             <div class="trial-band__register">
-              <span class="kicker">Register your child</span>
-              <h2>Create your parent account</h2>
-              <p>About two minutes: your name, a real email address, and your child's age and school year. Then you book the free first class yourself - in your own time zone, with no card and no commitment.</p>
+              <span class="kicker">${t.regKicker}</span>
+              <h2>${t.regH2}</h2>
+              <p>${t.regP}</p>
               <ul class="trial-band__points">
-                <li><strong>Free first class.</strong> A full lesson with a real teacher before you pay anything.</li>
-                <li><strong>Your time zone, your slots.</strong> Every slot is shown in your local time when you book.</li>
-                <li><strong>Feedback after every lesson.</strong> Written notes in your parent dashboard, plus homework and practice words.</li>
+                <li><strong>${t.regPts[0][0]}</strong> ${t.regPts[0][1]}</li>
+                <li><strong>${t.regPts[1][0]}</strong> ${t.regPts[1][1]}</li>
+                <li><strong>${t.regPts[2][0]}</strong> ${t.regPts[2][1]}</li>
               </ul>
-              <p class="cta-row"><a class="btn btn--primary" href="/?book=1">Register & book the free class</a></p>
+              <p class="cta-row"><a class="btn btn--primary" href="/?book=1">${t.regCta}</a></p>
             </div>
             <div class="trial-band__contact">
-              <span class="kicker">Prefer to talk first?</span>
-              <h2>Ask us to book the trial for you</h2>
+              <span class="kicker">${t.talkKicker}</span>
+              <h2>${t.talkH2}</h2>
               <form class="trial-form" id="trial-form">
-                <label>Parent name<input name="parentName" required maxlength="80" placeholder="Your name" autocomplete="name" /></label>
-                <label>Email address<input type="email" name="email" required maxlength="120" placeholder="you@example.com" autocomplete="email" /></label>
-                <label>Child's age<select name="age">${Array.from({ length: 13 }, (_, i) => `<option value="${i + 4}">${i + 4} years old</option>`).join('')}</select></label>
-                <label>Preferred days or times<input name="times" maxlength="120" placeholder="e.g. weekends after 4pm" /></label>
-                <label>Anything we should know? (optional)<textarea name="message" maxlength="600" placeholder="Shy beginner, exam prep, sibling to schedule together…"></textarea></label>
-                <button class="btn btn--primary" type="submit">Send trial request</button>
-                <p class="trial-form__note" id="trial-note">Your request lands in our support inbox and we reply to your email, usually within one day. No mailing lists, ever.</p>
+                <label>${t.fName}<input name="parentName" required maxlength="80" placeholder="${t.fNamePh}" autocomplete="name" /></label>
+                <label>${t.fEmail}<input type="email" name="email" required maxlength="120" placeholder="you@example.com" autocomplete="email" /></label>
+                <label>${t.fAge}<select name="age">${Array.from({ length: 13 }, (_, i) => `<option value="${i + 4}">${i + 4} ${t.fAgeSuf}</option>`).join('')}</select></label>
+                <label>${t.fTimes}<input name="times" maxlength="120" placeholder="${t.fTimesPh}" /></label>
+                <label>${t.fNotes}<textarea name="message" maxlength="600" placeholder="${t.fNotesPh}"></textarea></label>
+                <button class="btn btn--primary" type="submit">${t.fSubmit}</button>
+                <p class="trial-form__note" id="trial-note">${t.fNote}</p>
               </form>
             </div>
           </div>
@@ -445,56 +617,56 @@ function render(entry, all) {
 
       <section>
         <div class="wrap wrap--narrow">
-          <h2>Lesson times from ${escapeHtml(entry.country)}</h2>
+          <h2>${escapeHtml(t.hTimes(cname))}</h2>
           <p>${escapeHtml(entry.timezone)}</p>
-          <p>Slots appear in your own local time when you book. <a href="/online-english-class-schedule-time-zones.html">How scheduling works across time zones</a>.</p>
+          <p>${t.schedP} <a href="/online-english-class-schedule-time-zones.html">${t.schedLink}</a></p>
 
-          <h2>English at school in ${escapeHtml(entry.country)}</h2>
+          <h2>${escapeHtml(t.hSchool(cname))}</h2>
           <p>${escapeHtml(entry.school)}</p>
 
-          <h2>How this differs from what you have locally</h2>
+          <h2>${t.hDiff}</h2>
           <p>${escapeHtml(entry.instead)}</p>
 
-          <h2>Who we are usually asked to help in ${escapeHtml(entry.country)}</h2>
+          <h2>${escapeHtml(t.hWho(cname))}</h2>
           <ul class="ticks">
             ${entry.situations.map((item) => `<li>${escapeHtml(item)}</li>`).join('\n            ')}
           </ul>
-          <p>Lessons cover speaking, listening, reading, pronunciation, grammar and vocabulary, weighted towards whichever of those your child actually needs. <a href="/online-english-classes-for-kids">How the classes work</a>.</p>
+          <p>${t.coverP} <a href="/online-english-classes-for-kids">${t.coverLink}</a></p>
 
-          <h2>Who teaches your child</h2>
-          <p>Teachers live in the Philippines and teach in English. Every applicant records a teaching interview we watch in full, and their credentials are checked before they are given a student — <a href="/teachers.html">their profiles and introduction videos are public</a>. TutorPro Online English is registered in the Philippines, DTI ${DTI}. We say so plainly rather than implying a presence in ${escapeHtml(entry.country)} that we do not have.</p>
+          <h2>${t.hTeach}</h2>
+          <p>${t.teachWhoP}<a href="/teachers.html">${t.teachWhoLink}</a>${t.teachWhoP2(cname, DTI)}</p>
 
-          <h2>Paying from ${escapeHtml(entry.country)}</h2>
-          <p>${escapeHtml(entry.pay)} First class free, no card. <a href="/refund-policy.html">Cancellation and refunds</a>.</p>
+          <h2>${escapeHtml(t.hPay(cname))}</h2>
+          <p>${escapeHtml(entry.pay)}${t.payExtra}<a href="/refund-policy.html">${t.payLink}</a></p>
         </div>
       </section>
 
       <section class="faq alt">
         <div class="wrap wrap--narrow">
-          <h2>Questions from ${escapeHtml(entry.adjective)} parents</h2>
+          <h2>${escapeHtml(t.faqH(entry.adjective, cname))}</h2>
           ${entry.faqs.map(([q, a], index) => `<details${index === 0 ? ' open' : ''}><summary>${escapeHtml(q)}</summary><p>${escapeHtml(a)}</p></details>`).join('\n          ')}
           <p class="cta-row">
-            <a class="btn btn--primary" href="/?book=1">Register now</a>
-            <a class="btn" href="/contact.html">Ask us a question first</a>
+            <a class="btn btn--primary" href="/?book=1">${t.registerNow}</a>
+            <a class="btn" href="/contact.html">${t.faqCta2}</a>
           </p>
         </div>
       </section>
 
       <section>
         <div class="wrap wrap--narrow">
-          <h2>Other countries we teach from the Philippines</h2>
+          <h2>${t.hOther}</h2>
           <nav class="pagenav" aria-label="Other countries">
-            ${others.map((item) => `<a href="/${item.slug}.html">${escapeHtml(item.country)}</a>`).join('\n            ')}
+            ${others.map((item) => `<a href="/${item.slug}.html">${escapeHtml(localName(item))}</a>`)}.join('\n            ')}
           </nav>
         </div>
       </section>
       <section class="country-cloud">
         <div class="wrap wrap--narrow">
-          <span class="kicker">Families join from</span>
-          <h2>European and worldwide countries welcome</h2>
-          <p>Wherever you are, lessons are shown in your own time zone, payment is by debit or credit card, and the first class is free.</p>
+          <span class="kicker">${t.cloudKicker}</span>
+          <h2>${t.cloudH2}</h2>
+          <p>${t.cloudP}</p>
           <ul>
-            ${COUNTRIES.filter((other) => other.slug !== entry.slug).map((other) => `<li><a href="/${other.slug}.html">${escapeHtml(other.country)}</a></li>`).join('\n            ')}
+            ${COUNTRIES.filter((other) => other.slug !== entry.slug).map((other) => `<li><a href="/${other.slug}.html">${escapeHtml(localName(other))}</a></li>`)}.join('\n            ')}
           </ul>
         </div>
       </section>
@@ -503,18 +675,19 @@ function render(entry, all) {
     <footer class="site-foot">
       <div class="wrap">
         <nav>
-          <a href="/">Home</a>
-          <a href="/online-english-classes-for-kids">Online English classes</a>
-          <a href="/pricing.html">Pricing</a>
-          <a href="/teachers.html">Teachers</a>
-          <a href="/faq.html">FAQ</a>
-          <a href="/contact.html">Contact</a>
+          <a href="/">${t.foot[0]}</a>
+          <a href="/online-english-classes-for-kids">${t.foot[1]}</a>
+          <a href="/pricing.html">${t.foot[2]}</a>
+          <a href="/teachers.html">${t.foot[3]}</a>
+          <a href="/faq.html">${t.foot[4]}</a>
+          <a href="/contact.html">${t.foot[5]}</a>
         </nav>
-        <p>© ${new Date().getFullYear()} TutorPro Online English · DTI Business Name Registration ${DTI} · One-to-one online classes for children worldwide, taught from the Philippines.</p>
+        <p>${t.footCopy(new Date().getFullYear(), DTI)}</p>
       </div>
     </footer>
 
     <script>
+      var t_js = ${JSON.stringify({ jsInvalid: t.jsInvalid, jsSending: t.jsSending, jsFirst: t.jsFirst(cname), jsTimes: t.jsTimes, jsNotes: t.jsNotes, jsOk1: t.jsOk1, jsOk2: t.jsOk2, jsFail: t.jsFail, jsFail2: t.jsFail2, visitorLang: t.visitorLang })};
       (function () {
         var form = document.getElementById('trial-form');
         if (!form) return;
@@ -526,14 +699,14 @@ function render(entry, all) {
           var parentName = String(fields.get('parentName') || '').trim();
           var email = String(fields.get('email') || '').trim();
           if (parentName.length < 2 || !/^\S+@\S+\.\S+$/.test(email)) {
-            note.textContent = 'Please add your name and a valid email address so we can answer you.';
+            note.textContent = t_js.jsInvalid;
             return;
           }
           var times = String(fields.get('times') || '').trim() || 'flexible';
           var extra = String(fields.get('message') || '').trim();
-          var firstMessage = 'Trial request from the ${escapeHtml(entry.country)} page. Child age ' + String(fields.get('age') || '') + '. Preferred times: ' + times + '.' + (extra ? ' Notes: ' + extra : '');
+          var firstMessage = t_js.jsFirst + String(fields.get('age') || '') + t_js.jsTimes + times + '.' + (extra ? t_js.jsNotes + extra : '');
           button.disabled = true;
-          note.textContent = 'Sending your request…';
+          note.textContent = t_js.jsSending;
           fetch('https://losmkvvwzijipqrlelyt.supabase.co/rest/v1/rpc/create_support_conversation', {
             method: 'POST',
             headers: {
@@ -541,15 +714,15 @@ function render(entry, all) {
               'apikey': 'sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL',
               'Authorization': 'Bearer sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL'
             },
-            body: JSON.stringify({ parent_name: parentName, parent_email: email, visitor_language: 'en', first_message: firstMessage })
+            body: JSON.stringify({ parent_name: parentName, parent_email: email, visitor_language: t_js.visitorLang, first_message: firstMessage })
           }).then(function (response) {
             if (!response.ok) throw new Error('request failed');
             form.reset();
             button.disabled = false;
-            note.textContent = 'Thank you - your trial request is in our inbox. We will reply to ' + email + ', usually within one day.';
+            note.textContent = t_js.jsOk1 + email + t_js.jsOk2;
           }).catch(function () {
             button.disabled = false;
-            note.innerHTML = 'Sending failed. Email us directly at <a href="mailto:sejongenglish@yahoo.com">sejongenglish@yahoo.com</a>, or register above and book the free class yourself.';
+            note.innerHTML = t_js.jsFail + '<a href="mailto:sejongenglish@yahoo.com">sejongenglish@yahoo.com</a>' + t_js.jsFail2;
           });
         });
       })();
