@@ -66,6 +66,8 @@ import {
   Volume2,
   X,
   XCircle,
+  MoonStar,
+  Sun,
 } from 'lucide-react'
 import {
   addStudentLearner,
@@ -5912,13 +5914,28 @@ export function TeacherDashboard({ account: initialAccount, onAccountChange, onH
           </div>
           <section className="portal-card availability-calendar-card">
             <div className="drag-instruction"><span><CalendarDays size={18} /></span><div><strong>Paint your available time</strong><small>Each cell is 30 minutes. Booked lessons are locked and cannot be removed.</small></div></div>
-            <div className="schedule-shift-options" role="group" aria-label="Shift quick fill" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', margin: '4px 0 14px' }}>
-              {Object.values(TEACHER_SHIFTS).map((shift) => (
-                <button key={shift.id} type="button" className={`portal-secondary-button${shiftChoice === shift.id ? ' active' : ''}`} onClick={() => applyShift(shift.id)} title={`Open ${shift.hours} across the whole week`}>
-                  {shift.label} · {shift.hours}
-                </button>
-              ))}
-              <small>One tap opens the shift across the week. Paint over it to adjust, then save.</small>
+            <div className="shift-pick" role="group" aria-label="Choose your working shift">
+              <div className="shift-pick__label"><Sparkles size={15} aria-hidden="true" /> Your working shift</div>
+              <div className="shift-pick__row">
+                {Object.values(TEACHER_SHIFTS).map((shift) => (
+                  <button
+                    key={shift.id}
+                    type="button"
+                    className={`shift-pick__btn shift-pick__btn--${shift.id}${shiftChoice === shift.id ? ' is-active' : ''}`}
+                    aria-pressed={shiftChoice === shift.id}
+                    onClick={() => applyShift(shift.id)}
+                    title={`Open ${shift.hours} across the whole week`}
+                  >
+                    <span className="shift-pick__icon" aria-hidden="true">{shift.id === 'day' ? <Sun size={26} /> : <MoonStar size={26} />}</span>
+                    <span className="shift-pick__text">
+                      <strong>{shift.label}</strong>
+                      <small>{shift.hours} · Manila time</small>
+                    </span>
+                    <span className="shift-pick__tick" aria-hidden="true"><Check size={16} /></span>
+                  </button>
+                ))}
+              </div>
+              <small className="shift-pick__hint">One tap opens your shift across the whole week. Paint over the calendar to adjust, then press Save availability.</small>
             </div>
             <ScheduleCalendar
               weekOffset={scheduleWeek}
