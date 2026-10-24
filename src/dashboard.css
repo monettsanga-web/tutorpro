@@ -13785,3 +13785,64 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   width: 15px; min-height: 15px; height: 15px; margin: 0; padding: 0;
   border-radius: 4px; accent-color: #5b4be0; flex: 0 0 auto; background: #ffffff;
 }
+
+/* THE SHIFT PICKER
+   The owner asked for day-shift / night-shift buttons teachers would
+   love: two big sunlit and starlit cards, one tap to open the whole
+   week. Selected state glows and carries a check badge; motion is
+   decorative only and stops for reduced motion. */
+.shift-pick { margin: 2px 0 18px; }
+.shift-pick__label {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #7c5cbf; margin-bottom: 10px;
+}
+.shift-pick__row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.shift-pick__btn {
+  position: relative; display: flex; align-items: center; gap: 14px; text-align: left;
+  border-radius: 18px; padding: 16px 18px; cursor: pointer; overflow: hidden;
+  border: 2px solid transparent; transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  font: inherit; color: inherit;
+}
+.shift-pick__btn:hover { transform: translateY(-2px); }
+.shift-pick__btn:focus-visible { outline: 3px solid #8b5cf6; outline-offset: 2px; }
+.shift-pick__btn--day {
+  background: linear-gradient(135deg, #fff8e1 0%, #ffefc2 55%, #ffe29a 100%);
+  border-color: #f5d478; color: #6b4a06;
+  box-shadow: 0 8px 22px rgba(245, 196, 66, 0.28);
+}
+.shift-pick__btn--night {
+  background: linear-gradient(135deg, #241b4d 0%, #34246b 55%, #4c2f8f 100%);
+  border-color: #5b4599; color: #efe9ff;
+  box-shadow: 0 8px 22px rgba(52, 36, 107, 0.35);
+}
+.shift-pick__btn--night::after {
+  content: '✦  ✧'; position: absolute; right: 14px; top: 10px; font-size: 0.7rem;
+  letter-spacing: 6px; color: rgba(255, 255, 255, 0.45); pointer-events: none;
+}
+.shift-pick__icon {
+  flex: 0 0 48px; height: 48px; display: grid; place-items: center; border-radius: 14px;
+}
+.shift-pick__btn--day .shift-pick__icon { background: radial-gradient(circle at 35% 30%, #ffd766, #f6b93b); color: #7a4d00; box-shadow: inset 0 -3px 0 rgba(122, 77, 0, 0.25); }
+.shift-pick__btn--night .shift-pick__icon { background: radial-gradient(circle at 35% 30%, #6d5bd0, #3b2a7a); color: #ffe9a8; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35); }
+.shift-pick__text { display: flex; flex-direction: column; gap: 2px; }
+.shift-pick__text strong { font-size: 1.06rem; font-weight: 800; letter-spacing: 0.01em; }
+.shift-pick__text small { font-size: 0.8rem; font-weight: 700; opacity: 0.82; }
+.shift-pick__tick {
+  position: absolute; right: 12px; bottom: 12px; width: 26px; height: 26px;
+  display: grid; place-items: center; border-radius: 999px;
+  background: #22c55e; color: #fff; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.45);
+  opacity: 0; transform: scale(0.4); transition: opacity 160ms ease, transform 160ms ease;
+}
+.shift-pick__btn.is-active { border-color: #22c55e; transform: translateY(-2px); }
+.shift-pick__btn--day.is-active { box-shadow: 0 12px 30px rgba(245, 196, 66, 0.45), 0 0 0 4px rgba(34, 197, 94, 0.18); }
+.shift-pick__btn--night.is-active { box-shadow: 0 12px 30px rgba(52, 36, 107, 0.5), 0 0 0 4px rgba(34, 197, 94, 0.22); }
+.shift-pick__btn.is-active .shift-pick__tick { opacity: 1; transform: scale(1); }
+.shift-pick__hint { display: block; margin-top: 10px; color: #7a7390; font-size: 0.82rem; }
+@media (max-width: 640px) {
+  .shift-pick__row { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shift-pick__btn:hover, .shift-pick__btn.is-active { transform: none; }
+  .shift-pick__tick { transition: none; }
+}
