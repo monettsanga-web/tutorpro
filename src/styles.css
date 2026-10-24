@@ -8838,3 +8838,28 @@ body:has(.auth-shell--student-register) .messenger-float {
   .footer__links { grid-template-columns: 1fr; }
   .footer { border-radius: 24px 24px 0 0; }
 }
+
+/* SIZE FIXES 2026-10-24 -------------------------------------------------
+   Two size faults the owner circled: the footer's teacher callout was
+   squeezed into the brand column of the footer grid (it is a grid
+   child, so it needs to span the whole row), and the mobile hero ran
+   oversized - headline, tagline, lede and age widget all scaled for
+   desktop crammed into a phone. The callout now spans full width with
+   its actions beside the copy; the phone hero gets a calmer scale. */
+.footer__teacher-callout { grid-column: 1 / -1; }
+.footer__teacher-callout > div:first-child { max-width: 680px; }
+@media (max-width: 700px) {
+  .hero--banner { padding: 34px 0 46px; }
+  .hero__content > h1 { font-size: clamp(1.9rem, 7.4vw, 2.5rem); line-height: 1.14; }
+  .hero__tagline { font-size: 1rem; line-height: 1.55; }
+  .hero__lede { font-size: 0.94rem; line-height: 1.6; }
+  .hero-age-widget { margin: 16px 0 2px; padding: 13px 14px 15px; border-radius: 18px; }
+  .hero-age-widget__label { font-size: 0.72rem; margin-bottom: 8px; }
+  .hero-age-widget__chips { gap: 7px; }
+  .hero-age-widget__chips button { min-width: 40px; min-height: 40px; border-radius: 12px; font-size: 0.95rem; }
+  .hero-age-widget__cta { min-height: 46px; font-size: 0.98rem; }
+  .hero__actions { gap: 10px; }
+  .hero__actions .button { min-height: 46px; font-size: 0.95rem; }
+  .eyebrow { font-size: 0.72rem; padding: 6px 12px; }
+  .footer__teacher-callout { padding: 20px 18px; }
+}
