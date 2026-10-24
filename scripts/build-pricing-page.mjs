@@ -77,7 +77,7 @@ const FAQS = [
   ['Can I get a refund?',
    'Unused lesson credits can be refunded within 14 days of purchase. Cancelling a booked lesson at least 12 hours in advance returns the credit in full, and if a lesson fails because of a problem on our side you always get the credit back.'],
   ['How do I pay?',
-   'Payments are made securely through PayPal in US dollars. We never see or store your card details. Where a local currency amount is shown next to the price it is an approximate guide only.'],
+   'You pay by debit or credit card, charged securely in US dollars. We never see or store your full card details. Where a local currency amount is shown next to the price it is an approximate guide only.'],
   ['Are there any hidden fees?',
    'No. The price per class is the price you pay. There are no registration fees, no materials fees and no platform charges — coursebooks and classroom tools are included.'],
 ]
