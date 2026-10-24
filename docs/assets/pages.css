@@ -667,3 +667,41 @@ a.ct-channel__item:hover { background: #f6f2ff; }
   .ct-float { animation: none; }
   .ct-submit:hover { transform: none; }
 }
+
+/* DESIGN POLISH PASS 2026-10-24 -----------------------------------------
+   The owner's brief: simple but stunning, the way a senior product
+   designer would leave it. Nothing here changes content - it unifies
+   the surfaces: a frosted sticky header, a deep calm footer, FAQ and
+   cards on the same radius and shadow language, and kickers as quiet
+   pills. Appended last so every generated page inherits it. */
+.site-head {
+  position: sticky; top: 0; z-index: 60;
+  background: rgba(253, 250, 242, 0.86);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(50, 21, 104, 0.08);
+}
+.site-foot {
+  margin-top: 56px; padding: 40px 0 44px; border-top: none;
+  background: linear-gradient(180deg, #2b1b52 0%, #241b3a 100%);
+  color: #b9aecf; border-radius: 28px 28px 0 0;
+}
+.site-foot a { color: #d9d0ec; }
+.site-foot a:hover { color: #fff; }
+.site-foot p { color: #9c92b8; }
+details {
+  background: #fff; border: 1px solid rgba(50, 21, 104, 0.08);
+  border-radius: 16px; padding: 14px 18px; margin: 10px 0;
+  box-shadow: var(--shadow-sm); transition: box-shadow 0.16s ease;
+}
+details[open] { box-shadow: var(--shadow-lg); }
+summary { font-family: 'Nunito', 'Manrope', ui-rounded, sans-serif; color: #4c1d95; }
+.kicker {
+  display: inline-block; background: #fff; border: 1px solid #eadcf9;
+  border-radius: 999px; padding: 6px 14px; font-weight: 800;
+  color: #6d28d9; box-shadow: 0 3px 0 #f3e8ff;
+}
+.card { border: 1px solid rgba(50, 21, 104, 0.07); box-shadow: var(--shadow-sm); }
+h1, h2, h3 { letter-spacing: -0.015em; }
+@media (prefers-reduced-motion: reduce) {
+  .btn--primary:hover, .btn:hover { transform: none; }
+}
