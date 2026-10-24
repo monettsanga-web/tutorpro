@@ -254,45 +254,6 @@ const bandForAge = (age) => {
   return '14+'
 }
 
-/* A first look at the teaching team, pulled live from the public
-   directory so every face, name and year here is real. The curve on
-   top is an organic section divider in the spirit of the reference
-   design the owner shared - drawn here, not borrowed. */
-function TeacherPreviewStrip({ onOpenTeachers }) {
-  const [teachers, setTeachers] = useState([])
-  useEffect(() => {
-    let active = true
-    fetchPublicTeachers().then((rows) => { if (active) setTeachers(rows.slice(0, 4)) }).catch(() => {})
-    return () => { active = false }
-  }, [])
-  if (!teachers.length) return null
-  return (
-    <section className="teacher-strip" aria-label="Meet some of our teachers">
-      <svg className="teacher-strip__curve" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0,0 L1440,0 L1440,24 C1080,64 360,64 0,24 Z" fill="#fdfaf2" /></svg>
-      <div className="container">
-        <div className="section-heading section-heading--center">
-          <span className="kicker">A real person, not an app</span>
-          <h2>Meet your child’s teachers</h2>
-          <p>Every teacher passes a recorded teaching interview and a credential check before their first class.</p>
-        </div>
-        <div className="teacher-strip__grid">
-          {teachers.map((teacher) => (
-            <article className="teacher-strip__card" key={teacher.id}>
-              <ProfilePhoto accountId={teacher.id} name={teacher.fullName} className="teacher-strip__photo" />
-              <strong>{teacher.fullName}</strong>
-              <small>{teacher.teacher?.specialization || 'English'} · {teacher.teacher?.experience || 1}+ years</small>
-              <span>{teacher.teacher?.languages || 'English'}</span>
-            </article>
-          ))}
-        </div>
-        <div className="teacher-strip__cta">
-          <button className="button button--outline" onClick={onOpenTeachers}>Meet all our teachers <ArrowRight size={17} /></button>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function Hero({ onBook, onTeacherApply }) {
   const [heroAge, setHeroAge] = useState(() => {
     try { return window.sessionStorage.getItem('tutorpro_trial_age') || '' } catch { return '' }
@@ -2022,19 +1983,20 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
           <div className="footer__brand">
             <Logo light />
             <p>Personalized English tutoring for confident, capable learners.</p>
-            <span>Cambridge & Oxford aligned</span>
+            <span className="footer__align">Cambridge & Oxford aligned</span>
             <TrustpilotWidget variant="mini" theme="dark" className="footer__trustpilot" />
+            <div className="footer__contact-pills">
+              <a className="footer__pill footer__pill--messenger" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on Messenger</span></a>
+              <a className="footer__pill footer__pill--whatsapp" href="https://wa.me/639625284849" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on WhatsApp</span></a>
+              <a href="mailto:sejongenglish@yahoo.com"><Mail size={15} /> <span>sejongenglish@yahoo.com</span></a>
+              <a href="tel:+639625284849"><Phone size={15} /> <span>+63 962 528 4849</span></a>
+              <a href="https://www.facebook.com/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Facebook Page</span></a>
+              {/* A WeChat ID cannot be linked, so it is shown as plain
+                  selectable text rather than a link that would go nowhere. */}
+              <span className="footer__wechat"><MessageCircle size={15} /> <span>WeChat: <b>t_cora</b></span></span>
+            </div>
           </div>
           <div className="footer__links">
-            <div>
-              <h3>Explore</h3>
-              <a href="#why">Why TutorPro Online English</a>
-              <a href="#programmes">Subjects</a>
-              {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>}
-              <a href="#journey">How it works</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#contact">Contact us</a>
-            </div>
             <div>
               <h3>Get started</h3>
               {currentAccount ? (
@@ -2046,13 +2008,24 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
                 </>
               )}
               <button onClick={onTeacherAccess}>Teacher portal</button>
-              <button onClick={onTeacherApply}>Apply as a teacher</button>
               <button onClick={onAdminAccess}>Admin portal</button>
+              <a href="/free-trial.html">Free trial class</a>
+              <a href="/free-english-class.html">Free English class</a>
+              <a href="/how-it-works.html">How lessons work</a>
+              <a href="/faq.html">Questions &amp; answers</a>
+              <a href="/english-tutor-for-shy-child.html">Help for a shy child</a>
+              <a href="/blog/">Learning resources</a>
             </div>
-            {/* Internal links are how Google finds and ranks these pages. A
-                subject page nothing links to is effectively invisible. */}
             <div>
-              <h3>Subjects</h3>
+              <h3>Explore & subjects</h3>
+              <a href="#why">Why TutorPro Online English</a>
+              <a href="#programmes">Subjects</a>
+              {showTeachersLink && <a href="#teachers" onClick={(e) => { e.preventDefault(); onOpenTeachers(); }}>Teachers</a>}
+              <a href="#journey">How it works</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#contact">Contact us</a>
+              {/* Internal links are how Google finds and ranks these pages. A
+                  subject page nothing links to is effectively invisible. */}
               <a href="/online-english-classes-for-kids">Online English classes</a>
               <a href="/online-english-tutor-for-kids.html">Online English tutor</a>
               <a href="/online-maths-tutor-for-kids.html">Online Maths tutor</a>
@@ -2060,32 +2033,18 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
               <a href="/online-ict-computing-classes-for-kids.html">Online ICT &amp; Computing</a>
             </div>
             <div>
-              <h3>English skills</h3>
+              <h3>Skills & programs</h3>
               <a href="/english-reading.html">Reading</a>
               <a href="/english-speaking.html">Speaking</a>
               <a href="/english-grammar.html">Grammar</a>
               <a href="/english-vocabulary.html">Vocabulary</a>
               <a href="/cambridge-english.html">Cambridge English</a>
               <a href="/oxford-english.html">Oxford English</a>
-            </div>
-            <div>
-              <h3>Programs</h3>
               <a href="/primary-english.html">Primary English (4–11)</a>
               <a href="/secondary-english.html">Secondary English (12–16)</a>
               <a href="/english-for-kids-ages-4-7.html">English for ages 4–7</a>
               <a href="/english-for-kids-ages-8-11.html">English for ages 8–11</a>
               <a href="/english-for-teens-ages-12-16.html">English for teens 12–16</a>
-            </div>
-            <div>
-              <h3>Getting started</h3>
-              <a href="/blog/">Learning resources</a>
-              <a href="/free-trial.html">Free trial class</a>
-              <a href="/free-english-class.html">Free English class</a>
-              <a href="/how-it-works.html">How lessons work</a>
-              <a href="/pricing.html">Pricing &amp; plans</a>
-              <a href="/teachers.html">Our teachers</a>
-              <a href="/faq.html">Questions &amp; answers</a>
-              <a href="/english-tutor-for-shy-child.html">Help for a shy child</a>
             </div>
             <div>
               <h3>Company</h3>
@@ -2100,17 +2059,6 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
               <a href="/privacy-policy.html">Privacy policy</a>
               <a href="/terms.html">Terms of service</a>
               <a href="/refund-policy.html">Refund policy</a>
-            </div>
-            <div className="footer__contact">
-              <h3>Contact us</h3>
-              <a href="mailto:sejongenglish@yahoo.com"><Mail size={15} /> <span>sejongenglish@yahoo.com</span></a>
-              <a href="tel:+639625284849"><Phone size={15} /> <span>+63 962 528 4849</span></a>
-              <a href="https://www.facebook.com/tutorproenglish" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Facebook Page</span></a>
-              <a className="footer__whatsapp" href="https://m.me/526047974195321" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on Messenger</span></a>
-              <a className="footer__whatsapp" href="https://wa.me/639625284849" target="_blank" rel="noreferrer"><MessageCircle size={15} /> <span>Chat on WhatsApp</span></a>
-              {/* A WeChat ID cannot be linked, so it is shown as plain
-                  selectable text rather than a link that would go nowhere. */}
-              <span className="footer__wechat"><MessageCircle size={15} /> <span>WeChat: <b>t_cora</b></span></span>
             </div>
           </div>
 
@@ -2490,7 +2438,6 @@ export default function App() {
       ) : (
         <main>
           <Hero onBook={openRegistration} onTeacherApply={openTeacherApply} />
-          <TeacherPreviewStrip onOpenTeachers={() => setShowPublicTeachers(true)} />
           <WhyParents onBook={openRegistration} />
           <SeeAClass />
           <CurriculumCarousel onBook={openRegistration} />
