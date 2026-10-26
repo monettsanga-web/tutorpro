@@ -101,6 +101,8 @@ for (const provider of ['gmail', 'yahoo', 'wechat', 'whatsapp']) {
 const picker = read('src/AuthProviderPicker.jsx')
 ok(!/id: 'wechat'|id: 'whatsapp'/.test(picker), 'new registrations offer email methods only - the owner requires a reachable email')
 ok(/id: 'gmail'/.test(picker) && /id: 'yahoo'/.test(picker) && /id: 'email'/.test(picker), 'gmail, yahoo and other-email remain the sign-up methods')
+ok(/id: 'apple'/.test(picker) && /id: 'qq'/.test(picker), 'apple and qq join the sign-up methods the owner asked for')
+ok(/@\(icloud\|me\|mac\)/.test(auth) && /@qq\\.com/.test(auth), 'apple and qq logins are validated like the others')
 ok(/register-email-promise/.test(read('src/AuthModal.jsx')), 'registration explains why a real email is required, at the field itself')
 
 /* ================================================================== */
