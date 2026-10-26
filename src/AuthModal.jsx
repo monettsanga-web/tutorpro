@@ -16,7 +16,10 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { completePasswordReset, loginAccount, logoutAccount, registerAccount, requestPasswordReset } from './auth.js'
+import { completePasswordReset, createReferralCode, loginAccount, logoutAccount, registerAccount, registrationSnapshot, requestPasswordReset } from './auth.js'
+import { updateCloudProfile } from './cloudProfiles.js'
+import { oneTapProviderFor, startOneTapSignIn } from './oneTapAuth.js'
+import OneTapLoginRow from './OneTapLoginRow.jsx'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 import ContactFallback from './ContactFallback.jsx'
@@ -65,6 +68,8 @@ function FieldError({ children }) {
 
 export default function AuthModal({
   initialMode = 'register',
+  resumeAccount = null,
+  resumeStep = 2,
   selectedPlan = '',
   preferredTeacher = null,
   referralCode = '',
@@ -77,13 +82,21 @@ export default function AuthModal({
   const authBackdropRef = useRef(null)
   const authPanelRef = useRef(null)
   const [view, setView] = useState(initialMode)
-  const [registerStep, setRegisterStep] = useState(1)
+  const [registerStep, setRegisterStep] = useState(resumeAccount ? Math.max(resumeStep || 2, 2) : 1)
   /* The homepage age chips remember their choice for this tab, so the
      school-year question arrives with context instead of cold. */
   const [trialAgeBand] = useState(() => {
     try { return window.sessionStorage.getItem('tutorpro_trial_age_band') || '' } catch { return '' }
   })
-  const [form, setForm] = useState(() => ({ ...initialForm, authProvider: isChineseVisitor(currentVisitorLocale()) ? 'email' : 'gmail' }))
+  const [form, setForm] = useState(() => ({
+    ...initialForm,
+    authProvider: isChineseVisitor(currentVisitorLocale()) ? 'email' : 'gmail',
+    /* Returning from a one-tap Google/Apple sign-up: identity fields are
+       already known, the family only completes the student details. */
+    ...(resumeAccount ? { authProvider: resumeAccount.authProvider || 'gmail', parentName: resumeAccount.parentName || '', email: resumeAccount.email || '' } : {}),
+  }))
+  const [oauthAccount] = useState(resumeAccount)
+  const [providerNote, setProviderNote] = useState('')
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   // Set when a failure is OUR fault (database unreachable or restricted)
@@ -172,6 +185,40 @@ export default function AuthModal({
     setFormError('')
     setContactFallback('')
     try {
+      if (oauthAccount) {
+        /* One-tap resume: Google/Apple already created and verified the
+           account; step 2 only adds the child, then the existing cloud
+           update writes it. No second auth user, no password. */
+        const learner = {
+          id: crypto.randomUUID(),
+          name: form.childName.trim(),
+          year: form.year,
+          curriculum: form.curriculum,
+          goal: form.goal,
+          frequency: form.frequency,
+          accessStatus: 'active',
+          level: 'Building foundations',
+          progress: 18,
+          streak: 0,
+          lessonsCompleted: 0,
+          achievements: ['First step'],
+        }
+        const account = {
+          ...oauthAccount,
+          child: learner,
+          children: [learner],
+          selectedPlan: oauthAccount.selectedPlan || selectedPlan || '',
+          preferredTeacherId: oauthAccount.preferredTeacherId || preferredTeacher?.id || '',
+          referredByCode: oauthAccount.referredByCode || referralCode || '',
+          referralCode: oauthAccount.referralCode || createReferralCode(oauthAccount.parentName || form.parentName, oauthAccount.id),
+          cloudProfile: true,
+        }
+        await updateCloudProfile(account)
+        setCreatedAccount(account)
+        onAuthenticated(account)
+        setView('success')
+        return
+      }
       const account = await registerAccount({ ...form, selectedPlan, referralCode, preferredTeacherId: preferredTeacher?.id || '' })
       setCreatedAccount(account)
       onAuthenticated(account)
@@ -404,7 +451,29 @@ export default function AuthModal({
                     </div>
                     <FieldError>{errors.parentName}</FieldError>
                   </label>
-                  <AuthProviderPicker value={form.authProvider} onSelect={(provider) => { setForm((current) => ({ ...current, authProvider: provider, email: '' })); setErrors((current) => ({ ...current, email: '' })) }} />
+                  <AuthProviderPicker value={form.authProvider} onSelect={async (provider) => {
+                    /* Gmail and Apple tiles redirect to the provider's own site
+                       (one-tap). Until that is switched on, or for Yahoo/QQ/other,
+                       the tile selects the address field as before. */
+                    const oneTapProvider = oneTapProviderFor(provider)
+                    if (oneTapProvider) {
+                      if (!form.terms) {
+                        setErrors((current) => ({ ...current, terms: 'Please confirm you are the parent or guardian, then tap your provider again.' }))
+                        return
+                      }
+                      setProviderNote('')
+                      const result = await startOneTapSignIn(oneTapProvider, { kind: 'register', surface: 'student', parentName: form.parentName.trim(), selectedPlan, referralCode, preferredTeacherId: preferredTeacher?.id || '', ...registrationSnapshot() })
+                      if (result.error) {
+                        setForm((current) => ({ ...current, authProvider: provider, email: '' }))
+                        setErrors((current) => ({ ...current, email: '', terms: '' }))
+                        setProviderNote(result.error)
+                      }
+                      return
+                    }
+                    setForm((current) => ({ ...current, authProvider: provider, email: '' }))
+                    setErrors((current) => ({ ...current, email: '' }))
+                  }} />
+                  {providerNote && <p className="onetap-note" role="status">{providerNote}</p>}
                   <label>
                     <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}<em className="field-required">{chineseVisitor ? '必填' : 'required'}</em></span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
@@ -558,6 +627,7 @@ export default function AuthModal({
                   {isSubmitting ? 'Logging in…' : 'Log in'} {!isSubmitting && <ArrowRight size={17} />}
                 </button>
               </form>
+              <OneTapLoginRow surface="student" note={providerNote} onNote={setProviderNote} />
               <p className="auth-switch auth-switch--compact"><button onClick={() => switchView('reset-request')}>Forgot password?</button></p>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
               <p className="auth-switch">New to TutorPro Online English? <button type="button" onClick={() => switchView('register')}>Create a free account</button></p>

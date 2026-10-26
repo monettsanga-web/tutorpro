@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-24 apple-qq-signup
+TutorPro English production build 2026-10-26 one-tap-oauth
