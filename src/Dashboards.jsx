@@ -256,7 +256,7 @@ const MONTHLY_BILLING_WEEKS = 4
 const MAX_CUSTOM_WEEKLY_SESSIONS = 12
 // Must match api/_paypal.js exactly. scripts/test-pricing.mjs enforces it.
 const SESSION_RATE_STANDARD = 8
-const SESSION_RATE_PACKAGE = 7
+const SESSION_RATE_PACKAGE = 6
 const PACKAGE_MIN_SESSIONS = 4
 const LONG_LESSON_MULTIPLIER = 2
 const weeklySessionRate = (sessions) => Number(sessions) < PACKAGE_MIN_SESSIONS ? SESSION_RATE_STANDARD : SESSION_RATE_PACKAGE
@@ -3315,10 +3315,10 @@ function AdminPaymentsPanel() {
                 ? { pricing: { mode: 'fixed', standardRate: Number(discountForm.standardRate), packageRate: Number(discountForm.packageRate) } }
                 : { pricing: { mode: 'percent', percent: Number(discountForm.percent) } }
               const single = resolveStudentPrice(draft, {
-                standard: 8, package: 7, packageMin: 4, sessions: 1, credits: 1, fullTotal: planTotal('weekly', 1),
+                standard: 8, package: 6, packageMin: 4, sessions: 1, credits: 1, fullTotal: planTotal('weekly', 1),
               })
               const monthly = resolveStudentPrice(draft, {
-                standard: 8, package: 7, packageMin: 4, sessions: 4, credits: planCreditCount('monthly', 4), fullTotal: planTotal('monthly', 4),
+                standard: 8, package: 6, packageMin: 4, sessions: 4, credits: planCreditCount('monthly', 4), fullTotal: planTotal('monthly', 4),
               })
               if (single.mode === 'standard') return 'Choose a discount or a price per lesson to preview what this family would pay.'
               return `${displayName(discountStudent)} would pay $${single.total.toFixed(2)} for a single class (normally $${planTotal('weekly', 1).toFixed(2)}), and $${monthly.total.toFixed(2)} for a 4-a-week monthly package (normally $${planTotal('monthly', 4).toFixed(2)}) — saving $${monthly.saving.toFixed(2)} a month.`
@@ -4323,7 +4323,7 @@ function StudentPaymentGateway({ account, adminPreview = false, onPaymentComplet
       </div>
 
       <div className="student-payment-pro__footer-notes">
-        <span>USD pricing: $8 per 25-minute class for 1–3 classes a week. Monthly package is 3–7 classes/week billed for 4 weeks: 3/week at $8 per class, 4–7/week at $7 per class. A 50-minute class is double.</span>
+        <span>USD pricing: $8 per 25-minute class for 1–3 classes a week. Monthly package is 3–7 classes/week billed for 4 weeks: 3/week at $8 per class, 4–7/week at $6 per class. A 50-minute class is double.</span>
         {chinaQrAllowed && <span>China QR rule: RMB25 per 25 minutes plus RMB5 processing fee per selected session. Hidden outside China except for admin preview.</span>}
         <span>{isPayPalTestMode ? 'PayPal is currently in sandbox mode. Add your live PayPal Client ID in Vercel to accept real payments.' : 'PayPal live checkout is active. Successful payments are verified on the server before booking credits are added.'}</span>
       </div>

@@ -118,7 +118,7 @@ const UI = {
     jsFail: 'Sending failed. Email us directly at ',
     jsFail2: ', or register above and book the free class yourself.',
     courseName: (c) => `Online English classes for children in ${c}`,
-    offerDesc: 'First 25-minute one-to-one class free. Lessons from US$7 afterwards.',
+    offerDesc: 'First 25-minute one-to-one class free. Lessons from US$6 afterwards.',
   },
   zh: {
     lang: 'zh-Hans',
@@ -193,7 +193,7 @@ const UI = {
     jsFail: '发送失败。请直接发邮件至 ',
     jsFail2: ',或在上方注册并自行预约免费课。',
     courseName: (c) => `${c}儿童在线英语一对一课程`,
-    offerDesc: '首节25分钟一对一课程免费,之后每节最低7美元。',
+    offerDesc: '首节25分钟一对一课程免费,之后每节最低6美元。',
   },
 }
 
@@ -215,7 +215,7 @@ const COUNTRIES = [
     timezone: 'KST is UTC+9, one hour ahead of Manila. A 17:00 lesson in Seoul is 16:00 for the teacher — ordinary working hours on both sides, which is why Korean families can book the 16:00–21:00 slots that are hardest to get elsewhere.',
     school: 'English is a compulsory subject from 3rd grade of 초등학교 (elementary school), and the jump in difficulty at 중학교 (middle school) is where many families start looking for help. Lessons can follow your child\u2019s school textbook directly, or work on speaking, which school classes rarely have time for.',
     instead: 'A 학원 (hagwon) class usually means one teacher and a roomful of children, where a quiet child can go a whole session without speaking English aloud. Travel is on top. These lessons are one-to-one, from home, and the whole 25 or 50 minutes belongs to your child.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['Is the teacher Korean or a native English speaker?', 'Teachers are Filipino and teach entirely in English. Many have taught Korean children for years and are used to starting from a learner who reads well but hesitates to speak.'],
       ['Can lessons follow my child\u2019s school textbook?', 'Yes. Teachers can work directly from the school book and homework, alongside the Cambridge and Oxford course books, if keeping up at school is the priority.'],
@@ -262,13 +262,13 @@ const COUNTRIES = [
     timezone: 'Italy is UTC+1 in winter and UTC+2 in summer, so Manila is 6 to 7 hours ahead. In practice the earliest after-school slots work best: a 15:00 lesson in Rome is 21:00 for the teacher, and later Italian times become late-night ones in Manila. We would rather say that plainly than have you find out when you try to book 19:00.',
     school: 'English is taught from scuola primaria and continues through scuola secondaria, but class sizes mean a child can read and write English far better than they can speak it. Many Italian families also prepare for Cambridge English qualifications, and lessons can be pointed at the speaking and listening parts of those.',
     instead: 'A private tutor at home in Italy means travel, a fixed local rate and whatever times that tutor has left. These lessons are one-to-one from home, 25 or 50 minutes, booked when it suits your family.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate; there is no separate fee from us.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. Your bank converts at its own rate; there is no separate fee from us.',
     faqs: [
       ['Does the teacher speak Italian?', 'No. Teachers are Filipino and teach entirely in English, which is deliberate: a child who knows the teacher cannot switch to Italian stops waiting to be rescued and starts trying.'],
       ['What time are lessons available in Italy?', 'The earliest after-school slots are the most reliable. 15:00 to 17:00 Italian time is 21:00 to 23:00 in Manila, which teachers do cover; later Italian evenings are much harder.'],
       ['Can lessons prepare my child for a Cambridge exam?', 'Teachers can focus on the speaking and listening skills those exams test, using Cambridge course books. TutorPro is not a Cambridge exam centre and does not register candidates — your school or a local centre does that.'],
       ['Is this suitable for a complete beginner?', 'Yes. Lessons for younger children start with phonics, songs and first words, and the teacher begins from what your child can already do.'],
-      ['How do I pay from Italy?', 'By debit or credit card, in US dollars. Prices are published on the site: US$8 per 25-minute lesson, or US$7 on four or more a week.'],
+      ['How do I pay from Italy?', 'By debit or credit card, in US dollars. Prices are published on the site: US$8 per 25-minute lesson, or US$6 on four or more a week.'],
     ],
   },
   {
@@ -285,7 +285,7 @@ const COUNTRIES = [
     timezone: 'Poland is UTC+1 in winter and UTC+2 in summer, so Manila is 6 to 7 hours ahead. The earliest after-school slots are the ones we cover most reliably: a 15:00 lesson in Warsaw is 21:00 for the teacher. Later Polish evenings are much harder to staff, and it is better to know that before you book.',
     school: 'English is taught from the early years of szkoła podstawowa, and the egzamin ósmoklasisty at the end of it includes a modern foreign language, which for most pupils is English. Lessons can work on the speaking and listening that classroom time rarely stretches to, or support directly what the school is covering.',
     instead: 'Group courses and school lessons give a child a few sentences of speaking each week. One-to-one means the whole lesson is theirs, with mistakes corrected privately instead of in front of classmates.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate; we add nothing on top.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. Your bank converts at its own rate; we add nothing on top.',
     faqs: [
       ['Does the teacher speak Polish?', 'No. Teachers are Filipino and teach entirely in English. For a child who understands more than they will say, that is usually the point.'],
       ['Can lessons help with the egzamin ósmoklasisty?', 'Teachers can work on the language skills the exam tests — reading, listening, writing and the grammar it rests on — using the exam-style practice your child brings and Cambridge and Oxford course books.'],
@@ -308,7 +308,7 @@ const COUNTRIES = [
     timezone: 'Turkey is UTC+3 all year, so Manila is 5 hours ahead. A 16:00 lesson in Istanbul is 21:00 for the teacher, and the earlier after-school slots are the ones we can cover most reliably.',
     school: 'English begins in ilkokul and continues through ortaokul, where the LGS exam at the end includes English. Classroom English leans heavily on grammar and vocabulary, so speaking is usually where a child needs the practice, and that is what a one-to-one lesson is for.',
     instead: 'A dershane or private course is a group, with travel on top. Here your child speaks for the whole lesson, from home, and you get written feedback afterwards saying exactly what was covered.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. Your bank converts at its own rate.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. Your bank converts at its own rate.',
     faqs: [
       ['Does the teacher speak Turkish?', 'No. Teachers are Filipino and teach entirely in English, which pushes a child to produce the language rather than translate their way around it.'],
       ['Can lessons help with LGS English?', 'Teachers can work on the reading, vocabulary and grammar the exam tests, and on the speaking that the exam does not test but school and life do.'],
@@ -331,9 +331,9 @@ const COUNTRIES = [
     timezone: 'Germany runs on CET (UTC+1, UTC+2 in summer). Manila is 6-7 hours ahead, so a 16:00 lesson in Berlin is 22:00 or 23:00 for the teacher - precisely the window our night-shift teachers open, which is why European after-school slots exist at all.',
     school: 'English becomes a compulsory subject in most German states from class 3 or 5, and Gymnasium expectations rise quickly. Lessons can follow the school book, or build the speaking confidence German classrooms rarely have time to practise.',
     instead: 'Nachhilfe usually means a small group after an already long school day, with travel on top. These lessons are one-to-one, from home, and the whole 25 or 50 minutes belongs to your child.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
-      ['How do I pay from Germany?', 'By debit or credit card, in US dollars, at the published rates: US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. There is no registration fee.'],
+      ['How do I pay from Germany?', 'By debit or credit card, in US dollars, at the published rates: US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. There is no registration fee.'],
       ['What time are lessons in German time?', 'After-school and early-evening slots. Every time is shown in your own zone when you book, and night-shift teachers cover the European evening on purpose.'],
       ['Is the first class really free?', 'Yes, and no card is required. It is a full lesson with a real teacher.'],
     ],
@@ -351,7 +351,7 @@ const COUNTRIES = [
     timezone: 'France runs on CET (UTC+1, UTC+2 in summer). Manila is 6-7 hours ahead, so a 17:00 lesson in Paris is late evening for the teacher - covered by teachers who choose the night shift.',
     school: 'English starts in primary school (CP) and counts heavily in the brevet and the lycée, where oral expression is usually the weakest skill. Lessons give the speaking time a thirty-pupil class cannot.',
     instead: 'Soutien scolaire and cours particuliers are usually groups or generalist tutors. These lessons are one-to-one with a specialist English teacher, from home, with written feedback after every class.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['How do I pay from France?', 'By debit or credit card, in US dollars, at the published rates. Your bank converts at its own rate; we add nothing on top.'],
       ['What time are lessons in French time?', 'After-school and early-evening slots, shown in your own zone when you book. The European evening is our night shift, so the slots exist.'],
@@ -371,7 +371,7 @@ const COUNTRIES = [
     timezone: 'Peninsular Spain runs on CET (UTC+1, UTC+2 in summer); the Canary Islands one hour earlier. Manila is 6-7 hours ahead of the peninsula, so after-school slots sit in the Philippine evening and are bookable.',
     school: 'Many Spanish regions teach subjects bilingually from Primaria, and Cambridge-style B1 and B2 exams are common in Secundaria. Lessons can target the speaking papers those exams reward.',
     instead: 'An academia teaches in groups on a fixed timetable, with travel on top. These lessons are one-to-one, at your hour, and the whole session belongs to your child.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['How do I pay from Spain?', 'By debit or credit card, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
       ['What time are lessons in Spanish time?', 'After-school and early-evening slots, shown in your own zone when you book, including Canary Islands time.'],
@@ -391,7 +391,7 @@ const COUNTRIES = [
     timezone: 'Portugal runs on WET (UTC+0, UTC+1 in summer). Manila is 7-8 hours ahead, so a 17:00 lesson in Lisbon approaches midnight for the teacher - night-shift hours, and bookable.',
     school: 'English is compulsory from the 3rd year and continues through secondary, where oral exams count. One-to-one practice is the fastest way to close the gap between writing and speaking.',
     instead: 'Explicadores are often generalists shared between subjects and students. These lessons are specialist English, one child per session, from home.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['How do I pay from Portugal?', 'By debit or credit card, in US dollars, at the published rates. Your bank converts at its own rate; we add nothing on top.'],
       ['What time are lessons in Lisbon time?', 'After-school and early-evening slots, shown in your own zone when you book.'],
@@ -411,7 +411,7 @@ const COUNTRIES = [
     timezone: 'The Netherlands runs on CET (UTC+1, UTC+2 in summer). Manila is 6-7 hours ahead, so after-school slots sit in the Philippine evening and are bookable every week.',
     school: 'Dutch children start English around age 10 and quickly outgrow beginner material, so the real need is speaking confidence and exam-level precision rather than basics. Lessons pitch to that.',
     instead: 'Bijles helps with schoolwork but rarely gives sustained conversation. These lessons are speaking-first, one-to-one, with written feedback after every class.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['How do I pay from the Netherlands?', 'By debit or credit card, in US dollars, at the published rates. There is no registration fee and no charge for books.'],
       ['What time are lessons in Dutch time?', 'After-school and early-evening slots, shown in your own zone when you book.'],
@@ -431,7 +431,7 @@ const COUNTRIES = [
     timezone: 'Greece runs on EET (UTC+2, UTC+3 in summer). Manila is 5-6 hours ahead, so a 17:00 lesson in Athens is 22:00 or 23:00 for the teacher - night-shift hours, and bookable.',
     school: 'Greek children often study English from a young age and sit international B1, B2 and Proficiency exams in their teens. Lessons target the speaking and writing those exams score.',
     instead: 'A frontistirio teaches in groups on a fixed schedule. These lessons are one-to-one, at your hour, and every minute is your child speaking or writing with feedback.',
-    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$7 on 4 or more. No registration fee and no materials fee.',
+    pay: 'Payment is by debit or credit card, in US dollars — US$8 per 25-minute lesson on 1 to 3 lessons a week, US$6 on 4 or more. No registration fee and no materials fee.',
     faqs: [
       ['How do I pay from Greece?', 'By debit or credit card, in US dollars, at the published rates. Your bank converts at its own rate; we add nothing on top.'],
       ['What time are lessons in Greek time?', 'After-school and early-evening slots, shown in your own zone when you book.'],

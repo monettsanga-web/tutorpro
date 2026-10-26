@@ -157,7 +157,7 @@ export function describeDiscount(discount) {
  * and the disagreement would show up as a parent being charged something
  * other than what they were quoted. So there is a single `pricing.mode`:
  *
- *   'standard'  the published $8 / $7
+ *   'standard'  the published $8 / $6
  *   'percent'   a percentage off the published price
  *   'fixed'     an explicit price per lesson, replacing the published rate
  *

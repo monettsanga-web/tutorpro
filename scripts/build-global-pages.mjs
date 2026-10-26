@@ -160,7 +160,7 @@ const PAGES = [
           <li><strong>Lesson times in your own time zone</strong>, with evening and weekend slots.</li>
           <li><strong>Written feedback after every class</strong>, in plain language a parent can act on.</li>
           <li><strong>Learning from home</strong>, on an ordinary laptop or tablet, with no travel.</li>
-          <li><strong>A free first class</strong> with no card required, and <a href="/pricing.html">published prices from $7 per lesson</a>.</li>
+          <li><strong>A free first class</strong> with no card required, and <a href="/pricing.html">published prices from $6 per lesson</a>.</li>
           <li><strong>Refundable credits</strong> - cancel 12 hours ahead and the credit returns in full.</li>
         </ul>
 
@@ -187,7 +187,7 @@ const PAGES = [
     label: 'Online English tutor',
     title: 'Online English Tutor for Children | TutorPro',
     description:
-      'Find a qualified online English tutor for your child. Every teacher passes a recorded interview and credential check. From $7 per lesson.',
+      'Find a qualified online English tutor for your child. Every teacher passes a recorded interview and credential check. From $6 per lesson.',
     heading: 'Finding an online English tutor you can actually trust',
     lede:
       'Choosing a tutor for your child online means trusting someone you have never met. Here is exactly how our teachers are selected, and how to judge any tutor you are considering.',
@@ -372,7 +372,7 @@ function page(spec) {
           <span class="pill">Ages 4–16</span>
           <span class="pill">One-to-one, always</span>
           <span class="pill">25 or 50 minute lessons</span>
-          <span class="pill">from $7 per class</span>
+          <span class="pill">from $6 per class</span>
           <span class="pill">Free first class</span>
         </p>
         <p>
@@ -400,7 +400,7 @@ ${spec.body}
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
           <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
-          <tr><td>Monthly package</td><td>4–7</td><td>$7</td></tr>
+          <tr><td>Monthly package</td><td>4–7</td><td>$6</td></tr>
         </table>
         <p>No registration fee, no materials fee, no platform fee. The first class is free for every new family and no card is required. Cancelling at least 12 hours before a lesson returns the credit in full, and unused credits can be refunded within 14 days — the full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>
 

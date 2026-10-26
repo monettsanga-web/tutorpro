@@ -10,7 +10,7 @@
  *
  * Published rates (confirmed by the owner):
  *   $8 per 25-minute lesson, 1-3 lessons per week
- *   $7 per 25-minute lesson, 4 or more per week (package rate)
+ *   $6 per 25-minute lesson, 4 or more per week (package rate)
  *   A 50-minute lesson is exactly double the 25-minute rate.
  */
 import assert from 'node:assert/strict'
@@ -23,7 +23,7 @@ const server = await import('../api/_paypal.js')
 
 /* --- the published rates ------------------------------------------- */
 ok(server.SESSION_RATE_STANDARD === 8, 'standard rate is $8 per 25-minute lesson')
-ok(server.SESSION_RATE_PACKAGE === 7, 'package rate is $7 per 25-minute lesson')
+ok(server.SESSION_RATE_PACKAGE === 6, 'package rate is $6 per 25-minute lesson')
 ok(server.PACKAGE_MIN_SESSIONS === 4, 'the package rate starts at 4 lessons a week')
 ok(server.LONG_LESSON_MULTIPLIER === 2, 'a 50-minute lesson costs double a 25-minute one')
 ok(server.SESSION_RATE_STANDARD * server.LONG_LESSON_MULTIPLIER === 16, '50 minutes at the standard rate is $16')
@@ -32,16 +32,16 @@ ok(server.SESSION_RATE_STANDARD * server.LONG_LESSON_MULTIPLIER === 16, '50 minu
 ok(server.weeklySessionRate(1) === 8, '1 lesson a week is $8 each')
 ok(server.weeklySessionRate(2) === 8, '2 lessons a week is $8 each')
 ok(server.weeklySessionRate(3) === 8, '3 lessons a week is still $8 each')
-ok(server.weeklySessionRate(4) === 7, '4 lessons a week drops to $7 each')
-ok(server.weeklySessionRate(5) === 7, '5 lessons a week is $7 each')
-ok(server.weeklySessionRate(12) === 7, 'the maximum weekly count is $7 each')
+ok(server.weeklySessionRate(4) === 6, '4 lessons a week drops to $6 each')
+ok(server.weeklySessionRate(5) === 6, '5 lessons a week is $6 each')
+ok(server.weeklySessionRate(12) === 6, 'the maximum weekly count is $6 each')
 
 /* --- totals a parent would be charged -------------------------------- */
 ok(server.planTotal('weekly', 2) === 16, 'weekly plan, 2 lessons = $16')
-ok(server.planTotal('weekly', 4) === 28, 'weekly plan, 4 lessons = $28 at the package rate')
+ok(server.planTotal('weekly', 4) === 24, 'weekly plan, 4 lessons = $24 at the package rate')
 // A monthly package bills 4 weeks up front.
-ok(server.planTotal('monthly', 4) === 112, 'monthly package, 4/week = 16 lessons x $7 = $112')
-ok(server.planTotal('monthly', 5) === 140, 'monthly package, 5/week = 20 lessons x $7 = $140')
+ok(server.planTotal('monthly', 4) === 96, 'monthly package, 4/week = 16 lessons x $6 = $96')
+ok(server.planTotal('monthly', 5) === 120, 'monthly package, 5/week = 20 lessons x $6 = $120')
 ok(server.planTotal('monthly', 3) === 96, 'monthly package, 3/week = 12 lessons x $8 = $96')
 ok(server.planCreditCount('monthly', 4) === 16, 'a monthly package grants 4 weeks of credits')
 ok(server.planCreditCount('weekly', 4) === 4, 'a weekly plan grants one week of credits')
@@ -72,10 +72,10 @@ ok(!/\$10 per (25-minute|class|lesson)/.test(priceCopy), 'the pricing page no lo
 // the page read "$8 per class" in the copy while the table below still said
 // "$10.00" in every row. Assert on the rendered figures too.
 ok(!/\$10\.00/.test(priceCopy), 'the pricing table contains no $10.00 rows')
-ok(!/\$128\.00|\$160\.00|\$192\.00|\$224\.00/.test(priceCopy), 'no monthly totals computed from the old rate')
-ok(/\$8\.00/.test(priceCopy) && /\$7\.00/.test(priceCopy), 'the table shows the current $8 and $7 rates')
+ok(!/\$112\.00|\$128\.00|\$140\.00|\$160\.00|\$196\.00|\$224\.00/.test(priceCopy), 'no monthly totals computed from an old rate')
+ok(/\$8\.00/.test(priceCopy) && /\$6\.00/.test(priceCopy), 'the table shows the current $8 and $6 rates')
 ok(/\$8/.test(priceCopy), 'the pricing page shows the new $8 rate')
-ok(/\$7/.test(priceCopy), 'the pricing page shows the new $7 package rate')
+ok(/\$6/.test(priceCopy), 'the pricing page shows the new $6 package rate')
 
 /* --- the amount charged is the amount quoted -------------------------- */
 for (const [plan, sessions] of [['weekly', 1], ['weekly', 3], ['weekly', 4], ['monthly', 4], ['monthly', 5]]) {

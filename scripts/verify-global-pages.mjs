@@ -59,8 +59,8 @@ for (const f of PAGES) {
   /* --- honesty --------------------------------------------------- */
   ok(!/aggregateRating|ratingValue|reviewCount/i.test(h), `${f}: no fabricated rating schema`)
   ok(!/[0-9,]{4,}\s*(happy\s+)?(students|families|parents)/i.test(text(h)), `${f}: no invented student numbers`)
-  // Current published rates: $8 for 1-3 lessons a week, $7 for 4 or more.
-  ok(h.includes('$8') && h.includes('$7'), `${f}: real pricing ($8 weekly / $7 package)`)
+  // Current published rates: $8 for 1-3 lessons a week, $6 for 4 or more.
+  ok(h.includes('$8') && h.includes('$6'), `${f}: real pricing ($8 weekly / $6 package)`)
   ok(!/\$10 per|\$10 each/.test(text(h)), `${f}: no stale $10 price`)
   ok(h.includes('5274092'), `${f}: publishes the DTI registration`)
   ok(/Philippine|Philippines/.test(text(h)), `${f}: states where teachers are based`)

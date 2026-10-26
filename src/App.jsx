@@ -161,7 +161,7 @@ const faqs = [
   {
     question: 'What currency are prices in?',
     answer:
-      'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$7 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
+      'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$6 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
   },
 ]
 
@@ -1668,7 +1668,7 @@ function GlobalDiscovery({ onBook }) {
 
    The Weekly card on this page still read $10 / $20 while the checkout, the
    dashboard and the crawlable homepage copy all use the owner-confirmed
-   rates of $8 per 25-minute lesson (1-3 a week) and $7 (4 or more). A parent
+   rates of $8 per 25-minute lesson (1-3 a week) and $6 (4 or more). A parent
    who read the card and then paid the checkout would see two different
    numbers, which is the one pricing bug this codebase treats as fatal.
    Rather than publish a third set of numbers while the cards are corrected,
@@ -1724,7 +1724,7 @@ function Pricing({ onBook }) {
               <div><h3>Package</h3><p>For faster, consistent progress</p></div>
             </div>
             <div className="package-price">
-              <strong>$8</strong><span>/ 25 min class</span>
+              <strong>$6</strong><span>/ 25 min class</span>
             </div>
             <p className="price-card__cadence">4–7 classes per week · pay monthly</p>
             <ul>

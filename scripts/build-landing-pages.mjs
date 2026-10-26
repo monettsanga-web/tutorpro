@@ -11,7 +11,7 @@
  *   - a tagged CTA link so the funnel dashboard credits the right channel
  *
  * ACCURACY: every claim is verified against the live platform —
- *   - pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/wk, $7 for 4+)
+ *   - pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/wk, $6 for 4+)
  *   - the four testimonials are real, from Facebook, quoted verbatim including typos
  *   - DTI 5274092 is the real registration number
  *   - free first class, 12-hour cancellation and 14-day refund are real policy
@@ -71,10 +71,10 @@ const PAGES = [
     slug: 'free-english-class',
     tag: 'lp-free',
     title: 'Free English Class for Your Child · TutorPro Online English',
-    description: 'Book a free 25-minute one-to-one online English class for your child. No card required, no contract. From $7 per lesson afterwards.',
+    description: 'Book a free 25-minute one-to-one online English class for your child. No card required, no contract. From $6 per lesson afterwards.',
     h1: 'A free English class for your child. No card, no catch.',
     lede: 'One-to-one online lessons with real teachers, built around Cambridge and Oxford coursebooks. Try a full 25-minute class for free and decide afterwards.',
-    pills: ['Free first class', 'No card required', 'Ages 4–16', 'from $7 per lesson'],
+    pills: ['Free first class', 'No card required', 'Ages 4–16', 'from $6 per lesson'],
     body: `
         <h2>Why parents choose one-to-one</h2>
         <div class="grid">
@@ -220,7 +220,7 @@ function render(page) {
         category: 'Partially Free',
         price: '0',
         priceCurrency: 'USD',
-        description: 'First 25-minute one-to-one class is free. Lessons from $7 afterwards.',
+        description: 'First 25-minute one-to-one class is free. Lessons from $6 afterwards.',
         url,
       },
     },
