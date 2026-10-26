@@ -29,10 +29,10 @@ const now = Date.now()
 /* --- the maths -------------------------------------------------------- */
 console.log('--- the arithmetic ---')
 ok(applyDiscount(100, 20) === 80, '20% off $100 is $80')
-ok(applyDiscount(112, 20) === 89.6, '20% off a $112 monthly package is $89.60')
+ok(applyDiscount(96, 20) === 76.8, '20% off a $96 monthly package is $76.80')
 ok(applyDiscount(16, 25) === 12, '25% off $16 is $12')
 ok(applyDiscount(100, 0) === 100, 'no discount leaves the price alone')
-ok(discountSaving(112, 20) === 22.4, 'the saving on $112 at 20% is $22.40')
+ok(discountSaving(96, 20) === 19.2, 'the saving on $96 at 20% is $19.20')
 ok(discountSaving(100, 0) === 0, 'no discount saves nothing')
 
 // Rounding must land on whole cents, or the capture check rejects the payment.
@@ -138,8 +138,8 @@ ok(/sessions\}:\$\{discountPercent\}/.test(createOrder), 'the discount is record
 /* ==================================================================
  * Fixed per-lesson rates set by the admin
  * ================================================================== */
-const MONTHLY = { standard: 8, package: 7, packageMin: 4, sessions: 4, credits: 16, fullTotal: 112 }
-const SINGLE = { standard: 8, package: 7, packageMin: 4, sessions: 1, credits: 1, fullTotal: 8 }
+const MONTHLY = { standard: 8, package: 6, packageMin: 4, sessions: 4, credits: 16, fullTotal: 96 }
+const SINGLE = { standard: 8, package: 6, packageMin: 4, sessions: 1, credits: 1, fullTotal: 8 }
 
 console.log('\n--- fixed per-lesson pricing ---')
 const fixed = { pricing: { mode: 'fixed', standardRate: 5, packageRate: 4 } }
@@ -147,7 +147,7 @@ ok(resolveStudentPrice(fixed, MONTHLY).total === 64, 'a $4 package rate on 16 cr
 ok(resolveStudentPrice(fixed, MONTHLY).rate === 4, 'the package rate applies at 4 lessons a week')
 ok(resolveStudentPrice(fixed, SINGLE).rate === 5, 'the single-lesson rate applies below 4 a week')
 ok(resolveStudentPrice(fixed, SINGLE).total === 5, 'one lesson at the agreed rate costs $5')
-ok(resolveStudentPrice(fixed, MONTHLY).saving === 48, 'the saving against the published price is reported')
+ok(resolveStudentPrice(fixed, MONTHLY).saving === 32, 'the saving against the published price is reported')
 ok(resolveStudentPrice(fixed, MONTHLY).mode === 'fixed', 'the mode is reported so the checkout can explain itself')
 
 // A package rate omitted should fall back to the single rate, never to free.
@@ -155,10 +155,10 @@ ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: 6 } }, MONTHLY)
   'an omitted package rate falls back to the single-lesson rate')
 
 console.log('\n--- standard pricing is untouched ---')
-ok(resolveStudentPrice({}, MONTHLY).total === 112, 'a student with no arrangement pays the published price')
+ok(resolveStudentPrice({}, MONTHLY).total === 96, 'a student with no arrangement pays the published price')
 ok(resolveStudentPrice({}, MONTHLY).mode === 'standard', 'the mode is standard')
 ok(resolveStudentPrice({}, MONTHLY).saving === 0, 'nothing is saved')
-ok(resolveStudentPrice({ pricing: { mode: 'standard' } }, MONTHLY).total === 112, 'an explicit standard mode pays full price')
+ok(resolveStudentPrice({ pricing: { mode: 'standard' } }, MONTHLY).total === 96, 'an explicit standard mode pays full price')
 
 console.log('\n--- percent and fixed never stack ---')
 // Stacking would quietly produce a price nobody intended.
@@ -167,21 +167,21 @@ ok(resolveStudentPrice(both, MONTHLY).total === 64, 'a percentage alongside a fi
 ok(resolveStudentPrice(both, MONTHLY).percent === 0, 'the percentage is reported as zero in fixed mode')
 
 console.log('\n--- older records keep working ---')
-ok(resolveStudentPrice({ discount: { percent: 25 } }, MONTHLY).total === 84,
+ok(resolveStudentPrice({ discount: { percent: 25 } }, MONTHLY).total === 72,
   'a discount saved before fixed rates existed still applies')
 ok(resolveStudentPrice({ discount: { percent: 25 } }, MONTHLY).mode === 'percent', 'it is reported as a percentage')
 
 console.log('\n--- fixed rates fail closed ---')
-ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: 0 } }, MONTHLY).total === 112,
+ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: 0 } }, MONTHLY).total === 96,
   'a zero rate is ignored and the family pays full price, never nothing')
-ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: -5 } }, MONTHLY).total === 112,
+ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: -5 } }, MONTHLY).total === 96,
   'a negative rate cannot produce a refund')
-ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: 'free' } }, MONTHLY).total === 112,
+ok(resolveStudentPrice({ pricing: { mode: 'fixed', standardRate: 'free' } }, MONTHLY).total === 96,
   'a non-numeric rate is ignored')
-ok(resolveStudentPrice({ pricing: { mode: 'nonsense', standardRate: 1 } }, MONTHLY).total === 112,
+ok(resolveStudentPrice({ pricing: { mode: 'nonsense', standardRate: 1 } }, MONTHLY).total === 96,
   'an unrecognised mode falls back to full price')
 const expiredFixed = { pricing: { mode: 'fixed', standardRate: 3, expiresAt: new Date(now - DAY).toISOString() } }
-ok(resolveStudentPrice(expiredFixed, MONTHLY, now).total === 112, 'an expired arrangement reverts to full price')
+ok(resolveStudentPrice(expiredFixed, MONTHLY, now).total === 96, 'an expired arrangement reverts to full price')
 ok(normalizeRate(1000) === MAX_SESSION_RATE, 'an absurd rate is capped')
 ok(normalizeRate(0.5) === 0, `a rate below $${MIN_SESSION_RATE} is rejected`)
 

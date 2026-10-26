@@ -173,7 +173,7 @@ const html = `<!doctype html>
         <h2>How the money works</h2>
         <div class="grid">
           <div class="card"><h3>The first class is free</h3><p>A full 25-minute one-to-one lesson, with no card details required. Nothing is charged unless you later choose a plan yourself.</p></div>
-          <div class="card"><h3>$8 or $7 per lesson</h3><p>$8 each for one to three lessons a week, $7 each on a monthly plan of four or more. No registration, materials or platform fees.</p></div>
+          <div class="card"><h3>$8 or $6 per lesson</h3><p>$8 each for one to three lessons a week, $6 each on a monthly plan of four or more. No registration, materials or platform fees.</p></div>
           <div class="card"><h3>Cancel and get the credit back</h3><p>Cancel at least 12 hours ahead and the credit returns in full. If a lesson fails on our side, you always get the credit back.</p></div>
           <div class="card"><h3>14-day refunds</h3><p>Unused credits are refundable within 14 days of purchase. No contract, no lock-in, cancel whenever you like.</p></div>
         </div>

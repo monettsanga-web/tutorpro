@@ -21,7 +21,7 @@
  * a thousand thin ones.
  *
  * ACCURACY: pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3
- * lessons a week, $7 for 4+), coursebooks from src/App.jsx, DTI 5274092, and
+ * lessons a week, $6 for 4+), coursebooks from src/App.jsx, DTI 5274092, and
  * the real 12-hour cancellation and 14-day refund terms. Nothing invented.
  */
 
@@ -194,7 +194,7 @@ function schema(city) {
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: `Online English lessons for children in ${city.city}`,
-    description: `One-to-one online English lessons for children aged 4 to 16 in ${city.city}. Cambridge and Oxford coursebooks, free first class, from $7 per lesson.`,
+    description: `One-to-one online English lessons for children aged 4 to 16 in ${city.city}. Cambridge and Oxford coursebooks, free first class, from $6 per lesson.`,
     provider: {
       '@type': 'EducationalOrganization',
       name: 'TutorPro Online English',
@@ -211,7 +211,7 @@ function schema(city) {
         category: 'Partially Free',
         price: '0',
         priceCurrency: 'USD',
-        description: 'First 25-minute one-to-one class free. Lessons from $7 afterwards.',
+        description: 'First 25-minute one-to-one class free. Lessons from $6 afterwards.',
         url: `${SITE}/${city.slug}.html`,
       },
     },
@@ -287,7 +287,7 @@ function render(city, all) {
         <p>
           <span class="pill">${city.region}</span>
           <span class="pill">Free first class</span>
-          <span class="pill">from $7 per lesson</span>
+          <span class="pill">from $6 per lesson</span>
           <span class="pill">Ages 4–16</span>
         </p>
         <p>

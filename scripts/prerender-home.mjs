@@ -76,7 +76,7 @@ const SECTIONS = [
   },
   {
     heading: 'Why Parents Choose TutorPro',
-    body: 'Experienced teachers, screened by recorded teaching interview before they are given a student. Personalised lessons built around one child. Live classes rather than recordings. Primary and secondary programmes under one roof. Flexible scheduling with evening and weekend slots shown in your own time zone. Written teacher feedback after every lesson. Learning from home with no travel. A free first class with no card required. Published prices from US$7 per lesson, and credits refundable within 14 days.',
+    body: 'Experienced teachers, screened by recorded teaching interview before they are given a student. Personalised lessons built around one child. Live classes rather than recordings. Primary and secondary programmes under one roof. Flexible scheduling with evening and weekend slots shown in your own time zone. Written teacher feedback after every lesson. Learning from home with no travel. A free first class with no card required. Published prices from US$6 per lesson, and credits refundable within 14 days.',
   },
   {
     heading: 'Parents can see exactly what is happening.',
@@ -88,7 +88,7 @@ const SECTIONS = [
   },
   {
     heading: 'Simple, honest pricing in US dollars.',
-    body: 'All prices are in US dollars, so there is no guessing what a lesson costs. Classes are US$8 per 25-minute lesson on the Weekly plan of 1 to 3 classes a week, and US$7 per lesson on the Monthly Package of 4 or more classes a week, billed monthly with priority scheduling and a dedicated tutor. Fifty-minute lessons are available for older learners. The first class is free for every new family with no card required, prices are published on this page rather than hidden behind a sales call, unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full.',
+    body: 'All prices are in US dollars, so there is no guessing what a lesson costs. Classes are US$8 per 25-minute lesson on the Weekly plan of 1 to 3 classes a week, and US$6 per lesson on the Monthly Package of 4 or more classes a week, billed monthly with priority scheduling and a dedicated tutor. Fifty-minute lessons are available for older learners. The first class is free for every new family with no card required, prices are published on this page rather than hidden behind a sales call, unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full.',
   },
   {
     heading: 'Looking for a Special Discount?',
@@ -186,7 +186,7 @@ const FAQS = [
   },
   {
     question: 'What currency are prices in?',
-    answer: 'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$7 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
+    answer: 'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$6 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
   },
 ]
 
@@ -264,7 +264,7 @@ ${faqItems}
  * matching course below. Never publish a rating that is not genuinely earned.
  *
  * Content mirrors the `programmes` object in src/App.jsx and the pricing helpers in
- * src/Dashboards.jsx ($8/class for 1-3 lessons a week, $7/class for 4 or more).
+ * src/Dashboards.jsx ($8/class for 1-3 lessons a week, $6/class for 4 or more).
  */
 const COURSES = [
   {

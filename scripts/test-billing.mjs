@@ -16,7 +16,7 @@ const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf
 const bills = await import('../src/paymentRequests.js')
 const server = await import('../api/_paypal.js')
 
-const RATES = { standard: 8, package: 7, packageMin: 4 }
+const RATES = { standard: 8, package: 6, packageMin: 4 }
 
 /* ================================================================== */
 /* 1. What an administrator may type                                    */
@@ -53,13 +53,13 @@ const expired = { pricing: { mode: 'percent', percent: 50, expiresAt: '2020-01-0
 
 ok(bills.suggestedRequestAmount(1, standardFamily, RATES).amount === 8, '1 session at the standard rate is $8')
 ok(bills.suggestedRequestAmount(3, standardFamily, RATES).amount === 24, '3 sessions is $24')
-ok(bills.suggestedRequestAmount(4, standardFamily, RATES).amount === 28, '4 sessions crosses to the package rate: $28')
-ok(bills.suggestedRequestAmount(12, standardFamily, RATES).amount === 84, '12 sessions is $84')
-ok(bills.suggestedRequestAmount(12, standardFamily, RATES).rate === 7, 'and the per-session figure shown is $7')
-ok(bills.suggestedRequestAmount(12, discounted, RATES).amount === 63, 'a family on 25% off is billed $63 for the same 12 sessions')
+ok(bills.suggestedRequestAmount(4, standardFamily, RATES).amount === 24, '4 sessions crosses to the package rate: $24')
+ok(bills.suggestedRequestAmount(12, standardFamily, RATES).amount === 72, '12 sessions is $72')
+ok(bills.suggestedRequestAmount(12, standardFamily, RATES).rate === 6, 'and the per-session figure shown is $6')
+ok(bills.suggestedRequestAmount(12, discounted, RATES).amount === 54, 'a family on 25% off is billed $54 for the same 12 sessions')
 ok(bills.suggestedRequestAmount(12, negotiated, RATES).amount === 60, 'a family on an agreed $5 package rate is billed $60')
 ok(bills.suggestedRequestAmount(2, negotiated, RATES).amount === 12, 'under the package threshold they pay their agreed $6')
-ok(bills.suggestedRequestAmount(12, expired, RATES).amount === 84, 'an expired arrangement falls back to full price, never a free lesson')
+ok(bills.suggestedRequestAmount(12, expired, RATES).amount === 72, 'an expired arrangement falls back to full price, never a free lesson')
 ok(bills.suggestedRequestAmount(0, standardFamily, RATES).amount === 0, 'no sessions means no amount')
 ok(bills.suggestedRequestAmount(12, discounted, RATES).mode === 'percent', 'the reason for the price is reported to the admin')
 
@@ -77,19 +77,19 @@ ok(bills.buildPaymentRequest({ sessions: 5, amount: 40, note: 'x'.repeat(500) })
 /* ================================================================== */
 /* 3. What the parent's dashboard is allowed to show                    */
 /* ================================================================== */
-const openProfile = { paymentRequest: bills.buildPaymentRequest({ sessions: 12, amount: 84, rate: 7 }) }
+const openProfile = { paymentRequest: bills.buildPaymentRequest({ sessions: 12, amount: 72, rate: 6 }) }
 const openBill = bills.activePaymentRequest(openProfile)
-ok(openBill?.amount === 84 && openBill.sessions === 12, 'an open bill is readable by the dashboard')
+ok(openBill?.amount === 72 && openBill.sessions === 12, 'an open bill is readable by the dashboard')
 ok(bills.activePaymentRequest({}) === null, 'a family with no bill sees nothing')
 ok(bills.activePaymentRequest({ paymentRequest: null }) === null, 'a cleared bill shows nothing')
 ok(bills.activePaymentRequest({ paymentRequest: { sessions: 4, amount: 0 } }) === null, 'a corrupted $0 bill is ignored rather than shown')
 ok(bills.activePaymentRequest({ paymentRequest: { sessions: 0, amount: 40 } }) === null, 'a bill with no sessions is ignored')
 ok(bills.activePaymentRequest({ paymentRequest: 'oops' }) === null, 'junk in the field is ignored')
 
-const paidProfile = { paymentRequest: bills.markPaymentRequestPaid(openProfile.paymentRequest, { orderId: 'ORD1', amount: 84 }) }
+const paidProfile = { paymentRequest: bills.markPaymentRequestPaid(openProfile.paymentRequest, { orderId: 'ORD1', amount: 72 }) }
 ok(bills.activePaymentRequest(paidProfile) === null, 'a paid bill stops asking for money')
 ok(bills.settledPaymentRequest(paidProfile)?.orderId === 'ORD1', 'the paid bill keeps the PayPal order id')
-ok(bills.settledPaymentRequest(paidProfile)?.amount === 84, 'the amount actually paid is recorded')
+ok(bills.settledPaymentRequest(paidProfile)?.amount === 72, 'the amount actually paid is recorded')
 ok(bills.settledPaymentRequest(openProfile) === null, 'an unpaid bill is not reported as paid')
 
 const cancelledProfile = { paymentRequest: bills.cancelPaymentRequest(openProfile.paymentRequest) }
@@ -100,7 +100,7 @@ ok(bills.describePaymentRequest(openProfile.paymentRequest).includes('awaiting p
 ok(bills.describePaymentRequest(paidProfile.paymentRequest).includes('paid'), 'the admin list says when it is paid')
 ok(bills.describePaymentRequest(cancelledProfile.paymentRequest) === 'Bill cancelled', 'and when it was withdrawn')
 ok(bills.describePaymentRequest(null) === 'No bill sent', 'no bill reads plainly')
-ok(bills.paymentRequestSummary(openProfile.paymentRequest) === '12 class sessions — $84.00 total ($7.00 per session)', 'the parent-facing summary reads in plain English')
+ok(bills.paymentRequestSummary(openProfile.paymentRequest) === '12 class sessions — $72.00 total ($6.00 per session)', 'the parent-facing summary reads in plain English')
 ok(bills.paymentRequestSummary(bills.buildPaymentRequest({ sessions: 1, amount: 8, rate: 8 })).includes('1 class session —'), 'a single session is not pluralised')
 
 /* ================================================================== */
@@ -120,10 +120,10 @@ let invoiceRejected = false
 try { server.parseSessions(500, 'invoice') } catch { invoiceRejected = true }
 ok(invoiceRejected, 'even a bill has an upper limit')
 
-const customId = 'acc-1:invoice:12:0:8400'
+const customId = 'acc-1:invoice:12:0:7200'
 const parsed = server.parseCustomId(customId)
 ok(parsed.billingPlan === 'invoice' && parsed.sessions === 12, 'the order reference records the bill')
-ok(parsed.agreedTotal === 84, 'and the exact agreed total, in dollars')
+ok(parsed.agreedTotal === 72, 'and the exact agreed total, in dollars')
 
 const orderFor = (value, id = customId) => ({
   id: 'ORDER-1',

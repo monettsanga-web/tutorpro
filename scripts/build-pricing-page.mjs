@@ -93,7 +93,7 @@ function buildSchema() {
         '@type': 'Course',
         '@id': `${url}#course`,
         name: 'One-to-One Online English Classes for Kids',
-        description: 'One-to-one online English lessons for children and teenagers, from $7 per 25-minute class. Cambridge and Oxford aligned, with a free first class.',
+        description: 'One-to-one online English lessons for children and teenagers, from $6 per 25-minute class. Cambridge and Oxford aligned, with a free first class.',
         url,
         provider: { '@type': 'EducationalOrganization', name: 'TutorPro Online English', sameAs: SITE },
         inLanguage: 'en',
@@ -148,8 +148,8 @@ function buildSchema() {
 
 function page() {
   const url = `${SITE}/pricing.html`
-  const title = 'Online English Class Prices from $7 | TutorPro'
-  const description = 'Transparent pricing for one-to-one online English classes for kids: from $7 per 25-minute lesson, free first class, no contract.'
+  const title = 'Online English Class Prices from $6 | TutorPro'
+  const description = 'Transparent pricing for one-to-one online English classes for kids: from $6 per 25-minute lesson, free first class, no contract.'
 
   const weeklyRows = WEEKLY_ROWS.map((r) => `
             <tr>
@@ -202,7 +202,7 @@ function page() {
         <h1>Online English class pricing</h1>
         <p class="lede">One-to-one lessons from <strong>$8 per 25-minute class</strong>. The first class is free, there is no contract, and every price is published here rather than hidden behind a sales call.</p>
         <p>
-          <span class="pill">from $7 per class</span>
+          <span class="pill">from $6 per class</span>
           <span class="pill">Free first class</span>
           <span class="pill">No contract</span>
           <span class="pill">No hidden fees</span>
