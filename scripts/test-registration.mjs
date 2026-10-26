@@ -123,5 +123,21 @@ ok(/@media \(max-width: 560px\)/.test(responsiveStyles) && /grid-template-column
 ok(/height: min\(860px, calc\(100dvh - 40px\)\)/.test(responsiveStyles), 'desktop registration stays within the available viewport height')
 ok(/body:has\(\.auth-shell--student-register\) \.support-widget/.test(responsiveStyles) && /body:has\(\.auth-shell--student-register\) \.china-mobile-student-prompt/.test(responsiveStyles), 'floating support and locale prompts stay out of the registration overlay')
 
+
+/* One-tap redirect sign-up (owner: clicking the provider must go to that
+   provider's website, like usual OAuth sign-up/sign-in). */
+const oneTapSrc = read('src/oneTapAuth.js')
+const oneTapRow = read('src/OneTapLoginRow.jsx')
+const ensureRoute = read('api/auth/ensure-profile.js')
+const appNow = read('src/App.jsx')
+const portalNow = read('src/PortalAccess.jsx')
+ok(/signInWithOAuth/.test(oneTapSrc) && /redirectTo/.test(oneTapSrc) && /prompt: 'select_account'/.test(oneTapSrc), 'gmail and apple tiles redirect to the provider website through Supabase OAuth')
+ok(/ONE_TAP_PROVIDERS = \['google', 'apple'\]/.test(oneTapSrc), 'only google and apple redirect; yahoo and qq keep email entry (no fake buttons)')
+ok(/clearOAuthIntent\(\)\s*\n\s*return \{ error/.test(oneTapSrc) && /onetap-note/.test(modal), 'a provider that is not switched on yet falls back to the address field with an honest note')
+ok(/auth\.getUser\(token\)/.test(ensureRoute) && /status: role === 'teacher' \? 'pending' : 'active'/.test(ensureRoute), 'the return route verifies the session server-side and stores teacher applications as pending')
+ok(/completeOneTapReturn/.test(appNow) && /resumeAccount=\{resumeStudent\}/.test(appNow) && /resumeIdentity=\{resumeTeacher\}/.test(appNow), 'the app resumes each registration exactly where the redirect left off')
+ok(/startOneTapSignIn/.test(modal) && /startOneTapSignIn/.test(portalNow) && /oneTap: true/.test(portalNow), 'students and teachers both get the one-tap redirect')
+ok(/surface="student"/.test(oneTapRow.replace(/'/g, '"')) || /surface, note/.test(oneTapRow), 'existing login forms offer continue-with-google/apple too')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

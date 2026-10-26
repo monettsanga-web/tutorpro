@@ -6,9 +6,9 @@ import { CheckCircle2, CircleAlert } from 'lucide-react'
 import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from './visitorLocale.js'
 
 const authProviderOptions = [
-  { id: 'gmail', label: 'Gmail', action: 'Use Gmail address', Icon: SiGmail },
+  { id: 'gmail', label: 'Gmail', action: 'Continue on Google', Icon: SiGmail },
   { id: 'yahoo', label: 'Yahoo Mail', action: 'Use Yahoo address', Icon: FaYahoo },
-  { id: 'apple', label: 'Apple ID email', action: 'Use your Apple address', Icon: SiApple },
+  { id: 'apple', label: 'Apple', action: 'Continue on Apple', Icon: SiApple },
   { id: 'qq', label: 'QQ Mail', action: 'Use your QQ address', Icon: SiTencentqq },
   { id: 'email', label: 'Other email', action: 'Any email provider', Icon: MdAlternateEmail },
 ]
