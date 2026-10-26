@@ -3429,6 +3429,8 @@ h3 {
 
 .provider-method--gmail .provider-method__logo { background: #fff0ee; color: #ea4335; }
 .provider-method--yahoo .provider-method__logo { background: #f1eafe; color: #6001d2; }
+.provider-method--apple .provider-method__logo { background: #f0f0f4; color: #17171f; }
+.provider-method--qq .provider-method__logo { background: #e6f4ff; color: #12b7f5; }
 .provider-method--wechat .provider-method__logo { background: #e8fbed; color: #07a84f; }
 .provider-method--whatsapp .provider-method__logo { background: #e7faed; color: #20ad58; }
 .provider-method--email .provider-method__logo { background: #eee8fb; color: #7048df; }

@@ -28,13 +28,17 @@ const yearOptions = [
 ]
 
 function providerField(provider) {
-  return { label: provider === 'gmail' ? 'Gmail address' : provider === 'yahoo' ? 'Yahoo Mail address' : 'Email address', placeholder: provider === 'gmail' ? 'you@gmail.com' : provider === 'yahoo' ? 'you@yahoo.com' : 'you@example.com', inputMode: 'email' }
+  const labels = { gmail: ['Gmail address', 'you@gmail.com'], yahoo: ['Yahoo Mail address', 'you@yahoo.com'], apple: ['Apple ID email', 'you@icloud.com'], qq: ['QQ Mail address', 'you@qq.com'] }
+  const pick = labels[provider] || ['Email address', 'you@example.com']
+  return { label: pick[0], placeholder: pick[1], inputMode: provider === 'qq' ? 'text' : 'email' }
 }
 
 function validProviderLogin(provider, value) {
   const login = value.trim()
   if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
   if (provider === 'yahoo') return /^[^\s@]+@yahoo\.[a-z.]{2,}$/i.test(login)
+  if (provider === 'apple') return /^[^\s@]+@(icloud|me|mac)\.com$/i.test(login)
+  if (provider === 'qq') return /^[^\s@]+@qq\.com$/i.test(login)
   return /^\S+@\S+\.\S+$/.test(login)
 }
 
@@ -404,7 +408,7 @@ export default function AuthModal({
                   <label>
                     <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}<em className="field-required">{chineseVisitor ? '必填' : 'required'}</em></span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
-                      <Mail size={18} /><input autoComplete={['gmail', 'yahoo', 'email'].includes(form.authProvider) ? 'email' : 'username'} inputMode={providerField(form.authProvider).inputMode} name="email" value={form.email} onChange={updateField} placeholder={providerField(form.authProvider).placeholder} />
+                      <Mail size={18} /><input autoComplete={['gmail', 'yahoo', 'apple', 'email'].includes(form.authProvider) ? 'email' : 'username'} inputMode={providerField(form.authProvider).inputMode} name="email" value={form.email} onChange={updateField} placeholder={providerField(form.authProvider).placeholder} />
                     </div>
                     <FieldError>{errors.email}</FieldError>
                     {/* The owner's requirement: a reachable email is part of a

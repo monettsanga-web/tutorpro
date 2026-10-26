@@ -26,6 +26,8 @@ function validLoginId(provider, value) {
   const login = value.trim()
   if (provider === 'gmail') return /^[^\s@]+@gmail\.com$/i.test(login)
   if (provider === 'yahoo') return /^[^\s@]+@yahoo\.[a-z.]{2,}$/i.test(login)
+  if (provider === 'apple') return /^[^\s@]+@(icloud|me|mac)\.com$/i.test(login)
+  if (provider === 'qq') return /^[^\s@]+@qq\.com$/i.test(login)
   if (provider === 'wechat') return /^[a-z][-_a-z0-9]{5,19}$/i.test(login)
   if (provider === 'whatsapp') return /^\+?[0-9\s()-]{8,20}$/.test(login)
   return /^\S+@\S+\.\S+$/.test(login)
