@@ -100,7 +100,7 @@ ok(/10:00|오전 10/.test(seoul.html), 'a 09:00 Manila lesson is shown as 10:00 
 const calendar = createCalendar({ id: 'b1', date: '2026-10-10', time: '09:00', duration: 25, focus: 'Reading' }, 'Juan', 'Teacher M')
 ok(calendar.includes('BEGIN:VCALENDAR') && calendar.includes('END:VCALENDAR'), 'a calendar invitation is produced')
 ok(/BEGIN:VALARM/.test(calendar), 'with reminders before the lesson')
-const route = read('api/notify/booking.js')
+const route = read('api/notify/_booking.js')
 ok(/createCalendar\(/.test(route), 'and the route actually builds it')
 ok(!/mail\.calendar/.test(route), 'rather than reading a property buildEmail never returns')
 
@@ -157,7 +157,7 @@ ok(msg.languageForProfile({ profile_data: { registrationCountry: 'PH' } }) === '
 ok(msg.languageForProfile({ profile_data: { ipLanguage: 'zh-CN' } }) === 'zh-CN', 'and a Chinese reader still gets Chinese, alone')
 ok(Object.keys(msg.COPY).length >= 14, `the message email covers ${Object.keys(msg.COPY).length} languages`)
 
-const messageRoute = read('api/notify/message.js')
+const messageRoute = read('api/notify/_message.js')
 ok(/RESEND_API_KEY/.test(messageRoute) && /501/.test(messageRoute), 'the message route falls back cleanly before the key is set')
 ok(/Not your message/.test(messageRoute), 'only the author can trigger their own notification')
 ok(/emailed_at/.test(messageRoute), 'it refuses to send the same message twice')
@@ -182,7 +182,7 @@ ok(
    committed to this repository at all - it exists only in the Supabase
    dashboard, which is why searching the code for its wording found
    nothing. */
-const supportRoute = read('api/notify/support.js')
+const supportRoute = read('api/notify/_support.js')
 ok(/support_conversations/.test(supportRoute), 'the support route reads the conversation it is told about')
 ok(
   /from '\.\.\/_messageEmail\.js'/.test(supportRoute),
@@ -218,6 +218,22 @@ ok(
   !/bilingual secure email notification/.test(dash),
   'the comment that advertised the bilingual email is gone with it',
 )
+
+
+/* Vercel's Hobby plan refuses a deployment with more than twelve serverless
+   functions, and it fails in seconds with no useful build output. Count the
+   real routes (files not prefixed with _) so the next route added fails here
+   instead of in production. */
+import { readdirSync, statSync } from 'node:fs'
+const countFunctions = (dir) => readdirSync(dir).flatMap((name) => {
+  const full = `${dir}/${name}`
+  if (statSync(full).isDirectory()) return countFunctions(full)
+  return name.endsWith('.js') && !name.startsWith('_') ? [full] : []
+})
+const functionCount = countFunctions('api').length
+ok(functionCount <= 12, `serverless function count stays within the Hobby plan limit (${functionCount} of 12)`)
+const dispatcher = read('api/notify/[type].js')
+ok(/booking, message, support/.test(dispatcher), 'the merged notify dispatcher still serves all three emails')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
