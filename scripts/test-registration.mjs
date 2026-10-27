@@ -144,7 +144,9 @@ ok(/accounts\.google\.com/.test(socialRoute) && /api\.login\.yahoo\.com/.test(so
 ok(/GOOGLE_CLIENT_ID/.test(socialRoute) && /YAHOO_CLIENT_ID/.test(socialRoute) && /get\('check'\)/.test(socialRoute), 'unconfigured providers fall back to email entry instead of dead-ending')
 ok(/api\/auth\/social\?p=/.test(oneTapSrc), 'the client sends google and yahoo through the shared social route')
 
-ok(/<OneTapLoginRow surface="student" variant="register"/.test(modal) && /<OneTapLoginRow surface="teacher" variant="register"/.test(portalNow), 'the registration area itself carries the one-click Google/Apple/Yahoo buttons')
+ok(/<OneTapLoginRow surface="student" intentKind="register"/.test(modal) && /<OneTapLoginRow surface="teacher" intentKind="teacher-register"/.test(portalNow), 'the registration area itself carries the one-click Google/Apple/Yahoo buttons')
+ok(modal.indexOf('<OneTapLoginRow surface="student" intentKind="register"') < modal.indexOf('<AuthProviderPicker'), 'the one-click buttons sit ABOVE the email fields, Novakid style')
+ok(/Or continue with/.test(read('src/OneTapLoginRow.jsx')), 'the divider reads Or continue with, like the reference design')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

@@ -339,6 +339,7 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
               <div className="auth-progress auth-progress--three"><span className="complete" /><span className={step >= 2 ? 'complete' : ''} /><span className={step >= 3 ? 'complete' : ''} /></div>
               {step === 1 ? (
                 <form className="auth-form" onSubmit={nextTeacherStep} noValidate>
+                  <OneTapLoginRow surface="teacher" intentKind="teacher-register" note={providerNote} onNote={setProviderNote} gateMessage={form.fullName.trim().length < 2 ? 'Enter your full name first — your provider opens right after.' : ''} />
                   <label><span>Full name</span><div className={`input-wrap ${errors.fullName ? 'input-wrap--error' : ''}`}><UserRound size={18} /><input autoFocus name="fullName" autoComplete="name" value={form.fullName} onChange={update} placeholder="Your full name" /></div>{errors.fullName && <small className="field-error">{errors.fullName}</small>}</label>
                   <AuthProviderPicker value={form.authProvider} onSelect={async (provider) => {
                     /* Gmail and Apple tiles redirect to the provider's own site;
@@ -359,7 +360,6 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
                     }
                     setForm((current) => ({ ...current, authProvider: provider, email: '' }))
                   }} />
-                  <OneTapLoginRow surface="teacher" variant="register" intentKind="teacher-register" note={providerNote} onNote={setProviderNote} gateMessage={form.fullName.trim().length < 2 ? 'Enter your full name first — your provider opens right after.' : ''} />
                   <label><span>{form.authProvider === 'wechat' ? 'WeChat ID' : form.authProvider === 'whatsapp' ? 'WhatsApp number' : form.authProvider === 'apple' ? 'Apple ID email' : form.authProvider === 'qq' ? 'QQ Mail address' : 'Email address'}</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input name="email" autoComplete="username" value={form.email} onChange={update} placeholder={form.authProvider === 'wechat' ? 'Your WeChat ID' : form.authProvider === 'whatsapp' ? '+63 912 345 6789' : form.authProvider === 'apple' ? 'you@icloud.com' : form.authProvider === 'qq' ? 'you@qq.com' : 'teacher@example.com'} /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
                   <div className="auth-form__row">
                     <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={update} placeholder="8+ characters" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
@@ -383,7 +383,7 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
           ))}
 
           {!isAdmin && view === 'login' && (
-            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><TeacherApplyCta onClick={() => { setView('register'); setError(''); setErrors({}) }} /><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><OneTapLoginRow surface="teacher" note={providerNote} onNote={setProviderNote} /><p className="auth-switch"><button onClick={() => { setView('invite'); setError(''); setErrors({}) }}>I have an invitation code</button></p></>
+            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><TeacherApplyCta onClick={() => { setView('register'); setError(''); setErrors({}) }} /><OneTapLoginRow surface="teacher" intentKind="login" note={providerNote} onNote={setProviderNote} /><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch"><button onClick={() => { setView('invite'); setError(''); setErrors({}) }}>I have an invitation code</button></p></>
           )}
 
           {!isAdmin && view === 'invite' && (

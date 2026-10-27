@@ -445,6 +445,7 @@ export default function AuthModal({
 
               {registerStep === 1 ? (
                 <form className="auth-form auth-form--registration" onSubmit={continueRegistration} noValidate>
+                  <OneTapLoginRow surface="student" intentKind="register" note={providerNote} onNote={setProviderNote} gateMessage={form.terms ? '' : 'Please confirm you are the parent or guardian, then tap your provider again.'} />
                   <label>
                     <span>{chineseVisitor ? '家长或监护人姓名' : 'Parent or guardian name'}</span>
                     <div className={`input-wrap ${errors.parentName ? 'input-wrap--error' : ''}`}>
@@ -474,7 +475,6 @@ export default function AuthModal({
                     setForm((current) => ({ ...current, authProvider: provider, email: '' }))
                     setErrors((current) => ({ ...current, email: '' }))
                   }} />
-                  <OneTapLoginRow surface="student" variant="register" intentKind="register" note={providerNote} onNote={setProviderNote} gateMessage={form.terms ? '' : 'Please confirm you are the parent or guardian, then tap your provider again.'} />
                   <label>
                     <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}<em className="field-required">{chineseVisitor ? '必填' : 'required'}</em></span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
@@ -608,6 +608,7 @@ export default function AuthModal({
               {contactFallback && (
                 <ContactFallback message={contactFallback} details={{ email: form.email }} compact />
               )}
+              <OneTapLoginRow surface="student" note={providerNote} onNote={setProviderNote} />
               <form className="auth-form auth-form--login" onSubmit={submitLogin} noValidate>
                 <label>
                   <span>Email, WeChat ID or WhatsApp number</span>
@@ -628,7 +629,6 @@ export default function AuthModal({
                   {isSubmitting ? 'Logging in…' : 'Log in'} {!isSubmitting && <ArrowRight size={17} />}
                 </button>
               </form>
-              <OneTapLoginRow surface="student" note={providerNote} onNote={setProviderNote} />
               <p className="auth-switch auth-switch--compact"><button onClick={() => switchView('reset-request')}>Forgot password?</button></p>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
               <p className="auth-switch">New to TutorPro Online English? <button type="button" onClick={() => switchView('register')}>Create a free account</button></p>
