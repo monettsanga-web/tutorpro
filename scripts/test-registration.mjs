@@ -133,7 +133,7 @@ const appNow = read('src/App.jsx')
 const portalNow = read('src/PortalAccess.jsx')
 ok(/signInWithOAuth/.test(oneTapSrc) && /redirectTo/.test(oneTapSrc) && /prompt: 'select_account'/.test(oneTapSrc), 'gmail and apple tiles redirect to the provider website through Supabase OAuth')
 ok(/ONE_TAP_PROVIDERS = \['google', 'apple', 'yahoo'\]/.test(oneTapSrc), 'google, apple and yahoo redirect; qq keeps email entry (no fake buttons)')
-ok(/clearOAuthIntent\(\)\s*\n\s*return \{ error/.test(oneTapSrc) && /onetap-note/.test(modal), 'a provider that is not switched on yet falls back to the address field with an honest note')
+ok(/clearOAuthIntent\(\)\s*\n\s*return \{ error/.test(oneTapSrc) && /note=\{providerNote\}/.test(modal), 'a provider that is not switched on yet falls back to the address field with an honest note')
 ok(/auth\.getUser\(token\)/.test(ensureRoute) && /status: role === 'teacher' \? 'pending' : 'active'/.test(ensureRoute), 'the return route verifies the session server-side and stores teacher applications as pending')
 ok(/completeOneTapReturn/.test(appNow) && /resumeAccount=\{resumeStudent\}/.test(appNow) && /resumeIdentity=\{resumeTeacher\}/.test(appNow), 'the app resumes each registration exactly where the redirect left off')
 ok(/startOneTapSignIn/.test(modal) && /startOneTapSignIn/.test(portalNow) && /oneTap: true/.test(portalNow), 'students and teachers both get the one-tap redirect')
@@ -142,6 +142,8 @@ ok(/surface="student"/.test(oneTapRow.replace(/'/g, '"')) || /surface, note/.tes
 const yahooRoute = read('api/auth/yahoo.js')
 ok(/api\.login\.yahoo\.com/.test(yahooRoute) && /generateLink/.test(yahooRoute) && /STATE_COOKIE/.test(yahooRoute), 'the yahoo tile redirects through Yahoo own consent screen with CSRF state')
 ok(/YAHOO_CLIENT_ID/.test(yahooRoute) && /get\('check'\) === '1'/.test(yahooRoute), 'yahoo falls back to email entry until the free developer keys exist')
+
+ok(/<OneTapLoginRow surface="student" variant="register"/.test(modal) && /<OneTapLoginRow surface="teacher" variant="register"/.test(portalNow), 'the registration area itself carries the one-click Google/Apple/Yahoo buttons')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
