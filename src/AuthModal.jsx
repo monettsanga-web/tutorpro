@@ -474,7 +474,7 @@ export default function AuthModal({
                     setForm((current) => ({ ...current, authProvider: provider, email: '' }))
                     setErrors((current) => ({ ...current, email: '' }))
                   }} />
-                  {providerNote && <p className="onetap-note" role="status">{providerNote}</p>}
+                  <OneTapLoginRow surface="student" variant="register" intentKind="register" note={providerNote} onNote={setProviderNote} gateMessage={form.terms ? '' : 'Please confirm you are the parent or guardian, then tap your provider again.'} />
                   <label>
                     <span>{chineseVisitor && form.authProvider === 'email' ? '其他邮箱地址（推荐中国家长）' : providerField(form.authProvider).label}<em className="field-required">{chineseVisitor ? '必填' : 'required'}</em></span>
                     <div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}>
