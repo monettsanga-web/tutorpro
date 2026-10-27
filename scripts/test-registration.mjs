@@ -139,9 +139,10 @@ ok(/completeOneTapReturn/.test(appNow) && /resumeAccount=\{resumeStudent\}/.test
 ok(/startOneTapSignIn/.test(modal) && /startOneTapSignIn/.test(portalNow) && /oneTap: true/.test(portalNow), 'students and teachers both get the one-tap redirect')
 ok(/surface="student"/.test(oneTapRow.replace(/'/g, '"')) || /surface, note/.test(oneTapRow), 'existing login forms offer continue-with-google/apple too')
 
-const yahooRoute = read('api/auth/yahoo.js')
-ok(/api\.login\.yahoo\.com/.test(yahooRoute) && /generateLink/.test(yahooRoute) && /STATE_COOKIE/.test(yahooRoute), 'the yahoo tile redirects through Yahoo own consent screen with CSRF state')
-ok(/YAHOO_CLIENT_ID/.test(yahooRoute) && /get\('check'\) === '1'/.test(yahooRoute), 'yahoo falls back to email entry until the free developer keys exist')
+const socialRoute = read('api/auth/[social].js')
+ok(/accounts\.google\.com/.test(socialRoute) && /api\.login\.yahoo\.com/.test(socialRoute) && /generateLink/.test(socialRoute) && /STATE_COOKIE/.test(socialRoute), 'google and yahoo tiles redirect through the providers own consent screens with CSRF state')
+ok(/GOOGLE_CLIENT_ID/.test(socialRoute) && /YAHOO_CLIENT_ID/.test(socialRoute) && /get\('check'\)/.test(socialRoute), 'unconfigured providers fall back to email entry instead of dead-ending')
+ok(/api\/auth\/social\?p=/.test(oneTapSrc), 'the client sends google and yahoo through the shared social route')
 
 ok(/<OneTapLoginRow surface="student" variant="register"/.test(modal) && /<OneTapLoginRow surface="teacher" variant="register"/.test(portalNow), 'the registration area itself carries the one-click Google/Apple/Yahoo buttons')
 
