@@ -448,14 +448,10 @@ export function adoptCloudAccount(cloudAccount) {
 
 export async function registerTeacher(details) {
   const accounts = readAccounts()
-  /* ONE-TAP APPLICATIONS: the teacher was verified by Google or Apple; the
-     Supabase session is the credential, so there is no password to validate
-     or store. Everything else — validation, pending status — is unchanged. */
-  const oneTap = Boolean(details.oneTap)
   const authProvider = details.authProvider || 'email'
-  const loginId = oneTap ? normalizeEmail(details.email) : normalizeLoginId(authProvider, details.email)
-  const email = oneTap || ['email', 'gmail', 'yahoo', 'apple', 'qq'].includes(authProvider) ? normalizeEmail(details.email) : ''
-  if (!oneTap) validateNewCredentials(authProvider, details.email, details.password)
+  const loginId = normalizeLoginId(authProvider, details.email)
+  const email = ['email', 'gmail', 'yahoo', 'apple', 'qq'].includes(authProvider) ? normalizeEmail(details.email) : ''
+  validateNewCredentials(authProvider, details.email, details.password)
 
   if (accounts.some((account) => accountLoginId(account) === loginId)) {
     throw new Error('An account with this login already exists.')
@@ -467,7 +463,7 @@ export async function registerTeacher(details) {
     throw new Error('Complete the required AI teacher interview before submitting your application.')
   }
 
-  const salt = oneTap ? '' : createSalt()
+  const salt = createSalt()
   const account = {
     id: crypto.randomUUID(),
     role: 'teacher',
@@ -476,7 +472,8 @@ export async function registerTeacher(details) {
     email,
     loginId,
     authProvider,
-    ...(oneTap ? {} : { passwordHash: await hashPassword(details.password, salt), salt }),
+    passwordHash: await hashPassword(details.password, salt),
+    salt,
     createdAt: new Date().toISOString(),
     referralWallet: { freeLessons: 0, coupons: [], coins: 0, xp: 0, transactions: [] },
     teacher: {
@@ -507,9 +504,7 @@ export async function registerTeacher(details) {
     },
   }
 
-  const cloud = oneTap
-    ? await (await import('./oneTapAuth.js')).ensureCloudTeacherProfile(account)
-    : await registerCloudProfile({ login: details.email, password: details.password, provider: authProvider, account })
+  const cloud = await registerCloudProfile({ login: details.email, password: details.password, provider: authProvider, account })
   if (cloud?.userId) {
     account.id = cloud.userId
     account.cloudProfile = true

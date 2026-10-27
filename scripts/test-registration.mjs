@@ -124,29 +124,5 @@ ok(/height: min\(860px, calc\(100dvh - 40px\)\)/.test(responsiveStyles), 'deskto
 ok(/body:has\(\.auth-shell--student-register\) \.support-widget/.test(responsiveStyles) && /body:has\(\.auth-shell--student-register\) \.china-mobile-student-prompt/.test(responsiveStyles), 'floating support and locale prompts stay out of the registration overlay')
 
 
-/* One-tap redirect sign-up (owner: clicking the provider must go to that
-   provider's website, like usual OAuth sign-up/sign-in). */
-const oneTapSrc = read('src/oneTapAuth.js')
-const oneTapRow = read('src/OneTapLoginRow.jsx')
-const ensureRoute = read('api/auth/ensure-profile.js')
-const appNow = read('src/App.jsx')
-const portalNow = read('src/PortalAccess.jsx')
-ok(/signInWithOAuth/.test(oneTapSrc) && /redirectTo/.test(oneTapSrc) && /prompt: 'select_account'/.test(oneTapSrc), 'gmail and apple tiles redirect to the provider website through Supabase OAuth')
-ok(/ONE_TAP_PROVIDERS = \['google', 'apple', 'yahoo'\]/.test(oneTapSrc), 'google, apple and yahoo redirect; qq keeps email entry (no fake buttons)')
-ok(/clearOAuthIntent\(\)\s*\n\s*return \{ error/.test(oneTapSrc) && /note=\{providerNote\}/.test(modal), 'a provider that is not switched on yet falls back to the address field with an honest note')
-ok(/auth\.getUser\(token\)/.test(ensureRoute) && /status: role === 'teacher' \? 'pending' : 'active'/.test(ensureRoute), 'the return route verifies the session server-side and stores teacher applications as pending')
-ok(/completeOneTapReturn/.test(appNow) && /resumeAccount=\{resumeStudent\}/.test(appNow) && /resumeIdentity=\{resumeTeacher\}/.test(appNow), 'the app resumes each registration exactly where the redirect left off')
-ok(/startOneTapSignIn/.test(modal) && /startOneTapSignIn/.test(portalNow) && /oneTap: true/.test(portalNow), 'students and teachers both get the one-tap redirect')
-ok(/surface="student"/.test(oneTapRow.replace(/'/g, '"')) || /surface, note/.test(oneTapRow), 'existing login forms offer continue-with-google/apple too')
-
-const socialRoute = read('api/auth/[social].js')
-ok(/accounts\.google\.com/.test(socialRoute) && /api\.login\.yahoo\.com/.test(socialRoute) && /generateLink/.test(socialRoute) && /STATE_COOKIE/.test(socialRoute), 'google and yahoo tiles redirect through the providers own consent screens with CSRF state')
-ok(/GOOGLE_CLIENT_ID/.test(socialRoute) && /YAHOO_CLIENT_ID/.test(socialRoute) && /get\('check'\)/.test(socialRoute), 'unconfigured providers fall back to email entry instead of dead-ending')
-ok(/api\/auth\/social\?p=/.test(oneTapSrc), 'the client sends google and yahoo through the shared social route')
-
-ok(/<OneTapLoginRow surface="student" intentKind="register"/.test(modal) && /<OneTapLoginRow surface="teacher" intentKind="teacher-register"/.test(portalNow), 'the registration area itself carries the one-click Google/Apple/Yahoo buttons')
-ok(modal.indexOf('<OneTapLoginRow surface="student" intentKind="register"') < modal.indexOf('<AuthProviderPicker'), 'the one-click buttons sit ABOVE the email fields, Novakid style')
-ok(/Or continue with/.test(read('src/OneTapLoginRow.jsx')), 'the divider reads Or continue with, like the reference design')
-
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

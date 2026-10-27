@@ -21,8 +21,6 @@ import {
 } from 'lucide-react'
 import { loginAccount, registerTeacher, requestPasswordReset } from './auth.js'
 import AuthProviderPicker from './AuthProviderPicker.jsx'
-import OneTapLoginRow from './OneTapLoginRow.jsx'
-import { oneTapProviderFor, startOneTapSignIn } from './oneTapAuth.js'
 import { confirmTeacherInvite, isValidEmail, isValidOtp, normalizeOtp, setTeacherPassword } from './teacherInvites.js'
 
 const TeacherAIInterview = lazy(() => import('./TeacherAIInterview.jsx'))
@@ -147,7 +145,7 @@ function TeacherApplyCta({ onClick, variant = 'block' }) {
   )
 }
 
-export default function PortalAccess({ mode, initialView = 'login', onClose, onAuthenticated, onEnterPortal, resumeIdentity = null, resumeStep = 2, notice = '' }) {
+export default function PortalAccess({ mode, initialView = 'login', onClose, onAuthenticated, onEnterPortal }) {
   const isAdmin = mode === 'admin'
   const isPhone = usePhoneLayout()
   /* The gate lives here rather than in the caller so that every route into the
@@ -181,15 +179,14 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
       setInviteBusy(false)
     }
   }
-  const [step, setStep] = useState(resumeIdentity ? Math.max(resumeStep || 2, 2) : 1)
+  const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [errors, setErrors] = useState({})
   const [created, setCreated] = useState(null)
-  const [providerNote, setProviderNote] = useState('')
-  const [form, setForm] = useState({
-    fullName: resumeIdentity?.fullName || '', authProvider: resumeIdentity?.provider || 'gmail', email: resumeIdentity?.email || '', password: '', confirmPassword: '',
+    const [form, setForm] = useState({
+    fullName: '', authProvider: 'gmail', email: '', password: '', confirmPassword: '',
     specialization: 'Both Curricula', bio: '', education: '', experience: '', languages: '', credentials: [],
   })
 
@@ -253,7 +250,7 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
     setSubmitting(true)
     setError('')
     try {
-      const account = await registerTeacher({ ...form, interview, ...(resumeIdentity ? { oneTap: true } : {}) })
+      const account = await registerTeacher({ ...form, interview })
       if (recordingCredentials) {
         try {
           const { linkTeacherInterviewSession } = await import('./teacherInterviewMedia.js')
@@ -326,7 +323,7 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
         </aside>
 
         <div className="role-access__panel">
-          {(error || notice) && <div className="portal-error" role="alert">{error || notice}</div>}
+          {error && <div className="portal-error" role="alert">{error}</div>}
 
           {!isAdmin && view === 'register' && (teacherApplicationBlocked ? (
             /* A phone never reaches the three-step form. See the note on
@@ -339,27 +336,8 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
               <div className="auth-progress auth-progress--three"><span className="complete" /><span className={step >= 2 ? 'complete' : ''} /><span className={step >= 3 ? 'complete' : ''} /></div>
               {step === 1 ? (
                 <form className="auth-form" onSubmit={nextTeacherStep} noValidate>
-                  <OneTapLoginRow surface="teacher" intentKind="teacher-register" note={providerNote} onNote={setProviderNote} gateMessage={form.fullName.trim().length < 2 ? 'Enter your full name first — your provider opens right after.' : ''} />
                   <label><span>Full name</span><div className={`input-wrap ${errors.fullName ? 'input-wrap--error' : ''}`}><UserRound size={18} /><input autoFocus name="fullName" autoComplete="name" value={form.fullName} onChange={update} placeholder="Your full name" /></div>{errors.fullName && <small className="field-error">{errors.fullName}</small>}</label>
-                  <AuthProviderPicker value={form.authProvider} onSelect={async (provider) => {
-                    /* Gmail and Apple tiles redirect to the provider's own site;
-                       the application resumes at step 2 when the teacher returns. */
-                    const oneTapProvider = oneTapProviderFor(provider)
-                    if (oneTapProvider) {
-                      if (form.fullName.trim().length < 2) {
-                        setErrors((current) => ({ ...current, fullName: 'Enter your full name first — your provider opens right after.' }))
-                        return
-                      }
-                      setProviderNote('')
-                      const result = await startOneTapSignIn(oneTapProvider, { kind: 'teacher-register', surface: 'teacher', fullName: form.fullName.trim() })
-                      if (result.error) {
-                        setForm((current) => ({ ...current, authProvider: provider, email: '' }))
-                        setProviderNote(result.error)
-                      }
-                      return
-                    }
-                    setForm((current) => ({ ...current, authProvider: provider, email: '' }))
-                  }} />
+                  <AuthProviderPicker value={form.authProvider} onSelect={(provider) => setForm((current) => ({ ...current, authProvider: provider, email: '' }))} />
                   <label><span>{form.authProvider === 'wechat' ? 'WeChat ID' : form.authProvider === 'whatsapp' ? 'WhatsApp number' : form.authProvider === 'apple' ? 'Apple ID email' : form.authProvider === 'qq' ? 'QQ Mail address' : 'Email address'}</span><div className={`input-wrap ${errors.email ? 'input-wrap--error' : ''}`}><Mail size={18} /><input name="email" autoComplete="username" value={form.email} onChange={update} placeholder={form.authProvider === 'wechat' ? 'Your WeChat ID' : form.authProvider === 'whatsapp' ? '+63 912 345 6789' : form.authProvider === 'apple' ? 'you@icloud.com' : form.authProvider === 'qq' ? 'you@qq.com' : 'teacher@example.com'} /></div>{errors.email && <small className="field-error">{errors.email}</small>}</label>
                   <div className="auth-form__row">
                     <label><span>Password</span><div className={`input-wrap ${errors.password ? 'input-wrap--error' : ''}`}><LockKeyhole size={18} /><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={update} placeholder="8+ characters" /><button type="button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{errors.password && <small className="field-error">{errors.password}</small>}</label>
@@ -383,7 +361,7 @@ export default function PortalAccess({ mode, initialView = 'login', onClose, onA
           ))}
 
           {!isAdmin && view === 'login' && (
-            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><TeacherApplyCta onClick={() => { setView('register'); setError(''); setErrors({}) }} /><OneTapLoginRow surface="teacher" intentKind="login" note={providerNote} onNote={setProviderNote} /><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch"><button onClick={() => { setView('invite'); setError(''); setErrors({}) }}>I have an invitation code</button></p></>
+            <><div className="auth-heading role-login-heading"><span className="auth-heading__icon"><GraduationCap size={22} /></span><div><span>Teacher studio</span><h2 id="role-access-title">Teacher login</h2><p>Manage your profile, availability and bookings.</p></div></div><TeacherApplyCta onClick={() => { setView('register'); setError(''); setErrors({}) }} /><LoginForm form={form} update={update} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} submitting={submitting} onSubmit={submitLogin} onForgot={() => { setView('reset-request'); setError(''); setErrors({}) }} /><p className="auth-switch"><button onClick={() => { setView('invite'); setError(''); setErrors({}) }}>I have an invitation code</button></p></>
           )}
 
           {!isAdmin && view === 'invite' && (

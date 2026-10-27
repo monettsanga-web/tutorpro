@@ -43,7 +43,6 @@ const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ defa
 const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
 const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
-import { clearOAuthIntent, completeOneTapReturn, readOAuthIntent } from './oneTapAuth.js'
 import { SUBJECTS } from './subjects.js'
 
 /*
@@ -2117,11 +2116,6 @@ export default function App() {
      application so an applicant does not have to find the link behind the
      login form first. */
   const [roleAccessView, setRoleAccessView] = useState('login')
-  /* One-tap Google/Apple returns: who has to resume which flow. */
-  const [resumeStudent, setResumeStudent] = useState(null)
-  const [resumeTeacher, setResumeTeacher] = useState(null)
-  const [portalNotice, setPortalNotice] = useState('')
-  const [oneTapNote, setOneTapNote] = useState('')
   const [activePortal, setActivePortal] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState('')
   const [preferredTeacher, setPreferredTeacher] = useState(null)
@@ -2351,71 +2345,6 @@ export default function App() {
     setActivePortal(account.role || 'student')
   }
 
-  /* ONE-TAP RETURN HANDLER
-     ----------------------
-     Google/Apple sent the browser back with a session hash (Supabase picks
-     it up automatically). This finishes the flow the person started before
-     the redirect: student registrations reopen at step 2 with the account
-     already created, teacher applications reopen at step 2 with their
-     verified identity, and logins land straight in the right portal. */
-  useEffect(() => {
-    let active = true
-    /* A Yahoo bounce that could not finish (declined consent, expired
-       state) comes back with ?yt=err: reopen the form with an honest note
-       instead of silently doing nothing. */
-    const yahooError = new URL(window.location.href).searchParams.get('yt') === 'err'
-    const yahooIntent = yahooError ? readOAuthIntent() : null
-    if (yahooError) {
-      clearOAuthIntent()
-      try { window.history.replaceState({}, '', window.location.pathname) } catch { /* cosmetic */ }
-    }
-    completeOneTapReturn()
-      .then((result) => {
-        if (!active) return
-        /* State updates live in this callback, never synchronously in the
-           effect body. */
-        if (yahooError) {
-          const note = 'Yahoo one-tap could not finish — you can register with your Yahoo address below instead.'
-          if (yahooIntent?.surface === 'teacher') { setPortalNotice(note); setRoleAccess('teacher'); setRoleAccessView('register') }
-          else { setOneTapNote(note); setAuthMode('register'); setAuthOpen(true) }
-          if (!result) return
-        }
-        if (!result) return
-        const intent = result.intent || {}
-        if (result.cancelled) {
-          // Came back without signing in at the provider: reopen where they were.
-          if (intent.surface === 'teacher') { setRoleAccess('teacher'); setRoleAccessView('register') }
-          else { setAuthMode('register'); setAuthOpen(true) }
-          return
-        }
-        if (result.needsApplication) {
-          setResumeTeacher(result.identity)
-          setPortalNotice(intent.kind === 'login' ? 'No teacher application was found for that account yet — complete the three-step application and the administrator will review it.' : '')
-          setRoleAccess('teacher')
-          setRoleAccessView('register')
-          return
-        }
-        if (!result.account) return
-        if (intent.surface === 'teacher') {
-          if (result.account.role !== 'teacher') {
-            setPortalNotice('That account is not a teacher login. Use “Apply as a teacher” to join the team.')
-            setRoleAccess('teacher')
-            setRoleAccessView('login')
-            return
-          }
-          enterPortal(result.account)
-          return
-        }
-        setCurrentAccount(result.account)
-        if (intent.kind === 'register') {
-          setResumeStudent(result.account)
-          setAuthMode('register')
-          setAuthOpen(true)
-        }
-      })
-      .catch(() => { /* Provider unreachable or aborted: the visit continues normally. */ })
-    return () => { active = false }
-  }, [])
 
   const openRegistration = (plan = '') => {
     if (currentAccount) {
@@ -2565,9 +2494,7 @@ export default function App() {
           preferredTeacher={preferredTeacher}
           referralCode={incomingReferralCode}
           currentAccount={currentAccount}
-          resumeAccount={resumeStudent}
-          initialNote={oneTapNote}
-          onClose={() => { setAuthOpen(false); setResumeStudent(null) }}
+          onClose={() => setAuthOpen(false)}
           onAuthenticated={setCurrentAccount}
           onExplore={closeAndExplore}
           onEnterPortal={enterPortal}
@@ -2578,9 +2505,7 @@ export default function App() {
           key={`${roleAccess}-${roleAccessView}`}
           mode={roleAccess}
           initialView={roleAccessView}
-          resumeIdentity={resumeTeacher}
-          notice={portalNotice}
-          onClose={() => { setRoleAccess(null); setResumeTeacher(null); setPortalNotice('') }}
+          onClose={() => setRoleAccess(null)}
           onAuthenticated={setCurrentAccount}
           onEnterPortal={enterPortal}
         />
