@@ -42,7 +42,7 @@ export default async function handler(req, res) {
 
     /* Tiles speak 'gmail'/'apple'; Supabase speaks 'google'/'apple'. Store
        the tile ids so every existing login path recognises the account. */
-    const provider = user.app_metadata?.provider === 'apple' ? 'apple' : 'gmail'
+    const provider = user.app_metadata?.provider === 'apple' ? 'apple' : body.authProvider === 'yahoo' ? 'yahoo' : 'gmail'
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {})
     const role = body.role === 'teacher' ? 'teacher' : 'student'
