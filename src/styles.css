@@ -3432,14 +3432,16 @@ h3 {
 .provider-method--apple .provider-method__logo { background: #f0f0f4; color: #17171f; }
 .provider-method--qq .provider-method__logo { background: #e6f4ff; color: #12b7f5; }
 
-/* One-tap Google/Apple sign-in: the honest note and the login-form row. */
+/* One-tap sign-in, Novakid pattern: big provider buttons on top, an
+   "Or continue with" divider, then the email fields below. */
+.onetap-primary { margin-bottom: 2px; }
+.onetap-primary__buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.onetap-primary__btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; border: 1.5px solid #e4def8; border-radius: 12px; background: #fff; color: #2c2140; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+.onetap-primary__btn:hover { border-color: #b9a7ee; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(91, 58, 160, 0.12); }
+.onetap-primary__btn svg { flex: none; }
+.onetap-divider { display: flex; align-items: center; gap: 12px; margin: 14px 0 12px; color: #8a7aa5; font-size: 12.5px; font-weight: 700; letter-spacing: 0.03em; }
+.onetap-divider::before, .onetap-divider::after { content: ''; flex: 1; height: 1px; background: #e6e0f2; }
 .onetap-note { margin: 10px 2px 0; font-size: 13px; line-height: 1.5; color: #6f5f8c; }
-.onetap-login { margin-top: 16px; text-align: center; }
-.onetap-login > span { font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #8a7aa5; }
-.onetap-login__buttons { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-.onetap-button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(74, 44, 120, 0.18); background: #fff; color: #2c2140; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; transition: border-color 0.15s ease, transform 0.15s ease; }
-.onetap-button:hover { border-color: rgba(74, 44, 120, 0.45); transform: translateY(-1px); }
-.onetap-button svg { color: #5b3aa0; }
 .provider-method--wechat .provider-method__logo { background: #e8fbed; color: #07a84f; }
 .provider-method--whatsapp .provider-method__logo { background: #e7faed; color: #20ad58; }
 .provider-method--email .provider-method__logo { background: #eee8fb; color: #7048df; }
