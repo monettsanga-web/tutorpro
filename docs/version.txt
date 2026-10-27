@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-27 novakid-style
+TutorPro English production build 2026-10-27 remove-onetap
