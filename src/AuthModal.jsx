@@ -70,6 +70,7 @@ export default function AuthModal({
   initialMode = 'register',
   resumeAccount = null,
   resumeStep = 2,
+  initialNote = '',
   selectedPlan = '',
   preferredTeacher = null,
   referralCode = '',
@@ -96,7 +97,7 @@ export default function AuthModal({
     ...(resumeAccount ? { authProvider: resumeAccount.authProvider || 'gmail', parentName: resumeAccount.parentName || '', email: resumeAccount.email || '' } : {}),
   }))
   const [oauthAccount] = useState(resumeAccount)
-  const [providerNote, setProviderNote] = useState('')
+  const [providerNote, setProviderNote] = useState(initialNote)
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   // Set when a failure is OUR fault (database unreachable or restricted)

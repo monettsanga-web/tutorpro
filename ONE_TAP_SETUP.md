@@ -37,14 +37,27 @@ Supabase dashboard → *Authentication → Providers → Apple*: enter Team ID,
 Key ID, the .p8 contents, and the Services ID as client id → same URL
 Configuration as Google. The Apple tiles light up afterwards.
 
-## Yahoo and QQ — why these tiles do not redirect
+## Yahoo (free, ~5 minutes)
 
-- **Yahoo**: no OAuth provider exists on this backend (Supabase does not
-  offer Yahoo), so there is no redirect to make.
-- **QQ**: QQ Connect requires a Chinese business licence to register an
-  application — not available to this site.
+The redirect code is already live; it only needs two keys.
 
-Both tiles therefore collect the family's Yahoo Mail / QQ Mail address
-directly, which still ends in a real, reachable inbox. If you ever want
-Yahoo redirect sign-in badly enough, it needs custom server work with a
-Yahoo developer app (free) — ask and I will scope it.
+1. **developer.yahoo.com** → sign in with any Yahoo account → **Create
+   Project** (or an app inside one).
+2. Home Page URL: `https://www.tutorpro.site`
+   **Redirect URI(s):** `https://www.tutorpro.site/api/auth/yahoo`
+   (API permissions: none needed beyond the default OpenID scopes.)
+3. Copy the **Client ID** and **Client Secret** from the app page.
+4. **Vercel dashboard** → tutorpro project → Settings → Environment
+   Variables → add two, for Production + Preview:
+   `YAHOO_CLIENT_ID` and `YAHOO_CLIENT_SECRET`.
+5. Redeploy once (Dashboard → Deployments → latest → Redeploy is fine NOW,
+   because the current code is healthy) or wait for the next merge.
+
+The Yahoo tile redirects for real from that moment.
+
+## QQ — why this tile can never redirect
+
+QQ Connect requires a **Chinese business licence** to register an
+application, which this site does not have. The QQ tile therefore collects
+the family's QQ Mail address directly — still a real, reachable inbox, and
+still one tap to start.

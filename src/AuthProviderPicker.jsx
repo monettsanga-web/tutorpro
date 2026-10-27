@@ -7,7 +7,7 @@ import { currentVisitorLocale, isChineseVisitor, subscribeToVisitorLocale } from
 
 const authProviderOptions = [
   { id: 'gmail', label: 'Gmail', action: 'Continue on Google', Icon: SiGmail },
-  { id: 'yahoo', label: 'Yahoo Mail', action: 'Use Yahoo address', Icon: FaYahoo },
+  { id: 'yahoo', label: 'Yahoo', action: 'Continue on Yahoo', Icon: FaYahoo },
   { id: 'apple', label: 'Apple', action: 'Continue on Apple', Icon: SiApple },
   { id: 'qq', label: 'QQ Mail', action: 'Use your QQ address', Icon: SiTencentqq },
   { id: 'email', label: 'Other email', action: 'Any email provider', Icon: MdAlternateEmail },

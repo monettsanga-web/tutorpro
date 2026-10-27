@@ -21,12 +21,13 @@ import { adoptCloudAccount } from './auth.js'
  * caught and the tile falls back to email entry with an honest one-liner,
  * so no button is ever dead.
  */
-export const ONE_TAP_PROVIDERS = ['google', 'apple']
+export const ONE_TAP_PROVIDERS = ['google', 'apple', 'yahoo']
 const TILE_BY_PROVIDER = { google: 'gmail', apple: 'apple' }
 
 export function oneTapProviderFor(tileId) {
   if (tileId === 'gmail') return 'google'
   if (tileId === 'apple') return 'apple'
+  if (tileId === 'yahoo') return 'yahoo'
   return null
 }
 
@@ -67,7 +68,19 @@ function friendlyProviderError(error) {
 export async function startOneTapSignIn(provider, intent) {
   if (!ONE_TAP_PROVIDERS.includes(provider)) return { error: 'That provider signs up with its email address.' }
   if (!supabase) return { error: 'One-tap sign-in is not configured on this site yet. Please enter your email address instead.' }
-  saveIntent(intent)
+  saveIntent({ ...intent, providerHint: provider })
+  /* Yahoo has no Supabase provider: our own route bounces the browser to
+     Yahoo's consent screen and back through a Supabase magic link. The
+     ?check=1 preflight keeps an unconfigured Yahoo on the page. */
+  if (provider === 'yahoo') {
+    const preflight = await fetch('/api/auth/yahoo?check=1').then((response) => response.json()).catch(() => null)
+    if (!preflight?.ok) {
+      clearOAuthIntent()
+      return { error: 'One-tap sign-in with this provider has not been switched on for the site yet — enter your email address below instead.' }
+    }
+    window.location.href = '/api/auth/yahoo'
+    return { redirected: true }
+  }
   const options = { redirectTo: `${window.location.origin}/` }
   // Let the family choose which Google account to use, every time.
   if (provider === 'google') options.queryParams = { access_type: 'consent', prompt: 'select_account' }
@@ -122,7 +135,7 @@ export async function completeOneTapReturn() {
   const identity = {
     fullName: String(user.user_metadata?.full_name || intent.fullName || ''),
     email: String(user.email || '').toLowerCase(),
-    provider: TILE_BY_PROVIDER[user.app_metadata?.provider] || 'gmail',
+    provider: TILE_BY_PROVIDER[user.app_metadata?.provider] || intent.providerHint || 'gmail',
   }
 
   const { data: row } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
@@ -148,6 +161,7 @@ export async function completeOneTapReturn() {
       selectedPlan: intent.selectedPlan || '',
       preferredTeacherId: intent.preferredTeacherId || '',
       referredByCode: intent.referralCode || '',
+      authProvider: intent.providerHint === 'yahoo' ? 'yahoo' : undefined,
       registrationCountry: intent.registrationCountry || '',
       attribution: intent.attribution || null,
     }),

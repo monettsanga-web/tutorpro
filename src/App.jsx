@@ -43,7 +43,7 @@ const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ defa
 const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
 const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
-import { completeOneTapReturn } from './oneTapAuth.js'
+import { clearOAuthIntent, completeOneTapReturn, readOAuthIntent } from './oneTapAuth.js'
 import { SUBJECTS } from './subjects.js'
 
 /*
@@ -2121,6 +2121,7 @@ export default function App() {
   const [resumeStudent, setResumeStudent] = useState(null)
   const [resumeTeacher, setResumeTeacher] = useState(null)
   const [portalNotice, setPortalNotice] = useState('')
+  const [oneTapNote, setOneTapNote] = useState('')
   const [activePortal, setActivePortal] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState('')
   const [preferredTeacher, setPreferredTeacher] = useState(null)
@@ -2359,9 +2360,27 @@ export default function App() {
      verified identity, and logins land straight in the right portal. */
   useEffect(() => {
     let active = true
+    /* A Yahoo bounce that could not finish (declined consent, expired
+       state) comes back with ?yt=err: reopen the form with an honest note
+       instead of silently doing nothing. */
+    const yahooError = new URL(window.location.href).searchParams.get('yt') === 'err'
+    const yahooIntent = yahooError ? readOAuthIntent() : null
+    if (yahooError) {
+      clearOAuthIntent()
+      try { window.history.replaceState({}, '', window.location.pathname) } catch { /* cosmetic */ }
+    }
     completeOneTapReturn()
       .then((result) => {
-        if (!active || !result) return
+        if (!active) return
+        /* State updates live in this callback, never synchronously in the
+           effect body. */
+        if (yahooError) {
+          const note = 'Yahoo one-tap could not finish — you can register with your Yahoo address below instead.'
+          if (yahooIntent?.surface === 'teacher') { setPortalNotice(note); setRoleAccess('teacher'); setRoleAccessView('register') }
+          else { setOneTapNote(note); setAuthMode('register'); setAuthOpen(true) }
+          if (!result) return
+        }
+        if (!result) return
         const intent = result.intent || {}
         if (result.cancelled) {
           // Came back without signing in at the provider: reopen where they were.
@@ -2547,6 +2566,7 @@ export default function App() {
           referralCode={incomingReferralCode}
           currentAccount={currentAccount}
           resumeAccount={resumeStudent}
+          initialNote={oneTapNote}
           onClose={() => { setAuthOpen(false); setResumeStudent(null) }}
           onAuthenticated={setCurrentAccount}
           onExplore={closeAndExplore}
