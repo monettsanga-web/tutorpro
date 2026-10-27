@@ -40,12 +40,12 @@ User-agent: ClaudeBot
 Allow: /
 
 # Links like /?book=1 and /?action=book open the booking panel on the home
-# page. They are the home page - the canonical tag says so - but Google
-# crawls each one, reports it under "Alternate page with proper canonical
-# tag", and spends crawl budget doing it. On a site where 33 real pages are
-# sitting at "Discovered - currently not indexed", that budget is better
-# spent elsewhere. The canonical tags stay; this just stops the re-crawling.
-User-agent: *
-Disallow: /*?
+# page. They USED to be blocked here (Disallow: /*?) to save crawl budget.
+# Google Search Console then listed every one of those URLs as "Blocked by
+# robots.txt" with a failed validation - and a robots block also stops Google
+# from reading the canonical tag that points each variant at the home page,
+# which is what actually de-duplicates them. The variants are allowed again:
+# the canonical tag does the dedup, the report goes empty, and nothing real
+# was ever hidden behind a query string.
 
 Sitemap: https://www.tutorpro.site/sitemap.xml
