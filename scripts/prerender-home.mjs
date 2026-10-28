@@ -26,17 +26,15 @@ const distIndex = resolve(here, '..', 'dist', 'index.html')
 /* Copy mirrored from src/App.jsx — keep these in sync. */
 const HERO = {
   eyebrow: 'Cambridge & Oxford aligned',
-  // The H1 must carry the query, not a slogan. "English confidence, built one
-  // lesson at a time" says nothing a parent would ever type into Google, and
-  // the homepage is the highest-authority page on the site — wasting its H1
-  // on a tagline is the single most expensive on-page mistake available.
-  // The tagline still appears as the lede, so nothing is lost.
-  // "Kids & Teens" was dropped from the H1 on purpose. Search Console shows
-  // the page already ranking around position 6 for "english tutor" with no
-  // clicks at all, so the job is relevance and a clearer promise, not more
-  // words. Teens are still named in the lede and have their own page.
-  heading: 'Online English Classes for Kids',
-  tagline: 'Live one-to-one classes with near-native Filipino English teachers — clear, patient, and trusted by families worldwide.',
+  // H1 wording is the owner's explicit brand decision (2026-10-28 spec):
+  // "Build Your Child's English Confidence with TutorPro!". The search
+  // targeting that used to live in the H1 is preserved everywhere else it
+  // still counts: the <title> and meta description ("Online English
+  // Classes for Kids"), the lede ("online English tutor"), the section
+  // headings below, and every keyword page. React's H1 and this one must
+  // always match — Google indexes what React renders.
+  heading: 'Build Your Child\'s English Confidence with TutorPro!',
+  tagline: 'Personalized online English lessons for primary and secondary students — live one-to-one with near-native Filipino English teachers.',
   lede: 'Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one, so they speak for the whole lesson — building confidence in speaking, reading, grammar and writing with an experienced English teacher.',
   proof: ['No commitment', 'From $8 per class', 'Flexible times'],
 }
@@ -221,7 +219,7 @@ function buildStaticHtml() {
         <p>${escapeHtml(HERO.tagline)}</p>
         <p>${escapeHtml(HERO.lede)}</p>
         <p>${HERO.proof.map(escapeHtml).join(' · ')}</p>
-        <p><a href="/?action=book">Book a free first class</a> · <a href="#programmes">Explore programmes</a></p>
+        <p><a href="/?action=book">Book a Free Trial</a> · <a href="/signup">Sign Up</a> · <a href="/login">Log In</a> · <a href="#programmes">Explore programmes</a></p>
       </header>
 ${sections}
       <section>

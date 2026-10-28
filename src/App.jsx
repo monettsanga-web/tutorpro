@@ -310,10 +310,10 @@ function Hero({ onBook, onTeacherApply }) {
               heading the prerender had carefully put in place, and the whole
               homepage optimisation was being undone a second after load.
               The tagline survives directly underneath, so nothing is lost. */}
-          <h1>Online English Classes for <em>Kids</em></h1>
-          <p className="hero__tagline">Live one-to-one classes with near-native Filipino English teachers — clear, patient, and trusted by families worldwide.</p>
+          <h1>Build Your Child's English Confidence with TutorPro!</h1>
+          <p className="hero__tagline">Personalized online English lessons for primary and secondary students — live one-to-one with near-native Filipino English teachers.</p>
           <p className="hero__lede">
-            TutorPro is an online English school helping children around the world build confidence in speaking, reading, listening, grammar, vocabulary and communication. One teacher, one child, live — in English, Maths, Science and ICT for ages 4–16.
+            Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one, so they speak for the whole lesson — building confidence in speaking, reading, grammar and writing with an experienced English teacher.
           </p>
           <div className="hero-age-widget" role="group" aria-label="Child's age">
             <span className="hero-age-widget__label">Child’s age</span>
@@ -327,9 +327,19 @@ function Hero({ onBook, onTeacherApply }) {
             </button>
           </div>
           <div className="hero__actions">
+            {/* Owner spec 2026-10-28: Book a Free Trial leads; Sign Up and
+                Log In sit right beside it on the real /signup and /login
+                URLs (served by the vercel.json rewrites). Explore + teacher
+                apply stay — nothing that worked was removed. */}
             <button className="button button--primary button--large" onClick={onBook}>
-              Book a free trial <ArrowRight size={18} />
+              Book a Free Trial <ArrowRight size={18} />
             </button>
+            <a className="button button--outline button--large" href="/signup">
+              Sign Up
+            </a>
+            <a className="button button--quiet button--large" href="/login">
+              Log In
+            </a>
             <a className="button button--quiet button--large" href="#programmes">
               Explore our programs
             </a>
@@ -346,7 +356,7 @@ function Hero({ onBook, onTeacherApply }) {
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
           <div className="hero__proof" aria-label="TutorPro Online English benefits">
             <span><Check size={15} /> No commitment</span>
-            <span><Check size={15} /> From US$8 per class</span>
+            <span><Check size={15} /> From US$6 per class</span>
             <span><Check size={15} /> Flexible times</span>
           </div>
         </div>
@@ -2443,6 +2453,7 @@ export default function App() {
 
   return (
     <>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <Header
         onBook={openRegistration}
         onLogin={openLogin}
@@ -2462,11 +2473,11 @@ export default function App() {
         </div>
       )}
       {showPublicTeachers && teachersVisible ? (
-        <main>
+        <main id="main-content">
           <TeacherShowcase onChooseTeacher={chooseTeacher} onBack={() => { setShowPublicTeachers(false); window.scrollTo(0, 0); }} />
         </main>
       ) : (
-        <main>
+        <main id="main-content">
           <Hero onBook={openRegistration} onTeacherApply={openTeacherApply} />
           <WhyParents onBook={openRegistration} />
           <SeeAClass />
