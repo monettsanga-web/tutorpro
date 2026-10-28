@@ -102,7 +102,11 @@ const homeTitle = pick(home, /<title>([\s\S]*?)<\/title>/i)
 ok(/online english classes for kids/i.test(homeTitle), `the homepage title leads with the main search term: "${homeTitle}"`)
 ok(homeTitle.length <= TITLE_MAX, `and fits (${homeTitle.length} chars)`)
 const h1 = pick(home, /<h1[^>]*>([\s\S]*?)<\/h1>/i).replace(/<[^>]+>/g, '')
-ok(/online english classes for kids/i.test(h1), `the prerendered H1 matches the title: "${h1.trim()}"`)
+/* The H1 is the owner's exact brand headline (2026-10-28 spec). The search
+   targeting it gave up must still live in the title (asserted above) and in
+   the rendered homepage copy (lede, sections, keyword pages). */
+ok(h1.trim() === "Build Your Child's English Confidence with TutorPro!", `the prerendered H1 is the owner's exact brand headline: "${h1.trim()}"`)
+ok(/online english (classes|tutor)/i.test(home), 'the homepage copy still carries the target search phrases outside the H1')
 
 /* Short descriptions are a missed opportunity rather than a fault, so they
    are reported but do not fail the run. */

@@ -3680,6 +3680,10 @@ h3 {
 
 /* Log In / Sign Up header pair: anchors styled exactly like the old buttons,
    plus the Remember-me row on the login form. */
+/* Accessibility: skip straight to the content with the keyboard. */
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 200; background: #321568; color: #fff; padding: 10px 16px; border-radius: 0 0 10px 10px; font-weight: 700; font-size: 14px; text-decoration: none; transition: top 0.15s ease; }
+.skip-link:focus { top: 0; }
+
 a.header-portal-link, a.mobile-portal-button, a.button { text-decoration: none; display: inline-flex; align-items: center; }
 .remember-row { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; color: #4a3b6b; margin: 2px 2px 10px; cursor: pointer; user-select: none; }
 .remember-row input { width: 17px; height: 17px; accent-color: #5b3aa0; cursor: pointer; flex: none; }
@@ -8767,7 +8771,7 @@ body:has(.auth-shell--student-register) .messenger-float {
 .teacher-strip__card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(50, 21, 104, 0.16); }
 .teacher-strip__photo { width: 84px; height: 84px; margin-bottom: 8px; }
 .teacher-strip__photo strong, .teacher-strip__photo img { width: 84px; height: 84px; border-radius: 999px; font-size: 2rem; }
-.teacher-strip__card strong { color: #321568; font-family: 'Nunito', 'Manrope', ui-rounded, sans-serif; font-size: 1.05rem; }
+.teacher-strip__card strong { color: #321568; font-family: 'Nunito', 'Manrope', sans-serif; font-size: 1.05rem; }
 .teacher-strip__card small { color: #716981; font-weight: 700; font-size: 0.85rem; }
 .teacher-strip__card span {
   margin-top: 6px; background: #f4fbe4; border: 1px solid #dff5a7; color: #4d7c0f;
@@ -8816,7 +8820,7 @@ body:has(.auth-shell--student-register) .messenger-float {
 .footer__pill--whatsapp { background: linear-gradient(135deg, #1faf5a, #25d366); box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3); }
 .footer__links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
 .footer__links h3 {
-  color: #fff; font-family: 'Nunito', 'Manrope', ui-rounded, sans-serif;
+  color: #fff; font-family: 'Nunito', 'Manrope', sans-serif;
   font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 12px;
 }
 .footer__links a, .footer__links button {
@@ -8830,7 +8834,7 @@ body:has(.auth-shell--student-register) .messenger-float {
   background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
   display: flex; justify-content: space-between; gap: 22px; align-items: center; flex-wrap: wrap;
 }
-.footer__teacher-callout h3 { color: #fff; margin: 0 0 6px; font-family: 'Nunito', 'Manrope', ui-rounded, sans-serif; }
+.footer__teacher-callout h3 { color: #fff; margin: 0 0 6px; font-family: 'Nunito', 'Manrope', sans-serif; }
 .footer__teacher-callout p { color: #cfc6e4; margin: 0; }
 .footer__teacher-callout small { color: #9c92b8; }
 .footer__bottom {

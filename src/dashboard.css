@@ -13748,7 +13748,7 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 .feedback-prompt-output textarea {
   width: 100%; min-height: 190px; resize: vertical;
   background: #1f2937; color: #e5e7eb; border: 1px solid #374151; border-radius: 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem;
+  font-family: 'Courier New', monospace; font-size: 0.85rem;
   line-height: 1.5; padding: 10px 12px; outline: none;
 }
 .feedback-prompt-output__actions { display: flex; gap: 8px; margin-top: 8px; }
@@ -13887,5 +13887,5 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 .portal-secondary-button { font-weight: 800; }
 .portal-view h1,
 .portal-card h2,
-.portal-card h3 { font-family: 'Nunito', 'Manrope', ui-rounded, 'DM Sans', sans-serif; letter-spacing: -0.015em; color: #321568; }
+.portal-card h3 { font-family: 'Nunito', 'Manrope', 'DM Sans', sans-serif; letter-spacing: -0.015em; color: #321568; }
 .portal-card { border: 1px solid rgba(50, 21, 104, 0.07); border-radius: 20px; box-shadow: 0 14px 40px rgba(50, 21, 104, 0.08); }
