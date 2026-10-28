@@ -750,3 +750,23 @@ h1, h2, h3 { letter-spacing: -0.015em; }
   .ct-actions .btn { width: 100%; justify-content: center; }
   .ct-submit { width: 100%; }
 }
+
+/* ======================================================================
+   CONTACT HEADER ON PHONES (2026-10-28, owner saw it broken on iPhone).
+   The small-screen rule '.btn { width: 100% }' is meant for content
+   actions; this page is the only static page whose HEADER carries two
+   buttons (Log In + Sign Up), so on a phone they stacked into giant
+   full-width rows above the hero. Scoped to this page only: the header
+   buttons stay compact and inline, and on the narrowest screens the
+   wordmark yields to the logo so nothing ever overflows.
+   ====================================================================== */
+@media (max-width: 640px) {
+  .pg-contact .site-head .btn { width: auto; min-height: 40px; padding: 9px 15px; font-size: 0.9rem; }
+  .pg-contact .site-head__inner { gap: 10px; }
+  .pg-contact .brand { gap: 8px; font-size: 0.98rem; }
+  .pg-contact .brand img { width: 30px; height: 30px; }
+  .pg-contact .ct-actions .btn { width: 100%; }
+}
+@media (max-width: 400px) {
+  .pg-contact .brand__text { display: none; }
+}
