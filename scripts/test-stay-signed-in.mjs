@@ -59,10 +59,15 @@ ok(/return window\.sessionStorage/.test(clientCode), 'private browsing still fal
 /* ================================================================== */
 const writeBody = authCode.slice(authCode.indexOf('function writeSessionId'), authCode.indexOf('function clearSessionId'))
 ok(/localStorage\.setItem\(SESSION_KEY/.test(writeBody), 'writeSessionId stores the account in localStorage')
-ok(
-  !/localStorage\.removeItem\(SESSION_KEY\)/.test(writeBody),
-  'and no longer deletes that copy immediately afterwards — the bug that made the fallback dead code',
-)
+/* The owner-spec Remember-me option adds exactly one legitimate deletion:
+   the opt-out branch (remember=false) moves the session to this tab only
+   and must remove the persistent copy so it cannot shadow on next read.
+   The default, remembered path must still never delete what it wrote —
+   that was the bug that once made the fallback dead code. */
+const rememberBranch = writeBody.slice(writeBody.indexOf('if (!remember) {'), writeBody.indexOf('try {', writeBody.indexOf('if (!remember) {')))
+ok(/sessionStorage\.setItem\(SESSION_KEY/.test(rememberBranch) && /localStorage\.removeItem\(SESSION_KEY/.test(rememberBranch), 'the Remember-me opt-out branch writes tab-only and clears the persistent copy')
+const rememberedPath = writeBody.slice(writeBody.indexOf('if (!remember) {') + rememberBranch.length)
+ok(/localStorage\.setItem\(SESSION_KEY/.test(rememberedPath) && !/localStorage\.removeItem\(SESSION_KEY\)/.test(rememberedPath), 'the remembered (default) path stores in localStorage and never deletes it afterwards')
 ok(/sessionStorage\.removeItem\(SESSION_KEY\)/.test(writeBody), 'the stale per-tab copy is cleared so it cannot shadow the durable one')
 
 const readBody = authCode.slice(authCode.indexOf('function readSessionId'), authCode.indexOf('function writeSessionId'))
@@ -81,7 +86,7 @@ for (const entry of ['registerAccount', 'registerTeacher', 'registerAdmin', 'log
   ok(/writeSessionId\(/.test(body), `${entry} records the session through the one shared function`)
 }
 const sessionWrites = authCode.match(/sessionStorage\.setItem\(SESSION_KEY/g) || []
-ok(sessionWrites.length <= 1, `only the private-browsing fallback writes a per-tab session (${sessionWrites.length})`)
+ok(sessionWrites.length <= 2, `only the Remember-me opt-out and the private-browsing fallback write per-tab sessions (${sessionWrites.length})`)
 
 /* ================================================================== */
 /* 4. Logging out still really logs out                                */
