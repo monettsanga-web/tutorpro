@@ -183,6 +183,15 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
   const accountRole = currentAccount?.role === 'admin' ? 'Administrator' : currentAccount?.role === 'teacher' ? 'Teacher' : 'Family account'
 
   const closeMenu = () => setMenuOpen(false)
+  /* Header Log In / Sign Up anchors: real URLs (/login, /signup - rewritten
+     to the app by vercel.json, so they are shareable and crawlable) that
+     open the existing modal without a page reload. */
+  const goAuth = (event, path, action) => {
+    event.preventDefault()
+    closeMenu()
+    window.history.replaceState({}, '', path)
+    action()
+  }
   const openAndClose = (callback) => {
     closeMenu()
     callback()
@@ -206,8 +215,8 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
               </>
             ) : (
               <>
-                <button className="mobile-portal-button mobile-portal-button--primary" onClick={() => openAndClose(onBook)}>Student registration</button>
-                <button className="mobile-portal-button" onClick={() => openAndClose(onLogin)}>Student login</button>
+                <a className="mobile-portal-button mobile-portal-button--primary" href="/signup" onClick={(event) => goAuth(event, '/signup', () => onBook())}>Sign Up — free first class</a>
+                <a className="mobile-portal-button" href="/login" onClick={(event) => goAuth(event, '/login', onLogin)}>Log In</a>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onTeacherAccess)}>Teacher portal</button>
                 <button className="mobile-portal-button mobile-portal-button--teacher" onClick={() => openAndClose(onTeacherApply)}>Apply as a teacher</button>
                 <button className="mobile-portal-button" onClick={() => openAndClose(onAdminAccess)}>Admin portal</button>
@@ -227,14 +236,16 @@ function Header({ onBook, onLogin, onAccount, onLogout, onTeacherAccess, onTeach
             </div>
           ) : (
             <>
-              <button className="header-portal-link" onClick={onLogin}>Student login</button>
+              <a className="header-portal-link" href="/login" onClick={(event) => goAuth(event, '/login', onLogin)}>Log In</a>
               <button className="header-portal-link" onClick={onTeacherAccess}>Teacher portal</button>
               <button className="header-portal-link header-portal-link--admin" onClick={onAdminAccess}>Admin portal</button>
             </>
           )}
-          <button className="button button--primary button--small" onClick={onBook}>
-            {currentAccount ? 'My dashboard' : 'Student registration'} <ArrowUpRight size={16} />
-          </button>
+          {currentAccount ? (
+            <button className="button button--primary button--small" onClick={onBook}>My dashboard <ArrowUpRight size={16} /></button>
+          ) : (
+            <a className="button button--primary button--small" href="/signup" onClick={(event) => goAuth(event, '/signup', () => onBook())}>Sign Up <ArrowUpRight size={16} /></a>
+          )}
         </div>
         <button className="menu-button" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -2139,6 +2150,15 @@ export default function App() {
       setAuthOpen(true)
       setRoleAccess(null)
     }
+    /* Deep links: tutorpro.site/signup and tutorpro.site/login open the
+       matching view of the one existing auth modal (vercel.json rewrites
+       both paths to the app). No second auth system. */
+    const path = url.pathname.replace(/\/+$/, '')
+    if (!isRecovery && (path === '/signup' || path === '/login')) {
+      setAuthMode(path === '/signup' ? 'register' : 'login')
+      setAuthOpen(true)
+      setRoleAccess(null)
+    }
   }, [])
 
   useEffect(() => {
@@ -2436,9 +2456,9 @@ export default function App() {
         showTeachersLink={teachersVisible}
       />
       {!currentAccount && (
-        <div className="mobile-guest-action-bar" aria-label="Student account actions">
-          <button type="button" onClick={openLogin}>Student login</button>
-          <button type="button" className="primary" onClick={() => openRegistration('Mobile quick registration')}>Book free class</button>
+        <div className="mobile-guest-action-bar" aria-label="Account actions">
+          <button type="button" onClick={openLogin}>Log In</button>
+          <button type="button" className="primary" onClick={() => openRegistration('Mobile quick registration')}>Sign Up</button>
         </div>
       )}
       {showPublicTeachers && teachersVisible ? (
@@ -2494,7 +2514,7 @@ export default function App() {
           preferredTeacher={preferredTeacher}
           referralCode={incomingReferralCode}
           currentAccount={currentAccount}
-          onClose={() => setAuthOpen(false)}
+          onClose={() => { setAuthOpen(false); if (/^\/(signup|login)\/?$/.test(window.location.pathname)) window.history.replaceState({}, '', '/') }}
           onAuthenticated={setCurrentAccount}
           onExplore={closeAndExplore}
           onEnterPortal={enterPortal}

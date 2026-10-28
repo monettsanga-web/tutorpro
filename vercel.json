@@ -86,6 +86,14 @@
     {
       "source": "/online-english-classes-for-kids",
       "destination": "/online-english-classes-for-kids.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
     }
   ]
 }

@@ -321,7 +321,11 @@ export async function updateCloudProfile(account) {
   if (!supabase || !account?.id) return null
   const payload = {
     id: account.id,
-    role: account.role,
+    // role is deliberately NOT in this payload. Roles are set once, server
+    // side, by /api/auth/register (which refuses anything but student or
+    // pending teacher). A profile update from the browser can therefore
+    // never escalate a student to teacher or admin, whatever the in-memory
+    // account object claims.
     status: account.status,
     email: account.email || null,
     login_id: account.loginId || account.email || '',
