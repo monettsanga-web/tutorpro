@@ -1,1 +1,1 @@
-TutorPro English production build 2026-10-27 remove-onetap
+TutorPro English production build 2026-10-28 auth-ux

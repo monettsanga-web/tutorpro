@@ -95,6 +95,7 @@ export default function AuthModal({
   const [contactFallback, setContactFallback] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [remember, setRemember] = useState(true)
   const [createdAccount, setCreatedAccount] = useState(null)
   const [visitorLocale, setVisitorLocale] = useState(currentVisitorLocale)
   const chineseVisitor = isChineseVisitor(visitorLocale)
@@ -206,7 +207,7 @@ export default function AuthModal({
     setFormError('')
     setContactFallback('')
     try {
-      const account = await loginAccount(form.email, form.password)
+      const account = await loginAccount(form.email, form.password, { remember })
       onAuthenticated(account)
       onEnterPortal(account)
     } catch (error) {
@@ -561,6 +562,7 @@ export default function AuthModal({
                   {isSubmitting ? 'Logging in…' : 'Log in'} {!isSubmitting && <ArrowRight size={17} />}
                 </button>
               </form>
+              <label className="remember-row"><input type="checkbox" name="remember" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> <span>Remember me on this device</span></label>
               <p className="auth-switch auth-switch--compact"><button onClick={() => switchView('reset-request')}>Forgot password?</button></p>
               <div className="auth-security"><ShieldCheck size={17} /> Your password is never stored as plain text.</div>
               <p className="auth-switch">New to TutorPro Online English? <button type="button" onClick={() => switchView('register')}>Create a free account</button></p>

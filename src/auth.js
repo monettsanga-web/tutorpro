@@ -130,7 +130,17 @@ function readSessionId() {
   }
 }
 
-function writeSessionId(accountId) {
+function writeSessionId(accountId, remember = true) {
+  /* Remember me: unchecked keeps the session in this tab only
+     (sessionStorage, cleared when the browser closes). The reader already
+     checks sessionStorage first and clearSessionId clears both stores. */
+  if (!remember) {
+    try {
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(SESSION_KEY, accountId)
+      localStorage.removeItem(SESSION_KEY)
+    } catch { /* Restricted storage: the session simply cannot persist. */ }
+    return
+  }
   try {
     localStorage.setItem(SESSION_KEY, accountId)
     // The old per-tab copy would otherwise shadow this one on the next read.
@@ -432,20 +442,6 @@ async function sendWelcomeEmail() {
   }
 }
 
-/* What a registration knew at click time, captured before a one-tap
-   redirect leaves the page (the analytics columns registerAccount writes). */
-export function registrationSnapshot() {
-  return { registrationCountry: readVisitorCountry().toUpperCase(), attribution: attributionSnapshot() }
-}
-
-/* Adopt a cloud account that arrived without a password login — a one-tap
-   Google/Apple return. Same merge as loginAccount, plus the session id. */
-export function adoptCloudAccount(cloudAccount) {
-  const adopted = mergeCloudAccounts([cloudAccount])[0]
-  writeSessionId(adopted.id)
-  return adopted
-}
-
 export async function registerTeacher(details) {
   const accounts = readAccounts()
   const authProvider = details.authProvider || 'email'
@@ -689,7 +685,7 @@ export function mergeCloudAccounts(cloudAccounts, options = {}) {
   return cloudAccounts.map((account) => publicAccount(accounts.find((item) => item.id === account.id) || account))
 }
 
-export async function loginAccount(loginValue, password) {
+export async function loginAccount(loginValue, password, { remember = true } = {}) {
   let account = readAccounts().find((item) => accountLoginId(item) === normalizeLoginId(item.authProvider || 'email', loginValue))
   let cloudLoginError = null
   if (cloudSyncEnabled()) {
@@ -698,8 +694,10 @@ export async function loginAccount(loginValue, password) {
       if (cloudAccount) {
         account = mergeCloudAccounts([cloudAccount])[0]
         if (['suspended', 'rejected', 'removed'].includes(account.status)) throw new Error(`This account is ${account.status}. Please contact the TutorPro Online English administrator.`)
-        writeSessionId(account.id)
-        return account
+        writeSessionId(account.id, remember)
+        // Same sanitiser as every other auth exit: the hash and salt of the
+        // merged local copy never travel into app state or the DOM.
+        return publicAccount(account)
       }
     } catch (error) {
       cloudLoginError = error
@@ -740,7 +738,7 @@ export async function loginAccount(loginValue, password) {
     throw new Error('That password is not correct. Please try again.')
   }
 
-  writeSessionId(account.id)
+  writeSessionId(account.id, remember)
   return publicAccount(account)
 }
 
