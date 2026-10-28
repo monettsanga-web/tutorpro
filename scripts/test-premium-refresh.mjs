@@ -48,5 +48,13 @@ ok(app.includes('<main id="main-content">'), 'the public main is the skip target
 ok(/href="\/login">Log In<\/a>/.test(contact) && /btn--primary" href="\/signup">Sign Up<\/a>/.test(contact), 'contact page header offers Log In and Sign Up')
 ok(!/Register now/.test(contact), 'the old Register now button was replaced, not duplicated')
 
+/* 7 - contact page accuracy + conversion (owner pointed at the page) */
+ok(!/US\$7/.test(contact), 'the contact FAQ no longer quotes the stale US$7 package rate')
+ok(/US\$6 for 25 minutes on four or more a week/.test(contact), 'it quotes the live US$6 Monthly Package rate instead')
+ok(/btn--primary btn--lg" href="\/\?book=1">Book a Free Trial/.test(contact), 'the free trial is one tap from the contact hero')
+ok(/View pricing/.test(contact), 'transparent pricing is linked from the same hero')
+ok(/Last updated: 28 October 2026/.test(contact), 'the freshness stamp is current')
+ok(/ct-form input:focus-visible/.test(read('public/assets/pages.css')), 'contact fields show a visible keyboard focus ring')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
