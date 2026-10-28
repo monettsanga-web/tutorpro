@@ -456,9 +456,15 @@ export default function AuthModal({
                     <span>{chineseVisitor ? '我确认本人是该学生的家长或法定监护人。' : 'I confirm I am registering this student as their parent or guardian.'}</span>
                   </label>
                   <FieldError>{errors.terms}</FieldError>
-                  <button className="button button--primary button--full auth-submit" type="submit">
-                    {chineseVisitor ? '继续填写学生资料' : 'Continue to student profile'} <ArrowRight size={17} />
-                  </button>
+                  {/* The sticky mobile bar is a WRAPPER: the cream fade that
+                      hides scrolling fields must never sit on the button
+                      itself, or it out-specifies .button--primary and leaves
+                      white text on cream — invisible on a phone. */}
+                  <div className="auth-sticky-bar">
+                    <button className="button button--primary button--full auth-submit" type="submit">
+                      {chineseVisitor ? '继续填写学生资料' : 'Continue to student profile'} <ArrowRight size={17} />
+                    </button>
+                  </div>
                 </form>
               ) : (
                 <form className="auth-form auth-form--registration" onSubmit={completeRegistration} noValidate>
