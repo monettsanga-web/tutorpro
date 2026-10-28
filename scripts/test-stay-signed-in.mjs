@@ -64,9 +64,11 @@ ok(/localStorage\.setItem\(SESSION_KEY/.test(writeBody), 'writeSessionId stores 
    and must remove the persistent copy so it cannot shadow on next read.
    The default, remembered path must still never delete what it wrote —
    that was the bug that once made the fallback dead code. */
-const rememberBranch = writeBody.slice(writeBody.indexOf('if (!remember) {'), writeBody.indexOf('try {', writeBody.indexOf('if (!remember) {')))
+const optOutStart = writeBody.indexOf('if (!remember) {')
+const optOutEnd = writeBody.indexOf('return', optOutStart)
+const rememberBranch = writeBody.slice(optOutStart, optOutEnd)
 ok(/sessionStorage\.setItem\(SESSION_KEY/.test(rememberBranch) && /localStorage\.removeItem\(SESSION_KEY/.test(rememberBranch), 'the Remember-me opt-out branch writes tab-only and clears the persistent copy')
-const rememberedPath = writeBody.slice(writeBody.indexOf('if (!remember) {') + rememberBranch.length)
+const rememberedPath = writeBody.slice(optOutEnd)
 ok(/localStorage\.setItem\(SESSION_KEY/.test(rememberedPath) && !/localStorage\.removeItem\(SESSION_KEY\)/.test(rememberedPath), 'the remembered (default) path stores in localStorage and never deletes it afterwards')
 ok(/sessionStorage\.removeItem\(SESSION_KEY\)/.test(writeBody), 'the stale per-tab copy is cleared so it cannot shadow the durable one')
 
