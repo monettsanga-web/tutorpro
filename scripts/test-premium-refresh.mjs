@@ -56,5 +56,13 @@ ok(/View pricing/.test(contact), 'transparent pricing is linked from the same he
 ok(/Last updated: 28 October 2026/.test(contact), 'the freshness stamp is current')
 ok(/ct-form input:focus-visible/.test(read('public/assets/pages.css')), 'contact fields show a visible keyboard focus ring')
 
+/* 8 - the contact header must survive a phone (owner's iPhone, 2026-10-28) */
+ok(/<body class="pg-contact">/.test(contact), 'the contact page is scoped for its own header fixes')
+ok(/brand__text/.test(contact), 'the wordmark is wrapped so narrow screens can yield to the logo')
+const pagesCss = read('public/assets/pages.css')
+ok(/\.pg-contact \.site-head \.btn \{ width: auto;/.test(pagesCss), 'header Log In / Sign Up stay compact instead of stacking full-width on phones')
+ok(/\.pg-contact \.brand__text \{ display: none; \}/.test(pagesCss), 'the wordmark hides on the narrowest screens rather than overflowing')
+ok(/\.pg-contact \.ct-actions \.btn \{ width: 100%; \}/.test(pagesCss), 'the hero CTAs still go full-width on phones')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
