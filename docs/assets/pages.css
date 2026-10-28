@@ -720,3 +720,33 @@ h1, h2, h3 { letter-spacing: -0.015em; }
   text-decoration: none; box-shadow: 0 3px 0 #f3e8ff; transition: transform 120ms ease, background 120ms ease;
 }
 .country-cloud li a:hover, .country-index li a:hover { background: #f5f3ff; transform: translateY(-2px); }
+
+/* ======================================================================
+   CONTACT PAGE PREMIUM PASS (2026-10-28) - scoped to ct-* and the two
+   hero buttons only; every other static page keeps its current look.
+   Touch targets, visible keyboard focus, iOS-zoom-safe field sizes.
+   ====================================================================== */
+.ct-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.btn--lg { min-height: 50px; padding: 13px 26px; font-size: 1.05rem; }
+.ct-form label { font-weight: 700; }
+.ct-form input, .ct-form select, .ct-form textarea {
+  min-height: 48px; font-size: 16px; border-radius: 12px;
+  border: 1.5px solid #ddd3ee; padding: 11px 14px;
+}
+.ct-form textarea { min-height: 120px; line-height: 1.55; }
+.ct-form input:focus-visible, .ct-form select:focus-visible, .ct-form textarea:focus-visible,
+.ct-submit:focus-visible, .btn:focus-visible, .ct-channel__item:focus-visible,
+.ct-card details summary:focus-visible {
+  outline: 3px solid rgba(112, 72, 223, 0.35); outline-offset: 2px;
+}
+.ct-submit { min-height: 50px; padding: 14px 30px; }
+.ct-card details summary {
+  min-height: 44px; display: flex; align-items: center; cursor: pointer;
+  font-weight: 700; color: #321568; padding: 4px 2px;
+}
+.ct-card details p { margin: 8px 2px 12px; }
+.ct-channel__item { border-radius: 14px; }
+@media (max-width: 640px) {
+  .ct-actions .btn { width: 100%; justify-content: center; }
+  .ct-submit { width: 100%; }
+}
