@@ -8524,7 +8524,7 @@ body:has(.auth-shell--student-register) .messenger-float {
 
 @media (max-width: 560px) {
   /* 1. keep the way forward on screen ------------------------------------ */
-  .auth-shell--student-register .auth-submit,
+  .auth-shell--student-register .auth-sticky-bar,
   .auth-shell--student-register .auth-form__actions {
     position: sticky;
     bottom: 0;

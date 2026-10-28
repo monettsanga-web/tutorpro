@@ -13,6 +13,8 @@ const app = read('src/App.jsx')
 const modal = read('src/AuthModal.jsx')
 const auth = read('src/auth.js')
 const cloud = read('src/cloudProfiles.js')
+const css = read('src/styles.css')
+const modalJsx = read('src/AuthModal.jsx')
 const registerApi = read('api/auth/register.js')
 
 /* 1 - real URLs that serve the one existing app (no duplicate auth pages) */
@@ -61,6 +63,14 @@ ok(!/export function registrationSnapshot|export function adoptCloudAccount/.tes
 
 /* 7 - homepage CTA untouched */
 ok(/Book a free first class <ArrowRight/.test(app), 'Book a free first class remains the homepage CTA')
+
+/* 8 - the mobile continue button must stay readable (owner, 2026-10-28:
+   'the continue button font is white, its not visible'). The sticky fade
+   belongs to a wrapper div, never to the button's own background. */
+ok(/\.auth-shell--student-register \.auth-sticky-bar,\n\s*\.auth-shell--student-register \.auth-form__actions \{[\s\S]{0,400}?background: linear-gradient/.test(css), 'the mobile sticky-bar fade sits on a wrapper, not on the submit button')
+ok(!/\.auth-shell--student-register \.auth-submit,\n\s*\.auth-shell--student-register \.auth-form__actions \{/.test(css), 'no rule paints the submit button cream over its coral face')
+ok(/<div className="auth-sticky-bar">/.test(modalJsx), 'step 1 wraps its submit button in the sticky bar')
+ok(/\.button--primary \{\n\s*background: linear-gradient/.test(css), 'the primary face is still the brand gradient with white text')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)
