@@ -30,6 +30,21 @@
   ],
   "redirects": [
     {
+      "source": "/online-maths-tutor-for-kids.html",
+      "destination": "/online-english-classes-for-kids",
+      "permanent": true
+    },
+    {
+      "source": "/online-science-tutor-for-kids.html",
+      "destination": "/online-english-classes-for-kids",
+      "permanent": true
+    },
+    {
+      "source": "/online-ict-computing-classes-for-kids.html",
+      "destination": "/online-english-classes-for-kids",
+      "permanent": true
+    },
+    {
       "source": "/index.html",
       "destination": "/",
       "permanent": true

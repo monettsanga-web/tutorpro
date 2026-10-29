@@ -43,7 +43,7 @@ const AdminDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ defa
 const StudentDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.StudentDashboard })))
 const TeacherDashboard = lazy(() => import('./Dashboards.jsx').then((m) => ({ default: m.TeacherDashboard })))
 import { getApprovedTeachers, getCurrentAccount, initializePlatform, logoutAccount, mergeCloudAccounts, updateAccount } from './auth.js'
-import { SUBJECTS } from './subjects.js'
+import { OFFERED_SUBJECTS, SUBJECTS } from './subjects.js'
 
 /*
  * Subject id -> icon. Kept here rather than in subjects.js so that module
@@ -302,7 +302,7 @@ function Hero({ onBook, onTeacherApply }) {
         <div className="hero__content">
           <div className="eyebrow">
             <span><Sparkles size={14} /></span>
-            English · Maths · Science · ICT · Ages 4–16
+            English · Ages 4–16
           </div>
           {/* The H1 must match the prerendered one in scripts/prerender-home.mjs.
               Google renders JavaScript, so React's H1 is what finally gets
@@ -915,9 +915,9 @@ function Programmes({ onBook }) {
           <span className="kicker kicker--light">Subjects</span>
           <h2>English Programs for Primary and Secondary Students</h2>
           <p>
-            English, Maths, Science and ICT — taught one-to-one and matched to what
-            your child is actually covering at school. Choose a level to see what
-            each subject looks like.
+            English only — taught one-to-one and matched to what your child is
+            actually covering at school, from first words to exam-style writing.
+            Choose a level to see what each stage looks like.
           </p>
           <div className="level-toggle" role="group" aria-label="Choose school level">
             <button
@@ -938,7 +938,7 @@ function Programmes({ onBook }) {
         </div>
 
         <div className="programme-list" aria-live="polite">
-          {SUBJECTS.map((subject) => {
+          {OFFERED_SUBJECTS.map((subject) => {
             const Icon = subjectIcons[subject.id] || BookOpen
             return (
               <article className="programme-card" key={`${subject.id}-${level}`}>
@@ -2049,9 +2049,6 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
                   subject page nothing links to is effectively invisible. */}
               <a href="/online-english-classes-for-kids">Online English classes</a>
               <a href="/online-english-tutor-for-kids.html">Online English tutor</a>
-              <a href="/online-maths-tutor-for-kids.html">Online Maths tutor</a>
-              <a href="/online-science-tutor-for-kids.html">Online Science tutor</a>
-              <a href="/online-ict-computing-classes-for-kids.html">Online ICT &amp; Computing</a>
             </div>
             <div>
               <h3>Skills & programs</h3>
