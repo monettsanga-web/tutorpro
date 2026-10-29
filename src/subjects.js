@@ -48,6 +48,9 @@ export const SUBJECTS = [
   },
   {
     id: 'maths',
+    offered: false, /* owner 2026-10-29: English-only school. Kept so legacy
+      bookings and teacher records still resolve their labels; never shown
+      as something a family can book. */
     name: 'Maths',
     short: 'Maths',
     tagline: 'From counting to algebra, without the panic',
@@ -68,6 +71,9 @@ export const SUBJECTS = [
   },
   {
     id: 'science',
+    offered: false, /* owner 2026-10-29: English-only school. Kept so legacy
+      bookings and teacher records still resolve their labels; never shown
+      as something a family can book. */
     name: 'Science',
     short: 'Science',
     tagline: 'Curious questions, clear explanations',
@@ -88,6 +94,9 @@ export const SUBJECTS = [
   },
   {
     id: 'ict',
+    offered: false, /* owner 2026-10-29: English-only school. Kept so legacy
+      bookings and teacher records still resolve their labels; never shown
+      as something a family can book. */
     name: 'ICT',
     short: 'ICT',
     tagline: 'Real digital skills, safely taught',
@@ -150,11 +159,16 @@ export function focusOptionsFor(value) {
  * existing teacher profile is invalidated, and the subjects are added
  * alongside them.
  */
+/* English-only school (owner, 2026-10-29): specialisation is about which
+   English courseware the teacher knows, never another subject. */
+/* What a family can actually book. The full SUBJECTS list stays as the
+   label source for legacy records; the offer is English only. */
+export const OFFERED_SUBJECTS = SUBJECTS.filter((subject) => subject.offered !== false)
+
 export const TEACHER_SPECIALIZATIONS = [
   'Both Curricula',
   'Cambridge',
   'Oxford',
-  ...SUBJECTS.filter((subject) => subject.id !== 'english').map((subject) => subject.name),
   'Multiple subjects',
 ]
 

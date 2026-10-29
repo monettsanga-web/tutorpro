@@ -114,7 +114,7 @@ import { qrDataUri } from './qrCode.js'
 import { attendanceSummary, formatPresence, punctuality } from './classroomAttendance.js'
 import { CLASSROOM_COMING_SOON_LABEL, CLASSROOM_COMING_SOON_NOTE, CLASSROOM_ENABLED, CLASSROOM_REGION_NOTE, classroomEntryState, classroomRegionNotice } from './classroomFeature.js'
 import { CLOUD_SYNC_INTERVAL_MS, createCloudSyncScheduler } from './cloudSyncPolicy.js'
-import { SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
+import { OFFERED_SUBJECTS, SUBJECTS, DEFAULT_SUBJECT_ID, focusOptionsFor, resolveSubject, subjectName, TEACHER_SPECIALIZATIONS, teacherTeachesSubject } from './subjects.js'
 import { fetchThread, listDirectConversations, markThreadRead, mergeThread, readLocalThread, sendDirectMessage, subscribeToDirectMessages } from './directMessages.js'
 import { classroomComponents } from './classroomLazy.js'
 import { BookingsMonthCalendar, nearestBookingKey } from './TeacherBookingsCalendar.jsx'
@@ -1871,7 +1871,7 @@ function BookLessonPanel({ account, learner: learnerProp, onBooked, adminBooking
       </div>
       <section className="portal-card booking-calendar-card">
         <div className="booking-controls">
-          <label><span>Subject</span><select name="subject" value={form.subject} onChange={update}>{SUBJECTS.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
+          <label><span>Subject</span><select name="subject" value={form.subject} onChange={update}>{OFFERED_SUBJECTS.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
           <label><span>Teacher</span><select name="teacherId" value={selectedTeacherId} onChange={update}>{bookableTeachers.map((teacher) => <option value={teacher.id} key={teacher.id}>{teacher.fullName} · {teacher.teacher.specialization}</option>)}</select></label>
           {/* A dropdown cannot show a face - an <option> may only contain
               text - so the chosen teacher is shown beside it. Parents were

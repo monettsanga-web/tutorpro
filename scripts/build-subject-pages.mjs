@@ -34,83 +34,13 @@ const SITE = 'https://www.tutorpro.site'
 const UPDATED = '2 September 2026'
 const MESSENGER = 'https://m.me/526047974195321'
 
-const SUBJECTS = [
-  {
-    slug: 'online-maths-tutor-for-kids.html',
-    name: 'Maths',
-    label: 'Maths',
-    title: 'Online Maths Tutor for Kids & Teens | TutorPro',
-    description: 'One-to-one online maths lessons for children aged 4–16: times tables, fractions, algebra and exam preparation. Free first class, from $6.',
-    heading: 'Online maths tutoring for children and teenagers',
-    lede: 'One-to-one maths lessons that go at your child’s pace — the steps worked through slowly until the idea actually clicks, not just the answer copied down.',
-    stage: 'Primary and Secondary · Ages 4–16',
-    accreditation: 'Follows your child’s school curriculum',
-    focus: [
-      ['Number and place value', 'Counting, place value, times tables and mental methods that make everything later easier.'],
-      ['Fractions, decimals and percentages', 'The topic most children get stuck on, taught with visual models before any rules or shortcuts.'],
-      ['Algebra and equations', 'Letters standing for numbers, solving step by step, and why the method works rather than memorising it.'],
-      ['Word problems and reasoning', 'Reading a question, working out what it is actually asking, and showing the working an examiner wants.'],
-    ],
-    lesson: 'Maths lessons are worked, not lectured. The teacher and your child solve problems together on a shared lesson board they can both write on, so the teacher sees exactly where a method breaks down rather than only seeing a wrong answer. When a step does not land, they go back a step rather than pressing on.',
-    parentNote: 'Bring your child’s actual homework or textbook to the first class. Lessons follow what they are covering at school, so the fastest progress usually comes from working on the exact topic they are stuck on this week.',
-    faqs: [
-      ['My child says they are "bad at maths". Can tutoring help?', 'Usually yes, and usually quickly. Most children who believe this have one or two missing foundations — often times tables or fractions — that make everything built on top feel impossible. One-to-one lessons can go back and fix the gap, which is very hard to do in a class of thirty.'],
-      ['Do you follow the same maths curriculum as my child’s school?', 'Lessons are matched to whatever your child is covering at school rather than following a separate syllabus. Share their textbook, topic list or homework in the first class and the teacher plans around it.'],
-      ['Can you help with exam preparation?', 'Yes. Teachers work through past-paper style questions, focus on the topics being assessed, and practise showing working clearly, which is where marks are most often lost.'],
-      ['How long are maths lessons?', '25 or 50 minutes. Younger children usually do better with 25; secondary students working through longer problems often prefer 50.'],
-    ],
-  },
-  {
-    slug: 'online-science-tutor-for-kids.html',
-    name: 'Science',
-    label: 'Science',
-    title: 'Online Science Tutor for Kids & Teens | TutorPro',
-    description: 'One-to-one online science lessons for children aged 4–16. Biology, chemistry and physics explained clearly. Free first class, from $6.',
-    heading: 'Online science tutoring for children and teenagers',
-    lede: 'Biology, chemistry and physics explained in plain language — with the reasoning made visible, so your child understands why an answer is right instead of memorising it.',
-    stage: 'Primary and Secondary · Ages 4–16',
-    accreditation: 'Follows your child’s school curriculum',
-    focus: [
-      ['Living things and the human body', 'Plants, animals, habitats, cells and body systems, built up from what your child can already observe.'],
-      ['Materials and chemistry', 'States of matter, changes, mixtures and reactions, explained with everyday examples before the formal vocabulary.'],
-      ['Forces, energy and physics', 'Forces, light, sound, electricity and energy, worked through with diagrams rather than definitions to memorise.'],
-      ['Investigations and writing up', 'Fair tests, variables, drawing conclusions and writing a method the way an examiner expects to read it.'],
-    ],
-    lesson: 'Science lessons are explanation-led and question-heavy. The teacher draws diagrams on a shared lesson board, asks your child to predict what will happen and why, then works through it with them. Understanding the reasoning is the goal, because that is what transfers to a question they have not seen before.',
-    parentNote: 'No equipment or home experiments are needed. Everything is taught through explanation, diagrams and discussion, using whatever topic your child is currently covering at school.',
-    faqs: [
-      ['Which science subjects do you cover?', 'Biology, chemistry and physics, at both primary and secondary level. For younger children it is taught as one combined subject, matching how schools teach it.'],
-      ['My child understands the lesson but freezes in tests. Can you help?', 'Yes, and it is common. It usually means the ideas are understood but not yet expressed in the form a mark scheme expects. Teachers practise answering in exam language and showing reasoning clearly.'],
-      ['Do you need lab equipment for online science?', 'No. Lessons focus on understanding concepts, interpreting results and writing up investigations, all of which work well one-to-one online.'],
-      ['Can lessons cover a specific topic my child is struggling with?', 'Yes. Tell the teacher the topic — photosynthesis, forces, the periodic table — and the lesson is built entirely around it.'],
-    ],
-  },
-  {
-    slug: 'online-ict-computing-classes-for-kids.html',
-    name: 'ICT',
-    label: 'ICT & Computing',
-    title: 'Online ICT & Computing Classes for Kids | TutorPro',
-    description: 'One-to-one online ICT and computing lessons for children aged 4–16: typing, spreadsheets, coding and online safety. Free first class.',
-    heading: 'Online ICT and computing classes for children',
-    lede: 'The digital skills school and homework now assume your child already has — taught properly, one-to-one, from first typing to real coding.',
-    stage: 'Primary and Secondary · Ages 4–16',
-    accreditation: 'Follows your child’s school curriculum',
-    focus: [
-      ['Computer basics and typing', 'Confident keyboard and file skills, so schoolwork stops being slowed down by the computer itself.'],
-      ['Documents, slides and spreadsheets', 'Producing the documents, presentations and data work that homework increasingly expects.'],
-      ['Coding and algorithms', 'From block-based first steps to writing real code, with the thinking behind an algorithm rather than copied snippets.'],
-      ['Online safety and digital literacy', 'Judging whether a source is trustworthy, protecting personal information, and behaving safely online.'],
-    ],
-    lesson: 'ICT lessons are hands-on. Your child works on their own screen while the teacher guides them step by step and watches what they are actually doing, so a mistake is caught as it happens rather than at the end. Skills are practised on real tasks, not demonstrations to watch.',
-    parentNote: 'Your child needs a computer or laptop for ICT lessons rather than a tablet or phone, because the skills involve a real keyboard, files and software. A basic machine is fine — nothing powerful is required.',
-    faqs: [
-      ['What age can a child start ICT lessons?', 'Around 4–6 for typing, mouse skills and safe internet use. Coding usually starts from about 7, beginning with block-based tools before moving to written code.'],
-      ['Which coding languages do you teach?', 'Younger children start with block-based coding such as Scratch. Older students move on to text-based programming, matched to whatever their school uses.'],
-      ['Is this the same as the ICT my child does at school?', 'It follows the same curriculum, but one-to-one. School computing lessons often mean sharing machines and limited time; here your child works the whole lesson with the teacher watching their screen.'],
-      ['Do you cover online safety?', 'Yes, and it is built into lessons rather than treated as a separate talk — judging sources, protecting personal information and recognising scams.'],
-    ],
-  },
-]
+/* English-only school (owner, 2026-10-29): the Maths, Science and ICT
+   landing pages are gone; their old URLs 301 to the English classes page
+   in vercel.json so no backlink or bookmark ever 404s. */
+/* English-only school (owner, 2026-10-29): the Maths, Science and ICT
+   landing pages are gone. Their old URLs 301 to the English classes page
+   in vercel.json, so no backlink or bookmark ever 404s. */
+const SUBJECTS = []
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"']/g, (character) => ({
