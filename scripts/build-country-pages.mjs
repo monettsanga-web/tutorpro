@@ -607,6 +607,8 @@ function render(entry, all) {
                 <label>${t.fAge}<select name="age">${Array.from({ length: 13 }, (_, i) => `<option value="${i + 4}">${i + 4} ${t.fAgeSuf}</option>`).join('')}</select></label>
                 <label>${t.fTimes}<input name="times" maxlength="120" placeholder="${t.fTimesPh}" /></label>
                 <label>${t.fNotes}<textarea name="message" maxlength="600" placeholder="${t.fNotesPh}"></textarea></label>
+                <input type="text" name="website" class="ct-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+                <input type="hidden" name="ts" id="ct-ts" value="0" />
                 <button class="btn btn--primary" type="submit">${t.fSubmit}</button>
                 <p class="trial-form__note" id="trial-note">${t.fNote}</p>
               </form>
@@ -691,6 +693,7 @@ function render(entry, all) {
       (function () {
         var form = document.getElementById('trial-form');
         if (!form) return;
+        document.getElementById('ct-ts').value = String(Date.now());
         form.addEventListener('submit', function (event) {
           event.preventDefault();
           var note = document.getElementById('trial-note');
@@ -707,14 +710,10 @@ function render(entry, all) {
           var firstMessage = t_js.jsFirst + String(fields.get('age') || '') + t_js.jsTimes + times + '.' + (extra ? t_js.jsNotes + extra : '');
           button.disabled = true;
           note.textContent = t_js.jsSending;
-          fetch('https://losmkvvwzijipqrlelyt.supabase.co/rest/v1/rpc/create_support_conversation', {
+          fetch('/api/contact', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': 'sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL',
-              'Authorization': 'Bearer sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL'
-            },
-            body: JSON.stringify({ parent_name: parentName, parent_email: email, visitor_language: t_js.visitorLang, first_message: firstMessage })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: parentName, email: email, topic: 'Trial lesson request', message: firstMessage, website: String(fields.get('website') || ''), ts: Number(document.getElementById('ct-ts').value || 0) })
           }).then(function (response) {
             if (!response.ok) throw new Error('request failed');
             form.reset();

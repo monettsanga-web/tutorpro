@@ -80,6 +80,8 @@
                 </select>
               </label>
             </div>
+            <input type="text" name="website" class="ct-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+            <input type="hidden" name="ts" id="ct-ts" value="0" />
             <label>Your message
               <textarea name="message" required maxlength="2000" rows="5" placeholder="Tell us what you need — include your account email and, for lesson questions, the date and time of the class."></textarea>
             </label>
@@ -172,12 +174,11 @@
     </footer>
     <script>
       (function () {
+        document.getElementById('ct-ts').value = String(Date.now());
         var form = document.getElementById('ct-form');
         var note = document.getElementById('ct-note');
         var result = document.getElementById('ct-result');
-        var SUPABASE_URL = 'https://losmkvvwzijipqrlelyt.supabase.co';
-        var PUBLISHABLE_KEY = 'sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL';
-        form.addEventListener('submit', function (event) {
+                form.addEventListener('submit', function (event) {
           event.preventDefault();
           var data = new FormData(form);
           var name = String(data.get('parentName') || '').trim();
@@ -195,18 +196,12 @@
           note.textContent = 'Sending…';
           var button = form.querySelector('.ct-submit');
           button.disabled = true;
-          fetch(SUPABASE_URL + '/rest/v1/rpc/create_support_conversation', {
+          fetch('/api/contact', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: PUBLISHABLE_KEY,
-              Authorization: 'Bearer ' + PUBLISHABLE_KEY,
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              parent_name: name,
-              parent_email: email,
-              visitor_language: 'en',
-              first_message: '[Contact page] ' + role + ' — ' + topic + '.\n\n' + message,
+              name: name, email: email, role: role, topic: topic, message: message,
+              website: String(data.get('website') || ''), ts: Number(document.getElementById('ct-ts').value || 0),
             }),
           })
             .then(function (response) {

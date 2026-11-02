@@ -770,3 +770,6 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 @media (max-width: 400px) {
   .pg-contact .brand__text { display: none; }
 }
+
+/* Honeypot: real visitors never see or fill this; bots do. */
+.ct-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

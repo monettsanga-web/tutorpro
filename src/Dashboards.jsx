@@ -6954,6 +6954,10 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
      broken. This records that the admin chose to close it. */
   const [threadDismissed, setThreadDismissed] = useState(false)
   const [query, setQuery] = useState('')
+  /* Bot fuzzers filled the inbox with random-token names (owner,
+     2026-11-02). Suspected spam stays out of the list by default but is
+     never deleted - one toggle brings it back for checking. */
+  const [showSpam, setShowSpam] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -7002,6 +7006,12 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
     || item.parent_name?.toLowerCase().includes(normalizedQuery)
     || item.email?.toLowerCase().includes(normalizedQuery)
     || item.last_message?.toLowerCase().includes(normalizedQuery))
+  const looksLikeBotName = (value = '') => {
+    const trimmed = String(value).trim()
+    return !/\s/.test(trimmed) && /[^aeiouAEIOU\s'’.-]{6,}/.test(trimmed)
+  }
+  const spamCount = filtered.filter((item) => looksLikeBotName(item.parent_name)).length
+  const visible = showSpam ? filtered : filtered.filter((item) => !looksLikeBotName(item.parent_name))
   const selected = conversations.find((item) => item.id === selectedId)
 
   return (
@@ -7024,7 +7034,8 @@ export function SupportInbox({ onUnreadChange, initialConversationId = '' }) {
       <section className="support-inbox">
         <aside className="support-conversation-list">
           <label><MessageSquareText size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search parent or email…" /></label>
-          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : filtered.length ? filtered.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_total) > 0 && <i>{conversation.unread_total}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
+          {spamCount > 0 && <button type="button" className="support-spam-toggle" onClick={() => setShowSpam((v) => !v)}>{showSpam ? `Hide suspected spam (${spamCount})` : `Show suspected spam (${spamCount})`}</button>}
+          <div>{loading ? <div className="support-inbox-empty">Loading conversations…</div> : visible.length ? visible.map((conversation) => <button className={selectedId === conversation.id ? 'active' : ''} onClick={() => selectConversation(conversation.id)} key={conversation.id}><span>{initials(conversation.parent_name)}</span><div><strong>{conversation.parent_name}</strong><small>{conversation.last_message || conversation.email}</small><time>{new Date(conversation.updated_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</time></div>{Number(conversation.unread_total) > 0 && <i>{conversation.unread_total}</i>}</button>) : <div className="support-inbox-empty"><MessageSquareText size={25} /><strong>No parent messages yet</strong><span>New website conversations will appear here.</span></div>}</div>
         </aside>
 
       </section>
