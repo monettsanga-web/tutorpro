@@ -107,6 +107,8 @@
                 <label>Child's age<select name="age"><option value="4">4 years old</option><option value="5">5 years old</option><option value="6">6 years old</option><option value="7">7 years old</option><option value="8">8 years old</option><option value="9">9 years old</option><option value="10">10 years old</option><option value="11">11 years old</option><option value="12">12 years old</option><option value="13">13 years old</option><option value="14">14 years old</option><option value="15">15 years old</option><option value="16">16 years old</option></select></label>
                 <label>Preferred days or times<input name="times" maxlength="120" placeholder="e.g. weekends after 4pm" /></label>
                 <label>Anything we should know? (optional)<textarea name="message" maxlength="600" placeholder="Shy beginner, exam prep, sibling to schedule together…"></textarea></label>
+                <input type="text" name="website" class="ct-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+                <input type="hidden" name="ts" id="ct-ts" value="0" />
                 <button class="btn btn--primary" type="submit">Send trial request</button>
                 <p class="trial-form__note" id="trial-note">Your request lands in our support inbox and we reply to your email, usually within one day. No mailing lists, ever.</p>
               </form>
@@ -197,6 +199,7 @@
       (function () {
         var form = document.getElementById('trial-form');
         if (!form) return;
+        document.getElementById('ct-ts').value = String(Date.now());
         form.addEventListener('submit', function (event) {
           event.preventDefault();
           var note = document.getElementById('trial-note');
@@ -213,14 +216,10 @@
           var firstMessage = t_js.jsFirst + String(fields.get('age') || '') + t_js.jsTimes + times + '.' + (extra ? t_js.jsNotes + extra : '');
           button.disabled = true;
           note.textContent = t_js.jsSending;
-          fetch('https://losmkvvwzijipqrlelyt.supabase.co/rest/v1/rpc/create_support_conversation', {
+          fetch('/api/contact', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': 'sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL',
-              'Authorization': 'Bearer sb_publishable_icTkeremuFxwHOy52_gXfQ_x3IibhLL'
-            },
-            body: JSON.stringify({ parent_name: parentName, parent_email: email, visitor_language: t_js.visitorLang, first_message: firstMessage })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: parentName, email: email, topic: 'Trial lesson request', message: firstMessage, website: String(fields.get('website') || ''), ts: Number(document.getElementById('ct-ts').value || 0) })
           }).then(function (response) {
             if (!response.ok) throw new Error('request failed');
             form.reset();
