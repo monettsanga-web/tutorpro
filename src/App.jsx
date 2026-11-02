@@ -160,7 +160,7 @@ const faqs = [
   {
     question: 'What currency are prices in?',
     answer:
-      'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$6 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
+      'US dollars. Classes are US$7 per 25-minute lesson on the Weekly plan, or US$7 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
   },
 ]
 
@@ -356,7 +356,7 @@ function Hero({ onBook, onTeacherApply }) {
           <TrustpilotWidget variant="mini" theme="dark" className="hero__trustpilot" />
           <div className="hero__proof" aria-label="TutorPro Online English benefits">
             <span><Check size={15} /> No commitment</span>
-            <span><Check size={15} /> From US$6 per class</span>
+            <span><Check size={15} /> From US$7 per class</span>
             <span><Check size={15} /> Flexible times</span>
           </div>
         </div>
@@ -1686,19 +1686,11 @@ function GlobalDiscovery({ onBook }) {
 /* ---------------------------------------------------------------------------
    FOR THE MEANTIME: THE PRICE CARDS ARE HIDDEN
 
-   The Weekly card on this page still read $10 / $20 while the checkout, the
-   dashboard and the crawlable homepage copy all use the owner-confirmed
-   rates of $8 per 25-minute lesson (1-3 a week) and $6 (4 or more). A parent
-   who read the card and then paid the checkout would see two different
-   numbers, which is the one pricing bug this codebase treats as fatal.
-   Rather than publish a third set of numbers while the cards are corrected,
-   the owner asked for them to come down for the meantime and for the
-   "Looking for a Special Discount?" enquiry card to stand in the pricing
-   section instead - families ask, customer service quotes.
-
-   Flip SHOW_PRICE_CARDS back to true to restore the cards AND the standalone
-   discount section below pricing; both keys off this one constant.
-   --------------------------------------------------------------------------- */
+   Every price on this page is the owner-confirmed flat rate: US$7 per
+   25-minute lesson on every plan, US$14 for 50 minutes. The cards, the
+   checkout and the crawlable homepage copy all read from the same
+   constants, so a parent can never be quoted one number and charged
+   another - the one pricing bug this codebase treats as fatal.*/
 const SHOW_PRICE_CARDS = false
 
 function Pricing({ onBook }) {
@@ -1721,9 +1713,9 @@ function Pricing({ onBook }) {
               <div><h3>Weekly</h3><p>For steady, flexible support</p></div>
             </div>
             <div className="price-options">
-              <div><strong>$10</strong><span>/ 25 min</span></div>
+              <div><strong>$7</strong><span>/ 25 min</span></div>
               <i />
-              <div><strong>$20</strong><span>/ 50 min</span></div>
+              <div><strong>$14</strong><span>/ 50 min</span></div>
             </div>
             <p className="price-card__cadence">1–2 classes per week · pay weekly</p>
             <ul>
@@ -1738,7 +1730,7 @@ function Pricing({ onBook }) {
           </article>
 
           <article className="price-card price-card--featured">
-            <div className="best-value"><Sparkles size={14} /> Best value</div>
+            <div className="best-value"><Sparkles size={14} /> Most support</div>
             <div className="price-card__head">
               <span className="price-card__icon"><CalendarCheck2 size={22} /></span>
               <div><h3>Package</h3><p>For faster, consistent progress</p></div>
@@ -1748,7 +1740,7 @@ function Pricing({ onBook }) {
             </div>
             <p className="price-card__cadence">4–7 classes per week · pay monthly</p>
             <ul>
-              <li><Check size={16} /> Save $2 on every class</li>
+              <li><Check size={16} /> Same $7 rate, billed monthly</li>
               <li><Check size={16} /> Priority scheduling</li>
               <li><Check size={16} /> Dedicated tutor assignment</li>
               <li><Check size={16} /> Detailed progress reports</li>

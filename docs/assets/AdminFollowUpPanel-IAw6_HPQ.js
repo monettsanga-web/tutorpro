@@ -1,4 +1,4 @@
-import{r as e}from"./rolldown-runtime-QTnfLwEv.js";import{t}from"./clock-BzdkvxRb.js";import{n,t as r}from"./supabaseClient-KzZ5Jy9l.js";import{$ as i,Cn as a,Fn as o,Kt as s,Ln as c,On as l,nn as u,st as d,un as f}from"./index-okRgr7BF.js";import{r as p}from"./bookings-DLenwWJV.js";var m=o(`Pencil`,[[`path`,{d:`M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z`,key:`1a8usu`}],[`path`,{d:`m15 5 4 4`,key:`1mk7zo`}]]),h=e(c(),1),g=`tutorpro_followups_sent_v1`,_=`tutorpro_followups_snoozed_v1`,v=36e5,y=24*v,b=[{id:`trial-reminder`,label:`Trial reminder`,tone:`urgent`,blurb:`Sent the day before a free class so the family actually turns up.`,when:({nextTrial:e,now:t})=>{if(!e||!e.startsAt)return!1;let n=e.startsAt-t;return n>0&&n<=2*y&&[`pending`,`confirmed`].includes(e.status)},build:({parentName:e,learnerName:t,nextTrial:n})=>({subject:`${t}'s free English class is coming up`,body:`Hi ${e},
+import{r as e}from"./rolldown-runtime-QTnfLwEv.js";import{t}from"./clock-AaTRvh0O.js";import{n,t as r}from"./supabaseClient-KzZ5Jy9l.js";import{$ as i,Cn as a,Fn as o,Kt as s,Ln as c,On as l,nn as u,st as d,un as f}from"./index-1xq-4FOt.js";import{r as p}from"./bookings-BTu_dRz5.js";var m=o(`Pencil`,[[`path`,{d:`M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z`,key:`1a8usu`}],[`path`,{d:`m15 5 4 4`,key:`1mk7zo`}]]),h=e(c(),1),g=`tutorpro_followups_sent_v1`,_=`tutorpro_followups_snoozed_v1`,v=36e5,y=24*v,b=[{id:`trial-reminder`,label:`Trial reminder`,tone:`urgent`,blurb:`Sent the day before a free class so the family actually turns up.`,when:({nextTrial:e,now:t})=>{if(!e||!e.startsAt)return!1;let n=e.startsAt-t;return n>0&&n<=2*y&&[`pending`,`confirmed`].includes(e.status)},build:({parentName:e,learnerName:t,nextTrial:n})=>({subject:`${t}'s free English class is coming up`,body:`Hi ${e},
 
 Just a quick reminder that ${t}'s free class with TutorPro is on ${n.label}.
 
@@ -14,7 +14,7 @@ TutorPro Online English`})},{id:`post-trial`,label:`After the free class`,tone:`
 
 Thank you for joining us for ${t}'s first class${n?` with ${n}`:``}. We hope it was a good experience.
 
-If you would like to carry on, lessons are $10 each weekly, or $8 each on a monthly plan. There is no registration fee, no materials fee, and no lock-in contract — you can stop whenever you like.
+If you would like to carry on, lessons are $7 each on every plan, and $14 for a 50-minute lesson. There is no registration fee, no materials fee, and no lock-in contract — you can stop whenever you like.
 
 • 12-hour cancellation returns the credit in full
 • 14-day refund on any unused credits

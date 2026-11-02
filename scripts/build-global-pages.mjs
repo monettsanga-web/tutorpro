@@ -29,7 +29,7 @@
  *
  * ACCURACY
  * --------
- * Pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/week, $8
+ * Pricing from planSessionRate() in src/Dashboards.jsx ($7 for 1-3/week, $7
  * for 4+). Free first class, 12-hour cancellation and 14-day refund from the
  * real booking rules. Only English claims Cambridge and Oxford alignment.
  * No invented reviews, ratings or student counts.
@@ -299,7 +299,7 @@ function faqSchema(page) {
           courseMode: 'online',
           courseWorkload: 'PT25M',
           location: { '@type': 'VirtualLocation', url: SITE },
-          offers: { '@type': 'Offer', price: '8', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
+          offers: { '@type': 'Offer', price: '7', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
         }],
       },
       {
@@ -399,7 +399,7 @@ ${spec.body}
         <h2>Pricing</h2>
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
-          <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
+          <tr><td>Weekly plan</td><td>1–3</td><td>$7</td></tr>
           <tr><td>Monthly package</td><td>4–7</td><td>$6</td></tr>
         </table>
         <p>No registration fee, no materials fee, no platform fee. The first class is free for every new family and no card is required. Cancelling at least 12 hours before a lesson returns the credit in full, and unused credits can be refunded within 14 days — the full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>

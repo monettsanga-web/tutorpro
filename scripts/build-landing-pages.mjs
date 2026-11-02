@@ -11,7 +11,7 @@
  *   - a tagged CTA link so the funnel dashboard credits the right channel
  *
  * ACCURACY: every claim is verified against the live platform —
- *   - pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/wk, $6 for 4+)
+ *   - pricing from planSessionRate() in src/Dashboards.jsx ($7 for 1-3/wk, $6 for 4+)
  *   - the four testimonials are real, from Facebook, quoted verbatim including typos
  *   - DTI 5274092 is the real registration number
  *   - free first class, 12-hour cancellation and 14-day refund are real policy
@@ -94,9 +94,9 @@ const PAGES = [
 
         <h2>What it costs if you continue</h2>
         <div class="card">
-          <p class="price">$8 per lesson</p>
+          <p class="price">$7 per lesson</p>
           <p>One to three lessons a week, billed weekly.</p>
-          <p class="price" style="margin-top:16px">$8 per lesson</p>
+          <p class="price" style="margin-top:16px">$7 per lesson</p>
           <p>Four or more lessons a week on a monthly plan.</p>
           <p style="margin-top:14px"><strong style="color:#fff">No registration fee. No materials fee. No platform fee. No contract.</strong> Cancel at least 12 hours before a lesson and the credit returns in full. Unused credits are refundable for 14 days.</p>
         </div>
@@ -150,7 +150,7 @@ const PAGES = [
           ['Can I sit with my child during the lesson?', 'Yes, especially at the start. Many parents sit nearby for the first few lessons and then step back once the child settles.'],
           ['What if the teacher is not a good match?', 'Tell us and we will change them. Fit matters more than anything else for a quiet child.'],
           ['Is the first class really free?', 'Yes — a full 25-minute lesson, no card required. If your child hates it, you have lost nothing.'],
-          ['What does it cost afterwards?', '$8 per lesson for one to three a week, or $8 per lesson on a monthly plan of four or more. No registration, materials or platform fees.'],
+          ['What does it cost afterwards?', '$7 per lesson on every plan, and $14 for a 50-minute lesson. No registration, materials or platform fees.'],
         ])}`,
   },
   {
@@ -178,9 +178,9 @@ const PAGES = [
 
         <h2>Simple pricing</h2>
         <div class="card">
-          <p class="price">$8 per lesson</p>
+          <p class="price">$7 per lesson</p>
           <p>One to three lessons a week, billed weekly.</p>
-          <p class="price" style="margin-top:16px">$8 per lesson</p>
+          <p class="price" style="margin-top:16px">$7 per lesson</p>
           <p>Four or more lessons a week on a monthly plan.</p>
           <p style="margin-top:14px"><strong style="color:#fff">No registration fee, no materials fee, no platform fee, no contract.</strong> Cancel 12 hours ahead and the credit returns in full. Unused credits refundable for 14 days.</p>
         </div>

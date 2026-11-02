@@ -67,13 +67,13 @@ const MONTHLY_ROWS = [3, 4, 5, 6, 7].map((s) => ({
 
 const FAQS = [
   ['How much do online English classes for kids cost?',
-   'At TutorPro Online English, classes cost $8 per 25-minute one-to-one lesson on the Monthly Package (4 or more classes a week), or $8 per class on the Weekly plan (1 to 3 classes a week). The first class is free and no card is required to try it.'],
+   'At TutorPro Online English, every class costs $7 per 25-minute one-to-one lesson on both the Weekly plan (1 to 3 classes a week) and the Monthly Package (4 or more classes a week). A 50-minute lesson is $14. The first class is free and no card is required to try it.'],
   ['Is the first class really free?',
    'Yes. Every new family can take one free trial class before choosing a plan. It is a real lesson with a real teacher, not a sales call, and there is no obligation to continue.'],
   ['Do I have to sign a contract?',
    'No. There is no long-term contract. The Weekly plan is paid weekly and the Monthly Package is billed monthly. You can change plan as your child\u2019s schedule or goals change.'],
   ['What is the difference between the Weekly plan and the Monthly Package?',
-   'The Weekly plan suits 1 to 3 classes a week at $8 per class, paid weekly. The Monthly Package is for 4 to 7 classes a week at $8 per class, billed over 4 weeks, and includes priority scheduling and a dedicated tutor.'],
+   'The Weekly plan suits 1 to 3 classes a week at $7 per class, paid weekly. The Monthly Package is for 4 to 7 classes a week at the same $7 per class, billed over 4 weeks, and includes priority scheduling and a dedicated tutor.'],
   ['Can I get a refund?',
    'Unused lesson credits can be refunded within 14 days of purchase. Cancelling a booked lesson at least 12 hours in advance returns the credit in full, and if a lesson fails because of a problem on our side you always get the credit back.'],
   ['How do I pay?',
@@ -103,9 +103,9 @@ function buildSchema() {
             '@type': 'Offer',
             name: 'Weekly plan',
             category: 'Paid',
-            price: '10.00',
+            price: '7.00',
             priceCurrency: 'USD',
-            description: '1 to 3 classes a week, $8 per 25-minute class, paid weekly.',
+            description: '1 to 3 classes a week, $7 per 25-minute class, paid weekly.',
             availability: 'https://schema.org/InStock',
             url,
           },
@@ -113,9 +113,9 @@ function buildSchema() {
             '@type': 'Offer',
             name: 'Monthly package',
             category: 'Paid',
-            price: '8.00',
+            price: '7.00',
             priceCurrency: 'USD',
-            description: '4 to 7 classes a week, $8 per 25-minute class, billed monthly over 4 weeks.',
+            description: '4 to 7 classes a week, $7 per 25-minute class, billed monthly over 4 weeks.',
             availability: 'https://schema.org/InStock',
             url,
           },
@@ -126,7 +126,7 @@ function buildSchema() {
           courseWorkload: 'PT25M',
           location: { '@type': 'VirtualLocation', url: SITE },
           courseSchedule: { '@type': 'Schedule', duration: 'PT25M', repeatFrequency: 'Weekly', repeatCount: 4 },
-          offers: { '@type': 'Offer', category: 'Paid', price: '8.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url },
+          offers: { '@type': 'Offer', category: 'Paid', price: '7.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url },
         }],
       },
       {
@@ -200,7 +200,7 @@ function page() {
       <div class="wrap page-head">
         <span class="kicker">Transparent pricing</span>
         <h1>Online English class pricing</h1>
-        <p class="lede">One-to-one lessons from <strong>$8 per 25-minute class</strong>. The first class is free, there is no contract, and every price is published here rather than hidden behind a sales call.</p>
+        <p class="lede">One-to-one lessons at <strong>$7 per 25-minute class</strong> on every plan — $14 for a 50-minute lesson. The first class is free, there is no contract, and every price is published here rather than hidden behind a sales call.</p>
         <p>
           <span class="pill">from $6 per class</span>
           <span class="pill">Free first class</span>
@@ -214,8 +214,8 @@ function page() {
 
         <div class="card card--hero">
           <h2>The short version</h2>
-          <p><strong>$8 per class</strong> if your child has 1–3 lessons a week.<br />
-          <strong>$8 per class</strong> if your child has 4 or more lessons a week.<br />
+          <p><strong>$7 per class</strong> if your child has 1–3 lessons a week.<br />
+          <strong>$7 per class</strong> if your child has 4 or more lessons a week.<br />
           Lessons are 25 minutes one-to-one. 50-minute lessons are available for older learners.</p>
         </div>
 
@@ -243,7 +243,7 @@ function page() {
         </div>
 
         <h2>How we compare</h2>
-        <p>Most well-known online English schools for children start higher than $8 per lesson, and many move children into group speaking clubs as they progress. Every TutorPro lesson stays one-to-one at every level.</p>
+        <p>Most well-known online English schools for children start higher than $7 per lesson, and many move children into group speaking clubs as they progress. Every TutorPro lesson stays one-to-one at every level.</p>
         <p>We publish our full price list on this page. If you are comparing providers, check three things: the real price per lesson after any introductory discount, whether lessons stay one-to-one, and whether the refund terms are written down anywhere you can read before paying.</p>
         <p><a href="/online-english-alternatives.html">See how TutorPro compares to Novakid, 51Talk and Preply →</a></p>
 

@@ -70,7 +70,7 @@ TutorPro Online English`,
 
 Thank you for joining us for ${learnerName}'s first class${teacherName ? ` with ${teacherName}` : ''}. We hope it was a good experience.
 
-If you would like to carry on, lessons are $10 each weekly, or $8 each on a monthly plan. There is no registration fee, no materials fee, and no lock-in contract — you can stop whenever you like.
+If you would like to carry on, lessons are $7 each on every plan, and $14 for a 50-minute lesson. There is no registration fee, no materials fee, and no lock-in contract — you can stop whenever you like.
 
 • 12-hour cancellation returns the credit in full
 • 14-day refund on any unused credits

@@ -70,7 +70,7 @@ const phrases = [
   'Ages 4 to 16 welcome',
   'One-to-one, never a crowd',
   'Real teachers, real progress',
-  'Classes from $8',
+  'Classes from $7',
   'Cancel 12 hours ahead, no charge',
   'Ask me for a free trial! 👋',
 ]
