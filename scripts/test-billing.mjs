@@ -16,7 +16,7 @@ const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf
 const bills = await import('../src/paymentRequests.js')
 const server = await import('../api/_paypal.js')
 
-const RATES = { standard: 8, package: 6, packageMin: 4 }
+const RATES = { standard: 7, package: 7, packageMin: 4 }
 
 /* ================================================================== */
 /* 1. What an administrator may type                                    */
@@ -51,15 +51,15 @@ const discounted = { pricing: { mode: 'percent', percent: 25 } }
 const negotiated = { pricing: { mode: 'fixed', standardRate: 6, packageRate: 5 } }
 const expired = { pricing: { mode: 'percent', percent: 50, expiresAt: '2020-01-01T00:00:00.000Z' } }
 
-ok(bills.suggestedRequestAmount(1, standardFamily, RATES).amount === 8, '1 session at the standard rate is $8')
-ok(bills.suggestedRequestAmount(3, standardFamily, RATES).amount === 24, '3 sessions is $24')
-ok(bills.suggestedRequestAmount(4, standardFamily, RATES).amount === 24, '4 sessions crosses to the package rate: $24')
-ok(bills.suggestedRequestAmount(12, standardFamily, RATES).amount === 72, '12 sessions is $72')
-ok(bills.suggestedRequestAmount(12, standardFamily, RATES).rate === 6, 'and the per-session figure shown is $6')
-ok(bills.suggestedRequestAmount(12, discounted, RATES).amount === 54, 'a family on 25% off is billed $54 for the same 12 sessions')
+ok(bills.suggestedRequestAmount(1, standardFamily, RATES).amount === 7, '1 session at the flat rate is $7')
+ok(bills.suggestedRequestAmount(3, standardFamily, RATES).amount === 21, '3 sessions is $21')
+ok(bills.suggestedRequestAmount(4, standardFamily, RATES).amount === 28, '4 sessions is $28 at the same flat rate')
+ok(bills.suggestedRequestAmount(12, standardFamily, RATES).amount === 84, '12 sessions is $84')
+ok(bills.suggestedRequestAmount(12, standardFamily, RATES).rate === 7, 'and the per-session figure shown is $7')
+ok(bills.suggestedRequestAmount(12, discounted, RATES).amount === 63, 'a family on 25% off is billed $63 for the same 12 sessions')
 ok(bills.suggestedRequestAmount(12, negotiated, RATES).amount === 60, 'a family on an agreed $5 package rate is billed $60')
 ok(bills.suggestedRequestAmount(2, negotiated, RATES).amount === 12, 'under the package threshold they pay their agreed $6')
-ok(bills.suggestedRequestAmount(12, expired, RATES).amount === 72, 'an expired arrangement falls back to full price, never a free lesson')
+ok(bills.suggestedRequestAmount(12, expired, RATES).amount === 84, 'an expired arrangement falls back to full price, never a free lesson')
 ok(bills.suggestedRequestAmount(0, standardFamily, RATES).amount === 0, 'no sessions means no amount')
 ok(bills.suggestedRequestAmount(12, discounted, RATES).mode === 'percent', 'the reason for the price is reported to the admin')
 

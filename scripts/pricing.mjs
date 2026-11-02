@@ -13,20 +13,20 @@
  * `api/_paypal.js`, which is what actually takes the money.
  *
  * CURRENT RATES (confirmed by the owner)
- *   $8 per 25-minute lesson   — 1 to 3 lessons per week
+ *   $7 per 25-minute lesson — every plan, flat (owner 2026-10-29)
  *   $6 per 25-minute lesson   — 4 or more lessons per week
  *   50-minute lessons cost exactly double the 25-minute rate
  */
 
-export const STANDARD = 8
-export const PACKAGE = 6
+export const STANDARD = 7
+export const PACKAGE = 7
 export const PACKAGE_MIN = 4
 export const LONG_MULTIPLIER = 2
 
 export const STANDARD_50 = STANDARD * LONG_MULTIPLIER  // $16
 export const PACKAGE_50 = PACKAGE * LONG_MULTIPLIER    // $14
 
-/** "$8" — the headline "from" price used in titles and meta descriptions. */
+/** "$7" — the headline "from" price used in titles and meta descriptions. */
 export const FROM = `$${PACKAGE}`
 
 /** One sentence covering the whole structure, for body copy. */

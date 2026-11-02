@@ -20,7 +20,7 @@
  * Only cities with real, verifiable detail are included. Five good pages beat
  * a thousand thin ones.
  *
- * ACCURACY: pricing from planSessionRate() in src/Dashboards.jsx ($8 for 1-3
+ * ACCURACY: pricing from planSessionRate() in src/Dashboards.jsx ($7 for 1-3
  * lessons a week, $6 for 4+), coursebooks from src/App.jsx, DTI 5274092, and
  * the real 12-hour cancellation and 14-day refund terms. Nothing invented.
  */
@@ -322,8 +322,8 @@ function render(city, all) {
         <p>${city.localNote} Our lessons are one-to-one throughout:</p>
         <table>
           <tr><th>Plan</th><th>Price per lesson</th></tr>
-          <tr><td>1–3 lessons a week, billed weekly</td><td><strong>$8</strong></td></tr>
-          <tr><td>4 or more a week, monthly plan</td><td><strong>$8</strong></td></tr>
+          <tr><td>1–3 lessons a week, billed weekly</td><td><strong>$7</strong></td></tr>
+          <tr><td>4 or more a week, monthly plan</td><td><strong>$7</strong></td></tr>
         </table>
         <p><strong style="color:#fff">No registration fee, no materials fee, no platform fee, no contract.</strong> Cancel at least 12 hours before a lesson and the credit returns in full. Unused credits are refundable within 14 days. ${city.payment}</p>
 

@@ -17,7 +17,7 @@
  * ----------------------
  * - Pricing shows the owner's Korea rates: 25min ₩8,000, 50min ₩16,000.
  *   These are the won prices Korean families actually pay - a local rate
- *   the owner set deliberately below the $8 / $16 list shown elsewhere.
+ *   the owner set deliberately below the $7 / $14 list shown elsewhere.
  * - No invented reviews, no star ratings, no fabricated student counts.
  * - Only English claims Cambridge/Oxford alignment, matching the English site.
  * - Teachers are described as Philippine-based, because they are, and because

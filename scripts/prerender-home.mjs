@@ -36,7 +36,7 @@ const HERO = {
   heading: 'Build Your Child\'s English Confidence with TutorPro!',
   tagline: 'Personalized online English lessons for primary and secondary students — live one-to-one with near-native Filipino English teachers.',
   lede: 'Looking for an online English tutor for your child? TutorPro teaches children and teens aged 4–16 one to one, so they speak for the whole lesson — building confidence in speaking, reading, grammar and writing with an experienced English teacher.',
-  proof: ['No commitment', 'From $8 per class', 'Flexible times'],
+  proof: ['No commitment', 'From $7 per class', 'Flexible times'],
 }
 
 const SECTIONS = [
@@ -74,7 +74,7 @@ const SECTIONS = [
   },
   {
     heading: 'Why Parents Choose TutorPro',
-    body: 'Experienced teachers, screened by recorded teaching interview before they are given a student. Personalised lessons built around one child. Live classes rather than recordings. Primary and secondary programmes under one roof. Flexible scheduling with evening and weekend slots shown in your own time zone. Written teacher feedback after every lesson. Learning from home with no travel. A free first class with no card required. Published prices from US$6 per lesson, and credits refundable within 14 days.',
+    body: 'Experienced teachers, screened by recorded teaching interview before they are given a student. Personalised lessons built around one child. Live classes rather than recordings. Primary and secondary programmes under one roof. Flexible scheduling with evening and weekend slots shown in your own time zone. Written teacher feedback after every lesson. Learning from home with no travel. A free first class with no card required. Published prices from US$7 per lesson, and credits refundable within 14 days.',
   },
   {
     heading: 'Parents can see exactly what is happening.',
@@ -86,7 +86,7 @@ const SECTIONS = [
   },
   {
     heading: 'Simple, honest pricing in US dollars.',
-    body: 'All prices are in US dollars, so there is no guessing what a lesson costs. Classes are US$8 per 25-minute lesson on the Weekly plan of 1 to 3 classes a week, and US$6 per lesson on the Monthly Package of 4 or more classes a week, billed monthly with priority scheduling and a dedicated tutor. Fifty-minute lessons are available for older learners. The first class is free for every new family with no card required, prices are published on this page rather than hidden behind a sales call, unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full.',
+    body: 'All prices are in US dollars, so there is no guessing what a lesson costs. Classes are US$7 per 25-minute lesson on the Weekly plan of 1 to 3 classes a week, and US$7 per lesson on the Monthly Package of 4 or more classes a week, billed monthly with priority scheduling and a dedicated tutor. Fifty-minute lessons are available for older learners. The first class is free for every new family with no card required, prices are published on this page rather than hidden behind a sales call, unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full.',
   },
   {
     heading: 'Looking for a Special Discount?',
@@ -100,7 +100,7 @@ const SECTIONS = [
   },
   {
     heading: 'Looking for a Novakid, 51Talk or Preply alternative?',
-    body: 'Families comparing online English schools choose TutorPro Online English for genuine one-to-one lessons, Cambridge and Oxford aligned courseware, transparent pricing from US$8 per 25-minute class, and a free first class with no commitment. Unlike platforms that move children into group speaking clubs as they progress, every TutorPro lesson stays one-to-one. Our published rate is lower than the entry price of most major online English schools for children, and there is no long contract to sign.',
+    body: 'Families comparing online English schools choose TutorPro Online English for genuine one-to-one lessons, Cambridge and Oxford aligned courseware, transparent pricing at US$7 per 25-minute class, and a free first class with no commitment. Unlike platforms that move children into group speaking clubs as they progress, every TutorPro lesson stays one-to-one. Our published rate is lower than the entry price of most major online English schools for children, and there is no long contract to sign.',
   },
 ]
 
@@ -184,7 +184,7 @@ const FAQS = [
   },
   {
     question: 'What currency are prices in?',
-    answer: 'US dollars. Classes are US$8 per 25-minute lesson on the Weekly plan, or US$6 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
+    answer: 'US dollars. Classes are US$7 per 25-minute lesson on the Weekly plan, or US$7 per lesson on the Monthly Package of 4 or more classes a week. There are no registration or materials fees.',
   },
 ]
 
@@ -262,7 +262,7 @@ ${faqItems}
  * matching course below. Never publish a rating that is not genuinely earned.
  *
  * Content mirrors the `programmes` object in src/App.jsx and the pricing helpers in
- * src/Dashboards.jsx ($8/class for 1-3 lessons a week, $6/class for 4 or more).
+ * src/Dashboards.jsx ($7/class for 1-3 lessons a week, $6/class for 4 or more).
  */
 const COURSES = [
   {
@@ -320,7 +320,7 @@ function buildCourseSchema() {
           offers: {
             '@type': 'Offer',
             category: 'Paid',
-            price: '8.00',
+            price: '7.00',
             priceCurrency: 'USD',
             availability: 'https://schema.org/InStock',
             url: 'https://www.tutorpro.site/',
@@ -330,7 +330,7 @@ function buildCourseSchema() {
       offers: {
         '@type': 'Offer',
         category: 'Paid',
-        price: '8.00',
+        price: '7.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://www.tutorpro.site/',

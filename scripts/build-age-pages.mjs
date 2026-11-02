@@ -12,7 +12,7 @@
  *
  * ACCURACY: every claim below is drawn from the real platform —
  *  - coursebooks come from the curriculum list in src/App.jsx
- *  - pricing comes from planSessionRate() in src/Dashboards.jsx ($8 for 1-3/wk, $6 for 4+)
+ *  - pricing comes from planSessionRate() in src/Dashboards.jsx ($7 for 1-3/wk, $6 for 4+)
  *  - lesson lengths, free trial, recordings and the AI speech coach are shipped features
  * Nothing here is aspirational or invented.
  */
@@ -152,9 +152,9 @@ function buildSchema(age) {
           courseWorkload: 'PT25M',
           location: { '@type': 'VirtualLocation', url: SITE },
           courseSchedule: { '@type': 'Schedule', duration: 'PT25M', repeatFrequency: 'Weekly', repeatCount: 4 },
-          offers: { '@type': 'Offer', category: 'Paid', price: '8.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
+          offers: { '@type': 'Offer', category: 'Paid', price: '7.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
         }],
-        offers: { '@type': 'Offer', category: 'Paid', price: '8.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
+        offers: { '@type': 'Offer', category: 'Paid', price: '7.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: SITE },
       },
       {
         '@type': 'FAQPage',
@@ -247,7 +247,7 @@ function page(age) {
         <h2>Pricing</h2>
         <table>
           <tr><th>Plan</th><th>Classes per week</th><th>Price per class</th></tr>
-          <tr><td>Weekly plan</td><td>1–3</td><td>$8</td></tr>
+          <tr><td>Weekly plan</td><td>1–3</td><td>$7</td></tr>
           <tr><td>Monthly package</td><td>4–7</td><td>$6</td></tr>
         </table>
         <p>The first class is free for every new family and no card is required to try it. Unused lesson credits can be refunded within 14 days of purchase, and cancelling at least 12 hours before a lesson returns the credit in full. Full terms are on our <a href="/refund-policy.html">refund policy</a> page.</p>

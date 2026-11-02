@@ -37,8 +37,8 @@ ok(/hero__apply-teacher/.test(app), 'Apply as a teacher kept in the hero')
 ok(/Book a Free Trial<\/a> · <a href="\/signup">Sign Up<\/a> · <a href="\/login">Log In/.test(prerender), 'the prerendered CTA line lists all three actions')
 
 /* 4 - pricing transparency: the hero no longer contradicts the pricing page */
-ok(app.includes('From US$6 per class'), 'hero proof says From US$6 per class')
-ok(!/From US\$8/.test(app), 'no From US$8 anywhere in the app copy')
+ok(app.includes('From US$7 per class'), 'hero proof says From US$7 per class (flat tuition)')
+ok(!/From US\$8/.test(app) && !/From US\$6/.test(app), 'no stale From-price left in the app copy')
 
 /* 5 - accessibility */
 ok(/<a className="skip-link" href="#main-content">Skip to main content<\/a>/.test(app), 'keyboard skip link added')
@@ -49,8 +49,8 @@ ok(/href="\/login">Log In<\/a>/.test(contact) && /btn--primary" href="\/signup">
 ok(!/Register now/.test(contact), 'the old Register now button was replaced, not duplicated')
 
 /* 7 - contact page accuracy + conversion (owner pointed at the page) */
-ok(!/US\$7/.test(contact), 'the contact FAQ no longer quotes the stale US$7 package rate')
-ok(/US\$6 for 25 minutes on four or more a week/.test(contact), 'it quotes the live US$6 Monthly Package rate instead')
+ok(/US\$7 for a 25-minute lesson on every plan/.test(contact), 'the contact FAQ quotes the flat US$7 rate')
+ok(/US\$14 for a 50-minute lesson/.test(contact), 'and the US$14 fifty-minute rate')
 ok(/btn--primary btn--lg" href="\/\?book=1">Book a Free Trial/.test(contact), 'the free trial is one tap from the contact hero')
 ok(/View pricing/.test(contact), 'transparent pricing is linked from the same hero')
 ok(/Last updated: 28 October 2026/.test(contact), 'the freshness stamp is current')

@@ -21,8 +21,8 @@ export const MAX_INVOICE_SESSIONS = 200
 // the package rate. Mirrored EXACTLY in src/Dashboards.jsx — scripts/test-pricing.mjs
 // fails the build if the two ever drift, because a mismatch would show a
 // parent one price and charge them another.
-export const SESSION_RATE_STANDARD = 8
-export const SESSION_RATE_PACKAGE = 6
+export const SESSION_RATE_STANDARD = 7
+export const SESSION_RATE_PACKAGE = 7
 export const PACKAGE_MIN_SESSIONS = 4
 /** A 50-minute lesson is exactly two 25-minute blocks, so it costs double. */
 export const LONG_LESSON_MULTIPLIER = 2
