@@ -407,6 +407,19 @@ export function removeStudentBookingData(accountId, learnerId, includeLegacyPrim
   return removed
 }
 
+/** Permanently remove one booking (owner, 2026-11-04: admins need to
+ * remove booked classes from the calendar). Unlike a cancellation, which
+ * keeps the record with status 'cancelled', this deletes it from the local
+ * store and the shared cloud table. */
+export async function deleteBooking(bookingId) {
+  const bookings = readBookings()
+  const remaining = bookings.filter((booking) => booking.id !== bookingId)
+  if (remaining.length === bookings.length) return false
+  writeBookings(remaining)
+  try { await deleteCloudBooking(bookingId) } catch { /* the cloud copy may already be gone */ }
+  return true
+}
+
 export function removeTeacherBookingData(accountId) {
   const bookings = readBookings()
   const removedBookings = bookings.filter((booking) => booking.teacherId === accountId)
