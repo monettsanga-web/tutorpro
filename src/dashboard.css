@@ -13892,3 +13892,6 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 
 .support-spam-toggle { margin: 2px 0 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid #e4def8; background: #faf7ff; color: #6f5f8c; font-size: 12.5px; font-weight: 700; cursor: pointer; }
 .support-spam-toggle:hover { border-color: #b9a7ee; color: #321568; }
+
+.booking-delete-control { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 5px 10px; border-radius: 8px; border: 1px solid #f0c9c6; background: #fff6f5; color: #a52a22; font-size: 12px; font-weight: 700; cursor: pointer; }
+.booking-delete-control:hover { background: #fdeae8; border-color: #d9908a; }

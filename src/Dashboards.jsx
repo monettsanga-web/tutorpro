@@ -88,7 +88,7 @@ import {
   updateTeacherProfile,
   waitForCloudProfileSync,
 } from './auth.js'
-import { createBooking, getBookings, getBookingStats, learnerHasUsedTrial, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
+import { createBooking, deleteBooking, getBookings, getBookingStats, learnerHasUsedTrial, mergeCloudBookings, rateCompletedBooking, reassignTeacherBookings, removeStudentBookingData, removeTeacherBookingData, saveTeacherFeedback, syncBookingNow, updateBooking } from './bookings.js'
 import { downloadBookingCalendar } from './bookingCalendar.js'
 import { notifyBookingParticipants, pingBookingEmailTemplate } from './bookingNotifications.js'
 import { ProfilePhoto, IntroVideo } from './ProfileMedia.jsx'
@@ -453,6 +453,7 @@ export function ScheduleCalendar({
   onBookingOpen,
   onBookingFeedback,
   onBookingCancel,
+  onBookingDelete,
   showInactiveBookings = false,
   duration = 25,
   multiSelect = false,
@@ -473,8 +474,11 @@ export function ScheduleCalendar({
   const [menuBusy, setMenuBusy] = useState(false)
   const [menuError, setMenuError] = useState('')
   const [confirmUnbook, setConfirmUnbook] = useState(false)
+  /* Permanent delete is separate from unbook: unbook cancels and keeps the
+     record, delete removes it everywhere (owner request, 2026-11-04). */
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const closeNameMenu = () => { setNameMenu(null); setConfirmUnbook(false); setMenuError(''); setMenuBusy(false) }
+  const closeNameMenu = () => { setNameMenu(null); setConfirmUnbook(false); setConfirmDelete(false); setMenuError(''); setMenuBusy(false) }
 
   useEffect(() => {
     if (!nameMenu) return undefined
@@ -503,6 +507,7 @@ export function ScheduleCalendar({
     if (top + menuHeight > window.innerHeight - 8) top = Math.max(8, rect.top - menuHeight - 6)
     const left = Math.min(Math.max(10, rect.left), Math.max(10, window.innerWidth - menuWidth - 10))
     setConfirmUnbook(false)
+    setConfirmDelete(false)
     setMenuError('')
     setNameMenu({ booking, studentName, top, left })
   }
@@ -516,6 +521,19 @@ export function ScheduleCalendar({
       closeNameMenu()
     } catch (cancelError) {
       setMenuError(cancelError?.message || 'Could not cancel this booking. Please try again.')
+      setMenuBusy(false)
+    }
+  }
+
+  const runDelete = async () => {
+    if (!nameMenu || !onBookingDelete) return
+    setMenuBusy(true)
+    setMenuError('')
+    try {
+      await onBookingDelete(nameMenu.booking)
+      closeNameMenu()
+    } catch (deleteError) {
+      setMenuError(deleteError?.message || 'Could not delete this class. Please try again.')
       setMenuBusy(false)
     }
   }
@@ -788,11 +806,20 @@ export function ScheduleCalendar({
                   <button type="button" className="danger" onClick={runUnbook} disabled={menuBusy}>{menuBusy ? 'Cancelling…' : 'Yes, unbook'}</button>
                 </div>
               </div>
+            ) : confirmDelete ? (
+              <div className="schedule-name-menu__confirm">
+                <p>Delete this class permanently? It disappears from every calendar and list.</p>
+                <div>
+                  <button type="button" onClick={() => setConfirmDelete(false)} disabled={menuBusy}>Keep</button>
+                  <button type="button" className="danger" onClick={runDelete} disabled={menuBusy}>{menuBusy ? 'Deleting…' : 'Yes, delete'}</button>
+                </div>
+              </div>
             ) : (
               <div className="schedule-name-menu__actions">
                 {onBookingOpen && <button type="button" onClick={() => { const target = menuBooking; closeNameMenu(); onBookingOpen(target) }}><CalendarCheck2 size={14} /> View booking details</button>}
                 {canFeedback && <button type="button" onClick={() => { const target = menuBooking; closeNameMenu(); onBookingFeedback(target) }}><MessageSquareText size={14} /> {menuBooking.teacherFeedback ? 'Edit feedback' : 'Write feedback'}</button>}
                 {onBookingCancel && unbookable && <button type="button" className="danger" onClick={() => setConfirmUnbook(true)}><XCircle size={14} /> Unbook / cancel class</button>}
+                {onBookingDelete && <button type="button" className="danger" onClick={() => setConfirmDelete(true)}><Trash2 size={14} /> Delete permanently</button>}
                 {alreadyReleased && <p className="schedule-name-menu__note">This class is already cancelled.</p>}
                 {!unbookable && !alreadyReleased && <p className="schedule-name-menu__note">Completed classes cannot be unbooked.</p>}
               </div>
@@ -7409,7 +7436,7 @@ function RemoveStudentDialog({ profile, onClose, onConfirm }) {
   )
 }
 
-export function AdminTeacherBookingGroups({ bookings, teachers, onStatusChange, onOpenTeacher, onEnterClassroom, onManageBooking }) {
+export function AdminTeacherBookingGroups({ bookings, teachers, onStatusChange, onOpenTeacher, onEnterClassroom, onManageBooking, onRemoveBooking }) {
   const [statusFilter, setStatusFilter] = useState('all')
   const [teacherFilter, setTeacherFilter] = useState('all')
   const teacherById = new Map(teachers.map((teacher) => [teacher.id, teacher]))
@@ -7442,7 +7469,7 @@ export function AdminTeacherBookingGroups({ bookings, teachers, onStatusChange, 
           const teacherName = teacher?.fullName || teacherBookings[0]?.teacherName || 'Unassigned teacher'
           const profile = teacher?.teacher || {}
           const allTeacherBookings = bookings.filter((booking) => booking.teacherId === teacherId)
-          return <section className="portal-card admin-teacher-booking-group" key={teacherId}><header><ProfilePhoto accountId={teacherId} name={teacherName} className="admin-booking-teacher-photo" /><div className="admin-teacher-booking-profile"><div><StatusBadge status={teacher?.status || 'removed'} /><span>Teacher booking profile</span></div><h2>{teacherName}</h2><p>{profile.specialization || 'Teacher profile unavailable'} · {Number(profile.experience) || 0} years experience</p></div><dl><div><dt>Shown</dt><dd>{teacherBookings.length}</dd></div><div><dt>Total</dt><dd>{allTeacherBookings.length}</dd></div><div><dt>Completed</dt><dd>{allTeacherBookings.filter((booking) => booking.status === 'completed').length}</dd></div></dl>{teacher && onOpenTeacher && <button type="button" className="admin-open-teacher-profile" onClick={() => onOpenTeacher(teacher.id)}><Eye size={15} /> Open profile</button>}</header><div className="admin-teacher-booking-list">{teacherBookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={onEnterClassroom} onManageBooking={onManageBooking} actions={<label className="booking-status-control"><span>Status</span><select className="booking-status-select" value={booking.status} onChange={(event) => onStatusChange(booking.id, event.target.value)}>{BOOKING_STATUS_OPTIONS.filter((option) => option.id !== 'all').map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>} />)}</div></section>
+          return <section className="portal-card admin-teacher-booking-group" key={teacherId}><header><ProfilePhoto accountId={teacherId} name={teacherName} className="admin-booking-teacher-photo" /><div className="admin-teacher-booking-profile"><div><StatusBadge status={teacher?.status || 'removed'} /><span>Teacher booking profile</span></div><h2>{teacherName}</h2><p>{profile.specialization || 'Teacher profile unavailable'} · {Number(profile.experience) || 0} years experience</p></div><dl><div><dt>Shown</dt><dd>{teacherBookings.length}</dd></div><div><dt>Total</dt><dd>{allTeacherBookings.length}</dd></div><div><dt>Completed</dt><dd>{allTeacherBookings.filter((booking) => booking.status === 'completed').length}</dd></div></dl>{teacher && onOpenTeacher && <button type="button" className="admin-open-teacher-profile" onClick={() => onOpenTeacher(teacher.id)}><Eye size={15} /> Open profile</button>}</header><div className="admin-teacher-booking-list">{teacherBookings.map((booking) => <BookingCard key={booking.id} booking={booking} showStudent onEnterClassroom={onEnterClassroom} onManageBooking={onManageBooking} actions={<><label className="booking-status-control"><span>Status</span><select className="booking-status-select" value={booking.status} onChange={(event) => onStatusChange(booking.id, event.target.value)}>{BOOKING_STATUS_OPTIONS.filter((option) => option.id !== 'all').map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>{onRemoveBooking && <button type="button" className="booking-delete-control" onClick={() => { if (window.confirm('Delete this class permanently? It will be removed from every calendar and list.')) onRemoveBooking(booking) }}><Trash2 size={13} /> Delete</button>}</>} />)}</div></section>
         })}
         {!visibleBookings.length && <section className="portal-card"><EmptyState icon={CalendarCheck2} title={`No ${statusFilter === 'all' ? '' : `${statusFilter} `}bookings found`} text="Choose another teacher or booking status to see matching lessons." /></section>}
       </div>
@@ -8659,6 +8686,15 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     refresh()
   }
 
+  /* Owner, 2026-11-04: admins can remove a booked class from the calendar
+     for good - local store plus the shared cloud table. */
+  const deleteCalendarClass = async (booking) => {
+    const removed = await deleteBooking(booking.id)
+    refresh()
+    if (!removed) throw new Error('That class was already removed from the calendar.')
+    return booking
+  }
+
   const unbookCalendarClass = async (booking) => {
     const updated = updateBooking(booking.id, { status: 'cancelled', cancelledBy: 'admin', cancelledAt: new Date().toISOString() })
     refresh()
@@ -9056,7 +9092,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
             </div>
 
             {adminBookingView === 'list' ? (
-              <AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} />
+              <AdminTeacherBookingGroups bookings={bookings} teachers={teachers} onStatusChange={setBookingStatus} onOpenTeacher={openManagedTeacher} onEnterClassroom={setClassroomBooking} onManageBooking={setManagedBooking} onRemoveBooking={async (booking) => { const removed = await deleteBooking(booking.id); refresh(); if (!removed) window.alert('That class was already removed.') }} />
             ) : (
               <section className="portal-card booking-calendar-card teacher-booking-calendar admin-reserve-calendar-card">
                 {/* Two jobs on one calendar: put a student into a slot, or
@@ -9140,7 +9176,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
                   selectedLessons={!availabilityMode && adminReserveSlot ? [{ ...adminReserveSlot, duration: Number(adminReserveDuration) }] : []}
                   onSelect={availabilityMode ? undefined : (slot) => { setAdminReserveSlot({ date: slot.date, time: slot.time, duration: Number(adminReserveDuration) }); setAdminReserveError(''); setAdminReserveMessage('') }}
                   onBookingOpen={setManagedBooking} 
-                  onBookingCancel={availabilityMode ? undefined : unbookCalendarClass}
+                  onBookingCancel={availabilityMode ? undefined : unbookCalendarClass} 
+                  onBookingDelete={availabilityMode ? undefined : deleteCalendarClass}
                   showInactiveBookings={!availabilityMode}
                 />
               </section>
