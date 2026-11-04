@@ -1015,8 +1015,8 @@ h3 {
   min-height: 0;
   /* Owner asked for more width (2026-11-05): the copy column takes a bigger
      share and the gutter narrows so the text measure opens up. */
-  grid-template-columns: 1.18fr 0.82fr;
-  gap: 48px;
+  grid-template-columns: 1.32fr 0.68fr;
+  gap: 40px;
   align-items: center;
   padding-top: 34px;
   padding-bottom: 44px;
@@ -1031,7 +1031,7 @@ h3 {
 .hero h1 {
   /* Was 452px tall on its own at 80px type, over a third of the whole hero.
      A wider measure and a tighter cap keep the same impact on fewer lines. */
-  max-width: 800px;
+  max-width: 980px;
   margin-bottom: 14px;
   font-size: clamp(2.3rem, 3.1vw, 2.95rem);
   line-height: 1.12;
@@ -1062,7 +1062,7 @@ h3 {
    phrase instead. Styled as a warm sub-heading so it still reads as the
    brand promise rather than body copy. */
 .hero__tagline {
-  max-width: 700px;
+  max-width: 860px;
   margin: -2px 0 10px;
   color: var(--coral-dark, #e73876);
   font-size: 1.04rem;
@@ -1071,7 +1071,7 @@ h3 {
 }
 
 .hero__lede {
-  max-width: 700px;
+  max-width: 860px;
   margin-bottom: 22px;
   color: #536662;
   font-size: 1.04rem;
@@ -4200,7 +4200,7 @@ a.header-portal-link, a.mobile-portal-button, a.button { text-decoration: none; 
   }
 
   .hero__content {
-    max-width: 780px;
+    max-width: 860px;
   }
 
   .hero h1 {
@@ -8739,7 +8739,7 @@ body:has(.auth-shell--student-register) .messenger-float {
    faces early, and reviews beside the price. All original drawing and
    code; only the ideas are shared. */
 .hero-age-widget {
-  margin: 18px 0 2px; padding: 14px 16px 16px; max-width: 560px;
+  margin: 18px 0 2px; padding: 14px 16px 16px; max-width: 640px;
   background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(50, 21, 104, 0.08);
   border-radius: 22px; box-shadow: 0 18px 44px rgba(50, 21, 104, 0.12);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
