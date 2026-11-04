@@ -901,9 +901,9 @@ h3 {
   .hero--banner .hero__grid {
     max-width: none;
     width: 100%;
-    padding-left: clamp(20px, 4vw, 72px);
-    padding-right: clamp(20px, 4vw, 72px);
-    grid-template-columns: clamp(320px, 50vw, 1080px) 1fr;
+    padding-left: clamp(16px, 2.5vw, 40px);
+    padding-right: clamp(16px, 2.5vw, 40px);
+    grid-template-columns: clamp(300px, 46vw, 980px) 1fr;
     gap: 0;
   }
   .hero--banner .hero__bg { object-position: right center; }
