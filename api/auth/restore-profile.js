@@ -10,12 +10,17 @@ import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return sendError(res, 405, 'Use POST.')
   const body = typeof req.body === 'string' ? safeParse(req.body) : (req.body || {})
-  if (!body.id || typeof body.id !== 'string') return sendError(res, 400, 'Missing profile id.')
-  const role = body.role === 'parent' ? 'parent' : 'student'
   const admin = getSupabaseAdmin()
   if (!admin) return sendError(res, 500, 'The shared database is not configured.')
+  /* The id may come straight from an admin trash snapshot, or be resolved
+     from the login email: a deletion removes the profiles row but never the
+     auth user, so the email still identifies the family (2026-11-07 rebuild
+     of an accidentally deleted account). */
+  const id = await resolveUserId(admin, body)
+  if (!id) return sendError(res, 404, 'No sign-in record matches that account.')
+  const role = body.role === 'parent' ? 'parent' : 'student'
   const payload = {
-    id: body.id,
+    id,
     role,
     status: body.status === 'active' || body.status === 'suspended' ? body.status : 'active',
     email: body.email || null,
@@ -37,4 +42,19 @@ export default async function handler(req, res) {
 
 function safeParse(text) {
   try { return JSON.parse(text) } catch { return {} }
+}
+
+async function resolveUserId(admin, body) {
+  if (body.id && typeof body.id === 'string') return body.id
+  const email = String(body.email || '').trim().toLowerCase()
+  if (!email) return null
+  for (let page = 1; page <= 5; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 100 })
+    if (error) return null
+    const users = data?.users || []
+    const match = users.find((user) => (user.email || '').toLowerCase() === email)
+    if (match) return match.id
+    if (users.length < 100) break
+  }
+  return null
 }
