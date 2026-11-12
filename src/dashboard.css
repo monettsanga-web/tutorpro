@@ -13895,3 +13895,12 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 
 .booking-delete-control { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 5px 10px; border-radius: 8px; border: 1px solid #f0c9c6; background: #fff6f5; color: #a52a22; font-size: 12px; font-weight: 700; cursor: pointer; }
 .booking-delete-control:hover { background: #fdeae8; border-color: #d9908a; }
+
+.family-trash-card { margin: 0 0 18px; padding: 16px 18px; border: 1px solid #f0c9c6; background: #fff8f7; }
+.family-trash-head { display: flex; gap: 10px; align-items: flex-start; color: #a52a22; margin-bottom: 10px; }
+.family-trash-head strong { display: block; font-size: 15px; }
+.family-trash-head small { color: #7c5a56; }
+.family-trash-row { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 10px 0; border-top: 1px dashed #ecd6d3; flex-wrap: wrap; }
+.family-trash-row strong { display: block; font-size: 14.5px; color: #3f2a28; }
+.family-trash-row small { color: #8a6b67; }
+.family-trash-row__actions { display: flex; gap: 8px; }

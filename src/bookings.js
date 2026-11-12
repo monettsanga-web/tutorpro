@@ -125,6 +125,20 @@ export function getBookings(filters = {}) {
     .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
 }
 
+/** Put snapshotted bookings back after a family restore (undo, 2026-11-07).
+ * Skips ids that already exist so a double restore cannot duplicate a
+ * class, and re-syncs each restored row to the shared table. */
+export function restoreBookings(list = []) {
+  if (!Array.isArray(list) || !list.length) return 0
+  const bookings = readBookings()
+  const existing = new Set(bookings.map((booking) => booking.id))
+  const added = list.filter((booking) => booking && booking.id && !existing.has(booking.id))
+  if (!added.length) return 0
+  writeBookings([...bookings, ...added])
+  added.forEach((booking) => syncCloudBooking(booking).catch(() => {}))
+  return added.length
+}
+
 export function createBooking(details) {
   const bookings = readBookings()
   const teacher = getAccountById(details.teacherId)
