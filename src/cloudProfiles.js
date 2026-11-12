@@ -348,6 +348,36 @@ export async function updateCloudProfile(account) {
   return { ...payload, ...data }
 }
 
+/** Re-create the shared profile row of a restored family (undo,
+ * 2026-11-07). The Supabase auth user was never deleted, so inserting the
+ *  profiles row with the same id brings back cloud login with the parent's
+ *  original password. Server-side the role is whitelisted to family roles. */
+export async function restoreCloudProfile(account) {
+  if (!account || !account.id) return false
+  const { passwordHash: _hash, salt: _salt, ...profileData } = account
+  /* Family roles only; the server route whitelists them again. Computed
+     ahead of the payload so the no-role-in-updates guard stays readable. */
+  const restoreRole = account.role === 'parent' ? 'parent' : 'student'
+  try {
+    const response = await fetch('/api/auth/restore-profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: account.id,
+        role: restoreRole,
+        status: account.status || 'active',
+        email: account.email || null,
+        loginId: account.loginId || account.email || '',
+        authProvider: account.authProvider || 'email',
+        parentName: account.parentName || null,
+        fullName: account.fullName || null,
+        profileData,
+      }),
+    })
+    return response.ok
+  } catch { return false }
+}
+
 export async function deleteCloudProfile(accountId) {
   if (!supabase || !accountId) return false
   const { data, error } = await supabase.from('profiles').delete().eq('id', accountId).select('id')

@@ -906,6 +906,18 @@ export function updateLearnerAccess(accountId, learnerId, accessStatus) {
   return updateStudentProfile(accountId, { accessStatus }, learnerId)
 }
 
+/** Re-insert a previously deleted family account (undo, 2026-11-07).
+ * Refuses duplicates and anything that is not a family role, so a restore
+ * can never overwrite a live account or create a privileged one. */
+export function insertAccount(account) {
+  if (!account || !account.id) throw new Error('The saved account snapshot was empty.')
+  if (!['student', 'parent'].includes(account.role || 'student')) throw new Error('Only family accounts can be restored here.')
+  const accounts = readAccounts()
+  if (accounts.some((item) => item.id === account.id)) throw new Error('That account already exists - nothing to restore.')
+  writeAccounts([...accounts, account])
+  return account
+}
+
 export function removeStudentLearner(accountId, learnerId) {
   const accounts = readAccounts()
   const index = accounts.findIndex((account) => account.id === accountId)

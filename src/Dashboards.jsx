@@ -140,7 +140,8 @@ import { onHashRouteChange, readHashRoute, writeHashRoute } from './hashRoute.js
 import { deleteProfileMediaOwner, getProfileMedia, saveProfileMedia } from './media.js'
 import { fetchCloudBookings, subscribeToCloudBookings } from './cloudBookings.js'
 import ParentTeacherReviews from './ParentTeacherReviews.jsx'
-import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
+import { cloudSyncEnabled, fetchCloudProfiles, fetchPublicTeachers, restoreCloudProfile, subscribeToCloudProfiles, updateCloudProfile, verifyCloudAdmin } from './cloudProfiles.js'
+import { captureFamily, discardFamily, listFamilyTrash, restoreFamily } from './accountTrash.js'
 import { photoFileToDataUrl, shareTeacherPhoto } from './teacherPhotos.js'
 import { recoveryStateFor, saveRecoveryEmail } from './recoveryEmail.js'
 import { deleteTestAccounts, listTestAccounts } from './testAccounts.js'
@@ -7835,6 +7836,8 @@ export function AdminDashboard({ account, onHome, onLogout }) {
   const [classroomBooking, setClassroomBooking] = useState(null)
   const [managedBooking, setManagedBooking] = useState(null)
   const [studentToRemove, setStudentToRemove] = useState(null)
+  const [restoringTrashId, setRestoringTrashId] = useState('')
+  const [trashError, setTrashError] = useState('')
   const [teacherToRemove, setTeacherToRemove] = useState(null)
   const [cloudStatus, setCloudStatus] = useState(cloudSyncEnabled() ? 'connecting' : 'local')
   const [cloudError, setCloudError] = useState('')
@@ -8568,8 +8571,27 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       setProcessingAccountId('')
     }
   }
+  const restoreDeletedFamily = async (accountId) => {
+    setRestoringTrashId(accountId)
+    setTrashError('')
+    try {
+      const { account } = restoreFamily(accountId)
+      if (cloudSyncEnabled()) await restoreCloudProfile(account).catch(() => {})
+      refresh()
+    } catch (restoreError) {
+      setTrashError(restoreError?.message || 'The family could not be restored.')
+    } finally {
+      setRestoringTrashId('')
+    }
+  }
+
   const removeStudentRegistration = async (profile, isFinalStudent) => {
     const isPrimary = profile.account.child?.id === profile.learner.id
+    /* Undo for accidental deletions (owner, 2026-11-07): snapshot the whole
+       family - account, learners, bookings - before anything is removed. */
+    if (isFinalStudent) {
+      try { captureFamily(profile.account.id) } catch { /* undo stays unavailable, deletion still proceeds */ }
+    }
     removeStudentBookingData(profile.account.id, isFinalStudent ? undefined : profile.learner.id, isPrimary)
     if (isFinalStudent) {
       await Promise.allSettled((profile.account.children || [profile.learner]).map((learner) => deleteProfileMediaOwner(`${profile.account.id}-${learner.id}`)))
@@ -8945,7 +8967,23 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       )}
 
       {active === 'students' && (
-        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div><section className="students-overview">
+        <div className="portal-view"><div className="portal-page-heading"><div><span className="portal-kicker">Learner community</span><h1>Students</h1><p>Manage every learner’s profile, access status and dashboard.</p></div></div>
+          {listFamilyTrash().length > 0 && (
+            <section className="portal-card family-trash-card">
+              <div className="family-trash-head"><Trash2 size={17} /><div><strong>Recently deleted families</strong><small>Kept 30 days on this device. Restoring brings back the login, the learners and their booked classes - the parent's original password keeps working.</small></div></div>
+              {listFamilyTrash().map((entry) => (
+                <div className="family-trash-row" key={entry.id}>
+                  <div><strong>{entry.account.parentName || entry.account.fullName || entry.account.email}</strong><small>{entry.account.email} · deleted {new Date(entry.deletedAt).toLocaleDateString('en', { month: 'short', day: 'numeric' })} · {(entry.account.children || []).length} learner{(entry.account.children || []).length === 1 ? '' : 's'} · {(entry.bookings || []).length} booking{(entry.bookings || []).length === 1 ? '' : 's'}</small></div>
+                  <div className="family-trash-row__actions">
+                    <button type="button" className="portal-primary-button" onClick={() => restoreDeletedFamily(entry.id)} disabled={restoringTrashId === entry.id}>{restoringTrashId === entry.id ? 'Restoring…' : 'Restore'}</button>
+                    <button type="button" className="button" onClick={() => { discardFamily(entry.id); refresh() }}>Discard</button>
+                  </div>
+                </div>
+              ))}
+              {trashError && <div className="portal-error" role="alert">{trashError}</div>}
+            </section>
+          )}
+          <section className="students-overview">
           <div className="students-stats">
             <article className="students-stat"><span className="students-stat__icon students-stat__icon--blue"><GraduationCap size={18} /></span><div><strong>{studentProfiles.length}</strong><small>Learner{studentProfiles.length === 1 ? '' : 's'}</small></div></article>
             <article className="students-stat"><span className="students-stat__icon students-stat__icon--violet"><Users size={18} /></span><div><strong>{students.length}</strong><small>{students.length === 1 ? 'Family' : 'Families'}</small></div></article>
