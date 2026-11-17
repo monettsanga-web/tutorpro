@@ -33,12 +33,13 @@
  * saying different things in different languages.
  */
 import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
+import { adminRecipients } from '../_notifyAdmin.js'
 import { COPY, escapeHtml, languageForProfile, preview } from '../_messageEmail.js'
 
 export const SUPPORT_TEMPLATE_VERSION = 'single-language-2026-09'
 
 const FROM = process.env.NOTIFICATION_FROM_EMAIL || 'TutorPro English <notifications@tutorpro.site>'
-const ADMIN_EMAIL = process.env.SUPPORT_ADMIN_EMAIL || 'sejongenglish@yahoo.com'
+const ADMIN_EMAIL = adminRecipients()[0] || 'sejongenglish@yahoo.com'
 
 function shell({ copy, heading, greeting, intro, quote, cta, footer }) {
   const direction = copy.rtl ? 'rtl' : 'ltr'
@@ -148,7 +149,7 @@ export default async function handler(req, res) {
         footer: copy.replyInside,
       })
     } else {
-      to = ADMIN_EMAIL
+      to = adminRecipients()
       copy = COPY.en
       const name = conversation.parent_name || 'A visitor'
       subject = `${copy.subject(name)} — TutorPro English Support`

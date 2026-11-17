@@ -1,6 +1,6 @@
 import { createHash, randomInt } from 'node:crypto'
 import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
-import { emailAdmin, escapeHtml } from '../_notifyAdmin.js'
+import { adminRecipients, emailAdmin, escapeHtml } from '../_notifyAdmin.js'
 import { normalizeWhatsappNumber, sendWhatsappCode, whatsappConfigured } from '../_whatsapp.js'
 
 /**
@@ -93,7 +93,7 @@ async function emailCode(profile, code) {
           <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:#1d1033;margin:18px 0">${code}</div>
           <p style="color:#5a4b6e;font-size:14px">It expires in ${CODE_TTL_MINUTES} minutes. If you did not ask to reset your password, ignore this email and nothing will change.</p>
         </div></body></html>`,
-      reply_to: process.env.SUPPORT_ADMIN_EMAIL || 'sejongenglish@yahoo.com',
+      reply_to: adminRecipients()[0],
     }),
   })
   return response.ok ? { sent: true, to } : { sent: false, reason: `Resend returned ${response.status}` }

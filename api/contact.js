@@ -12,6 +12,8 @@
  *   - more than five messages an hour from one address block.
  * Only what passes is written to the support inbox, server side.
  */
+import { emailAdmin } from './_notifyAdmin.js'
+
 const SUPABASE_URL = 'https://losmkvvwzijipqrlelyt.supabase.co'
 /* The publishable key is public by design (it ships in every page); the
    write path is what this route protects, not the key. */
@@ -59,6 +61,16 @@ export default async function handler(req, res) {
       }),
     })
     if (!response.ok) throw new Error(`status ${response.status}`)
+    /* Owner, 2026-11-08: every website message must also land in her inbox.
+       Best-effort - a mail-provider hiccup must not eat the parent's
+       message, which is already safely in the support inbox. */
+    emailAdmin({
+      subject: `New website message from ${name}`,
+      heading: 'New website message',
+      rows: [['From', name], ['Email', email], ['Role', role], ['Topic', topic]],
+      body: message,
+      replyTo: email,
+    })
     return res.status(200).json({ ok: true })
   } catch {
     return res.status(502).json({ error: 'The website could not send your message just now. Please email sejongenglish@yahoo.com instead.' })
