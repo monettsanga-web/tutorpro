@@ -648,6 +648,8 @@ a.ct-channel__item:hover { background: #f6f2ff; }
 .ct-channel__icon--wa { background: #25d366; }
 .ct-channel__icon--ms { background: #1877f2; }
 .ct-channel__icon--wc { background: #09b83e; }
+/* KakaoTalk yellow is very light: dark brown glyph for contrast. */
+.ct-channel__icon--kk { background: #fee500; color: #3c2a08; font-weight: 800; }
 .ct-channel__icon--em { background: #716981; }
 .ct-channel__icon--fb { background: #1877f2; font-family: serif; }
 .ct-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 26px auto 40px; }
