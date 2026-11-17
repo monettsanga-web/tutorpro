@@ -67,13 +67,14 @@ const CHANNELS = [
     id: 'kakao',
     Icon: SiKakaotalk,
     name: 'KakaoTalk',
-    handle: '+63 962 528 4849',
+    handle: 'tutorpro_english',
+    // Owner, 2026-11-08: the KakaoTalk username is the primary handle now.
     // Same reasoning as WeChat: KakaoTalk has no dependable web link that
-    // opens a chat with a phone number, so copying it is the action that
-    // actually helps. A link that quietly failed would be worse than none.
-    copy: '+639625284849',
-    action: 'Copy KakaoTalk number',
-    detail: 'Add this number in KakaoTalk, then send a message.',
+    // opens a chat from an ID, so copying it is the action that actually
+    // helps. A link that quietly failed would be worse than none.
+    copy: 'tutorpro_english',
+    action: 'Copy KakaoTalk ID',
+    detail: 'Search this ID in KakaoTalk (or add +63 962 528 4849), then message us.',
     meta: 'Best for families in Korea',
     brand: '#fee500',
     // KakaoTalk yellow is very light: a white glyph on it measures 1.28:1,
