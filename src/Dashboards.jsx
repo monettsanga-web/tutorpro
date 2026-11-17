@@ -478,6 +478,9 @@ export function ScheduleCalendar({
   /* Permanent delete is separate from unbook: unbook cancels and keeps the
      record, delete removes it everywhere (owner request, 2026-11-04). */
   const [confirmDelete, setConfirmDelete] = useState(false)
+  /* NovaKid-style header (owner screenshot 2026-11-09): a live booked-count
+     and a student search that dims every other class on the grid. */
+  const [studentQuery, setStudentQuery] = useState('')
 
   const closeNameMenu = () => { setNameMenu(null); setConfirmUnbook(false); setConfirmDelete(false); setMenuError(''); setMenuBusy(false) }
 
@@ -574,7 +577,7 @@ export function ScheduleCalendar({
     const finishDrag = () => { dragState.current = null }
     document.addEventListener('pointerup', finishDrag)
     document.addEventListener('pointercancel', finishDrag)
-    if (scrollRef.current) scrollRef.current.scrollTop = 7.5 * 62
+    if (scrollRef.current) scrollRef.current.scrollTop = 7.5 * 46
     return () => {
       document.removeEventListener('pointerup', finishDrag)
       document.removeEventListener('pointercancel', finishDrag)
@@ -608,8 +611,11 @@ export function ScheduleCalendar({
   const weekStart = dates[0]
   const weekEnd = dates[6]
   const rangeLabel = weekStart.getMonth() === weekEnd.getMonth()
-    ? `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`
-    : `${weekStart.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${weekEnd.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    ? `${weekStart.getDate()} – ${weekEnd.getDate()} ${weekEnd.toLocaleDateString('en', { month: 'short' })} ${weekEnd.getFullYear()}`
+    : `${weekStart.toLocaleDateString('en', { day: 'numeric', month: 'short' })} – ${weekEnd.toLocaleDateString('en', { day: 'numeric', month: 'short' })} ${weekEnd.getFullYear()}`
+
+  const weekDateKeys = new Set(dates.map((date) => formatDateKey(date)))
+  const bookedThisWeek = bookings.filter((booking) => weekDateKeys.has(booking.date) && !['cancelled', 'declined'].includes(booking.status)).length
 
   const toggleCalendarFullscreen = () => {
     const node = calendarRef.current
@@ -671,25 +677,38 @@ export function ScheduleCalendar({
     <div className="schedule-calendar" ref={calendarRef}>
       <div className="schedule-toolbar">
         <div className="schedule-toolbar__arrows">
-          <button onClick={() => onWeekOffset(weekOffset - 1)} aria-label="Previous week"><ChevronLeft size={19} /></button>
-          <button onClick={() => onWeekOffset(weekOffset + 1)} aria-label="Next week"><ChevronRight size={19} /></button>
+          <button onClick={() => onWeekOffset(weekOffset - 1)} aria-label="Previous week"><ChevronLeft size={18} /></button>
+          <button onClick={() => onWeekOffset(weekOffset + 1)} aria-label="Next week"><ChevronRight size={18} /></button>
         </div>
-        <strong>{rangeLabel}</strong>
-        <button className="schedule-today" onClick={() => onWeekOffset(0)}>Today</button>
-        <div className="schedule-view-tabs"><span className="active">Week</span><span>30 min slots</span></div>
-        <div className="schedule-timezone-note" title={`Lesson times are shown in your own timezone, detected from your internet connection (${viewerZone}). Our teaching base is Manila time.`}>
-          <Globe2 size={14} />
-          <span>Your time · <strong>{timezoneDescription(viewerZone)}</strong></span>
+        <strong className="schedule-range">{rangeLabel}</strong>
+        <button className="schedule-today" onClick={() => onWeekOffset(0)}><CalendarDays size={15} /> Today</button>
+        <div className="schedule-toolbar__right">
+          <span className="schedule-week-count"><CheckCircle2 size={16} /><strong>{bookedThisWeek}</strong> Booked lesson{bookedThisWeek === 1 ? '' : 's'} this week</span>
+          <label className="schedule-student-search"><Search size={14} /><input value={studentQuery} onChange={(event) => setStudentQuery(event.target.value)} placeholder="Search by student's name" aria-label="Search bookings by student name" /></label>
+          <div className="schedule-timezone-note" title={`Lesson times are shown in your own timezone, detected from your internet connection (${viewerZone}). Our teaching base is Manila time.`}>
+            <Globe2 size={14} />
+            <span>Your time · <strong>{timezoneDescription(viewerZone)}</strong></span>
+          </div>
+          <button type="button" className="schedule-fullscreen-button" onClick={toggleCalendarFullscreen} title={isFullscreen ? 'Exit full screen' : 'View calendar full screen'}>{isFullscreen ? <><Minimize2 size={14} /> Exit full screen</> : <><Maximize2 size={14} /> Full screen</>}</button>
         </div>
-        <button type="button" className="schedule-fullscreen-button" onClick={toggleCalendarFullscreen} title={isFullscreen ? 'Exit full screen' : 'View calendar full screen'}>{isFullscreen ? <><Minimize2 size={14} /> Exit full screen</> : <><Maximize2 size={14} /> Full screen</>}</button>
+      </div>
+      <div className="schedule-legend">
+        <span><i className="lg-open" /> Open slot</span>
+        <span><i className="lg-booked" /> Booked</span>
+        <span><i className="lg-trial" /> Free trial</span>
+        <span><i className="lg-ongoing" /> In progress</span>
+        <span><i className="lg-completed" /> Completed</span>
+        <span><i className="lg-absent" /> Absent</span>
+        <span><i className="lg-cancelled" /> Cancelled</span>
+        <span><i className="lg-selected" /> Selected</span>
       </div>
       <div className="schedule-scroll" ref={scrollRef}>
         <div className="schedule-days">
-          <div className="schedule-time-heading" title={showLocalTimes ? `Times shown in your local time (${viewerZone})` : 'Your timezone matches our teaching base in Manila'}>{timezoneLabel(viewerZone)}</div>
+          <div className="schedule-time-heading" title={showLocalTimes ? `Times shown in your local time (${viewerZone})` : 'Your timezone matches our teaching base in Manila'}><strong>Time</strong><span>{timezoneLabel(viewerZone)}</span></div>
           {dates.map((date) => {
             const dateKey = formatDateKey(date)
             const current = dateKey === today()
-            return <div className={`schedule-day-heading ${current ? 'current' : ''}`} key={dateKey}><span>{date.toLocaleDateString('en', { weekday: 'short' })}</span><strong>{date.getDate()}</strong></div>
+            return <div className={`schedule-day-heading ${current ? 'current' : ''}`} key={dateKey}><strong>{date.toLocaleDateString('en', { day: 'numeric', month: 'long' })}</strong><span>{date.toLocaleDateString('en', { weekday: 'short' })}</span></div>
           })}
         </div>
         <div className={`schedule-body ${editable ? 'schedule-body--editable' : ''} ${multiSelect ? 'schedule-body--multi' : ''}`}>
@@ -720,6 +739,7 @@ export function ScheduleCalendar({
                 // merge, so read it from the booking rather than local state.
                 const hasFeedback = Boolean(bookingCell?.booking?.teacherFeedback?.summary?.trim())
                 const needsFeedback = Boolean(bookingCell && bookingCell.booking.status === 'completed' && !hasFeedback)
+                const matchesQuery = !studentQuery.trim() || `${bookedLearner?.name || bookingCell?.booking?.learnerName || ''} ${student?.parentName || ''}`.toLowerCase().includes(studentQuery.trim().toLowerCase())
                 const classes = [
                   'schedule-cell',
                   isAvailable ? 'available' : 'unavailable',
@@ -731,6 +751,7 @@ export function ScheduleCalendar({
                   selectable ? 'selectable' : '',
                   isSelected ? 'selected' : '',
                   isPast && !editable ? 'past' : '',
+                  bookingCell && !matchesQuery ? 'dimmed' : '',
                 ].filter(Boolean).join(' ')
                 return (
                   <button
