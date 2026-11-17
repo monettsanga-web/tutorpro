@@ -7,7 +7,20 @@
  * bilingual-email bug survived in three places at once.
  */
 
-const ADMIN_EMAIL = process.env.SUPPORT_ADMIN_EMAIL || 'sejongenglish@yahoo.com'
+/* Owner, 2026-11-08: "if someone message the website, I can received an
+   email in monettsanga@yahoo.com". Every admin notification now goes to a
+   LIST - her mailbox plus the long-standing support mailbox - and the
+   SUPPORT_ADMIN_EMAIL env var wins if set, comma-separated for more. */
+const DEFAULT_ADMIN_RECIPIENTS = ['sejongenglish@yahoo.com', 'monettsanga@yahoo.com']
+export function adminRecipients() {
+  /* The two owner mailboxes are unconditional - her 2026-11-08 request must
+     survive whatever the env var holds. SUPPORT_ADMIN_EMAIL only ADDS
+     recipients (comma-separated), never replaces them. */
+  const extra = String(process.env.SUPPORT_ADMIN_EMAIL || '')
+    .split(',').map((addr) => addr.trim()).filter((addr) => addr.includes('@'))
+  return [...new Set([...DEFAULT_ADMIN_RECIPIENTS, ...extra])]
+}
+const ADMIN_EMAIL = adminRecipients()[0] || 'sejongenglish@yahoo.com'
 const FROM = process.env.NOTIFY_FROM || 'TutorPro Online English <notifications@tutorpro.site>'
 
 export function escapeHtml(value = '') {
@@ -54,7 +67,7 @@ export async function emailAdmin({ subject, heading, rows = [], body = '', reply
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM,
-        to: ADMIN_EMAIL,
+        to: adminRecipients(),
         subject,
         html,
         /* tutorpro.site has no MX record, so a reply to the from-address
