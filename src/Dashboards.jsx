@@ -6294,6 +6294,17 @@ function AdminInterviewRecordings({ interview }) {
   )
 }
 
+/* Families and teachers without a mailbox still chat: their dashboard
+   widget keys the thread to a synthetic local address built from the
+   account id (see SupportChatWidget), so every admin entry point must open
+   that same key. Module scope on purpose - the profile views are siblings
+   of AdminDashboard, and calling a helper defined inside it threw
+   ReferenceError on click, which is why the owner's "Chat on Website"
+   button appeared dead (2026-11-09). */
+function chatKeyForAccount(account) {
+  return account?.email || (account?.id ? `${account.id}@tutorpro.local` : account?.loginId || '')
+}
+
 export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove, processing, error, onOpenChat }) {
   const [pesoRate, setPesoRate] = useState(350)
   const [savingRate, setSavingRate] = useState(false)
@@ -6356,7 +6367,7 @@ export function AdminTeacherProfile({ teacher, onBack, onStatusChange, onRemove,
             {/* NATIVE INTER-WEBSITE CHAT BUTTON */}
             <button
               type="button"
-              onClick={() => onOpenChat?.(chatKeyFor(teacher), teacher?.fullName)}
+              onClick={() => onOpenChat?.(chatKeyForAccount(teacher), teacher?.fullName)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -6716,7 +6727,7 @@ export function AdminStudentProfile({ account, learnerId, onBack, onStatusChange
           {/* WEBPAGE CHAT TRIGGER */}
           <button
             type="button"
-            onClick={() => onOpenChat?.(chatKeyFor(account), account.parentName)}
+            onClick={() => onOpenChat?.(chatKeyForAccount(account), account.parentName)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -8292,7 +8303,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
    * same key. Passing a bare phone login failed email validation here and
    * orphaned the thread from the one the student actually sees.
    */
-  const chatKeyFor = (account) => account?.email || (account?.id ? `${account.id}@tutorpro.local` : account?.loginId || '')
+  const chatKeyFor = chatKeyForAccount
 
   const launchSupportChat = async (email, fullName) => {
     setAdminActionError('')
