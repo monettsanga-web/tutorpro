@@ -20,7 +20,7 @@ test('post carries Article + FAQ + Breadcrumb schema', () => must(post.includes(
 test('post states only real prices', () => must(post.includes('US$7 per 25-minute lesson') && post.includes('₩8,000'), 'pricing copy drifted'))
 const sitemap = readFileSync('public/sitemap.xml', 'utf8')
 test('sitemap lists the post', () => must(sitemap.includes(`/blog/${slug}.html`), 'not in sitemap'))
-const index = readFileSync('public/blog/index.html', 'utf8')
+const index = readFileSync('dist/blog/index.html', 'utf8')
 test('blog index lists and links the post', () => must(index.includes(`/blog/${slug}.html`) && index.includes(`"position":6,"name":"How to choose an online English class for kids"`), 'not in blog index'))
 
 if (checks.fail) {

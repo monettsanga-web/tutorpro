@@ -328,7 +328,45 @@ const ARTICLES = [
       ['How many online English lessons per week does a child need?', 'For steady progress, two or three short lessons a week work better than one long session. Speaking is a skill, and skills grow with frequent practice rather than cramming.'],
       ['Should the online English class follow a specific curriculum?', 'A recognised series such as Cambridge or Oxford gives you a visible path and levelled books, so progress is measurable. Ask the school to show which series they use and where your child would start.'],
     ],
-    related: [['online-english-classes-what-parents-should-know', 'What parents should know before booking'], ['help-child-speak-english-at-home', 'Helping your child speak English at home']],
+    related: [['kumu-english', 'Kumu English: conversation-first classes for Filipino kids'], ['online-english-classes-what-parents-should-know', 'What parents should know before booking'], ['help-child-speak-english-at-home', 'Helping your child speak English at home']],
+    cta: ['/?book=1', 'Book the free first class'],
+  },
+
+  {
+    slug: 'kumu-english',
+    category: 'Parent guides',
+    title: 'Kumu English: Online English Classes for Kids (2026)',
+    h1: 'Kumu English: online English classes for Filipino kids',
+    description:
+      'Kumu English — warm, one-to-one online English classes for kids with near-native Filipino English teachers. US$7 per 25-minute lesson, free first class.',
+    lede:
+      '"Kumusta!" is how every TutorPro lesson begins. Parents searching for Kumu English are usually looking for exactly that: a friendly teacher who greets a Filipino child in a way that puts them at ease, then gets them speaking English from the first minute.',
+    body: `
+        <h2>What "Kumu English" means to us</h2>
+        <p>Kumu comes from <em>kumusta</em> — the Filipino greeting every child here hears at home. It is the sound of a warm start, and a warm start is exactly what a shy or hesitant young learner needs before they will speak a second language. So Kumu English, for us, is simply a name for the way we teach: greeting first, conversation first, confidence before correction.</p>
+
+        <h2>Why Filipino kids speak more with a Filipino teacher</h2>
+        <p>Our teachers are near-native Filipino English speakers who grew up learning English the same way your child is — as a second language, at school, with the same hesitations. They know what it feels like to be afraid of sounding wrong, which makes them unusually good at waiting for an answer instead of filling the silence.</p>
+        <p>Every lesson is one-to-one: one child, one teacher, no group to hide in and no group to be talked over by. That is the single biggest reason children speak more in our classes than in a group of six.</p>
+
+        <h2>What a Kumu English lesson looks like</h2>
+        <p>Twenty-five minutes, in the browser, nothing to install. The teacher greets your child, then the lesson follows a levelled Cambridge or Oxford series — real books, pictures, stories and repetition, paced to your child's attention span rather than to a page count.</p>
+        <p>When your child says "She don't like it", the teacher recasts it — "She doesn't like it? Why not?" — and the conversation continues. The correct form is supplied naturally and nobody is told they are wrong. After the lesson you get written feedback: what was practised, what went well, and what to revise at home.</p>
+
+        <h2>What it costs</h2>
+        <p>A flat <a href="/pricing.html">US$7 per 25-minute lesson on every plan</a>, or US$14 for 50 minutes — no registration fee, no materials fee, no bundle that locks you in. In South Korea the same lessons are ₩8,000 and ₩16,000. Cancel 12 hours ahead and the credit returns; unused credits are refundable within 14 days.</p>
+        <p>TutorPro English PH is registered with the Philippine DTI under Business Name Registration 5274092.</p>
+
+        <h2>Try it: the first class is free</h2>
+        <p>The free first class takes no card information. Watch three things during it: does the teacher wait for your child to answer, does the lesson adapt when your child struggles, and does your child want to do it again? <a href="/?book=1">Book the free first class</a> and see.</p>
+    `,
+    faqs: [
+      ['What is Kumu English?', 'It is how parents describe the warm, conversation-first style of online English classes for Filipino kids: the teacher greets the child ("kumusta!"), gets them speaking from the first minute, and builds confidence before correcting mistakes. It is the teaching approach at TutorPro English PH.'],
+      ['Are the teachers Filipino?', 'Yes — near-native Filipino English speakers who learned English as a second language themselves, which makes them patient and effective with children who are shy about speaking. Every teacher passes a recorded teaching interview reviewed by a person before being approved.'],
+      ['How much does Kumu English cost?', 'A flat US$7 per 25-minute lesson (US$14 for 50 minutes), with no registration or materials fees. In South Korea, ₩8,000 and ₩16,000. The first class is free and takes no card details.'],
+      ['Do I need to install anything?', 'No. Lessons run in the browser on a computer or tablet with a camera and microphone — the same video classroom the teacher uses, with nothing to download.'],
+    ],
+    related: [['how-to-choose-online-english-class-for-kids', 'How to choose an online English class for kids'], ['online-english-classes-what-parents-should-know', 'What parents should know before booking']],
     cta: ['/?book=1', 'Book the free first class'],
   },
 ]
