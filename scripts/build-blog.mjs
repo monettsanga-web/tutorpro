@@ -276,6 +276,61 @@ const ARTICLES = [
     related: [['help-child-speak-english-at-home', 'Helping your child speak English at home'], ['english-reading-activities-primary', 'Reading activities for primary students']],
     cta: ['how-it-works.html', 'See exactly how our lessons work'],
   },
+
+  {
+    slug: 'how-to-choose-online-english-class-for-kids',
+    category: 'Parent guides',
+    title: 'How to Choose an Online English Class for Kids | 2026 Guide',
+    h1: 'How to choose an online English class for kids',
+    description:
+      'A practical checklist for parents comparing online English classes for kids: talk time, teacher vetting, curriculum, feedback, trials and real costs.',
+    lede:
+      'Search "online English class for kids" and you get hundreds of near-identical websites: smiling children, flags, promises. This guide is the checklist we wish every parent had before comparing anyone — including us.',
+    body: `
+        <h2>1. One child, or a group?</h2>
+        <p>The single biggest difference between online English classes is how many children share the teacher. In a group of six, your child speaks for a sixth of the lesson on a good day. One-to-one, they speak for most of it — and speaking is the skill parents usually want.</p>
+        <p>Group classes cost less and can suit confident older learners. For a shy child, a beginner, or anyone catching up at school, the talk-time gap is usually decisive.</p>
+
+        <h2>2. How much of the lesson does your child actually talk?</h2>
+        <p>Ask any school this directly: <em>in a typical lesson, what percentage of the time is the child speaking?</em> A one-to-one class should answer "most of it". If the answer is worksheets on screen while the teacher explains, that is a reading session, not a speaking class.</p>
+
+        <h2>3. Who teaches, and did anyone watch them teach?</h2>
+        <p>Document checks are easy; teaching checks are not. Ask whether someone at the school observed a live or recorded lesson before approving the teacher, and whether lessons are reviewed afterwards. Schools that vet teaching — not just paperwork — can describe the process in one sentence.</p>
+
+        <h2>4. Which curriculum, and can you see it?</h2>
+        <p>A recognised series (Cambridge or Oxford, for example) gives your child a levelled path with real books, so progress is visible and measurable. Ask to see the series name and the level your child would start at. "Our own materials" is not automatically bad, but it is harder for you to verify.</p>
+
+        <h2>5. What happens after the lesson?</h2>
+        <p>Written feedback after every class — what was practised, what went well, what to revise — turns lessons into progress you can track. Feedback that says only "great lesson!" tells you nothing. Ask to see a real example before paying.</p>
+
+        <h2>6. What does an online English class cost?</h2>
+        <p>Prices vary by country and by whether lessons are group or one-to-one, so compare like with like: price <em>per finished 25- or 50-minute lesson</em>, not per package. Watch for registration fees, materials fees and large upfront bundles that lock you in.</p>
+        <p>For transparency, ours is a flat <a href="/pricing.html">US$7 per 25-minute lesson on every plan</a> (US$14 for 50 minutes), with no registration or materials fees — in South Korea, ₩8,000 and ₩16,000 respectively. Whatever school you choose, the per-lesson figure is the only honest comparison.</p>
+
+        <h2>7. Use the free trial as a test, not a gift</h2>
+        <p>A genuine trial asks for no card details. During it, watch three things: does the teacher wait for your child to answer, does the lesson adapt when your child struggles, and does your child want to do it again? Those three observations tell you more than any website.</p>
+
+        <h2>Quick checklist</h2>
+        <ul>
+          <li>One-to-one, or a group small enough that your child still speaks.</li>
+          <li>Teachers observed teaching before approval, not just document-checked.</li>
+          <li>A named curriculum and a starting level you can see.</li>
+          <li>Written feedback after every lesson, with an example shown up front.</li>
+          <li>Clear per-lesson pricing, no registration fee, no forced bundle.</li>
+          <li>A trial that takes no payment information.</li>
+        </ul>
+
+        <p>If you want to run this checklist against a real lesson, <a href="/?book=1">book a free first class</a> — no card, one child, one teacher, twenty-five minutes.</p>
+    `,
+    faqs: [
+      ['What age should a child start online English classes?', 'From about age four, if the lessons are short, playful and one-to-one. Younger children need songs, pictures and lots of repetition; a good school will structure the lesson around attention span, not around a textbook page count.'],
+      ['How long should an online English lesson be?', 'Twenty-five minutes suits most children up to about ten; older students can hold a fifty-minute lesson. Shorter and regular beats long and occasional, because language sticks through repetition.'],
+      ['How many online English lessons per week does a child need?', 'For steady progress, two or three short lessons a week work better than one long session. Speaking is a skill, and skills grow with frequent practice rather than cramming.'],
+      ['Should the online English class follow a specific curriculum?', 'A recognised series such as Cambridge or Oxford gives you a visible path and levelled books, so progress is measurable. Ask the school to show which series they use and where your child would start.'],
+    ],
+    related: [['online-english-classes-what-parents-should-know', 'What parents should know before booking'], ['help-child-speak-english-at-home', 'Helping your child speak English at home']],
+    cta: ['/?book=1', 'Book the free first class'],
+  },
 ]
 
 const CATEGORIES = [...new Set(ARTICLES.map((a) => a.category))]
