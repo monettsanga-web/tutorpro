@@ -26,6 +26,7 @@ import {
   Download,
   Eye,
   ExternalLink,
+  FileText,
   FileUp,
   Film,
   Flame,
@@ -134,6 +135,7 @@ import { TIMEZONE_EVENT, formatViewerTime, lessonHasPassed, schoolSlotForViewerC
  */
 const OnlineClassroom = classroomComponents.OnlineClassroom
 const CoursewareManager = lazy(() => import('./CoursewareManager.jsx'))
+const LetDocsManager = lazy(() => import('./LetDocsManager.jsx'))
 import SupportChatWidget from './SupportChatWidget.jsx'
 import RoleErrorBoundary from './RoleErrorBoundary.jsx'
 import { onHashRouteChange, readHashRoute, writeHashRoute } from './hashRoute.js'
@@ -8768,6 +8770,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
     { id: 'announcements', label: 'Announcements', icon: Bell },
     { id: 'bookings', label: 'All bookings', icon: CalendarCheck2, badge: bookingStats.pending },
     { id: 'courseware', label: 'Courseware', icon: BookOpen },
+    { id: 'letdocs', label: 'Licensure Examination for Teachers', icon: FileText },
     { id: 'payments', label: 'Payments', icon: Coins },
     { id: 'funnel', label: 'Growth funnel', icon: TrendingUp },
     { id: 'followups', label: 'Follow-ups', icon: MessageSquareText },
@@ -9263,6 +9266,7 @@ export function AdminDashboard({ account, onHome, onLogout }) {
       {active === 'backup' && <AdminBackupPanel />}
 
       {active === 'courseware' && <Suspense fallback={<PanelFallback label="Loading courseware…" />}><CoursewareManager account={account} mode="admin" /></Suspense>}
+      {active === 'letdocs' && <Suspense fallback={<PanelFallback label="Loading LET files…" />}><LetDocsManager /></Suspense>}
 
       {active === 'homework' && <AdminHomeworkPanel />}
 

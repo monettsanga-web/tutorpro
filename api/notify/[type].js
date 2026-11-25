@@ -1,6 +1,7 @@
 import booking from './_booking.js'
 import message from './_message.js'
 import support from './_support.js'
+import letdocs from './_letdocs.js'
 
 /**
  * One serverless function for all three notification emails.
@@ -18,8 +19,14 @@ import support from './_support.js'
  * /api/notify/support onto this one [type] file, so no caller changed.
  * The handlers themselves live in _-prefixed files, which Vercel treats as
  * helpers rather than functions.
+ *
+ * `letdocs` is NOT a notification. It is the Licensure Examination for
+ * Teachers document shelf (owner request), parked on this router purely
+ * because a thirteenth function file would break every deploy. It is
+ * served at /api/notify/letdocs?action=list|upload|link|delete and is
+ * admin-gated server side; see _letdocs.js.
  */
-const HANDLERS = { booking, message, support }
+const HANDLERS = { booking, message, support, letdocs }
 
 export default async function handler(req, res) {
   const run = HANDLERS[String(req.query?.type || '')]
