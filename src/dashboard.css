@@ -13941,3 +13941,39 @@ body:has(.direct-chat) .support-widget { display: none !important; }
 .schedule-cell { border-color: #eceaf3; }
 .schedule-cell.dimmed { opacity: 0.28; }
 .schedule-time { color: #6b6784; font-size: 13px; }
+
+
+/* --- Licensure Examination for Teachers document shelf (LetDocsManager) --- */
+.let-docs-view { display: flex; flex-direction: column; gap: 14px; }
+.let-docs-sub { margin: 4px 0 0; color: var(--text-muted, #5b5670); font-size: 13px; }
+.let-docs-drop, .let-docs-linkform { display: flex; align-items: center; gap: 14px; padding: 16px; }
+.let-docs-drop > svg, .let-docs-linkform > svg { flex: none; color: #321568; }
+.let-docs-drop > div { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.let-docs-drop > div span { font-size: 12.5px; color: var(--text-muted, #5b5670); }
+.let-docs-drop--armed { outline: 2px dashed #321568; outline-offset: -4px; }
+.let-docs-choose { position: relative; overflow: hidden; flex: none; cursor: pointer; }
+.let-docs-choose input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.let-docs-linkfields { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.let-docs-linkfields input { padding: 9px 12px; border: 1px solid rgba(50, 21, 104, 0.25); border-radius: 10px; font: inherit; font-size: 13px; background: #fff; color: inherit; }
+.let-docs-linkform > button { flex: none; }
+.let-docs-error { margin: 0; padding: 10px 14px; border-radius: 10px; background: #fdecea; color: #8f1d13; font-size: 13px; }
+.let-docs-notice { margin: 0; padding: 10px 14px; border-radius: 10px; background: #e8f7ee; color: #1c6b3c; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.let-docs-list { padding: 16px; }
+.let-docs-list h3 { margin: 0 0 10px; font-size: 15px; }
+.let-docs-list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.let-docs-list li { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(50, 21, 104, 0.14); border-radius: 12px; background: #fff; }
+.let-docs-icon { flex: none; color: #b3261e; }
+.let-docs-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.let-docs-meta strong { font-size: 13.5px; }
+.let-docs-meta span { font-size: 12px; color: var(--text-muted, #5b5670); }
+.let-docs-url { font-size: 11.5px; color: #321568; text-decoration: none; overflow-wrap: anywhere; }
+.let-docs-url:hover { text-decoration: underline; }
+.let-docs-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.let-docs-actions button, .let-docs-actions a { display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px; border: 1px solid rgba(50, 21, 104, 0.25); border-radius: 9px; background: #fff; color: #321568; font: inherit; font-size: 12.5px; cursor: pointer; text-decoration: none; }
+.let-docs-actions button:disabled { opacity: 0.55; cursor: wait; }
+.let-docs-delete { color: #b3261e !important; border-color: rgba(179, 38, 30, 0.35) !important; }
+@media (max-width: 720px) {
+  .let-docs-drop, .let-docs-linkform { flex-wrap: wrap; }
+  .let-docs-list li { flex-wrap: wrap; }
+  .let-docs-actions { width: 100%; justify-content: flex-end; }
+}
