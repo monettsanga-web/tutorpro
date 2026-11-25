@@ -39,6 +39,9 @@ export default function LetDocsManager() {
   const [linkTitle, setLinkTitle] = useState('')
   const [copiedId, setCopiedId] = useState('')
   const [pendingFile, setPendingFile] = useState(null)
+  /* Owner requirement: PRIMARY and SECONDARY passers each have their own
+     files. Every upload/link declares which section it belongs to. */
+  const [level, setLevel] = useState('primary')
   const fileInputRef = useRef(null)
 
   const call = useCallback(async (action, payload = {}) => {
@@ -98,7 +101,7 @@ export default function LetDocsManager() {
         reader.onerror = () => reject(new Error('Could not read that file.'))
         reader.readAsDataURL(file)
       })
-      const { doc } = await call('upload', { pdf: dataUrl, fileName: file.name, title: file.name.replace(/\.pdf$/i, '') })
+      const { doc } = await call('upload', { pdf: dataUrl, fileName: file.name, title: file.name.replace(/\.pdf$/i, ''), level })
       setDocs((prev) => [doc, ...prev])
       setNotice(`Uploaded "${doc.title}". Use Copy link to share it.`)
     } catch (uploadError) {
@@ -108,7 +111,7 @@ export default function LetDocsManager() {
       setPendingFile(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
-  }, [call])
+  }, [call, level])
 
   const addLink = useCallback(async (event) => {
     event.preventDefault()
@@ -120,7 +123,7 @@ export default function LetDocsManager() {
     }
     setBusy('link')
     try {
-      const { doc } = await call('link', { url: linkUrl.trim(), title: linkTitle.trim() })
+      const { doc } = await call('link', { url: linkUrl.trim(), title: linkTitle.trim(), level })
       setDocs((prev) => [doc, ...prev])
       setNotice(`Link saved for "${doc.title}".`)
       setLinkUrl('')
@@ -130,7 +133,7 @@ export default function LetDocsManager() {
     } finally {
       setBusy('')
     }
-  }, [call, linkUrl, linkTitle])
+  }, [call, level, linkUrl, linkTitle])
 
   const removeDoc = useCallback(async (doc) => {
     if (!window.confirm(`Remove "${doc.title}" from the LET shelf?${doc.kind === 'upload' ? ' The uploaded file is deleted permanently.' : ''}`)) return
@@ -195,6 +198,19 @@ export default function LetDocsManager() {
           <p className="let-docs-sub">Upload or paste the LET passers PDF files; visitors see them on /let-passers.html, and each file gets a permanent link you can copy and send anywhere.</p>
         </div>
       </div>
+
+      <section className="portal-card let-docs-level" role="radiogroup" aria-label="Which passers list does the file belong to?">
+        <strong>Adding to:</strong>
+        <label className={`let-docs-level__opt${level === 'primary' ? ' let-docs-level__opt--on' : ''}`}>
+          <input type="radio" name="let-level" value="primary" checked={level === 'primary'} onChange={() => setLevel('primary')} />
+          PRIMARY passers
+        </label>
+        <label className={`let-docs-level__opt${level === 'secondary' ? ' let-docs-level__opt--on' : ''}`}>
+          <input type="radio" name="let-level" value="secondary" checked={level === 'secondary'} onChange={() => setLevel('secondary')} />
+          SECONDARY passers
+        </label>
+        <span className="let-docs-level__hint">Files appear on the website under their own {level === 'primary' ? 'Primary' : 'Secondary'} section.</span>
+      </section>
 
       <section
         className={`portal-card let-docs-drop${pendingFile ? ' let-docs-drop--armed' : ''}`}
@@ -263,7 +279,7 @@ export default function LetDocsManager() {
             <li key={doc.id}>
               <FileText size={18} className="let-docs-icon" />
               <div className="let-docs-meta">
-                <strong>{doc.title}</strong>
+                <strong>{doc.title} <em className={`let-docs-badge let-docs-badge--${doc.level === 'secondary' ? 'secondary' : 'primary'}`}>{doc.level === 'secondary' ? 'Secondary' : 'Primary'}</em></strong>
                 <span>
                   {doc.kind === 'link' ? 'Pasted link' : `Uploaded PDF${doc.bytes ? ` · ${readableSize(doc.bytes)}` : ''}`}
                   {doc.addedAt ? ` · ${new Date(doc.addedAt).toLocaleDateString()}` : ''}

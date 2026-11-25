@@ -13977,3 +13977,15 @@ body:has(.direct-chat) .support-widget { display: none !important; }
   .let-docs-list li { flex-wrap: wrap; }
   .let-docs-actions { width: 100%; justify-content: flex-end; }
 }
+
+/* --- LET level chooser + badges (Primary / Secondary) --- */
+.let-docs-level { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+.let-docs-level > strong { font-size: 13.5px; color: #321568; }
+.let-docs-level__opt { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1.5px solid rgba(50, 21, 104, 0.22); border-radius: 999px; font-size: 13px; font-weight: 700; color: #453f57; cursor: pointer; background: #fff; transition: all 0.18s ease; user-select: none; }
+.let-docs-level__opt input { accent-color: #321568; margin: 0; }
+.let-docs-level__opt--on { border-color: #321568; background: #f1ecfb; color: #241046; box-shadow: 0 2px 8px rgba(50, 21, 104, 0.12); }
+.let-docs-level__hint { font-size: 12px; color: #6b6580; margin-left: auto; }
+.let-docs-badge { display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; font-style: normal; vertical-align: middle; }
+.let-docs-badge--primary { background: #e8f7ee; color: #1c6b3c; }
+.let-docs-badge--secondary { background: #e7f0fe; color: #1d4ed8; }
+@media (max-width: 720px) { .let-docs-level__hint { margin-left: 0; width: 100%; } }

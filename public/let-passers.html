@@ -57,7 +57,7 @@
           </p>
           <p class="let-honest">
             Files are posted by TutorPro English PH for viewing by our visitors. New files
-            appear on this page as soon as they are uploaded.
+            appear on this page as soon as they are uploaded. Primary and Secondary passers each have their own section below.
           </p>
           <div class="let-chips">
             <span>✓ Free to view</span>
@@ -89,14 +89,40 @@
             <h2>Posted files</h2>
             <input id="let-filter" class="let-filter" type="search" placeholder="Search the files…" aria-label="Search posted files" hidden />
           </div>
-          <div id="let-status" class="let-status" role="status">Loading the file list…</div>
           <div id="let-skeleton" class="let-skeleton" aria-hidden="true"><div></div><div></div><div></div><div></div></div>
-          <div id="let-empty" class="let-empty-card">
-            <span aria-hidden="true">🗂️</span>
-            <strong>No passer files posted yet</strong>
-            <p>Please check back soon — or <a href="/contact.html">ask us on the contact page</a> and we will send them to you by email.</p>
+          <div id="let-global-status" class="let-status" role="status" hidden></div>
+          <div class="let-level-block" data-level="primary">
+            <div class="let-level-head">
+              <span class="let-level-badge let-level-badge--primary" aria-hidden="true">🎓</span>
+              <div>
+                <h3>Primary LET passers</h3>
+                <span class="let-level-sub">Elementary-level Licensure Examination for Teachers</span>
+              </div>
+            </div>
+            <div class="let-status let-level-status" data-for="primary" role="status">Loading…</div>
+            <div class="let-empty-card let-level-empty" data-for="primary">
+              <span aria-hidden="true">🗂️</span>
+              <strong>No Primary passer files posted yet</strong>
+              <p>Please check back soon — or <a href="/contact.html">ask us on the contact page</a> and we will send them to you by email.</p>
+            </div>
+            <ul class="let-list" data-list="primary" aria-label="Primary LET passers files"></ul>
           </div>
-          <ul id="let-list" class="let-list" aria-label="LET passers files"></ul>
+          <div class="let-level-block" data-level="secondary">
+            <div class="let-level-head">
+              <span class="let-level-badge let-level-badge--secondary" aria-hidden="true">📘</span>
+              <div>
+                <h3>Secondary LET passers</h3>
+                <span class="let-level-sub">High-school-level Licensure Examination for Teachers</span>
+              </div>
+            </div>
+            <div class="let-status let-level-status" data-for="secondary" role="status">Loading…</div>
+            <div class="let-empty-card let-level-empty" data-for="secondary">
+              <span aria-hidden="true">🗂️</span>
+              <strong>No Secondary passer files posted yet</strong>
+              <p>Please check back soon — or <a href="/contact.html">ask us on the contact page</a> and we will send them to you by email.</p>
+            </div>
+            <ul class="let-list" data-list="secondary" aria-label="Secondary LET passers files"></ul>
+          </div>
           <div class="let-cta">
             <h2>Want to teach with us?</h2>
             <p>TutorPro English PH hires near-native Filipino English teachers for one-to-one online classes. To apply, open the <strong>Teacher portal</strong> from our home page and choose <strong>Apply as a teacher</strong> — the same sequence every teacher goes through.</p>
@@ -122,11 +148,18 @@
     </footer>
     <script>
       (function () {
-        var status = document.getElementById('let-status');
-        var list = document.getElementById('let-list');
         var skeleton = document.getElementById('let-skeleton');
-        var emptyCard = document.getElementById('let-empty');
+        var globalStatus = document.getElementById('let-global-status');
         var filter = document.getElementById('let-filter');
+        var LEVELS = ['primary', 'secondary'];
+        var lists = {};
+        var statuses = {};
+        var empties = {};
+        LEVELS.forEach(function (level) {
+          lists[level] = document.querySelector('[data-list="' + level + '"]');
+          statuses[level] = document.querySelector('.let-level-status[data-for="' + level + '"]');
+          empties[level] = document.querySelector('.let-level-empty[data-for="' + level + '"]');
+        });
 
         function escapeHtml(value) {
           return String(value).replace(/[&<>"']/g, function (c) {
@@ -152,45 +185,75 @@
           .then(function (payload) {
             var docs = Array.isArray(payload.docs) ? payload.docs : [];
             skeleton.hidden = true;
-            if (!docs.length) {
-              status.hidden = true;
-              emptyCard.setAttribute('data-shown', 'true');
-              return;
-            }
-            status.textContent = docs.length + (docs.length === 1 ? ' file' : ' files') + ' available — click to open or download.';
-            status.className = 'let-status let-status--ok';
             filter.hidden = docs.length < 3;
-            list.innerHTML = docs.map(function (doc, index) {
-              var meta = [doc.kind === 'link' ? 'Shared link' : 'PDF'];
-              if (doc.bytes) meta.push(readableSize(doc.bytes));
-              if (doc.addedAt) meta.push(new Date(doc.addedAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }));
-              return '<li class="let-item" style="--i:' + Math.min(index, 12) + '">' +
-                '<span class="let-item__icon" aria-hidden="true">📄</span>' +
-                '<div class="let-item__meta">' +
-                  '<strong>' + escapeHtml(doc.title || 'LET file') + '</strong>' +
-                  '<span>' + escapeHtml(meta.join(' · ')) + '</span>' +
-                '</div>' +
-                '<a class="btn btn--primary let-item__open" href="' + escapeHtml(doc.url) + '" target="_blank" rel="noopener">Open / download</a>' +
-                '</li>';
-            }).join('');
+
+            function renderLevel(level) {
+              var levelDocs = docs.filter(function (doc) {
+                return (doc.level === 'secondary' ? 'secondary' : 'primary') === level;
+              });
+              if (!levelDocs.length) {
+                statuses[level].hidden = true;
+                empties[level].setAttribute('data-shown', 'true');
+                lists[level].innerHTML = '';
+                return 0;
+              }
+              empties[level].removeAttribute('data-shown');
+              statuses[level].hidden = false;
+              statuses[level].textContent = levelDocs.length + (levelDocs.length === 1 ? ' file' : ' files') + ' available — click to open or download.';
+              statuses[level].className = 'let-status let-level-status let-status--ok';
+              lists[level].innerHTML = levelDocs.map(function (doc, index) {
+                var meta = [doc.kind === 'link' ? 'Shared link' : 'PDF'];
+                if (doc.bytes) meta.push(readableSize(doc.bytes));
+                if (doc.addedAt) meta.push(new Date(doc.addedAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }));
+                return '<li class="let-item" style="--i:' + Math.min(index, 12) + '">' +
+                  '<span class="let-item__icon" aria-hidden="true">📄</span>' +
+                  '<div class="let-item__meta">' +
+                    '<strong>' + escapeHtml(doc.title || 'LET file') + '</strong>' +
+                    '<span>' + escapeHtml(meta.join(' · ')) + '</span>' +
+                  '</div>' +
+                  '<a class="btn btn--primary let-item__open" href="' + escapeHtml(doc.url) + '" target="_blank" rel="noopener">Open / download</a>' +
+                  '</li>';
+              }).join('');
+              return levelDocs.length;
+            }
+
+            var total = 0;
+            LEVELS.forEach(function (level) { total += renderLevel(level); });
+            if (!total) {
+              LEVELS.forEach(function (level) { statuses[level].hidden = true; });
+            }
+
             filter.addEventListener('input', function () {
               var term = filter.value.trim().toLowerCase();
               var shown = 0;
-              Array.prototype.forEach.call(list.children, function (item) {
-                var hit = !term || item.textContent.toLowerCase().indexOf(term) > -1;
-                item.hidden = !hit;
-                if (hit) shown += 1;
+              LEVELS.forEach(function (level) {
+                var count = 0;
+                Array.prototype.forEach.call(lists[level].children, function (item) {
+                  var hit = !term || item.textContent.toLowerCase().indexOf(term) > -1;
+                  item.hidden = !hit;
+                  if (hit) { shown += 1; count += 1; }
+                });
+                if (lists[level].children.length) {
+                  statuses[level].hidden = false;
+                  statuses[level].textContent = count
+                    ? count + (count === 1 ? ' file matches' : ' files match') + ' your search.'
+                    : 'No ' + (level === 'primary' ? 'Primary' : 'Secondary') + ' file matches that search.';
+                  statuses[level].className = 'let-status let-level-status' + (count ? ' let-status--ok' : ' let-status--empty');
+                }
               });
-              status.textContent = shown
-                ? shown + (shown === 1 ? ' file matches' : ' files match') + ' your search.'
-                : 'No file matches that search — try a shorter word, or ask us on the contact page.';
-              status.className = 'let-status' + (shown ? ' let-status--ok' : ' let-status--empty');
+              globalStatus.hidden = shown > 0;
+              if (!shown) {
+                globalStatus.textContent = 'No file matches that search — try a shorter word, or ask us on the contact page.';
+                globalStatus.className = 'let-status let-status--empty';
+              }
             });
           })
           .catch(function () {
             skeleton.hidden = true;
-            status.textContent = 'The file list could not load right now — are you offline? Please refresh, or ask us on the contact page and we will send the files by email.';
-            status.className = 'let-status let-status--warn';
+            LEVELS.forEach(function (level) { statuses[level].hidden = true; });
+            globalStatus.hidden = false;
+            globalStatus.textContent = 'The file list could not load right now — are you offline? Please refresh, or ask us on the contact page and we will send the files by email.';
+            globalStatus.className = 'let-status let-status--warn';
           });
       })();
     </script>

@@ -63,6 +63,11 @@ test('list is public by design; mutations verify the caller first', () => {
     must(slice.includes('adminCaller(req, supabase)'), `${action} is not admin-gated`)
   }
 })
+test('uploads and links must declare PRIMARY or SECONDARY', () => must(
+  api.includes("const LEVELS = new Set(['primary', 'secondary'])") &&
+  api.split('LEVELS.has(level)').length - 1 === 2 &&
+  api.includes('level,') ,
+  'level validation missing from upload/link'))
 test('manifest keeps the list inside the same bucket', () => must(
   api.includes("const MANIFEST = '_manifest.json'") && api.includes('writeManifest'),
   'manifest bookkeeping drifted'))
@@ -78,6 +83,10 @@ test('panel accepts choose + drag/drop + clipboard paste', () => must(
 test('paste rejects non-PDF files and oversize files honestly', () => must(
   panel.includes("file.type !== 'application/pdf'") && panel.includes('3 * 1024 * 1024'),
   'client-side validation drifted'))
+test('panel lets the owner pick PRIMARY or SECONDARY before posting', () => must(
+  panel.includes("useState('primary')") && panel.includes('PRIMARY passers') && panel.includes('SECONDARY passers') &&
+  panel.includes('level })') && panel.includes('let-docs-badge--'),
+  'level chooser or badge missing from the panel'))
 test('panel can paste a link, copy links and delete with confirmation', () => must(
   panel.includes('addLink') && panel.includes('navigator.clipboard.writeText(doc.url)') && panel.includes('window.confirm'),
   'link/copy/delete affordance missing'))
@@ -101,6 +110,15 @@ test('panel renders for the letdocs tab with Suspense', () => must(
 
 /* 6. Public visitor page for the shelf. */
 const pub = readFileSync('public/let-passers.html', 'utf8')
+const pagesCss = readFileSync('public/assets/pages.css', 'utf8')
+test('visitor page has its own section per level', () => {
+  for (const bit of ['data-list="primary"', 'data-list="secondary"', 'Primary LET passers', 'Secondary LET passers', 'let-level-badge--primary', 'let-level-badge--secondary']) {
+    must(pub.includes(bit), `page missing ${bit}`)
+  }
+  for (const cls of ['.pg-let .let-level-block', '.pg-let .let-level-head', '.pg-let .let-level-badge--primary']) {
+    must(pagesCss.includes(cls), `css missing ${cls}`)
+  }
+})
 test('visitor page exists, fetches the public list and escapes titles', () => must(
   pub.includes('/api/notify/letdocs?action=list') && pub.includes('escapeHtml(doc.title') && pub.includes('let-status--empty'),
   'public page wiring drifted'))
@@ -122,7 +140,6 @@ test('footer links the visitor page', () => must(
   'footer link missing'))
 const sitemap = readFileSync('public/sitemap.xml', 'utf8')
 test('sitemap lists the visitor page', () => must(sitemap.includes('/let-passers.html') && !sitemap.includes('let-reviewer-files'), 'not in sitemap'))
-const pagesCss = readFileSync('public/assets/pages.css', 'utf8')
 test('pages.css styles the visitor page', () => {
   for (const cls of ['.pg-let .let-hero', '.pg-let .let-item', '.pg-let .let-status', '.pg-let .let-cta']) {
     must(pagesCss.includes(cls), `missing ${cls}`)

@@ -952,3 +952,20 @@ h1, h2, h3 { letter-spacing: -0.015em; }
   .pg-let .let-item { opacity: 1; transform: none; }
   .pg-let .let-item:hover, .pg-let .let-step:hover { transform: none; }
 }
+
+/* --- LET passers: Primary / Secondary level sections --- */
+.pg-let .let-level-block { margin-bottom: 38px; }
+.pg-let .let-level-head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+.pg-let .let-level-badge {
+  flex: none; width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; font-size: 22px;
+  border: 1px solid rgba(50, 21, 104, 0.12);
+}
+.pg-let .let-level-badge--primary { background: linear-gradient(135deg, rgba(223, 245, 167, 0.6), rgba(139, 92, 246, 0.14)); }
+.pg-let .let-level-badge--secondary { background: linear-gradient(135deg, #e7f0fe, rgba(139, 92, 246, 0.14)); }
+.pg-let .let-level-head h3 {
+  margin: 0; font-family: 'Nunito', 'Manrope', sans-serif; font-weight: 900; font-size: 1.22rem;
+  color: var(--ink, #321568); letter-spacing: -0.005em;
+}
+.pg-let .let-level-sub { font-size: 0.83rem; color: var(--muted, #716981); font-weight: 600; }
+.pg-let .let-level-status { margin-bottom: 12px; }
+.pg-let .let-level-block .let-empty-card { margin-bottom: 0; }

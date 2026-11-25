@@ -52,6 +52,10 @@ const BUCKET = 'let-docs'
 const MANIFEST = '_manifest.json'
 const MAX_BYTES = 3 * 1024 * 1024
 const PDF_DATA_URL = /^data:application\/pdf;base64,/
+/* Owner requirement: PRIMARY and SECONDARY passers each have their own
+ * files, so every document must declare its level and the public page
+ * renders two separate sections from it. */
+const LEVELS = new Set(['primary', 'secondary'])
 
 async function adminCaller(req, supabase) {
   const header = req.headers?.authorization || ''
@@ -124,6 +128,8 @@ export default async function handler(req, res) {
       await adminCaller(req, supabase)
       const pdf = String(body.pdf || '')
       const title = String(body.title || '').trim().slice(0, 120)
+      const level = String(body.level || '').trim().toLowerCase()
+      if (!LEVELS.has(level)) return sendError(res, 400, 'Choose whether the file is for PRIMARY or SECONDARY passers.')
       if (!PDF_DATA_URL.test(pdf)) return sendError(res, 400, 'Send the file as a PDF data URL.')
       if (pdf.length > MAX_BYTES * 1.4) return sendError(res, 413, 'That PDF is too large to upload (3 MB limit). Use "paste a link" for bigger files.')
       const bytes = Buffer.from(pdf.slice(pdf.indexOf(',') + 1), 'base64')
@@ -138,6 +144,7 @@ export default async function handler(req, res) {
       const entry = {
         id: path,
         kind: 'upload',
+        level,
         title: title || path.replace(/^\w+-/, '').replace(/\.pdf$/i, ''),
         url: publicUrl(path),
         bytes: bytes.length,
@@ -152,10 +159,12 @@ export default async function handler(req, res) {
       await adminCaller(req, supabase)
       const url = String(body.url || '').trim()
       const title = String(body.title || '').trim().slice(0, 120)
+      const level = String(body.level || '').trim().toLowerCase()
+      if (!LEVELS.has(level)) return sendError(res, 400, 'Choose whether the file is for PRIMARY or SECONDARY passers.')
       if (!/^https?:\/\/.+/.test(url)) return sendError(res, 400, 'Paste the full web address of the PDF (starting with https://).')
       await ensureBucket(supabase)
       const docs = await readManifest(supabase)
-      const entry = { id: `link-${Date.now().toString(36)}`, kind: 'link', title: title || url, url, addedAt: new Date().toISOString() }
+      const entry = { id: `link-${Date.now().toString(36)}`, kind: 'link', level, title: title || url, url, addedAt: new Date().toISOString() }
       docs.unshift(entry)
       await writeManifest(supabase, docs)
       return sendJson(res, 200, { doc: entry })
