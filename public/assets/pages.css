@@ -987,3 +987,25 @@ h1, h2, h3 { letter-spacing: -0.015em; }
     mask-image: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 72%);
   }
 }
+
+/* --- LET results SEO paragraph + FAQ block --- */
+.pg-let .let-seo { color: rgba(237, 233, 254, 0.92); max-width: 62ch; font-size: 0.95rem; line-height: 1.65; margin: 14px 0 0; }
+.pg-let .let-seo strong { color: #fff; }
+.pg-let .let-faq { margin-bottom: 40px; }
+.pg-let .let-faq h2 { font-family: 'Nunito', 'Manrope', sans-serif; font-weight: 900; font-size: clamp(1.3rem, 2.6vw, 1.65rem); color: var(--ink, #321568); margin: 0 0 16px; }
+.pg-let .let-faq__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.pg-let .let-faq details {
+  background: var(--card, #fff); border: 1px solid var(--line, #e4e0eb); border-radius: 16px;
+  padding: 16px 18px; box-shadow: 0 6px 18px rgba(50, 21, 104, 0.05); transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pg-let .let-faq details[open] { border-color: rgba(139, 92, 246, 0.45); box-shadow: 0 12px 30px rgba(50, 21, 104, 0.1); }
+.pg-let .let-faq summary {
+  cursor: pointer; font-family: 'Nunito', 'Manrope', sans-serif; font-weight: 800; font-size: 0.98rem;
+  color: var(--ink, #321568); list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center;
+}
+.pg-let .let-faq summary::-webkit-details-marker { display: none; }
+.pg-let .let-faq summary::after { content: '+'; font-size: 1.3rem; font-weight: 700; color: #8b5cf6; transition: transform 0.2s ease; }
+.pg-let .let-faq details[open] summary::after { transform: rotate(45deg); }
+.pg-let .let-faq details p { margin: 10px 0 0; font-size: 0.9rem; line-height: 1.6; color: var(--muted, #716981); }
+.pg-let .let-faq details a { color: #4c1d95; font-weight: 700; }
+@media (max-width: 900px) { .pg-let .let-faq__grid { grid-template-columns: 1fr; } }
