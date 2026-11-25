@@ -49,8 +49,14 @@ test('admin gate uses admin_members, never profiles.role', () => must(
 test('PDF-only with a real magic-byte check and the 3 MB body cap', () => must(
   api.includes('PDF_DATA_URL') && api.includes("startsWith('%PDF-')") && api.includes('3 * 1024 * 1024'),
   'upload validation drifted'))
-test('every action verifies the caller before touching storage', () => {
-  for (const action of ["action === 'list'", "action === 'upload'", "action === 'link'", "action === 'delete'"]) {
+test('list is public by design; mutations verify the caller first', () => {
+  const listAt = api.indexOf("action === 'list'")
+  const listEnd = api.indexOf("action === 'upload'", listAt)
+  must(listEnd > listAt, 'upload block not found after list block')
+  const listSlice = api.slice(listAt, listEnd)
+  must(!listSlice.includes('adminCaller'), 'list must stay public for /let-reviewer-files.html')
+  must(listSlice.includes('Public on purpose'), 'the public list needs its intent comment')
+  for (const action of ["action === 'upload'", "action === 'link'", "action === 'delete'"]) {
     const at = api.indexOf(action)
     must(at > -1, `missing ${action}`)
     const slice = api.slice(at, at + 200)
@@ -93,7 +99,31 @@ test('panel renders for the letdocs tab with Suspense', () => must(
   dash.includes("active === 'letdocs'") && dash.includes('<LetDocsManager />') && dash.includes("lazy(() => import('./LetDocsManager.jsx'))"),
   'render wiring missing'))
 
-/* 6. Styles exist for every class the panel uses. */
+/* 6. Public visitor page for the shelf. */
+const pub = readFileSync('public/let-reviewer-files.html', 'utf8')
+test('visitor page exists, fetches the public list and escapes titles', () => must(
+  pub.includes('/api/notify/letdocs?action=list') && pub.includes('escapeHtml(doc.title') && pub.includes('let-status--empty'),
+  'public page wiring drifted'))
+test('visitor page is honest about provenance (no official-PRC claim)', () => must(
+  pub.includes('not official PRC publications') && !/official PRC reviewer|PRC-accredited/i.test(pub),
+  'provenance line missing or an official claim appeared'))
+test('visitor page CTA links only to real pages', () => must(
+  pub.includes('href="/teachers.html"') && pub.includes('href="/contact.html"') && !pub.includes('/?teach=1'),
+  'CTA links drifted or an invented route returned'))
+const app = readFileSync('src/App.jsx', 'utf8')
+test('footer links the visitor page', () => must(
+  app.includes('<a href="/let-reviewer-files.html">LET reviewer files</a>'),
+  'footer link missing'))
+const sitemap = readFileSync('public/sitemap.xml', 'utf8')
+test('sitemap lists the visitor page', () => must(sitemap.includes('/let-reviewer-files.html'), 'not in sitemap'))
+const pagesCss = readFileSync('public/assets/pages.css', 'utf8')
+test('pages.css styles the visitor page', () => {
+  for (const cls of ['.pg-let .let-hero', '.pg-let .let-item', '.pg-let .let-status', '.pg-let .let-cta']) {
+    must(pagesCss.includes(cls), `missing ${cls}`)
+  }
+})
+
+/* 7. Styles exist for every class the panel uses. */
 const css = readFileSync('src/dashboard.css', 'utf8')
 test('dashboard.css styles the shelf', () => {
   for (const cls of ['.let-docs-drop', '.let-docs-linkform', '.let-docs-list', '.let-docs-actions', '.let-docs-error', '.let-docs-notice']) {
