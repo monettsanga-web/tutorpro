@@ -2028,7 +2028,7 @@ function Footer({ onRegister, onLogin, onAccount, onTeacherAccess, onTeacherAppl
               <a href="/faq.html">Questions &amp; answers</a>
               <a href="/english-tutor-for-shy-child.html">Help for a shy child</a>
               <a href="/blog/">Learning resources</a>
-              <a href="/let-reviewer-files.html">LET reviewer files</a>
+              <a href="/let-passers.html">LET passers</a>
             </div>
             <div>
               <h3>Explore & subjects</h3>

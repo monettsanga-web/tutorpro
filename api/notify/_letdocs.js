@@ -6,8 +6,8 @@ import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
  * WHAT THIS IS
  * ------------
  * The owner asked for a section where she can paste and upload the PDF
- * files for the Licensure Examination for Teachers - reviewer material she
- * shares with teacher applicants. Uploads land in a PUBLIC Supabase
+ * files of Licensure Examination for Teachers PASSERS (her correction: not
+ * reviewer material) so website visitors can view them. Uploads land in a PUBLIC Supabase
  * Storage bucket (`let-docs`) through the service-role key, so every file
  * gets one permanent link she can copy and send to anyone, and the file
  * survives no matter which browser uploaded it.
@@ -33,7 +33,7 @@ import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
  * WHO MAY DO WHAT
  * ---------------
  * list: PUBLIC. Every document here is already public-by-URL in the
- * `let-docs` bucket, and /let-reviewer-files.html renders the same list
+ * `let-docs` bucket, and /let-passers.html renders the same list
  * for any visitor, so the list endpoint hides nothing that the bucket
  * does not already expose. It returns titles and URLs only.
  * upload/delete/link: administrators only, verified through
@@ -44,7 +44,7 @@ import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
  * ----------
  * Vercel Hobby caps the serverless request body at 4.5 MB. Base64 inflates
  * bytes by ~4/3, so PDFs are accepted up to 3 MB of real file size. That
- * covers typical reviewer handouts; anything bigger must be linked
+ * covers typical passers lists; anything bigger must be linked
  * instead of uploaded (the "paste a link" row exists for exactly that).
  */
 

@@ -54,7 +54,7 @@ test('list is public by design; mutations verify the caller first', () => {
   const listEnd = api.indexOf("action === 'upload'", listAt)
   must(listEnd > listAt, 'upload block not found after list block')
   const listSlice = api.slice(listAt, listEnd)
-  must(!listSlice.includes('adminCaller'), 'list must stay public for /let-reviewer-files.html')
+  must(!listSlice.includes('adminCaller'), 'list must stay public for /let-passers.html')
   must(listSlice.includes('Public on purpose'), 'the public list needs its intent comment')
   for (const action of ["action === 'upload'", "action === 'link'", "action === 'delete'"]) {
     const at = api.indexOf(action)
@@ -100,22 +100,28 @@ test('panel renders for the letdocs tab with Suspense', () => must(
   'render wiring missing'))
 
 /* 6. Public visitor page for the shelf. */
-const pub = readFileSync('public/let-reviewer-files.html', 'utf8')
+const pub = readFileSync('public/let-passers.html', 'utf8')
 test('visitor page exists, fetches the public list and escapes titles', () => must(
   pub.includes('/api/notify/letdocs?action=list') && pub.includes('escapeHtml(doc.title') && pub.includes('let-status--empty'),
   'public page wiring drifted'))
-test('visitor page is honest about provenance (no official-PRC claim)', () => must(
-  pub.includes('not official PRC publications') && !/official PRC reviewer|PRC-accredited/i.test(pub),
-  'provenance line missing or an official claim appeared'))
+test('visitor page says PASSERS, not reviewer, and claims no PRC endorsement', () => must(
+  pub.includes('LET passers') && pub.includes('posted here by') && !/reviewer/i.test(pub) && !/PRC-accredited|official PRC|PRC-endorsed/i.test(pub),
+  'page still says reviewer, or an endorsement claim appeared'))
+test('old reviewer URL 301s to the passers page', () => {
+  const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'))
+  const rule = (vercel.redirects || []).find((r) => r.source === '/let-reviewer-files.html')
+  must(rule && rule.destination === '/let-passers.html' && rule.permanent === true, 'redirect missing')
+  must(!existsSync('public/let-reviewer-files.html'), 'old page file must be gone')
+})
 test('visitor page CTA links only to real pages', () => must(
   pub.includes('href="/teachers.html"') && pub.includes('href="/contact.html"') && !pub.includes('/?teach=1'),
   'CTA links drifted or an invented route returned'))
 const app = readFileSync('src/App.jsx', 'utf8')
 test('footer links the visitor page', () => must(
-  app.includes('<a href="/let-reviewer-files.html">LET reviewer files</a>'),
+  app.includes('<a href="/let-passers.html">LET passers</a>'),
   'footer link missing'))
 const sitemap = readFileSync('public/sitemap.xml', 'utf8')
-test('sitemap lists the visitor page', () => must(sitemap.includes('/let-reviewer-files.html'), 'not in sitemap'))
+test('sitemap lists the visitor page', () => must(sitemap.includes('/let-passers.html') && !sitemap.includes('let-reviewer-files'), 'not in sitemap'))
 const pagesCss = readFileSync('public/assets/pages.css', 'utf8')
 test('pages.css styles the visitor page', () => {
   for (const cls of ['.pg-let .let-hero', '.pg-let .let-item', '.pg-let .let-status', '.pg-let .let-cta']) {

@@ -3,11 +3,12 @@ import { CheckCircle2, Copy, ExternalLink, FileText, FileUp, Link2, Trash2 } fro
 import { supabase } from './supabaseClient.js'
 
 /*
- * Licensure Examination for Teachers - document shelf (owner request).
+ * Licensure Examination for Teachers - passers document shelf (owner request).
  *
- * The owner uploads or pastes PDF files here once; every file gets one
- * permanent public link she can copy and send to teacher applicants or
- * paste anywhere on the site. Files live in the `let-docs` Supabase
+ * The owner uploads or pastes the LET PASSERS PDF files here (correction:
+ * not reviewer material - the files list passers, and visitors view them
+ * at /let-passers.html). Every file gets one permanent public link she can
+ * also copy and send anywhere. Files live in the `let-docs` Supabase
  * Storage bucket through /api/notify/letdocs (admin-gated server side -
  * see api/notify/_letdocs.js for why the route lives under /notify).
  *
@@ -191,7 +192,7 @@ export default function LetDocsManager() {
         <div>
           <span className="portal-kicker">Teacher resources</span>
           <h2>Licensure Examination for Teachers</h2>
-          <p className="let-docs-sub">Upload or paste the LET PDF files once; each gets a permanent link you can copy and send to applicants.</p>
+          <p className="let-docs-sub">Upload or paste the LET passers PDF files; visitors see them on /let-passers.html, and each file gets a permanent link you can copy and send anywhere.</p>
         </div>
       </div>
 
@@ -231,14 +232,14 @@ export default function LetDocsManager() {
             type="url"
             value={linkUrl}
             onChange={(event) => setLinkUrl(event.target.value)}
-            placeholder="https://…/let-reviewer-math.pdf (for files over 3 MB)"
+            placeholder="https://…/let-passers-2026.pdf (for files over 3 MB)"
             aria-label="PDF link"
           />
           <input
             type="text"
             value={linkTitle}
             onChange={(event) => setLinkTitle(event.target.value)}
-            placeholder="Optional title, e.g. LET Reviewer - Mathematics"
+            placeholder="Optional title, e.g. LET Passers - September 2026"
             maxLength={120}
             aria-label="Link title"
           />
@@ -252,10 +253,10 @@ export default function LetDocsManager() {
       {notice && <p className="let-docs-notice" role="status"><CheckCircle2 size={15} /> {notice}</p>}
 
       <section className="portal-card let-docs-list">
-        <h3>Shelf ({docs.length})</h3>
+        <h3>Posted files ({docs.length})</h3>
         {loading && <p className="let-docs-empty">Loading your LET files…</p>}
         {!loading && docs.length === 0 && (
-          <p className="let-docs-empty">No files yet. Upload your first LET PDF above - or paste a link to one.</p>
+          <p className="let-docs-empty">No files yet. Upload your first LET passers PDF above - or paste a link to one.</p>
         )}
         <ul>
           {docs.map((doc) => (

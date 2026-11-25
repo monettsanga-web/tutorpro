@@ -30,6 +30,11 @@
   ],
   "redirects": [
     {
+      "source": "/let-reviewer-files.html",
+      "destination": "/let-passers.html",
+      "permanent": true
+    },
+    {
       "source": "/online-maths-tutor-for-kids.html",
       "destination": "/online-english-classes-for-kids",
       "permanent": true
