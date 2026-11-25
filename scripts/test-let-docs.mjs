@@ -3,7 +3,7 @@
  * /api/notify/letdocs, files stored in the public `let-docs` Supabase
  * bucket, panel wired into the ADMIN dashboard nav only, and the
  * twelve-function cap untouched (handler merged, never a new file). */
-import { readFileSync, readdirSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const failures = []
@@ -118,6 +118,14 @@ test('visitor page has its own section per level', () => {
   for (const cls of ['.pg-let .let-level-block', '.pg-let .let-level-head', '.pg-let .let-level-badge--primary']) {
     must(pagesCss.includes(cls), `css missing ${cls}`)
   }
+})
+test('hero banner: owner-chosen image is shipped and referenced', () => {
+  must(existsSync('public/assets/let-passers-banner.webp'), 'banner file missing from public/assets')
+  const kb = statSync('public/assets/let-passers-banner.webp').size / 1024
+  must(kb < 200, `banner is ${Math.round(kb)} KB - keep it a compressed WebP under 200 KB`)
+  must(pub.includes('/assets/let-passers-banner.webp'), 'page does not reference the banner')
+  must(pub.includes('let-hero__banner') && pub.includes('alt="Illustration celebrating Licensure Examination for Teachers passers'), 'banner figure or alt text drifted')
+  must(pagesCss.includes('.pg-let .let-hero__banner'), 'banner styles missing')
 })
 test('visitor page exists, fetches the public list and escapes titles', () => must(
   pub.includes('/api/notify/letdocs?action=list') && pub.includes('escapeHtml(doc.title') && pub.includes('let-status--empty'),
