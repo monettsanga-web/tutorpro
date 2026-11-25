@@ -535,7 +535,7 @@
       "jsonldTypes": [
         null
       ],
-      "words": 387
+      "words": 435
     },
     {
       "url": "https://www.tutorpro.site/blog/build-english-vocabulary-children.html",
@@ -650,7 +650,30 @@
       "jsonldTypes": [
         null
       ],
-      "words": 813
+      "words": 820
+    },
+    {
+      "url": "https://www.tutorpro.site/blog/kumu-english.html",
+      "status": 200,
+      "title": "Kumu English: Online English Classes for Kids (2026)",
+      "description": "Kumu English — warm, one-to-one online English classes for kids with near-native Filipino English teachers. US$7 per 25-minute lesson, free first class.",
+      "canonical": "https://www.tutorpro.site/blog/kumu-english.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "https://www.tutorpro.site/assets/tutorpro-hero.webp",
+      "h1": [
+        {
+          "level": 1,
+          "text": "Kumu English: online English classes for Filipino kids"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 1,
+      "lazy": 0,
+      "jsonldTypes": [
+        null
+      ],
+      "words": 705
     },
     {
       "url": "https://www.tutorpro.site/blog/online-english-classes-what-parents-should-know.html",
@@ -1039,6 +1062,29 @@
         "BreadcrumbList"
       ],
       "words": 1171
+    },
+    {
+      "url": "https://www.tutorpro.site/let-passers.html",
+      "status": 200,
+      "title": "LET Passers — Licensure Examination for Teachers | TutorPro",
+      "description": "PDF files of Licensure Examination for Teachers (LET) passers, posted by TutorPro English PH. Open or view each file in your browser — free, no sign-up needed.",
+      "canonical": "https://www.tutorpro.site/let-passers.html",
+      "robots": "index, follow, max-image-preview:large",
+      "og": "",
+      "h1": [
+        {
+          "level": 1,
+          "text": "LET passers — Licensure Examination for Teachers"
+        }
+      ],
+      "imgsNoAlt": [],
+      "imgsEmptyAlt": [],
+      "imgCount": 2,
+      "lazy": 0,
+      "jsonldTypes": [
+        "CollectionPage"
+      ],
+      "words": 301
     },
     {
       "url": "https://www.tutorpro.site/one-to-one-english-tutor.html",
@@ -1529,9 +1575,19 @@
   ],
   "report": [
     {
+      "severity": "HIGH",
+      "page": "/let-passers.html",
+      "message": "no other page links to it — Google may never find it"
+    },
+    {
       "severity": "MED",
       "page": "/online-english-classes-china.html",
       "message": "title is only 24 chars: \"中国儿童在线英语一对一课程 | TutorPro\""
+    },
+    {
+      "severity": "LOW",
+      "page": "/let-passers.html",
+      "message": "no og:image, so shared links show no picture"
     }
   ]
 }

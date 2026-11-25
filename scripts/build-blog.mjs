@@ -369,6 +369,49 @@ const ARTICLES = [
     related: [['how-to-choose-online-english-class-for-kids', 'How to choose an online English class for kids'], ['online-english-classes-what-parents-should-know', 'What parents should know before booking']],
     cta: ['/?book=1', 'Book the free first class'],
   },
+
+  {
+    slug: 'let-results-passers-list-view-online',
+    category: 'Parent guides',
+    title: 'LET Results 2026: How to View the Passers List Online',
+    h1: 'LET results: how to view the passers list online',
+    description:
+      'Where LET results are released, what the passers list contains, and the Primary vs Secondary levels — plus free PDF copies posted by TutorPro English PH.',
+    lede:
+      'When the results of the Licensure Examination for Teachers (LET) come out, every aspiring teacher wants the same thing: the passers list, fast. This is where results are released, what the list actually contains, and where you can view the PDF files free.',
+    body: `
+        <h2>What the LET results are</h2>
+        <p>The LET — the Licensure Examination for Teachers — is the board examination a graduate must pass to become a licensed teacher in the Philippines. The "results" are the official list of passers released after each examination, together with the passing rates and the top performers.</p>
+
+        <h2>Where the official results are released</h2>
+        <p>The Professional Regulation Commission (PRC) releases the official LET results through its own channels — its website and its official announcements. For anything official, always start there; results pages that appear elsewhere are copies, and should say so honestly.</p>
+
+        <h2>Primary and Secondary: two levels, two lists</h2>
+        <p>The examination has two levels, and each produces its own passers list:</p>
+        <ul>
+          <li><strong>Primary (elementary)</strong> — for those who will teach Kindergarten to Grade 6.</li>
+          <li><strong>Secondary (high school)</strong> — for those who will teach Grade 7 to Grade 12, in a specific subject area.</li>
+        </ul>
+        <p>When you look for a results file, check which level it covers — a Secondary list will not contain a Primary passer, and the other way around.</p>
+
+        <h2>Viewing the passers lists as PDF files</h2>
+        <p>Passers lists are usually published as PDF documents, which can be large and awkward to search. We keep a copy of the files on our own page, split into <a href="/let-passers.html">Primary LET passers and Secondary LET passers sections</a>, so you can open or download each file free — no sign-up, no payment details. New files appear there as soon as they are posted.</p>
+
+        <h2>A note on honesty</h2>
+        <p>Files posted on our page are copies shared by TutorPro English PH for the convenience of our visitors. They are not an official PRC publication, and we do not claim they are. If a file you need is not on the page, message us and we will try to send it to you by email.</p>
+
+        <h2>After the results: what passing the LET means for teaching online</h2>
+        <p>A licence is the formal proof; teaching skill is the practice. If you are a licensed teacher — or waiting for your results — and you want to teach one-to-one online English classes, our teacher applications are open. Every applicant goes through a recorded teaching interview reviewed by a person before being approved.</p>
+    `,
+    faqs: [
+      ['Where can I view the LET results online?', 'The official results are released by the Professional Regulation Commission (PRC) through its own channels. TutorPro English PH also posts PDF copies of the passers lists on its LET passers page, split into Primary and Secondary sections, free to open or download.'],
+      ['What is the difference between the Primary and Secondary LET?', 'Primary is the licensure examination for elementary teachers (Kindergarten to Grade 6); Secondary is for high school teachers (Grade 7 to Grade 12). Each level has its own passers list.'],
+      ['Are the files on the TutorPro LET page official?', 'They are copies posted by TutorPro English PH for the convenience of visitors, not an official PRC publication. For official verification of a result, use PRC channels.'],
+      ['What should I do if the LET result file I need is not posted?', 'Message TutorPro English PH through the contact page; the team will try to send the file by email, usually within one business day.'],
+    ],
+    related: [['how-to-choose-online-english-class-for-kids', 'How to choose an online English class for kids'], ['kumu-english', 'Kumu English: conversation-first classes for Filipino kids']],
+    cta: ['/let-passers.html', 'View the LET passers files'],
+  },
 ]
 
 const CATEGORIES = [...new Set(ARTICLES.map((a) => a.category))]

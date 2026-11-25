@@ -124,6 +124,7 @@ test('hero banner: owner-chosen image is shipped and referenced', () => {
   const kb = statSync('public/assets/let-passers-banner.webp').size / 1024
   must(kb < 200, `banner is ${Math.round(kb)} KB - keep it a compressed WebP under 200 KB`)
   must(pub.includes('/assets/let-passers-banner.webp'), 'page does not reference the banner')
+  must(pub.includes('og:image'), 'banner should also be the og:image')
   must(pub.includes('let-hero__banner') && pub.includes('alt="Illustration celebrating Licensure Examination for Teachers passers'), 'banner figure or alt text drifted')
   must(pagesCss.includes('.pg-let .let-hero__banner'), 'banner styles missing')
 })
@@ -169,6 +170,31 @@ test('dashboard.css styles the shelf', () => {
   for (const cls of ['.let-docs-drop', '.let-docs-linkform', '.let-docs-list', '.let-docs-actions', '.let-docs-error', '.let-docs-notice']) {
     must(css.includes(cls), `missing ${cls}`)
   }
+})
+
+/* 8. "LET results" SEO layer (owner request). */
+test('page targets LET results in title and description', () => {
+  const decode = (v) => v.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  const title = decode(pub.match(/<title>([^<]+)<\/title>/)?.[1] ?? '')
+  const desc = decode(pub.match(/<meta name="description" content="([^"]+)"/)?.[1] ?? '')
+  must(title.includes('LET Results') && title.includes('Licensure Examination for Teachers'), `title drifted: ${title}`)
+  must(title.length <= 60, `title ${title.length} chars > 60`)
+  must(desc.includes('LET results') && desc.includes('Primary and Secondary passers'), 'description lacks results keywords')
+  must(desc.length <= 160, `description ${desc.length} chars > 160`)
+})
+test('FAQPage schema mirrors the visible FAQ and stays honest about the PRC', () => must(
+  pub.includes('"@type": "FAQPage"') && pub.includes('"@type": "CollectionPage"') &&
+  pub.includes('Where can I view LET results online?') && pub.includes('let-faq') &&
+  pub.includes('Professional Regulation Commission (PRC)') && !/official PRC publication|PRC-accredited|PRC-endorsed/i.test(pub),
+  'FAQ schema, visible FAQ or PRC honesty line drifted'))
+test('companion blog post exists in the generator, dist and sitemap', () => {
+  const gen = readFileSync('scripts/build-blog.mjs', 'utf8')
+  must(gen.includes("slug: 'let-results-passers-list-view-online'"), 'generator entry missing')
+  must(existsSync('dist/blog/let-results-passers-list-view-online.html'), 'post not built')
+  must(sitemap.includes('/blog/let-results-passers-list-view-online.html'), 'post not in sitemap')
+  const post = readFileSync('dist/blog/let-results-passers-list-view-online.html', 'utf8')
+  must(post.includes('/let-passers.html') && pub.includes('/blog/let-results-passers-list-view-online.html'), 'cross-links missing')
+  must(post.includes('"@type":"FAQPage"'), 'post FAQ schema missing')
 })
 
 if (checks.fail) {
