@@ -128,6 +128,15 @@ test('pages.css styles the visitor page', () => {
     must(pagesCss.includes(cls), `missing ${cls}`)
   }
 })
+test('premium design layer: hero decor, chips, steps, skeleton, filter, reduced motion', () => {
+  for (const bit of ['let-float--cap', 'let-chips', 'let-steps__grid', 'let-skeleton', 'let-empty-card', 'id="let-filter"', '--i:']) {
+    must(pub.includes(bit), `page missing ${bit}`)
+  }
+  for (const cls of ['.pg-let .let-chips', '.pg-let .let-step', '.pg-let .let-skeleton', '.pg-let .let-empty-card', '.pg-let .let-filter', '@keyframes letRise']) {
+    must(pagesCss.includes(cls), `css missing ${cls}`)
+  }
+  must(pagesCss.includes('@media (prefers-reduced-motion: reduce)'), 'reduced-motion fallback missing')
+})
 
 /* 7. Styles exist for every class the panel uses. */
 const css = readFileSync('src/dashboard.css', 'utf8')

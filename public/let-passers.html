@@ -44,8 +44,11 @@
     </header>
     <main>
       <section class="let-hero">
+        <span class="let-float let-float--cap" aria-hidden="true">🎓</span>
+        <span class="let-float let-float--star" aria-hidden="true">✦</span>
+        <span class="let-float let-float--spark" aria-hidden="true">💜</span>
         <div class="wrap">
-          <span class="let-kicker">Licensure Examination for Teachers</span>
+          <span class="let-kicker">📋 Licensure Examination for Teachers</span>
           <h1>LET passers — Licensure Examination for Teachers</h1>
           <p class="let-lede">
             PDF files of Licensure Examination for Teachers (LET) passers, posted here by
@@ -56,11 +59,43 @@
             Files are posted by TutorPro English PH for viewing by our visitors. New files
             appear on this page as soon as they are uploaded.
           </p>
+          <div class="let-chips">
+            <span>✓ Free to view</span>
+            <span>✓ No sign-up needed</span>
+            <span>📄 PDF files — open in your browser</span>
+            <span>⬇ Download to keep</span>
+          </div>
+        </div>
+      </section>
+      <section class="let-steps">
+        <div class="wrap let-steps__grid">
+          <div class="let-step">
+            <span class="let-step__icon" aria-hidden="true">🔎</span>
+            <div><strong>1 · Browse the list</strong><span>Every file we have posted appears below, newest first, with its name, size and date.</span></div>
+          </div>
+          <div class="let-step">
+            <span class="let-step__icon" aria-hidden="true">📄</span>
+            <div><strong>2 · Open or download</strong><span>One tap opens the PDF right in your browser — or download it to your device to keep.</span></div>
+          </div>
+          <div class="let-step">
+            <span class="let-step__icon" aria-hidden="true">💬</span>
+            <div><strong>3 · Need one that is not here?</strong><span>Message us on the contact page and we will send the file to you by email.</span></div>
+          </div>
         </div>
       </section>
       <section class="let-list-section">
         <div class="wrap">
+          <div class="let-section-head">
+            <h2>Posted files</h2>
+            <input id="let-filter" class="let-filter" type="search" placeholder="Search the files…" aria-label="Search posted files" hidden />
+          </div>
           <div id="let-status" class="let-status" role="status">Loading the file list…</div>
+          <div id="let-skeleton" class="let-skeleton" aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+          <div id="let-empty" class="let-empty-card">
+            <span aria-hidden="true">🗂️</span>
+            <strong>No passer files posted yet</strong>
+            <p>Please check back soon — or <a href="/contact.html">ask us on the contact page</a> and we will send them to you by email.</p>
+          </div>
           <ul id="let-list" class="let-list" aria-label="LET passers files"></ul>
           <div class="let-cta">
             <h2>Want to teach with us?</h2>
@@ -89,6 +124,9 @@
       (function () {
         var status = document.getElementById('let-status');
         var list = document.getElementById('let-list');
+        var skeleton = document.getElementById('let-skeleton');
+        var emptyCard = document.getElementById('let-empty');
+        var filter = document.getElementById('let-filter');
 
         function escapeHtml(value) {
           return String(value).replace(/[&<>"']/g, function (c) {
@@ -113,18 +151,20 @@
           })
           .then(function (payload) {
             var docs = Array.isArray(payload.docs) ? payload.docs : [];
+            skeleton.hidden = true;
             if (!docs.length) {
-              status.textContent = 'No passer files have been posted here yet. Please check back soon — or ask us on the contact page and we will send them to you by email.';
-              status.className = 'let-status let-status--empty';
+              status.hidden = true;
+              emptyCard.setAttribute('data-shown', 'true');
               return;
             }
             status.textContent = docs.length + (docs.length === 1 ? ' file' : ' files') + ' available — click to open or download.';
             status.className = 'let-status let-status--ok';
-            list.innerHTML = docs.map(function (doc) {
+            filter.hidden = docs.length < 3;
+            list.innerHTML = docs.map(function (doc, index) {
               var meta = [doc.kind === 'link' ? 'Shared link' : 'PDF'];
               if (doc.bytes) meta.push(readableSize(doc.bytes));
               if (doc.addedAt) meta.push(new Date(doc.addedAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }));
-              return '<li class="let-item">' +
+              return '<li class="let-item" style="--i:' + Math.min(index, 12) + '">' +
                 '<span class="let-item__icon" aria-hidden="true">📄</span>' +
                 '<div class="let-item__meta">' +
                   '<strong>' + escapeHtml(doc.title || 'LET file') + '</strong>' +
@@ -133,8 +173,22 @@
                 '<a class="btn btn--primary let-item__open" href="' + escapeHtml(doc.url) + '" target="_blank" rel="noopener">Open / download</a>' +
                 '</li>';
             }).join('');
+            filter.addEventListener('input', function () {
+              var term = filter.value.trim().toLowerCase();
+              var shown = 0;
+              Array.prototype.forEach.call(list.children, function (item) {
+                var hit = !term || item.textContent.toLowerCase().indexOf(term) > -1;
+                item.hidden = !hit;
+                if (hit) shown += 1;
+              });
+              status.textContent = shown
+                ? shown + (shown === 1 ? ' file matches' : ' files match') + ' your search.'
+                : 'No file matches that search — try a shorter word, or ask us on the contact page.';
+              status.className = 'let-status' + (shown ? ' let-status--ok' : ' let-status--empty');
+            });
           })
           .catch(function () {
+            skeleton.hidden = true;
             status.textContent = 'The file list could not load right now — are you offline? Please refresh, or ask us on the contact page and we will send the files by email.';
             status.className = 'let-status let-status--warn';
           });
