@@ -775,3 +775,31 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 
 /* Honeypot: real visitors never see or fill this; bots do. */
 .ct-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+
+/* --- LET reviewer files page (let-reviewer-files.html) --- */
+.pg-let .let-hero { padding: 56px 0 28px; background: linear-gradient(180deg, #f6f2ff 0%, #ffffff 100%); }
+.pg-let .let-kicker { display: inline-block; padding: 5px 12px; border-radius: 999px; background: #ece4ff; color: #321568; font-size: 12.5px; font-weight: 700; letter-spacing: 0.02em; }
+.pg-let .let-hero h1 { margin: 14px 0 10px; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.12; color: #241046; }
+.pg-let .let-lede { margin: 0 0 10px; max-width: 62ch; font-size: 16px; line-height: 1.6; color: #453f57; }
+.pg-let .let-honest { margin: 0; max-width: 62ch; font-size: 13.5px; line-height: 1.55; color: #6b6580; }
+.pg-let .let-list-section { padding: 22px 0 48px; }
+.pg-let .let-status { margin: 0 0 16px; padding: 11px 15px; border-radius: 12px; background: #f1ecfb; color: #3d3557; font-size: 14px; }
+.pg-let .let-status--ok { background: #e8f7ee; color: #1c6b3c; }
+.pg-let .let-status--empty { background: #fff7e3; color: #7a5a12; }
+.pg-let .let-status--warn { background: #fdecea; color: #8f1d13; }
+.pg-let .let-list { list-style: none; margin: 0 0 34px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.pg-let .let-item { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(50, 21, 104, 0.14); border-radius: 14px; background: #fff; box-shadow: 0 2px 10px rgba(50, 21, 104, 0.05); }
+.pg-let .let-item__icon { font-size: 22px; flex: none; }
+.pg-let .let-item__meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pg-let .let-item__meta strong { font-size: 15.5px; color: #241046; }
+.pg-let .let-item__meta span { font-size: 12.5px; color: #6b6580; }
+.pg-let .let-item__open { flex: none; white-space: nowrap; }
+.pg-let .let-cta { padding: 24px; border-radius: 16px; background: #f6f2ff; border: 1px solid rgba(50, 21, 104, 0.12); }
+.pg-let .let-cta h2 { margin: 0 0 8px; font-size: 20px; color: #241046; }
+.pg-let .let-cta p { margin: 0 0 14px; font-size: 14.5px; line-height: 1.6; color: #453f57; max-width: 70ch; }
+.pg-let .let-cta .btn { margin-right: 10px; }
+@media (max-width: 640px) {
+  .pg-let .let-item { flex-wrap: wrap; }
+  .pg-let .let-item__open { width: 100%; text-align: center; }
+}

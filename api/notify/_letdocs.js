@@ -32,7 +32,10 @@ import { getSupabaseAdmin, sendError, sendJson } from '../_paypal.js'
  *
  * WHO MAY DO WHAT
  * ---------------
- * list: anyone signed in to the admin dashboard (used by the panel).
+ * list: PUBLIC. Every document here is already public-by-URL in the
+ * `let-docs` bucket, and /let-reviewer-files.html renders the same list
+ * for any visitor, so the list endpoint hides nothing that the bucket
+ * does not already expose. It returns titles and URLs only.
  * upload/delete/link: administrators only, verified through
  * `admin_members` - never `profiles.role`, which any visitor could once
  * PATCH on themselves (same rule as api/teachers/photo.js).
@@ -112,7 +115,7 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {})
 
     if (action === 'list') {
-      await adminCaller(req, supabase)
+      /* Public on purpose: see WHO MAY DO WHAT above. */
       await ensureBucket(supabase)
       return sendJson(res, 200, { docs: await readManifest(supabase) })
     }
